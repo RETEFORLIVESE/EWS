@@ -6,66 +6,673 @@
 <title>RF News – Quotidiano della Rete Forlivese</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  /* ========== STILI IDENTICI A PRIMA (ometto per brevità, ma includi tutto lo stile che avevi) ========== */
-  * { box-sizing: border-box; margin:0; padding:0; }
+  /* ========== STILI COMPLETI ========== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
   :root {
     --rf-red: #c83b2f;
     --rf-blue: #173b73;
+    --rf-blue-deep: #0b1d38;
     --rf-gold: #d6a536;
     --rf-ink: #08090b;
     --rf-panel: #121417;
+    --rf-panel-soft: #181c21;
     --rf-paper: #f3efe6;
-    --rf-muted: rgba(243,239,230,0.68);
-    --rf-line: rgba(243,239,230,0.12);
+    --rf-muted: rgba(243, 239, 230, 0.68);
+    --rf-line: rgba(243, 239, 230, 0.12);
     --rf-verified: #2a7f3e;
   }
+
   body {
     background: var(--rf-ink);
     color: var(--rf-paper);
     font-family: "Barlow", sans-serif;
+    overflow-x: hidden;
   }
-  nav { /* ... stesso codice CSS di prima ... */ }
-  .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
-  .featured-card { grid-column: 1/-1; display: flex; flex-wrap: wrap; background: var(--rf-panel); border:1px solid var(--rf-line); }
-  .category-badge { display: inline-block; background: var(--rf-red); padding:0.25rem 0.7rem; font-family: "Barlow Condensed"; }
-  .verified-badge { background: var(--rf-verified); margin-left: 0.5rem; padding:0.2rem 0.5rem; font-size:0.7rem; }
-  .like-bar { display: flex; gap:1rem; margin-top:1rem; border-top:1px solid var(--rf-line); padding-top:0.75rem; }
-  .like-btn, .dislike-btn { background:none; border:1px solid rgba(255,255,255,0.2); padding:0.3rem 0.9rem; cursor:pointer; color:white; }
-  .like-btn.active-like { background:rgba(214,165,54,0.3); border-color:var(--rf-gold); }
-  .dislike-btn.active-dislike { background:rgba(200,59,47,0.3); border-color:var(--rf-red); }
-  footer { text-align:center; padding:2rem; border-top:1px solid var(--rf-line); margin-top:2rem; }
-  @media (max-width: 800px) { .featured-card { flex-direction: column; } }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(135deg, rgba(200,59,47,0.10), transparent 34%, rgba(23,59,115,0.16) 68%, transparent);
+    background-size: 72px 72px, 72px 72px, 100% 100%;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  .site-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* NAVBAR */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1rem clamp(1rem, 4vw, 3rem);
+    background: rgba(8, 9, 11, 0.86);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(214, 165, 54, 0.18);
+  }
+  .nav-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    min-width: max-content;
+  }
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(214, 165, 54, 0.55);
+    background: linear-gradient(135deg, var(--rf-blue) 0 50%, var(--rf-red) 50% 100%);
+    box-shadow: 0 0 0 4px rgba(214, 165, 54, 0.08);
+  }
+  .brand-mark span {
+    font-family: "Bebas Neue", sans-serif;
+    color: #fff;
+    font-size: 1.35rem;
+    letter-spacing: 0.04em;
+  }
+  .brand-text {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.2rem);
+    list-style: none;
+  }
+  .nav-links a {
+    position: relative;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.86rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(243,239,230,0.62);
+    transition: color 0.2s ease;
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.45rem;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    background: var(--rf-gold);
+    transition: transform 0.2s ease;
+  }
+  .nav-links a:hover { color: #fff; }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-links .active a,
+  .nav-links a.active {
+    color: #fff;
+  }
+  .nav-links .active a::after,
+  .nav-links a.active::after {
+    transform: scaleX(1);
+    background: var(--rf-gold);
+  }
+
+  /* PAGE HEADER */
+  .page-header {
+    padding: clamp(2.5rem, 5vw, 4rem) clamp(1rem, 5vw, 3rem) 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--rf-line);
+  }
+  .page-header .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--rf-gold);
+    margin-bottom: 1rem;
+  }
+  .page-header h1 {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: clamp(3rem, 8vw, 5.2rem);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: #fff;
+  }
+  .page-header .subhead {
+    max-width: 680px;
+    margin: 1rem auto 0;
+    color: var(--rf-muted);
+    font-size: 1.1rem;
+    font-weight: 300;
+  }
+
+  /* NEWS LAYOUT */
+  .news-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2.4fr) minmax(280px, 0.8fr);
+    gap: 2.5rem;
+    width: min(1280px, 100%);
+    margin: 2rem auto 3rem;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+  }
+
+  /* ARTICLES GRID */
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2.2rem;
+  }
+  .featured-card {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.8rem;
+    background: var(--rf-panel);
+    border: 1px solid var(--rf-line);
+    transition: transform 0.2s ease, border-color 0.2s;
+    margin-bottom: 0.5rem;
+  }
+  .featured-card:hover { transform: translateY(-3px); border-color: rgba(214,165,54,0.4); }
+  .featured-img {
+    flex: 1.2;
+    min-width: 220px;
+    background: linear-gradient(145deg, #1e2a3a, #0f1419);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Barlow Condensed", sans-serif;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--rf-line);
+    min-height: 240px;
+  }
+  .featured-content { flex: 2; padding: 1.5rem 1.5rem 1.5rem 0; }
+  .category-badge {
+    display: inline-block;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    background: var(--rf-red);
+    color: #fff;
+    margin-bottom: 0.75rem;
+    border-radius: 0px;
+  }
+  .verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--rf-verified);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    font-family: "Barlow Condensed", sans-serif;
+    letter-spacing: 0.05em;
+  }
+  .article-title {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0.5rem 0 0.75rem;
+    color: #fff;
+  }
+  .article-meta {
+    font-size: 0.8rem;
+    color: var(--rf-muted);
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-weight: 300;
+    flex-wrap: wrap;
+  }
+  .article-excerpt {
+    color: rgba(243,239,230,0.8);
+    line-height: 1.65;
+    font-weight: 300;
+  }
+  .read-more {
+    display: inline-block;
+    margin-top: 1rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--rf-gold);
+    border-bottom: 1.5px solid var(--rf-gold);
+    font-size: 0.85rem;
+  }
+  .article-card {
+    background: var(--rf-panel);
+    border: 1px solid var(--rf-line);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s;
+  }
+  .article-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(214,165,54,0.35);
+    background: var(--rf-panel-soft);
+  }
+  .card-img {
+    height: 180px;
+    background: linear-gradient(125deg, #232a31, #101417);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.25);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    border-bottom: 1px solid var(--rf-line);
+  }
+  .card-content { padding: 1.3rem 1.2rem 1.5rem; }
+  .card-content .article-title { font-size: 1.4rem; margin: 0.4rem 0 0.5rem; }
+  .like-bar {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.8rem;
+    align-items: center;
+    border-top: 1px solid var(--rf-line);
+    padding-top: 0.75rem;
+  }
+  .like-btn, .dislike-btn {
+    background: none;
+    border: 1px solid rgba(243,239,230,0.2);
+    padding: 0.3rem 0.9rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--rf-paper);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .like-btn:hover { background: rgba(214,165,54,0.2); border-color: var(--rf-gold); }
+  .dislike-btn:hover { background: rgba(200,59,47,0.2); border-color: var(--rf-red); }
+  .like-btn.active-like { background: rgba(214,165,54,0.3); border-color: var(--rf-gold); color: var(--rf-gold); }
+  .dislike-btn.active-dislike { background: rgba(200,59,47,0.3); border-color: var(--rf-red); color: #ff8a7a; }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 2rem; }
+  .newsletter-module {
+    background: linear-gradient(135deg, rgba(23,59,115,0.5), rgba(8,9,11,0.9));
+    border: 1px solid rgba(214,165,54,0.4);
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+  }
+  .newsletter-module h3 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.7rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+  .input-group { display: flex; flex-direction: column; gap: 0.8rem; }
+  .input-group input {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--rf-line);
+    padding: 0.8rem;
+    font-family: "Barlow", sans-serif;
+    color: #fff;
+    outline: none;
+  }
+  .btn-news {
+    background: var(--rf-red);
+    border: none;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    padding: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: white;
+  }
+  .btn-news:hover { background: #a72e23; }
+  .popular-list { list-style: none; border-top: 1px solid var(--rf-line); }
+  .popular-list li { padding: 1rem 0; border-bottom: 1px solid var(--rf-line); display: flex; gap: 0.8rem; align-items: baseline; }
+  .popular-rank { font-family: "Bebas Neue", sans-serif; font-size: 1.6rem; color: var(--rf-gold); line-height: 1; }
+  .popular-list a { font-family: "Barlow Condensed", sans-serif; font-size: 1rem; font-weight: 600; transition: color 0.2s; }
+  .popular-list a:hover { color: var(--rf-gold); }
+  .topic-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+  .topic-tags span { background: rgba(255,255,255,0.05); padding: 0.3rem 0.9rem; font-family: "Barlow Condensed", sans-serif; font-size: 0.7rem; border: 0.5px solid var(--rf-line); }
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(243,239,230,0.24);
+    padding: 0.6rem 1.2rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    transition: 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--rf-gold); background: rgba(214,165,54,0.09); }
+
+  footer {
+    margin-top: auto;
+    padding: 2.8rem clamp(1rem, 5vw, 4rem);
+    text-align: center;
+    background: #060709;
+    border-top: 1px solid rgba(214,165,54,0.2);
+  }
+  .footer-logo {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 2.7rem;
+    letter-spacing: 0.1em;
+  }
+  .footer-logo .r { color: var(--rf-red); }
+  .footer-logo .f { color: var(--rf-blue); }
+
+  @media (max-width: 920px) {
+    .news-layout { grid-template-columns: 1fr; }
+    .featured-card { flex-direction: column; }
+    .featured-img { border-right: 0; border-bottom: 1px solid var(--rf-line); min-height: 180px; }
+    .featured-content { padding: 1.5rem; }
+  }
+  @media (max-width: 640px) {
+    .brand-text { display: none; }
+    .nav-links { gap: 0.8rem; }
+    .nav-links a { font-size: 0.7rem; letter-spacing: 0.1em; }
+  }
 </style>
 </head>
 <body>
-<nav><!-- stessa navbar di prima --></nav>
-<div class="page-header"><h1>RF • QUOTIDIANO DELLA RETE</h1><p class="subhead">Articoli, inchieste e approfondimenti dal territorio forlivese.</p></div>
-<div class="news-layout" style="max-width:1280px; margin:2rem auto; padding:0 2rem; display:grid; grid-template-columns:2.4fr 0.8fr; gap:2rem;">
-  <div class="articles-grid" id="articlesGrid">Caricamento...</div>
-  <aside class="sidebar"><!-- sidebar identica a prima --></aside>
+<div class="site-shell">
+  <!-- NAVBAR -->
+  <nav aria-label="Navigazione principale">
+    <a href="index.html" class="nav-brand" aria-label="RF Community Home">
+      <span class="brand-mark" aria-hidden="true"><span>RF</span></span>
+      <span class="brand-text">Comitato Rete Forlivese</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#community">Comitato</a></li>
+      <li><a href="index.html#obiettivi">Obiettivi</a></li>
+      <li><a href="index.html#unisciti">Parlamento</a></li>
+      <li><a href="index.html#unisciti">Petizioni</a></li>
+      <li class="active"><a href="#" class="active">NewsLetter</a></li>
+      <li><a href="index.html#unisciti">Unisciti</a></li>
+    </ul>
+  </nav>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="eyebrow">Informazione partecipata</div>
+    <h1>RF • QUOTIDIANO DELLA RETE</h1>
+    <p class="subhead">Articoli, inchieste e approfondimenti dal territorio forlivese. Liberi, antifascisti, comunitari.</p>
+  </div>
+
+  <div class="news-layout">
+    <!-- ARTICOLI -->
+    <div class="articles-grid" id="articlesGrid">
+      <div style="grid-column:1/-1; text-align:center; padding:3rem;">Caricamento articoli...</div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="newsletter-module">
+        <h3>✉️ La RF‑Newsletter</h3>
+        <p>Ricevi ogni venerdì gli articoli, le petizioni attive e gli eventi del comitato.</p>
+        <form id="demoNewsletterForm" class="input-group">
+          <input type="email" placeholder="La tua email" required id="newsEmail">
+          <input type="text" placeholder="Nome o nickname (opzionale)">
+          <button type="submit" class="btn-news">Iscriviti alla community</button>
+        </form>
+        <p style="font-size: 0.7rem; margin-top: 0.8rem;">🔒 I tuoi dati restano sicuri.</p>
+      </div>
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--rf-line); padding: 1.2rem;">
+        <h3 style="font-family: 'Barlow Condensed';">📌 Più letti del mese</h3>
+        <ul class="popular-list" id="popularList"></ul>
+      </div>
+      <div style="background: rgba(0,0,0,0.2); border-left: 3px solid var(--rf-red); padding: 1rem 1.2rem;">
+        <p style="font-family: 'Barlow Condensed'; font-weight: 600;">🗣️ PARTECIPA IN PRIMA PERSONA</p>
+        <a href="index.html#unisciti" class="btn-outline" style="width: 100%; text-align: center;">Diventa volontario</a>
+        <div class="topic-tags" style="margin-top: 1rem;">
+          <span>#antifascismo</span><span>#meritocraziadalbasso</span><span>#spaziodiagorà</span>
+        </div>
+      </div>
+      <div class="newsletter-module" style="background: rgba(200,59,47,0.09); border-color: var(--rf-red);">
+        <h3>📱 Seguici</h3>
+        <div style="display: flex; gap: 0.8rem; justify-content: center;">
+          <a href="#" style="background:#1a1e24; padding:0.3rem 0.8rem;">📸 Instagram</a>
+          <a href="#" style="background:#1a1e24; padding:0.3rem 0.8rem;">💬 Telegram</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    <div class="footer-logo"><span class="r">R</span><span class="f">F</span></div>
+    <p>Community · Informazione · Coordinazione · Dialogo · Solidarietà</p>
+    <p>© 2026 RF Community - Quotidiano indipendente della Rete Forlivese</p>
+  </footer>
 </div>
-<footer>...</footer>
+
 <script>
-  const BIN_ID = "69f3d0a936566621a80f357f";      // da jsonbin.io
-  const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";    // da jsonbin.io
+  // ===== CONFIGURAZIONE CON LE TUE CREDENZIALI FUNZIONANTI =====
+  const BIN_ID = "69f3d0a936566621a80f357f";
+  const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";
+  const STORAGE_VOTES_KEY = "RF_article_votes";
 
   let masterArticles = [];
   let localVotes = {};
 
+  // Carica voti locali
+  function loadLocalVotes() {
+    const stored = localStorage.getItem(STORAGE_VOTES_KEY);
+    if (stored) {
+      try { localVotes = JSON.parse(stored); } catch(e) { localVotes = {}; }
+    } else { localVotes = {}; }
+  }
+
+  function saveLocalVotes() {
+    localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localVotes));
+  }
+
+  function getDisplayCounts(article) {
+    const baseLikes = article.likes || 0;
+    const baseDislikes = article.dislikes || 0;
+    const voteData = localVotes[article.id] || { localLikesDelta: 0, localDislikesDelta: 0 };
+    return {
+      likes: baseLikes + (voteData.localLikesDelta || 0),
+      dislikes: baseDislikes + (voteData.localDislikesDelta || 0)
+    };
+  }
+
+  function getUserChoice(articleId) {
+    return localVotes[articleId]?.userChoice || null;
+  }
+
+  function voteArticle(articleId, type) {
+    const article = masterArticles.find(a => a.id == articleId);
+    if (!article) return;
+    
+    let voteData = localVotes[articleId];
+    if (!voteData) voteData = { localLikesDelta: 0, localDislikesDelta: 0, userChoice: null };
+    
+    const previous = voteData.userChoice;
+    if (previous === 'like') voteData.localLikesDelta -= 1;
+    if (previous === 'dislike') voteData.localDislikesDelta -= 1;
+    
+    if (previous === type) {
+      voteData.userChoice = null;
+    } else {
+      if (type === 'like') voteData.localLikesDelta += 1;
+      if (type === 'dislike') voteData.localDislikesDelta += 1;
+      voteData.userChoice = type;
+    }
+    
+    localVotes[articleId] = voteData;
+    saveLocalVotes();
+    renderArticles();
+    updatePopularSidebar();
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  function renderArticles() {
+    const container = document.getElementById('articlesGrid');
+    if (!container) return;
+    
+    if (!masterArticles.length) {
+      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile al momento.</div>';
+      return;
+    }
+    
+    const featured = masterArticles.filter(a => a.featured === true);
+    const normal = masterArticles.filter(a => !a.featured);
+    let html = '';
+    
+    // Articolo in evidenza
+    if (featured.length) {
+      const art = featured[0];
+      const counts = getDisplayCounts(art);
+      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
+      html += `
+        <article class="featured-card">
+          <div class="featured-img"><span>${escapeHtml(art.imgLabel || '📷 FOCUS')}</span></div>
+          <div class="featured-content">
+            <div><span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${escapeHtml(art.category || 'INCHIESTA')}</span>${verifiedBadge}</div>
+            <h2 class="article-title">${escapeHtml(art.title)}</h2>
+            <div class="article-meta"><span>📅 ${escapeHtml(art.date || '')}</span><span>✍️ ${escapeHtml(art.author || 'Redazione')}</span></div>
+            <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
+            <div class="like-bar">
+              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+            </div>
+            <a href="#" class="read-more">Leggi approfondimento →</a>
+          </div>
+        </article>
+      `;
+    }
+    
+    // Articoli normali
+    normal.forEach(art => {
+      const counts = getDisplayCounts(art);
+      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
+      html += `
+        <article class="article-card">
+          <div class="card-img">${escapeHtml(art.imgLabel || '📰 ATTUALITÀ')}</div>
+          <div class="card-content">
+            <div><span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${escapeHtml(art.category || 'TERRITORIO')}</span>${verifiedBadge}</div>
+            <h3 class="article-title">${escapeHtml(art.title)}</h3>
+            <div class="article-meta">📅 ${escapeHtml(art.date || '')} • ${escapeHtml(art.author || '')}</div>
+            <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
+            <div class="like-bar">
+              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+            </div>
+            <a href="#" class="read-more">Leggi tutto →</a>
+          </div>
+        </article>
+      `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Attacca event listener ai bottoni like/dislike
+    document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = parseInt(btn.getAttribute('data-id'));
+        const type = btn.getAttribute('data-type');
+        voteArticle(id, type);
+      });
+    });
+  }
+
+  function updatePopularSidebar() {
+    if (!masterArticles.length) return;
+    const scored = masterArticles.map(art => {
+      const counts = getDisplayCounts(art);
+      return { ...art, score: counts.likes - counts.dislikes };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    const top5 = scored.slice(0, 5);
+    const listContainer = document.getElementById('popularList');
+    if (listContainer) {
+      listContainer.innerHTML = top5.map((item, idx) => `
+        <li><span class="popular-rank">${String(idx + 1).padStart(2, '0')}</span><a href="#">${escapeHtml(item.title)}</a></li>
+      `).join('');
+    }
+  }
+
   async function loadArticles() {
     try {
+      const container = document.getElementById('articlesGrid');
+      if (container) container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;">📡 Caricamento articoli in corso...</div>';
+      
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
         headers: { 'X-Master-Key': API_KEY }
       });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
       const data = await res.json();
       masterArticles = data.record.articles || [];
+      
+      if (masterArticles.length === 0) {
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile. Torna più tardi.</div>';
+        return;
+      }
+      
       renderArticles();
-    } catch(e) { console.error(e); articlesGrid.innerHTML = '<p>Errore nel caricamento degli articoli.</p>'; }
+      updatePopularSidebar();
+    } catch(e) {
+      console.error('Errore dettagliato:', e);
+      const container = document.getElementById('articlesGrid');
+      if (container) {
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:#c83b2f;">❌ Errore nel caricamento degli articoli. Verifica la connessione o riprova più tardi.</div>';
+      }
+    }
   }
 
-  function renderArticles() { /* stessa logica di rendering di prima, con like/dislike e badge verificato */ }
-  function voteArticle(id, type) { /* salva in localStorage e ri-render */ }
+  // Newsletter form
+  document.getElementById('demoNewsletterForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('newsEmail')?.value.trim();
+    if (email && email.includes('@')) {
+      alert('✅ Grazie per esserti iscritto/a alla newsletter RF! Riceverai aggiornamenti e articoli.');
+      e.target.reset();
+    } else {
+      alert('Inserisci un indirizzo email valido.');
+    }
+  });
 
+  // Inizializzazione
+  loadLocalVotes();
   loadArticles();
 </script>
 </body>
