@@ -22,6 +22,7 @@
     --rf-paper: #f3efe6;
     --rf-muted: rgba(243, 239, 230, 0.68);
     --rf-line: rgba(243, 239, 230, 0.12);
+    --rf-verified: #2a7f3e;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +48,7 @@
   a { color: inherit; text-decoration: none; }
   .site-shell { min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* ---------- NAVBAR ---------- */
+  /* navbar uguale a prima, la ometto per brevità (ma va inclusa) */
   nav {
     position: sticky;
     top: 0;
@@ -212,6 +213,20 @@
     margin-bottom: 0.75rem;
     border-radius: 0px;
   }
+  .verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--rf-verified);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    font-family: "Barlow Condensed", sans-serif;
+    letter-spacing: 0.05em;
+  }
   .article-title {
     font-family: "Barlow Condensed", sans-serif;
     font-size: 1.8rem;
@@ -311,7 +326,7 @@
     margin-bottom: 0.75rem;
   }
   .input-group { display: flex; flex-direction: column; gap: 0.8rem; }
-  .input-group input {
+  .input-group input, .input-group textarea, .input-group select {
     background: rgba(0,0,0,0.6);
     border: 1px solid var(--rf-line);
     padding: 0.8rem;
@@ -353,6 +368,7 @@
   .btn-outline:hover { border-color: var(--rf-gold); background: rgba(214,165,54,0.09); }
   .admin-panel { background: var(--rf-panel-soft); margin: 1rem auto; padding: 1.5rem; width: min(1280px, 100%); border: 1px solid var(--rf-line); }
   .admin-toggle { background: none; border: 1px solid var(--rf-gold); padding: 0.4rem 1rem; font-family: "Barlow Condensed"; cursor: pointer; margin: 0 auto; display: block; }
+  .verified-list-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; padding: 0.3rem; border-bottom: 1px solid var(--rf-line); }
   footer {
     margin-top: auto;
     padding: 2.8rem clamp(1rem, 5vw, 4rem);
@@ -433,18 +449,18 @@
     </aside>
   </div>
 
-  <!-- Pannello amministrazione (scrittura articoli senza toccare codice) -->
+  <!-- Pannello amministrazione (scrittura articoli + verifica) -->
   <button class="admin-toggle" id="adminToggleBtn">📝 Scrivi articolo / Gestione contenuti</button>
   <div id="adminPanel" style="display: none;" class="admin-panel">
-    <h3 style="font-family:'Barlow Condensed';">✍️ Crea nuovo articolo (JSON locale)</h3>
-    <p style="font-size:0.85rem; margin-bottom:1rem;">Aggiungi articoli all'anteprima. Dopo aver creato/modificato, <strong>esporta il JSON</strong> e sostituisci il file <code>articles.json</code> nel repository GitHub (database). L'HTML rimane invariato.</p>
+    <h3 style="font-family:'Barlow Condensed';">✍️ Crea nuovo articolo (locale)</h3>
     <div style="display:grid; gap:0.8rem; grid-template-columns:1fr 1fr;">
-      <input type="text" id="newTitle" placeholder="Titolo articolo" style="background:#0f1115; border:1px solid var(--rf-line); padding:0.5rem; color:white;">
-      <input type="text" id="newCategory" placeholder="Categoria (es. POLITICA)" style="background:#0f1115; border:1px solid var(--rf-line); padding:0.5rem; color:white;">
-      <input type="text" id="newAuthor" placeholder="Autore" style="background:#0f1115; border:1px solid var(--rf-line); padding:0.5rem; color:white;">
-      <input type="text" id="newDate" placeholder="Data (es. 30 aprile 2026)" style="background:#0f1115; border:1px solid var(--rf-line); padding:0.5rem; color:white;">
-      <textarea id="newExcerpt" rows="2" placeholder="Estratto / abstract" style="background:#0f1115; border:1px solid var(--rf-line); padding:0.5rem; color:white; grid-column:span 2;"></textarea>
-      <input type="text" id="newImgLabel" placeholder="Icona card (es. 📰 ATTUALITÀ)" style="background:#0f1115; border:1px solid var(--rf-line); padding:0.5rem; color:white;">
+      <input type="text" id="newTitle" placeholder="Titolo articolo">
+      <input type="text" id="newCategory" placeholder="Categoria (es. POLITICA)">
+      <input type="text" id="newAuthor" placeholder="Autore">
+      <input type="text" id="newDate" placeholder="Data (es. 30 aprile 2026)">
+      <textarea id="newExcerpt" rows="2" placeholder="Estratto / abstract" style="grid-column:span 2;"></textarea>
+      <input type="text" id="newImgLabel" placeholder="Icona card (es. 📰 ATTUALITÀ)">
+      <label style="display:flex; align-items:center; gap:0.5rem;"><input type="checkbox" id="newVerified"> ✅ Verificato (RF certified)</label>
     </div>
     <div style="margin-top:1rem; display:flex; gap:1rem;">
       <button id="addArticleBtn" class="btn-news" style="background: var(--rf-blue);">➕ Aggiungi articolo (locale)</button>
@@ -452,8 +468,16 @@
       <button id="resetDemoArticles" class="btn-news" style="background: #5a3e1a;">↺ Reset dati demo</button>
     </div>
     <p id="adminFeedback" style="margin-top:1rem; font-size:0.8rem; color:var(--rf-gold);"></p>
-    <hr style="margin:1rem 0; border-color:var(--rf-line);">
-    <p><strong>📂 Istruzioni:</strong> Dopo aver modificato gli articoli, clicca "Esporta JSON" e salva il file come <strong>articles.json</strong>. Carica/commit nel tuo repository GitHub (sostituisci il vecchio). La newsletter leggerà automaticamente il file remoto. Nessuna modifica all'HTML necessaria.</p>
+
+    <!-- Nuova sezione: Gestione verifica articoli esistenti -->
+    <hr style="margin:1.5rem 0; border-color:var(--rf-line);">
+    <h3 style="font-family:'Barlow Condensed';">✔️ Verifica articoli esistenti</h3>
+    <p style="font-size:0.85rem; margin-bottom:0.8rem;">Spunta o despunta la casella “Verificato” per ogni articolo, poi clicca “Applica modifiche verifica”. Ricorda di esportare il JSON dopo.</p>
+    <div id="verifiedChecklist"></div>
+    <button id="applyVerifiedBtn" class="btn-news" style="background: var(--rf-blue); margin-top:1rem;">Applica modifiche verifica</button>
+
+    <hr style="margin:1.5rem 0; border-color:var(--rf-line);">
+    <p><strong>📂 Istruzioni:</strong> Dopo aver modificato gli articoli o la verifica, clicca "Esporta JSON" e carica il file <strong>articles.json</strong> sul tuo repository GitHub. La newsletter leggerà automaticamente il file remoto.</p>
   </div>
 
   <footer>
@@ -464,110 +488,89 @@
 </div>
 
 <script>
-  // ---------- GLOBALE: articoli + like/dislike localStorage ----------
-  let masterArticles = [];   // articoli caricati
+  // ---------- GLOBALE: articoli + like/dislike + VERIFICA ----------
+  let masterArticles = [];
 
-  // ID univoco per articoli (se non presente ne generiamo)
-  // Struttura articolo: { id, title, category, categoryColor, date, author, excerpt, imgLabel, featured, likes, dislikes, imgPlace? }
-  const STORAGE_VOTES_KEY = "RF_article_votes"; // oggetto { articleId: {userVote: 'like'|'dislike'|null, deltaLike, deltaDislike} }
-  // approccio: base likes/dislikes dal JSON, ma sovrapponiamo preferenze locali delta.
-  // memorizziamo i delta voti locali (incrementi/decrementi fatti da questo browser)
-  let localVotes = {}; // { articleId: { localLikesDelta, localDislikesDelta, userChoice } }
+  const STORAGE_VOTES_KEY = "RF_article_votes";
+  let localVotes = {};
 
   function loadLocalVotes() {
     const stored = localStorage.getItem(STORAGE_VOTES_KEY);
-    if(stored) {
-      try {
-        localVotes = JSON.parse(stored);
-      } catch(e) { localVotes = {}; }
-    } else localVotes = {};
+    if(stored) try { localVotes = JSON.parse(stored); } catch(e) { localVotes = {}; }
+    else localVotes = {};
   }
-  function saveLocalVotes() {
-    localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localVotes));
-  }
+  function saveLocalVotes() { localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localVotes)); }
 
-  // funzione per ottenere like e dislike visuali
   function getDisplayCounts(article) {
     const baseLikes = article.likes || 0;
     const baseDislikes = article.dislikes || 0;
     const voteData = localVotes[article.id] || { localLikesDelta:0, localDislikesDelta:0 };
-    return {
-      likes: baseLikes + (voteData.localLikesDelta || 0),
-      dislikes: baseDislikes + (voteData.localDislikesDelta || 0)
-    };
+    return { likes: baseLikes + (voteData.localLikesDelta || 0), dislikes: baseDislikes + (voteData.localDislikesDelta || 0) };
   }
 
-  // vota: type 'like' o 'dislike'
   function voteArticle(articleId, type) {
     const article = masterArticles.find(a => a.id == articleId);
-    if(!article) return false;
+    if(!article) return;
     let voteData = localVotes[articleId];
     if(!voteData) voteData = { localLikesDelta:0, localDislikesDelta:0, userChoice: null };
-    const previousChoice = voteData.userChoice;
-    // reset precedente se esiste
-    if(previousChoice === 'like') voteData.localLikesDelta -= 1;
-    if(previousChoice === 'dislike') voteData.localDislikesDelta -= 1;
-    if(previousChoice === type) {
-      // annulla voto
-      voteData.userChoice = null;
-    } else {
+    const previous = voteData.userChoice;
+    if(previous === 'like') voteData.localLikesDelta -= 1;
+    if(previous === 'dislike') voteData.localDislikesDelta -= 1;
+    if(previous === type) voteData.userChoice = null;
+    else {
       if(type === 'like') voteData.localLikesDelta += 1;
       if(type === 'dislike') voteData.localDislikesDelta += 1;
       voteData.userChoice = type;
     }
     localVotes[articleId] = voteData;
     saveLocalVotes();
-    renderAllArticles();    // ri-render
+    renderAllArticles();
     updatePopularSidebar();
-    return true;
   }
 
-  // render dinamico della griglia
+  function getUserChoice(articleId) { return localVotes[articleId]?.userChoice || null; }
+
   function renderAllArticles() {
     const container = document.getElementById('dynamicArticlesGrid');
-    if(!container) return;
-    if(!masterArticles.length) {
-      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile. Usa il pannello "Scrivi articolo" o importa JSON.</div>';
-      return;
-    }
+    if(!masterArticles.length) { container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile. Usa il pannello "Scrivi articolo" o importa JSON.</div>'; return; }
     const featured = masterArticles.filter(a => a.featured === true);
     const normal = masterArticles.filter(a => !a.featured);
     let html = '';
-    // featured card (max 1)
     if(featured.length) {
       const art = featured[0];
       const counts = getDisplayCounts(art);
+      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
       html += `
         <article class="featured-card">
           <div class="featured-img"><span>${art.imgLabel || '📷 FOCUS'}</span></div>
           <div class="featured-content">
-            <span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${art.category || 'INCHIESTA'}</span>
+            <div><span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${art.category || 'INCHIESTA'}</span>${verifiedBadge}</div>
             <h2 class="article-title">${escapeHtml(art.title)}</h2>
             <div class="article-meta"><span>📅 ${art.date || ''}</span><span>✍️ ${art.author || 'Redazione'}</span></div>
             <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
             <div class="like-bar">
-              <button class="like-btn ${art.userChoiceLocal() === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
-              <button class="dislike-btn ${art.userChoiceLocal() === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
             </div>
             <a href="#" class="read-more">Leggi approfondimento →</a>
           </div>
         </article>
       `;
     }
-    // card normali
     normal.forEach(art => {
       const counts = getDisplayCounts(art);
+      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
       html += `
         <article class="article-card">
           <div class="card-img">${art.imgLabel || '📰 ATTUALITÀ'}</div>
           <div class="card-content">
-            <span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${art.category || 'TERRITORIO'}</span>
+            <div><span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${art.category || 'TERRITORIO'}</span>${verifiedBadge}</div>
             <h3 class="article-title">${escapeHtml(art.title)}</h3>
             <div class="article-meta">📅 ${art.date || ''} • ${art.author || ''}</div>
             <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
             <div class="like-bar">
-              <button class="like-btn ${art.userChoiceLocal() === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
-              <button class="dislike-btn ${art.userChoiceLocal() === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
             </div>
             <a href="#" class="read-more">Leggi tutto →</a>
           </div>
@@ -575,7 +578,6 @@
       `;
     });
     container.innerHTML = html;
-    // attach event listeners
     document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -584,71 +586,84 @@
         voteArticle(id, type);
       });
     });
+    updateVerifiedChecklist(); // aggiorna la lista nel pannello admin
   }
 
-  // helper userChoice per classe css
-  function getUserChoiceForArticle(articleId) {
-    return localVotes[articleId]?.userChoice || null;
-  }
-  // aggiunta temporanea agli oggetti articolo
-  function enrichArticlesWithVoteMethod(articles) {
-    articles.forEach(art => {
-      art.userChoiceLocal = () => getUserChoiceForArticle(art.id);
+  function updateVerifiedChecklist() {
+    const container = document.getElementById('verifiedChecklist');
+    if(!container) return;
+    if(!masterArticles.length) { container.innerHTML = '<p>Nessun articolo presente.</p>'; return; }
+    let html = '';
+    masterArticles.forEach(art => {
+      html += `
+        <div class="verified-list-item">
+          <input type="checkbox" class="verified-checkbox" data-id="${art.id}" ${art.verified ? 'checked' : ''}>
+          <strong>${escapeHtml(art.title)}</strong> <small style="color:var(--rf-muted);">(${art.author || 'Anonimo'})</small>
+        </div>
+      `;
     });
-    return articles;
+    container.innerHTML = html;
+    // attach event listeners (opzionale, li gestiamo dal pulsante "Applica")
   }
-  function updatePopularSidebar() {
-    if(!masterArticles.length) return;
-    const listContainer = document.getElementById('popularList');
-    const scored = masterArticles.map(art => {
-      const counts = getDisplayCounts(art);
-      const score = counts.likes - counts.dislikes;
-      return { ...art, score };
+
+  function applyVerifiedChanges() {
+    const checkboxes = document.querySelectorAll('#verifiedChecklist .verified-checkbox');
+    checkboxes.forEach(cb => {
+      const id = parseInt(cb.getAttribute('data-id'));
+      const article = masterArticles.find(a => a.id === id);
+      if(article) {
+        article.verified = cb.checked;
+      }
     });
-    scored.sort((a,b) => b.score - a.score);
-    const top5 = scored.slice(0,5);
-    listContainer.innerHTML = top5.map((item,idx) => `
-      <li><span class="popular-rank">${String(idx+1).padStart(2,'0')}</span><a href="#">${escapeHtml(item.title)}</a></li>
-    `).join('');
+    renderAllArticles();
+    document.getElementById('adminFeedback').innerHTML = "✅ Stati di verifica aggiornati. Ricorda di esportare il JSON per salvare su GitHub.";
   }
 
   function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
-  // Caricamento dati da GitHub JSON (articles.json) - database remoto
   async function loadArticlesFromGitHub() {
     try {
-      // Prova a caricare da percorso relativo "articles.json" (lo stesso repo)
       const response = await fetch('./articles.json?v='+Date.now());
       if(response.ok) {
         const data = await response.json();
         if(Array.isArray(data)) {
-          masterArticles = data.map((art, idx) => ({ id: art.id || idx+1, ...art, featured: art.featured === true }));
-          masterArticles = enrichArticlesWithVoteMethod(masterArticles);
+          masterArticles = data.map((art, idx) => ({ id: art.id || idx+1, ...art, featured: art.featured === true, verified: art.verified === true }));
           renderAllArticles();
           updatePopularSidebar();
           return;
         }
       }
-      throw new Error('File non trovato, uso dati demo');
+      throw new Error('Demo');
     } catch(e) {
-      console.warn('Demo mode: Caricamento dati esemplificativi');
       masterArticles = getDemoArticles();
-      masterArticles = enrichArticlesWithVoteMethod(masterArticles);
       renderAllArticles();
       updatePopularSidebar();
     }
   }
+
   function getDemoArticles() {
     return [
-      { id:1, title:"Forlì, il movimento dal basso che ridisegna la partecipazione", category:"INCHIESTA", categoryColor:"#c83b2f", date:"28 aprile 2026", author:"Redazione RF", excerpt:"Dalla nascita del comitato territoriale a decine di iniziative pubbliche: un modello antifascista.", imgLabel:"📷 SERVIZIO • FOCUS", featured:true, likes:24, dislikes:2 },
-      { id:2, title:"Distribuzione alimentare: +40% di famiglie assistite nel 2026", category:"SOLIDARIETÀ", categoryColor:"#173b73", date:"22 aprile 2026", author:"Martina N.", excerpt:"L'emergenza abitativa colpisce. La rete di mutuo aiuto raddoppia gli sforzi.", imgLabel:"📰 ATTUALITÀ", featured:false, likes:18, dislikes:1 },
-      { id:3, title:"“La memoria antifascista non è nostalgia, è azione quotidiana”", category:"INTERVISTA", categoryColor:"#d6a536", date:"18 aprile 2026", author:"Luca R.", excerpt:"Colloquio con una storica forlivese: necessità di coscienza collettiva.", imgLabel:"🎙 OPINIONI", featured:false, likes:32, dislikes:3 },
-      { id:4, title:"Referendum per la casa popolare: parte la raccolta firme", category:"TERRITORIO", categoryColor:"#c83b2f", date:"14 aprile 2026", author:"Ufficio Stampa RF", excerpt:"Dopo mesi di assemblee, mobilitazione per il diritto alla casa.", imgLabel:"🏛 POLITICA LOCALE", featured:false, likes:21, dislikes:4 },
-      { id:5, title:"25 aprile 2026: il corteo più partecipato", category:"APPROFONDIMENTO", categoryColor:"#173b73", date:"26 aprile 2026", author:"Samuele G.", excerpt:"Migliaia di persone per le vie del centro: la cronaca.", imgLabel:"✨ CULTURA", featured:false, likes:46, dislikes:5 }
+      { id:1, title:"Forlì, il movimento dal basso che ridisegna la partecipazione", category:"INCHIESTA", categoryColor:"#c83b2f", date:"28 aprile 2026", author:"Redazione RF", excerpt:"Dalla nascita del comitato territoriale a decine di iniziative pubbliche: un modello antifascista.", imgLabel:"📷 SERVIZIO • FOCUS", featured:true, likes:24, dislikes:2, verified: true },
+      { id:2, title:"Distribuzione alimentare: +40% di famiglie assistite nel 2026", category:"SOLIDARIETÀ", categoryColor:"#173b73", date:"22 aprile 2026", author:"Martina N.", excerpt:"L'emergenza abitativa colpisce. La rete di mutuo aiuto raddoppia gli sforzi.", imgLabel:"📰 ATTUALITÀ", featured:false, likes:18, dislikes:1, verified: true },
+      { id:3, title:"“La memoria antifascista non è nostalgia, è azione quotidiana”", category:"INTERVISTA", categoryColor:"#d6a536", date:"18 aprile 2026", author:"Luca R.", excerpt:"Colloquio con una storica forlivese: necessità di coscienza collettiva.", imgLabel:"🎙 OPINIONI", featured:false, likes:32, dislikes:3, verified: false },
+      { id:4, title:"Referendum per la casa popolare: parte la raccolta firme", category:"TERRITORIO", categoryColor:"#c83b2f", date:"14 aprile 2026", author:"Ufficio Stampa RF", excerpt:"Dopo mesi di assemblee, mobilitazione per il diritto alla casa.", imgLabel:"🏛 POLITICA LOCALE", featured:false, likes:21, dislikes:4, verified: true },
+      { id:5, title:"25 aprile 2026: il corteo più partecipato", category:"APPROFONDIMENTO", categoryColor:"#173b73", date:"26 aprile 2026", author:"Samuele G.", excerpt:"Migliaia di persone per le vie del centro: la cronaca.", imgLabel:"✨ CULTURA", featured:false, likes:46, dislikes:5, verified: false }
     ];
   }
 
-  // AMMINISTRAZIONE: aggiungere articolo, esportare JSON
+  function updatePopularSidebar() {
+    if(!masterArticles.length) return;
+    const scored = masterArticles.map(art => {
+      const counts = getDisplayCounts(art);
+      return { ...art, score: counts.likes - counts.dislikes };
+    });
+    scored.sort((a,b) => b.score - a.score);
+    const top5 = scored.slice(0,5);
+    const listContainer = document.getElementById('popularList');
+    if(listContainer) listContainer.innerHTML = top5.map((item,idx) => `<li><span class="popular-rank">${String(idx+1).padStart(2,'0')}</span><a href="#">${escapeHtml(item.title)}</a></li>`).join('');
+  }
+
+  // Admin functions
   function addLocalArticle() {
     const title = document.getElementById('newTitle').value.trim();
     if(!title) { document.getElementById('adminFeedback').innerText = "Inserisci titolo"; return; }
@@ -664,18 +679,20 @@
       imgLabel: document.getElementById('newImgLabel').value.trim() || "📰 NOTIZIA",
       featured: false,
       likes: 0,
-      dislikes: 0
+      dislikes: 0,
+      verified: document.getElementById('newVerified').checked
     };
     masterArticles.push(newArt);
-    masterArticles = enrichArticlesWithVoteMethod(masterArticles);
     renderAllArticles();
     updatePopularSidebar();
-    document.getElementById('adminFeedback').innerHTML = "✅ Articolo aggiunto (solo anteprima locale). Ricorda di esportare JSON per salvare su GitHub.";
-    document.querySelectorAll('#newTitle, #newCategory, #newAuthor, #newDate, #newExcerpt, #newImgLabel').forEach(field => field.value = '');
+    document.getElementById('adminFeedback').innerHTML = "✅ Articolo aggiunto (locale). Ricorda di esportare JSON per salvare su GitHub.";
+    document.querySelectorAll('#newTitle, #newCategory, #newAuthor, #newDate, #newExcerpt, #newImgLabel').forEach(f => f.value = '');
+    document.getElementById('newVerified').checked = false;
   }
+
   function exportToJSON() {
-    const exportData = masterArticles.map(({ id, title, category, categoryColor, date, author, excerpt, imgLabel, featured, likes, dislikes }) => ({
-      id, title, category, categoryColor, date, author, excerpt, imgLabel, featured, likes, dislikes
+    const exportData = masterArticles.map(({ id, title, category, categoryColor, date, author, excerpt, imgLabel, featured, likes, dislikes, verified }) => ({
+      id, title, category, categoryColor, date, author, excerpt, imgLabel, featured, likes, dislikes, verified: verified || false
     }));
     const dataStr = JSON.stringify(exportData, null, 2);
     const blob = new Blob([dataStr], {type: 'application/json'});
@@ -687,23 +704,26 @@
     URL.revokeObjectURL(url);
     document.getElementById('adminFeedback').innerHTML = "📁 Esportazione completata! Sostituisci articles.json nel repo GitHub.";
   }
+
   function resetDemo() {
     if(confirm("Ripristinare gli articoli demo? (Perdita modifiche locali non esportate)")) {
       masterArticles = getDemoArticles();
-      masterArticles = enrichArticlesWithVoteMethod(masterArticles);
       renderAllArticles();
       updatePopularSidebar();
       document.getElementById('adminFeedback').innerHTML = "↺ Dataset demo ripristinato. Esporta se vuoi mantenere su GitHub.";
     }
   }
-  // Toggle pannello admin
+
+  // Event binding
   document.getElementById('adminToggleBtn')?.addEventListener('click',()=>{
     const panel = document.getElementById('adminPanel');
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    updateVerifiedChecklist();
   });
   document.getElementById('addArticleBtn')?.addEventListener('click', addLocalArticle);
   document.getElementById('exportJsonBtn')?.addEventListener('click', exportToJSON);
   document.getElementById('resetDemoArticles')?.addEventListener('click', resetDemo);
+  document.getElementById('applyVerifiedBtn')?.addEventListener('click', applyVerifiedChanges);
   document.getElementById('demoNewsletterForm')?.addEventListener('submit', (e)=>{
     e.preventDefault();
     const email = document.getElementById('newsEmail').value.trim();
@@ -712,7 +732,7 @@
     e.target.reset();
   });
 
-  // init
+  // Init
   loadLocalVotes();
   loadArticlesFromGitHub();
 </script>
