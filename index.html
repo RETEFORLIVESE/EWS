@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RF Community</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --rf-red: #c83b2f;
+    --rf-blue: #173b73;
+    --rf-blue-deep: #0b1d38;
+    --rf-gold: #d6a536;
+    --rf-ink: #08090b;
+    --rf-panel: #121417;
+    --rf-panel-soft: #181c21;
+    --rf-paper: #f3efe6;
+    --rf-muted: rgba(243, 239, 230, 0.68);
+    --rf-line: rgba(243, 239, 230, 0.12);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--rf-ink);
+    color: var(--rf-paper);
+    font-family: "Barlow", sans-serif;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(135deg, rgba(200,59,47,0.10), transparent 34%, rgba(23,59,115,0.16) 68%, transparent);
+    background-size: 72px 72px, 72px 72px, 100% 100%;
+  }
+
+  a { color: inherit; }
+
+  .site-shell { min-height: 100vh; }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1rem clamp(1rem, 4vw, 3rem);
+    background: rgba(8, 9, 11, 0.86);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(214, 165, 54, 0.18);
+  }
+
+  .nav-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    min-width: max-content;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(214, 165, 54, 0.55);
+    background: linear-gradient(135deg, var(--rf-blue) 0 50%, var(--rf-red) 50% 100%);
+    box-shadow: 0 0 0 4px rgba(214, 165, 54, 0.08);
+  }
+
+  .brand-mark span,
+  .hero-tagline,
+  .logo-fallback,
+  .section-title,
+  .stat-num,
+  .identity-initial,
+  .footer-logo {
+    font-family: "Bebas Neue", sans-serif;
+  }
+
+  .brand-mark span {
+    color: #fff;
+    font-size: 1.35rem;
+    letter-spacing: 0.04em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  }
+
+  .brand-text {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.2rem);
+    list-style: none;
+  }
+
+  .nav-links a {
+    position: relative;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.86rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(243,239,230,0.62);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.45rem;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    background: var(--rf-gold);
+    transition: transform 0.2s ease;
+  }
+
+  .nav-links a:hover { color: #fff; }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  .hero {
+    min-height: 86svh;
+    display: grid;
+    align-items: center;
+    padding: clamp(3rem, 7vw, 6rem) clamp(1rem, 5vw, 4rem);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rf-line);
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(115deg, rgba(23,59,115,0.62) 0 20%, transparent 20% 56%, rgba(200,59,47,0.46) 56% 76%, transparent 76%),
+      linear-gradient(180deg, rgba(8,9,11,0.12), var(--rf-ink));
+    opacity: 0.78;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rf-blue), var(--rf-gold), var(--rf-red));
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: center;
+  }
+
+  .hero-copy {
+    max-width: 690px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--rf-gold);
+    margin-bottom: 1.1rem;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 38px;
+    height: 2px;
+    background: currentColor;
+  }
+
+  .hero-tagline {
+    font-size: clamp(4.5rem, 16vw, 10.5rem);
+    letter-spacing: 0.04em;
+    line-height: 0.78;
+    color: #fff;
+    text-shadow: 0 18px 44px rgba(0,0,0,0.45);
+  }
+
+  .hero-tagline .r { color: var(--rf-red); }
+  .hero-tagline .f { color: #f7f3ec; }
+
+  .hero-title {
+    margin-top: 1rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(1.75rem, 4vw, 3.25rem);
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .hero-desc {
+    max-width: 620px;
+    margin-top: 1.3rem;
+    color: var(--rf-muted);
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    font-weight: 300;
+    line-height: 1.75;
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 2rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.85rem 1.35rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .btn:hover { transform: translateY(-2px); }
+
+  .btn-primary {
+    color: #fff;
+    background: var(--rf-red);
+    border-color: rgba(255,255,255,0.16);
+    box-shadow: 0 18px 38px rgba(200,59,47,0.22);
+  }
+
+  .btn-outline {
+    color: var(--rf-paper);
+    background: rgba(255,255,255,0.035);
+    border-color: rgba(243,239,230,0.24);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--rf-gold);
+    background: rgba(214,165,54,0.09);
+  }
+
+  .hero-emblem {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 360px;
+  }
+
+  .hero-emblem::before,
+  .hero-emblem::after {
+    content: "";
+    position: absolute;
+    border: 1px solid rgba(214,165,54,0.22);
+  }
+
+  .hero-emblem::before {
+    width: 86%;
+    aspect-ratio: 1;
+    transform: rotate(8deg);
+  }
+
+  .hero-emblem::after {
+    width: 64%;
+    aspect-ratio: 1;
+    transform: rotate(45deg);
+    border-color: rgba(243,239,230,0.12);
+  }
+
+  .logo-wrap {
+    position: relative;
+    z-index: 1;
+    width: min(280px, 74vw);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    border: 3px solid var(--rf-gold);
+    background: linear-gradient(135deg, var(--rf-blue) 0 50%, var(--rf-red) 50% 100%);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.42), 0 0 0 10px rgba(214,165,54,0.08);
+  }
+
+  .logo-wrap img {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .logo-fallback {
+    color: #fff;
+    font-size: 6.5rem;
+    letter-spacing: 0.04em;
+    text-shadow: 0 10px 28px rgba(0,0,0,0.42);
+  }
+
+  main section {
+    padding: clamp(4.2rem, 8vw, 7rem) clamp(1rem, 5vw, 4rem);
+  }
+
+  .section-inner {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+  }
+
+  .section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(260px, 0.7fr);
+    gap: 2rem;
+    align-items: end;
+    margin-bottom: 2rem;
+  }
+
+  .section-label {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--rf-gold);
+    margin-bottom: 0.65rem;
+  }
+
+  .section-title {
+    font-size: clamp(2.6rem, 7vw, 5rem);
+    line-height: 0.92;
+    letter-spacing: 0.04em;
+    color: #fff;
+  }
+
+  .section-kicker {
+    color: var(--rf-muted);
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.75;
+  }
+
+  .pillars {
+    background: linear-gradient(180deg, var(--rf-ink), #101215);
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--rf-line);
+    background: rgba(255,255,255,0.035);
+  }
+
+  .pillar-card {
+    min-height: 280px;
+    padding: clamp(1.4rem, 2.2vw, 2rem);
+    background: rgba(18,20,23,0.92);
+    border-right: 1px solid var(--rf-line);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .pillar-card:last-child { border-right: 0; }
+  .pillar-card:hover { background: var(--rf-panel-soft); transform: translateY(-4px); }
+
+  .pillar-topline {
+    width: 42px;
+    height: 4px;
+    margin-bottom: 1.2rem;
+    background: var(--accent);
+  }
+
+  .pillar-code {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 3.2rem;
+    line-height: 0.9;
+    color: rgba(255,255,255,0.18);
+  }
+
+  .pillar-title {
+    margin-top: 1.8rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.42rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .pillar-text {
+    margin-top: 0.75rem;
+    color: var(--rf-muted);
+    font-size: 0.96rem;
+    font-weight: 300;
+    line-height: 1.65;
+  }
+
+  .stats {
+    padding: 0 clamp(1rem, 5vw, 4rem);
+    background: #101215;
+  }
+
+  .stats-grid {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--rf-line);
+    border-top: 0;
+  }
+
+  .stat-item {
+    padding: 1.6rem 1rem;
+    text-align: center;
+    background: var(--rf-ink);
+    border-right: 1px solid var(--rf-line);
+  }
+
+  .stat-item:last-child { border-right: 0; }
+
+  .stat-num {
+    font-size: clamp(2.3rem, 5vw, 3.4rem);
+    line-height: 1;
+    color: #fff;
+  }
+
+  .stat-num span { color: var(--rf-red); }
+
+  .stat-label {
+    margin-top: 0.35rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(243,239,230,0.45);
+  }
+
+  .objectives {
+    background:
+      linear-gradient(90deg, rgba(23,59,115,0.14), transparent 38%, rgba(200,59,47,0.12)),
+      #0d0f12;
+  }
+
+  .objectives-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(300px, 0.72fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .obj-list {
+    list-style: none;
+    display: grid;
+    gap: 1px;
+    margin-top: 1.6rem;
+    border: 1px solid var(--rf-line);
+    background: var(--rf-line);
+  }
+
+  .obj-list li {
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(18,20,23,0.95);
+  }
+
+  .obj-num {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 2.2rem;
+    color: var(--rf-red);
+    line-height: 1;
+  }
+
+  .obj-list strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .obj-list p {
+    color: var(--rf-muted);
+    font-size: 0.96rem;
+    font-weight: 300;
+    line-height: 1.65;
+  }
+
+  .identity-panel {
+    position: sticky;
+    top: 96px;
+    padding: clamp(1.4rem, 3vw, 2rem);
+    background:
+      linear-gradient(135deg, rgba(23,59,115,0.55), rgba(8,9,11,0.2) 45%, rgba(200,59,47,0.45)),
+      var(--rf-panel);
+    border: 1px solid rgba(214,165,54,0.3);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.28);
+  }
+
+  .identity-initial {
+    font-size: clamp(6rem, 18vw, 10rem);
+    line-height: 0.78;
+    color: rgba(255,255,255,0.12);
+  }
+
+  .identity-panel h3 {
+    margin-top: -0.6rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(1.7rem, 4vw, 2.5rem);
+    line-height: 0.98;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .identity-panel p {
+    margin-top: 1.1rem;
+    color: rgba(243,239,230,0.78);
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.75;
+  }
+
+  .identity-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1.4rem;
+  }
+
+  .identity-tags span {
+    padding: 0.48rem 0.68rem;
+    border: 1px solid rgba(243,239,230,0.16);
+    background: rgba(8,9,11,0.38);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(243,239,230,0.82);
+  }
+
+  .manifesto {
+    padding: clamp(4.2rem, 8vw, 7rem) clamp(1rem, 5vw, 4rem);
+    background: var(--rf-paper);
+    color: var(--rf-ink);
+  }
+
+  .manifesto-inner {
+    width: min(960px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 0.6fr) minmax(280px, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  .manifesto .section-label { color: var(--rf-red); }
+  .manifesto .section-title { color: var(--rf-ink); }
+
+  .manifesto blockquote {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(1.8rem, 4vw, 3.1rem);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rf-ink);
+    border-left: 6px solid var(--rf-gold);
+    padding-left: 1.4rem;
+  }
+
+  .manifesto em {
+    color: var(--rf-red);
+    font-style: normal;
+  }
+
+  .join {
+    background:
+      linear-gradient(135deg, rgba(23,59,115,0.7), rgba(8,9,11,0.92) 44%, rgba(200,59,47,0.58)),
+      var(--rf-ink);
+  }
+
+  .join-inner {
+    width: min(760px, 100%);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .ig-logo {
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 1.4rem;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #405de6, #833ab4, #c13584, #e1306c, #f77737, #ffdc80);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.32);
+  }
+
+  .ig-logo svg {
+    width: 28px;
+    height: 28px;
+    fill: #fff;
+  }
+
+  .join p {
+    margin: 1rem auto 0;
+    max-width: 570px;
+    color: var(--rf-muted);
+    line-height: 1.75;
+    font-weight: 300;
+  }
+
+  .join .btn { margin-top: 1.8rem; }
+
+  footer {
+    padding: 2.8rem clamp(1rem, 5vw, 4rem);
+    text-align: center;
+    background: #060709;
+    border-top: 1px solid rgba(214,165,54,0.2);
+  }
+
+  .footer-logo {
+    font-size: 2.7rem;
+    letter-spacing: 0.1em;
+  }
+
+  .footer-logo .r { color: var(--rf-red); }
+  .footer-logo .f { color: var(--rf-blue); }
+
+  footer p {
+    margin-top: 0.7rem;
+    color: rgba(243,239,230,0.42);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 920px) {
+    .hero-content,
+    .section-head,
+    .objectives-layout,
+    .manifesto-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .hero {
+      min-height: auto;
+      padding-top: 4rem;
+    }
+
+    .hero-emblem {
+      min-height: 270px;
+      order: -1;
+    }
+
+    .pillars-grid,
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pillar-card:nth-child(2) { border-right: 0; }
+    .pillar-card:nth-child(-n+2) { border-bottom: 1px solid var(--rf-line); }
+
+    .identity-panel { position: relative; top: auto; }
+  }
+
+  @media (max-width: 640px) {
+    nav { align-items: flex-start; }
+    .brand-text { display: none; }
+    .nav-links { gap: 0.8rem; }
+    .nav-links a { font-size: 0.72rem; letter-spacing: 0.12em; }
+    .hero-tagline { font-size: clamp(5.2rem, 28vw, 8rem); }
+    .hero-title { font-size: 1.65rem; }
+    .cta-row .btn { width: 100%; }
+    .pillars-grid,
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    .pillar-card,
+    .stat-item {
+      border-right: 0;
+      border-bottom: 1px solid var(--rf-line);
+    }
+    .pillar-card:last-child,
+    .stat-item:last-child { border-bottom: 0; }
+    .obj-list li {
+      grid-template-columns: 1fr;
+      gap: 0.45rem;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="site-shell">
+  <nav aria-label="Navigazione principale">
+    <a href="#" class="nav-brand" aria-label="RF Community">
+      <span class="brand-mark" aria-hidden="true"><span>RF</span></span>
+      <span class="brand-text">RF Community</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#community">Community</a></li>
+      <li><a href="#obiettivi">Obiettivi</a></li>
+      <li><a href="#unisciti">Unisciti</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-content">
+      <div class="hero-copy">
+        <p class="eyebrow">Rete nazionale</p>
+        <h1 class="hero-tagline"><span class="r">R</span><span class="f">F</span></h1>
+        <h2 class="hero-title">Radici forti, rete Forlivese</h2>
+        <p class="hero-desc">
+          Una community nata per informare, coordinare iniziative e creare confronto reale tra persone che vogliono aiutare il prossimo e costruire sostegno concreto.
+        </p>
+        <div class="cta-row">
+          <a href="#unisciti" class="btn btn-primary">Unisciti a noi</a>
+          <a href="#obiettivi" class="btn btn-outline">Scopri gli obiettivi</a>
+        </div>
+      </div>
+
+      <div class="hero-emblem" aria-hidden="true">
+        <div class="logo-wrap">
+          <span class="logo-fallback">RF</span>
+          <img src="rf-logo.jpeg" alt="Logo RF Rete Forlivese" onerror="this.style.display='none'">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="pillars" id="community">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-label">Cosa facciamo</p>
+            <h2 class="section-title">I pilastri della community</h2>
+          </div>
+          <p class="section-kicker">
+            RF mette insieme informazione, partecipazione e solidarietà con uno stile diretto, ordinato e riconoscibile.
+          </p>
+        </div>
+
+        <div class="pillars-grid">
+          <article class="pillar-card" style="--accent: var(--rf-blue);">
+            <div>
+              <div class="pillar-topline"></div>
+              <div class="pillar-code">01</div>
+            </div>
+            <div>
+              <h3 class="pillar-title">Informazione</h3>
+              <p class="pillar-text">Aggiornamenti chiari, contenuti verificati e notizie utili per capire cosa accade nel Paese.</p>
+            </div>
+          </article>
+
+          <article class="pillar-card" style="--accent: var(--rf-gold);">
+            <div>
+              <div class="pillar-topline"></div>
+              <div class="pillar-code">02</div>
+            </div>
+            <div>
+              <h3 class="pillar-title">Coordinazione</h3>
+              <p class="pillar-text">Iniziative, incontri ed eventi organizzati in modo semplice, concreto e accessibile.</p>
+            </div>
+          </article>
+
+          <article class="pillar-card" style="--accent: var(--rf-red);">
+            <div>
+              <div class="pillar-topline"></div>
+              <div class="pillar-code">03</div>
+            </div>
+            <div>
+              <h3 class="pillar-title">Dialogo</h3>
+              <p class="pillar-text">Uno spazio di confronto rispettoso, dove opinioni diverse possono diventare idee condivise.</p>
+            </div>
+          </article>
+
+          <article class="pillar-card" style="--accent: var(--rf-gold);">
+            <div>
+              <div class="pillar-topline"></div>
+              <div class="pillar-code">04</div>
+            </div>
+            <div>
+              <h3 class="pillar-title">Solidarietà</h3>
+              <p class="pillar-text">Aiuto reciproco, ascolto e presenza concreta come base per una comunità più forte.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div class="stats" aria-label="Valori della community">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-num">1<span>+</span></div>
+          <div class="stat-label">Community attiva</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">4</div>
+          <div class="stat-label">Pilastri fondanti</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">0<span>$</span></div>
+          <div class="stat-label">Senza fini di lucro</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Obiettivi condivisi</div>
+        </div>
+      </div>
+    </div>
+
+    <section class="objectives" id="obiettivi">
+      <div class="section-inner objectives-layout">
+        <div>
+          <p class="section-label">La nostra missione</p>
+          <h2 class="section-title">I nostri obiettivi</h2>
+          <ul class="obj-list">
+            <li>
+              <span class="obj-num">01</span>
+              <div>
+                <strong>Dare spazio alla comunità</strong>
+                <p>Creare una piattaforma dove le persone possano esprimersi, essere ascoltate e contribuire in modo concreto.</p>
+              </div>
+            </li>
+            <li>
+              <span class="obj-num">02</span>
+              <div>
+                <strong>Diffondere informazione autentica</strong>
+                <p>Contrastare confusione e disinformazione con contenuti chiari, verificati e accessibili.</p>
+              </div>
+            </li>
+            <li>
+              <span class="obj-num">03</span>
+              <div>
+                <strong>Costruire reti di supporto</strong>
+                <p>Mettere in connessione persone con valori comuni per creare solidarietà e sostegno reciproco.</p>
+              </div>
+            </li>
+            <li>
+              <span class="obj-num">04</span>
+              <div>
+                <strong>Mobilitare la partecipazione</strong>
+                <p>Stimolare presenza attiva attraverso eventi, discussioni e azioni condivise.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <aside class="identity-panel">
+          <div class="identity-initial">05</div>
+          <h3>Antifascismo</h3>
+          <p>
+            Difendere dignità, libertà e uguaglianza contro fascismo, odio e discriminazione, costruendo una comunità fondata su solidarietà e rispetto reciproco.
+          </p>
+          <div class="identity-tags" aria-label="Temi identitari">
+            <span>Dignità</span>
+            <span>Libertà</span>
+            <span>Uguaglianza</span>
+            <span>Solidarietà</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="manifesto" aria-labelledby="manifesto-title">
+      <div class="manifesto-inner">
+        <div>
+          <p class="section-label">Manifesto</p>
+          <h2 class="section-title" id="manifesto-title">Manifesto di mobilitazione</h2>
+        </div>
+        <blockquote>
+          "Aiuto reciproco, dignità e solidarietà: <em>unire le persone</em> contro odio, fascismo e indifferenza."
+        </blockquote>
+      </div>
+    </section>
+
+    <section class="join" id="unisciti">
+      <div class="join-inner">
+        <div class="ig-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+          </svg>
+        </div>
+        <p class="section-label">Instagram e Telegram</p>
+        <h2 class="section-title">Entra nella community</h2>
+        <p>
+          Seguici su Instagram per gli aggiornamenti e entra nella community Telegram per partecipare, coordinarti e contribuire alle iniziative RF.
+        </p>
+        <div class="cta-row" style="justify-content:center;">
+          <a href="https://www.instagram.com/rete_forlivese?igsh=NzZpY3U5dTFjOTd3" target="_blank" rel="noopener" class="btn btn-primary">Instagram @rete_forlivese</a>
+          <a href="https://t.me/RETEFORLIVESE" target="_blank" rel="noopener" class="btn btn-outline">Community Telegram</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-logo"><span class="r">R</span><span class="f">F</span></div>
+    <p>Community · Informazione · Coordinazione · Dialogo · Solidarietà</p>
+    <p>© 2026 RF Community - Tutti i diritti riservati</p>
+  </footer>
+</div>
+</body>
+</html>
