@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>RF Admin – Gestione articoli</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { background:#0a0c10; color:#eee; font-family: 'Barlow', sans-serif; padding:2rem; }
+  .container { max-width:1000px; margin:0 auto; }
+  input, textarea, button { background:#1e1e2a; border:1px solid #333; color:white; padding:0.5rem; margin:0.2rem; }
+  button { background:#c83b2f; cursor:pointer; border:none; }
+  .article-item { background:#121417; margin:1rem 0; padding:1rem; border-left:4px solid #d6a536; display:flex; align-items:center; gap:1rem; }
+  .article-item input[type="checkbox"] { transform:scale(1.2); }
+  hr { border-color:#333; margin:1rem 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>✍️ Pannello di amministrazione RF</h1>
+  <div id="loginArea">
+    <p>Inserisci la password per accedere:</p>
+    <input type="password" id="adminPassword" placeholder="Password">
+    <button id="loginBtn">Accedi</button>
+  </div>
+  <div id="adminContent" style="display:none;">
+    <h2>➕ Nuovo articolo</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+      <input id="title" placeholder="Titolo">
+      <input id="category" placeholder="Categoria">
+      <input id="author" placeholder="Autore">
+      <input id="date" placeholder="Data (es. 30 aprile 2026)">
+      <textarea id="excerpt" rows="2" placeholder="Estratto"></textarea>
+      <input id="imgLabel" placeholder="Icona (es. 📰 POLITICA)">
+      <label><input type="checkbox" id="verified"> ✅ Verificato RF</label>
+      <label><input type="checkbox" id="featured"> ⭐ Articolo in evidenza</label>
+    </div>
+    <button id="addArticleBtn">➕ Aggiungi articolo e salva su cloud</button>
+    <hr>
+    <h2>✔️ Gestione verifica articoli esistenti</h2>
+    <div id="articlesList"></div>
+    <button id="saveAllBtn" style="background:#2a6230;">💾 Salva tutte le modifiche su JSONbin</button>
+    <hr>
+    <p><strong>⚠️ Nota:</strong> Ogni modifica viene salvata immediatamente sul cloud (JSONbin). Non serve più esportare nulla.</p>
+  </div>
+</div>
+<script>
+  // CONFIGURAZIONE (cambia con i tuoi dati)
+  const BIN_ID = "IL_TUO_BIN_ID";
+  const API_KEY = "LA_TUA_API_KEY";
+  const ADMIN_PASSWORD = "RF2026Admin";  // cambia con la password desiderata
+
+  let currentArticles = [];
+
+  async function fetchArticles() {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    const data = await res.json();
+    currentArticles = data.record.articles || [];
+    renderArticleList();
+  }
+
+  async function saveArticlesToCloud() {
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify({ articles: currentArticles })
+    });
+    if(response.ok) alert("✅ Articoli salvati su cloud con successo!");
+    else alert("❌ Errore nel salvataggio.");
+  }
+
+  function renderArticleList() {
+    const container = document.getElementById('articlesList');
+    container.innerHTML = '';
+    currentArticles.forEach((art, idx) => {
+      const div = document.createElement('div');
+      div.className = 'article-item';
+      div.innerHTML = `
+        <input type="checkbox" class="verified-checkbox" data-idx="${idx}" ${art.verified ? 'checked' : ''}>
+        <strong>${escapeHtml(art.title)}</strong> <small>(${art.author || 'anonimo'})</small>
+        <span style="margin-left:auto;">${art.date || ''}</span>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function addArticle() {
+    const newArt = {
+      id: Date.now(),
+      title: document.getElementById('title').value,
+      category: document.getElementById('category').value || "ATTUALITÀ",
+      categoryColor: "#173b73",
+      date: document.getElementById('date').value || new Date().toLocaleDateString('it-IT'),
+      author: document.getElementById('author').value || "Redazione",
+      excerpt: document.getElementById('excerpt').value,
+      imgLabel: document.getElementById('imgLabel').value || "📰 NOTIZIA",
+      featured: document.getElementById('featured').checked,
+      verified: document.getElementById('verified').checked,
+      likes: 0,
+      dislikes: 0
+    };
+    if(!newArt.title) { alert("Il titolo è obbligatorio"); return; }
+    currentArticles.push(newArt);
+    renderArticleList();
+    saveArticlesToCloud();
+    // reset form
+    document.getElementById('title').value = '';
+    document.getElementById('excerpt').value = '';
+  }
+
+  function saveVerifiedChanges() {
+    const checkboxes = document.querySelectorAll('#articlesList .verified-checkbox');
+    checkboxes.forEach(cb => {
+      const idx = parseInt(cb.getAttribute('data-idx'));
+      if(currentArticles[idx]) currentArticles[idx].verified = cb.checked;
+    });
+    saveArticlesToCloud();
+    renderArticleList(); // refresh
+  }
+
+  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+  // Login
+  document.getElementById('loginBtn').onclick = () => {
+    const pwd = document.getElementById('adminPassword').value;
+    if(pwd === ADMIN_PASSWORD) {
+      document.getElementById('loginArea').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      fetchArticles();
+    } else { alert("Password errata"); }
+  };
+  document.getElementById('addArticleBtn').onclick = addArticle;
+  document.getElementById('saveAllBtn').onclick = saveVerifiedChanges;
+</script>
+</body>
+</html>
