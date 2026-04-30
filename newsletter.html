@@ -541,78 +541,76 @@
       return m;
     });
   }
-
   function renderArticles() {
-    const container = document.getElementById('articlesGrid');
-    if (!container) return;
-    
-    if (!masterArticles.length) {
-      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile al momento.</div>';
-      return;
-    }
-    
-    const featured = masterArticles.filter(a => a.featured === true);
-    const normal = masterArticles.filter(a => !a.featured);
-    let html = '';
-    
-    // Articolo in evidenza
-    if (featured.length) {
-      const art = featured[0];
-      const counts = getDisplayCounts(art);
-      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
-      html += `
-        <article class="featured-card">
-          <div class="featured-img"><span>${escapeHtml(art.imgLabel || '📷 FOCUS')}</span></div>
-          <div class="featured-content">
-            <div><span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${escapeHtml(art.category || 'INCHIESTA')}</span>${verifiedBadge}</div>
-            <h2 class="article-title">${escapeHtml(art.title)}</h2>
-            <div class="article-meta"><span>📅 ${escapeHtml(art.date || '')}</span><span>✍️ ${escapeHtml(art.author || 'Redazione')}</span></div>
-            <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
-            <div class="like-bar">
-              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
-              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
-            </div>
-            <a href="#" class="read-more">Leggi approfondimento →</a>
-          </div>
-        </article>
-      `;
-    }
-    
-    // Articoli normali
-    normal.forEach(art => {
-      const counts = getDisplayCounts(art);
-      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
-      html += `
-        <article class="article-card">
-          <div class="card-img">${escapeHtml(art.imgLabel || '📰 ATTUALITÀ')}</div>
-          <div class="card-content">
-            <div><span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${escapeHtml(art.category || 'TERRITORIO')}</span>${verifiedBadge}</div>
-            <h3 class="article-title">${escapeHtml(art.title)}</h3>
-            <div class="article-meta">📅 ${escapeHtml(art.date || '')} • ${escapeHtml(art.author || '')}</div>
-            <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
-            <div class="like-bar">
-              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
-              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
-            </div>
-            <a href="#" class="read-more">Leggi tutto →</a>
-          </div>
-        </article>
-      `;
-    });
-    
-    container.innerHTML = html;
-    
-    // Attacca event listener ai bottoni like/dislike
-    document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = parseInt(btn.getAttribute('data-id'));
-        const type = btn.getAttribute('data-type');
-        voteArticle(id, type);
-      });
-    });
+  const container = document.getElementById('articlesGrid');
+  if (!container) return;
+  
+  if (!masterArticles.length) {
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile al momento.</div>';
+    return;
   }
-
+  
+  const featured = masterArticles.filter(a => a.featured === true);
+  const normal = masterArticles.filter(a => !a.featured);
+  let html = '';
+  
+  // Articolo in evidenza
+  if (featured.length) {
+    const art = featured[0];
+    const counts = getDisplayCounts(art);
+    const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
+    html += `
+      <article class="featured-card">
+        <div class="featured-img"><span>${escapeHtml(art.imgLabel || '📷 FOCUS')}</span></div>
+        <div class="featured-content">
+          <div><span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${escapeHtml(art.category || 'INCHIESTA')}</span>${verifiedBadge}</div>
+          <h2 class="article-title">${escapeHtml(art.title)}</h2>
+          <div class="article-meta"><span>📅 ${escapeHtml(art.date || '')}</span><span>✍️ ${escapeHtml(art.author || 'Redazione')}</span></div>
+          <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
+          <div class="like-bar">
+            <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+            <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+          </div>
+          <a href="article.html?id=${art.id}" class="read-more">Leggi approfondimento →</a>
+        </div>
+      </article>
+    `;
+  }
+  
+  // Articoli normali
+  normal.forEach(art => {
+    const counts = getDisplayCounts(art);
+    const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
+    html += `
+      <article class="article-card">
+        <div class="card-img">${escapeHtml(art.imgLabel || '📰 ATTUALITÀ')}</div>
+        <div class="card-content">
+          <div><span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${escapeHtml(art.category || 'TERRITORIO')}</span>${verifiedBadge}</div>
+          <h3 class="article-title">${escapeHtml(art.title)}</h3>
+          <div class="article-meta">📅 ${escapeHtml(art.date || '')} • ${escapeHtml(art.author || '')}</div>
+          <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
+          <div class="like-bar">
+            <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+            <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+          </div>
+          <a href="article.html?id=${art.id}" class="read-more">Leggi tutto →</a>
+        </div>
+      </article>
+    `;
+  });
+  
+  container.innerHTML = html;
+  
+  // Attacca event listener ai bottoni like/dislike
+  document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = parseInt(btn.getAttribute('data-id'));
+      const type = btn.getAttribute('data-type');
+      voteArticle(id, type);
+    });
+  });
+}
   function updatePopularSidebar() {
     if (!masterArticles.length) return;
     const scored = masterArticles.map(art => {
