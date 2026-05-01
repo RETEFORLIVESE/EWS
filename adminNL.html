@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>RTF Admin – Gestione articoli</title>
+<title>RTF Admin – Gestione articoli (con bozze)</title>
 <link rel="apple-touch-icon" href="RTFstar.png">
 <link rel="icon" type="image/png" href="RTFstar.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&display=swap" rel="stylesheet">
@@ -13,6 +13,7 @@
   button { background:#c83b2f; cursor:pointer; border:none; }
   button:hover { opacity:0.9; }
   .article-item { background:#121417; margin:1rem 0; padding:1rem; border-left:4px solid #d6a536; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+  .article-item.draft { opacity:0.8; border-left-color:#888; background:#1a1c22; }
   .article-item button { margin-left:0.5rem; }
   hr { border-color:#333; margin:1rem 0; }
   .success { background:#2a6230; padding:0.5rem; margin:0.5rem 0; border-radius:4px; }
@@ -30,29 +31,17 @@
   .date-options { display:flex; gap:1rem; align-items:center; margin:0.5rem 0; flex-wrap:wrap; }
   .edit-mode-indicator { background:#d6a536; color:#0a0c10; padding:0.2rem 0.5rem; border-radius:4px; display:inline-block; margin-bottom:1rem; }
   .row-2cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .tags-container {
-    background:#1a1d24; padding:1rem; border-radius:8px; margin:0.5rem 0;
-  }
+  .tags-container { background:#1a1d24; padding:1rem; border-radius:8px; margin:0.5rem 0; }
   .tag-list { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
   .tag-item { background:#2a2a3a; padding:0.3rem 0.8rem; border-radius:20px; font-size:0.8rem; display:inline-flex; align-items:center; gap:0.5rem; }
   .tag-item button { background:none; border:none; color:#c83b2f; cursor:pointer; font-size:1rem; padding:0; margin:0; }
   .tag-input-group { display:flex; gap:0.5rem; margin-top:0.5rem; }
   .tag-input-group input { flex:1; }
-  
-  /* Stile per il logo nel titolo */
-  .title-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-  .title-logo img {
-    height: 40px;
-    width: auto;
-  }
-  .title-logo h1 {
-    margin: 0;
-    font-size: 1.8rem;
-  }
+  .title-logo { display: flex; align-items: center; gap: 0.8rem; }
+  .title-logo img { height: 40px; width: auto; }
+  .title-logo h1 { margin: 0; font-size: 1.8rem; }
+  .filter-bar { margin:1rem 0; display:flex; gap:1rem; align-items:center; }
+  .badge-draft { background:#555; color:#fff; border-radius:12px; padding:2px 8px; font-size:0.7rem; margin-left:0.5rem; }
 </style>
 </head>
 <body>
@@ -129,11 +118,20 @@
     <div style="margin:0.5rem 0;">
       <label><input type="checkbox" id="verified"> ✅ Verificato RF</label>
       <label style="margin-left:1rem;"><input type="checkbox" id="featured"> ⭐ Articolo in evidenza</label>
+      <label style="margin-left:1rem;"><input type="checkbox" id="draftCheckbox"> 📝 Bozza (non pubblicato)</label>
     </div>
     <button id="saveArticleBtn" style="background:#2a6230;">💾 Salva articolo</button>
     <button id="cancelEditBtn" style="background:#666; display:none;">❌ Annulla modifica</button>
     <hr>
     <h2>📋 Gestione articoli esistenti</h2>
+    <div class="filter-bar">
+      <span>Filtra:</span>
+      <select id="filterStatus">
+        <option value="all">📄 Tutti</option>
+        <option value="published">✅ Pubblicati</option>
+        <option value="drafts">📝 Solo bozze</option>
+      </select>
+    </div>
     <div id="articlesList"></div>
   </div>
 </div>
@@ -288,6 +286,7 @@
     document.getElementById('sources').value = '';
     document.getElementById('verified').checked = false;
     document.getElementById('featured').checked = false;
+    document.getElementById('draftCheckbox').checked = false;
     document.getElementById('customDate').value = '';
     document.querySelector('input[value="today"]').checked = true;
     document.getElementById('customDate').style.display = 'none';
@@ -333,6 +332,7 @@
     document.getElementById('sources').value = (art.sources || []).join('\n');
     document.getElementById('verified').checked = art.verified || false;
     document.getElementById('featured').checked = art.featured || false;
+    document.getElementById('draftCheckbox').checked = art.draft || false;
     tempImages = art.images || [];
     if (art.coverImage && tempImages.length) {
       const coverIndex = tempImages.findIndex(img => img.url === art.coverImage);
@@ -381,6 +381,7 @@
       imgLabel: iconLabel,
       featured: document.getElementById('featured').checked,
       verified: document.getElementById('verified').checked,
+      draft: document.getElementById('draftCheckbox').checked,
       images: tempImages.filter(img => img.url && img.url.trim()),
       coverImage: coverUrl,
       sources: sourcesList,
@@ -401,6 +402,15 @@
       showMessage(`Articolo "${title}" salvato!`);
     }
   }
+  async function publishDraft(articleId) {
+    const article = currentArticles.find(a => a.id === articleId);
+    if(article && article.draft) {
+      article.draft = false;
+      await saveArticlesToCloud();
+      renderArticleList();
+      showMessage(`"${article.title}" è ora pubblicato`);
+    }
+  }
   function cancelEdit() { resetForm(); renderArticleList(); }
   async function deleteArticle(articleId) {
     const article = currentArticles.find(a => a.id === articleId);
@@ -414,21 +424,28 @@
   function renderArticleList() {
     const container = document.getElementById('articlesList');
     if (!container) return;
-    if (currentArticles.length === 0) { container.innerHTML = '<p style="color:#888;">Nessun articolo presente.</p>'; return; }
+    const filter = document.getElementById('filterStatus')?.value || 'all';
+    let filtered = [...currentArticles];
+    if(filter === 'published') filtered = filtered.filter(a => !a.draft);
+    if(filter === 'drafts') filtered = filtered.filter(a => a.draft === true);
+    if (filtered.length === 0) { container.innerHTML = '<p style="color:#888;">Nessun articolo in questa categoria.</p>'; return; }
     container.innerHTML = '';
-    currentArticles.forEach((art) => {
+    filtered.forEach((art) => {
       const tagsHtml = (art.tags || []).map(t => `<span style="background:#2a2a3a; padding:0.1rem 0.4rem; border-radius:10px; font-size:0.7rem;">#${escapeHtml(t)}</span>`).join(' ');
+      const isDraft = art.draft === true;
+      const draftBadge = isDraft ? '<span class="badge-draft">📝 Bozza</span>' : '';
       const div = document.createElement('div');
-      div.className = 'article-item';
+      div.className = `article-item ${isDraft ? 'draft' : ''}`;
       div.innerHTML = `
         <input type="checkbox" class="verified-checkbox" data-id="${art.id}" ${art.verified ? 'checked' : ''}>
         <div style="flex:1;">
-          <strong>${escapeHtml(art.title)}</strong><br>
+          <strong>${escapeHtml(art.title)}</strong> ${draftBadge}<br>
           <small>${escapeHtml(art.author || 'anonimo')} • ${art.date || ''}</small>
           <div style="margin-top:0.3rem;">${tagsHtml}</div>
         </div>
         <span>
           <button class="edit-article" data-id="${art.id}" style="background:#2a6230;">✏️ Modifica</button>
+          ${isDraft ? `<button class="publish-article" data-id="${art.id}" style="background:#d6a536; color:#000;">📢 Pubblica</button>` : ''}
           <button class="delete-article" data-id="${art.id}" style="background:#8b2a1e;">🗑️ Elimina</button>
         </span>
       `;
@@ -439,6 +456,9 @@
     });
     document.querySelectorAll('.edit-article').forEach(btn => {
       btn.addEventListener('click', (e) => { loadArticleForEdit(parseInt(btn.dataset.id)); });
+    });
+    document.querySelectorAll('.publish-article').forEach(btn => {
+      btn.addEventListener('click', (e) => { publishDraft(parseInt(btn.dataset.id)); });
     });
     document.querySelectorAll('.verified-checkbox').forEach(cb => {
       cb.addEventListener('change', async (e) => {
@@ -467,6 +487,7 @@
     tempImages.push({ url: '', caption: '', credit: '' });
     renderImageList();
   };
+  document.getElementById('filterStatus')?.addEventListener('change', () => renderArticleList());
 </script>
 </body>
 </html>
