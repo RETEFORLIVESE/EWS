@@ -43,7 +43,7 @@
   a { color: inherit; text-decoration: none; }
   .site-shell { min-height: 100vh; display: flex; flex-direction: column; }
   
-  /* NAVBAR - versione corretta: logo + testo sempre visibili */
+  /* NAVBAR - logo + testo sempre visibili */
   nav {
     position: sticky;
     top: 0;
@@ -80,7 +80,7 @@
     color: var(--rf-paper);
     white-space: normal;
     line-height: 1.2;
-    display: inline-block;   /* mai nascosto */
+    display: inline-block;
   }
   .nav-links {
     display: flex;
@@ -407,11 +407,13 @@
   }
   .footer-logo {
     font-family: "Bebas Neue", sans-serif;
-    font-size: 2.7rem;
-    letter-spacing: 0.1em;
+    font-size: 3rem;
+    letter-spacing: 0.08em;
+    font-weight: 500;
   }
-  .footer-logo .r { color: var(--rf-red); }
-  .footer-logo .f { color: var(--rf-blue); }
+  .footer-logo .r { color: #c83b2f; }  /* Rosso */
+  .footer-logo .t { color: #ffffff; }  /* Bianco */
+  .footer-logo .f { color: #173b73; }  /* Blu / Azzurro scuro */
   .toast-msg {
     position: fixed;
     bottom: 20px;
@@ -425,6 +427,10 @@
     font-weight: bold;
     z-index: 200;
     display: none;
+    max-width: 90%;
+    text-align: center;
+    white-space: normal;
+    font-size: 0.85rem;
   }
   
   /* MOBILE: testo accanto al logo sempre visibile */
@@ -509,7 +515,8 @@
       </div>
       <div style="background: rgba(0,0,0,0.2); border-left: 3px solid var(--rf-red); padding: 1rem 1.2rem;">
         <p style="font-family: 'Barlow Condensed'; font-weight: 600;">🗣️ PARTECIPA IN PRIMA PERSONA</p>
-        <a href="index.html#unisciti" class="btn-outline" style="width: 100%; text-align: center;">Diventa volontario</a>
+        <!-- Bottone Diventa volontario con messaggio personalizzato -->
+        <a href="#" class="btn-outline" style="width: 100%; text-align: center;" id="volunteerBtn">Diventa volontario</a>
         <div class="topic-tags" style="margin-top: 1rem;">
           <span>#antifascismo</span><span>#meritocraziadalbasso</span><span>#spaziodiagorà</span>
         </div>
@@ -517,7 +524,9 @@
     </aside>
   </div>
   <footer>
-    <div class="footer-logo"><span class="r">R</span><span class="f">F</span></div>
+    <div class="footer-logo">
+      <span class="r">R</span><span class="t">T</span><span class="f">F</span>
+    </div>
     <p>Community · Informazione · Coordinazione · Dialogo · Solidarietà</p>
     <p>© 2026 RF Community - Quotidiano indipendente della Rete Forlivese</p>
   </footer>
@@ -537,8 +546,14 @@
     toast.style.backgroundColor = isError ? '#c83b2f' : '#d6a536';
     toast.style.color = '#08090b';
     toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    setTimeout(() => { toast.style.display = 'none'; }, 4000);
   }
+
+  // Handler per il bottone Diventa volontario
+  document.getElementById('volunteerBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showToast('⚠️ Funzionalità attualmente non attiva. Per collaborare, contattare RTF su Telegram o Instagram.', false);
+  });
 
   async function addSubscriber(email, name) {
     const subscribeBtn = document.getElementById('subscribeBtn');
