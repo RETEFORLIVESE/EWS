@@ -130,7 +130,6 @@
     gap: 1.2rem;
     flex-wrap: wrap;
   }
-  /* rimossa l'immagine dall'header: la classe .header-logo non più utilizzata */
   .page-header h1 {
     font-family: "Bebas Neue", sans-serif;
     font-size: clamp(3rem, 8vw, 5.2rem);
@@ -339,6 +338,10 @@
     color: white;
   }
   .btn-news:hover { background: #a72e23; }
+  .btn-news:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
   .popular-list { list-style: none; border-top: 1px solid var(--rf-line); }
   .popular-list li { padding: 1rem 0; border-bottom: 1px solid var(--rf-line); display: flex; gap: 0.8rem; align-items: baseline; }
   .popular-rank { font-family: "Bebas Neue", sans-serif; font-size: 1.6rem; color: var(--rf-gold); line-height: 1; }
@@ -405,7 +408,6 @@
 <div class="site-shell">
   <nav aria-label="Navigazione principale">
     <a href="index.html" class="nav-brand" aria-label="RF Community Home">
-      <!-- Immagine spostata qui, al posto del quadrato rimosso -->
       <img src="RTFnews.png" alt="Logo RTF News" class="nav-logo">
       <span class="brand-text">Reti Territoriali Forlivesi</span>
     </a>
@@ -421,7 +423,6 @@
   <div class="page-header">
     <div class="eyebrow">Informazione partecipata</div>
     <div class="title-with-logo">
-      <!-- Immagine rimossa dall'header -->
       <h1>NewsLetter</h1>
     </div>
     <p class="subhead">Articoli, inchieste e approfondimenti dal territorio forlivese al mondo.</p>
@@ -436,10 +437,10 @@
         <p>Ricevi ogni venerdì gli articoli, le petizioni attive e gli eventi del comitato.</p>
         <form id="demoNewsletterForm" class="input-group">
           <input type="email" placeholder="La tua email" required id="newsEmail">
-          <input type="text" placeholder="Nome o nickname (opzionale)">
-          <button type="submit" class="btn-news">Iscriviti alla community</button>
+          <input type="text" placeholder="Nome o nickname (opzionale)" id="newsName">
+          <button type="submit" class="btn-news" id="subscribeBtn">Iscriviti alla community</button>
         </form>
-        <p style="font-size: 0.7rem; margin-top: 0.8rem;">🔒 I tuoi dati restano sicuri.</p>
+        <p style="font-size: 0.7rem; margin-top: 0.8rem;">🔒 I tuoi dati restano sicuri e non verranno condivisi.</p>
       </div>
       <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--rf-line); padding: 1.2rem;">
         <h3 style="font-family: 'Barlow Condensed';">📌 Più letti del mese</h3>
@@ -474,8 +475,67 @@
   const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";
   const STORAGE_VOTES_KEY = "RF_article_votes";
   let masterArticles = [];
-  let localUserChoices = {};   // { articleId: 'like'/'dislike'/null }
-  
+  let localUserChoices = {};
+
+  // Toast helper
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('voteToast');
+    toast.textContent = message;
+    toast.style.backgroundColor = isError ? '#c83b2f' : '#d6a536';
+    toast.style.color = '#08090b';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3000);
+  }
+
+  // --- Newsletter subscription logic (saves to JSONbin) ---
+  async function addSubscriber(email, name) {
+    const subscribeBtn = document.getElementById('subscribeBtn');
+    if (subscribeBtn) subscribeBtn.disabled = true;
+    try {
+      // 1. Fetch current bin data
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      let record = data.record;
+      if (!record.subscribers) record.subscribers = [];
+      
+      // Check for duplicate email
+      const existing = record.subscribers.find(s => s.email.toLowerCase() === email.toLowerCase());
+      if (existing) {
+        showToast(`📧 ${email} è già iscritto/a alla newsletter!`, false);
+        return false;
+      }
+      
+      // Add new subscriber
+      const newSub = {
+        email: email,
+        name: name.trim() || null,
+        subscribedAt: new Date().toISOString()
+      };
+      record.subscribers.push(newSub);
+      
+      // 2. Update bin
+      const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+        body: JSON.stringify(record)
+      });
+      if (!putRes.ok) throw new Error('Salvataggio fallito');
+      
+      showToast(`✅ Grazie ${name ? name : ''}! Ora riceverai la nostra newsletter.`, false);
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('❌ Errore durante l\'iscrizione. Riprova più tardi.', true);
+      return false;
+    } finally {
+      if (subscribeBtn) subscribeBtn.disabled = false;
+    }
+  }
+
+  // --- Article voting logic (existing) ---
   function loadLocalChoices() {
     const stored = localStorage.getItem(STORAGE_VOTES_KEY);
     if (stored) {
@@ -494,15 +554,6 @@
     saveLocalChoices();
   }
   
-  function showToast(message, isError = false) {
-    const toast = document.getElementById('voteToast');
-    toast.textContent = message;
-    toast.style.backgroundColor = isError ? '#c83b2f' : '#d6a536';
-    toast.style.color = '#08090b';
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2500);
-  }
-  
   async function updateArticleVotesOnServer(articleId, previousChoice, newChoice) {
     let deltaLikes = 0, deltaDislikes = 0;
     if (previousChoice === newChoice) {
@@ -517,7 +568,6 @@
     }
     if (deltaLikes === 0 && deltaDislikes === 0) return null;
     
-    // fetch aggiornato
     const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
       headers: { 'X-Master-Key': API_KEY }
     });
@@ -550,13 +600,11 @@
     const previousChoice = getUserChoice(articleId);
     let newChoice = (previousChoice === clickedType) ? null : clickedType;
     
-    // disabilita temporaneamente i pulsanti per feedback
     const btns = document.querySelectorAll(`.like-btn[data-id="${articleId}"], .dislike-btn[data-id="${articleId}"]`);
     btns.forEach(btn => btn.disabled = true);
     try {
       const result = await updateArticleVotesOnServer(articleId, previousChoice, newChoice);
       if (result) {
-        // aggiorna l'array masterArticles con i nuovi conteggi
         const target = masterArticles.find(a => a.id === articleId);
         if (target) {
           target.likes = result.newLikes;
@@ -566,13 +614,12 @@
       } else {
         setUserChoice(articleId, previousChoice);
       }
-      // Ricarica l'intera UI per sincronizzare tutti i contatori e stati
       await refreshAllArticles();
       showToast(result ? (result.newFinalChoice === 'like' ? '👍 Like registrato' : (result.newFinalChoice === 'dislike' ? '👎 Dislike registrato' : '✖️ Voto rimosso')) : 'Nessuna modifica');
     } catch (err) {
       console.error(err);
       showToast('❌ Errore durante la registrazione', true);
-      await refreshAllArticles(); // ricarica per ripristinare stato consistente
+      await refreshAllArticles();
     } finally {
       btns.forEach(btn => btn.disabled = false);
     }
@@ -672,7 +719,6 @@
       `;
     });
     container.innerHTML = html;
-    // Attacca eventi
     document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -732,16 +778,24 @@
     });
   }
   
-  document.getElementById('demoNewsletterForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('newsEmail')?.value.trim();
-    if (email && email.includes('@')) {
-      alert('✅ Grazie per esserti iscritto/a alla newsletter RF! Riceverai aggiornamenti e articoli.');
-      e.target.reset();
-    } else {
-      alert('Inserisci un indirizzo email valido.');
-    }
-  });
+  // --- Attach newsletter form handler ---
+  const newsletterForm = document.getElementById('demoNewsletterForm');
+  if (newsletterForm) {
+    newsletterForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailInput = document.getElementById('newsEmail');
+      const nameInput = document.getElementById('newsName');
+      const email = emailInput?.value.trim();
+      const name = nameInput?.value.trim() || '';
+      if (!email || !email.includes('@')) {
+        showToast('Inserisci un indirizzo email valido.', true);
+        return;
+      }
+      await addSubscriber(email, name);
+      if (emailInput) emailInput.value = '';
+      if (nameInput) nameInput.value = '';
+    });
+  }
   
   loadLocalChoices();
   loadInitialArticles();
