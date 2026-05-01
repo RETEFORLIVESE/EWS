@@ -221,6 +221,20 @@
   
   .loading { text-align: center; padding: 3rem; }
   .error { text-align: center; padding: 3rem; color: var(--rf-red); }
+  .toast-msg {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--rf-gold);
+    color: #08090b;
+    padding: 0.6rem 1.2rem;
+    border-radius: 30px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: bold;
+    z-index: 200;
+    display: none;
+  }
   
   @media (max-width: 768px) {
     .container { padding: 1rem; }
@@ -241,6 +255,7 @@
 <div class="container" id="articleContainer">
   <div class="loading">⏳ Caricamento articolo...</div>
 </div>
+<div id="voteToast" class="toast-msg">👍 Voto registrato</div>
 
 <footer>
   <p>Rete Forlivese - Informazione partecipata e antifascista</p>
@@ -252,69 +267,148 @@
   const STORAGE_VOTES_KEY = "RF_article_votes_page";
   
   let currentArticle = null;
-  let localVotes = {};
+  let localUserChoices = {};  // solo per memorizzare la scelta dell'utente (null, 'like', 'dislike')
   
   function getArticleIdFromURL() {
     const params = new URLSearchParams(window.location.search);
     return parseInt(params.get('id'));
   }
   
-  function loadLocalVotes() {
+  function loadLocalChoices() {
     const stored = localStorage.getItem(STORAGE_VOTES_KEY);
     if (stored) {
-      try { localVotes = JSON.parse(stored); } catch(e) { localVotes = {}; }
+      try { localUserChoices = JSON.parse(stored); } catch(e) { localUserChoices = {}; }
     }
   }
   
-  function saveLocalVotes() {
-    localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localVotes));
-  }
-  
-  function getDisplayCounts(article) {
-    const baseLikes = article.likes || 0;
-    const baseDislikes = article.dislikes || 0;
-    const voteData = localVotes[article.id] || { localLikesDelta: 0, localDislikesDelta: 0 };
-    return {
-      likes: baseLikes + (voteData.localLikesDelta || 0),
-      dislikes: baseDislikes + (voteData.localDislikesDelta || 0)
-    };
+  function saveLocalChoices() {
+    localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localUserChoices));
   }
   
   function getUserChoice(articleId) {
-    return localVotes[articleId]?.userChoice || null;
+    return localUserChoices[articleId] || null;
   }
   
-  async function voteArticle(articleId, type) {
-    if (!currentArticle) return;
+  function setUserChoice(articleId, choice) {
+    if (choice === null) delete localUserChoices[articleId];
+    else localUserChoices[articleId] = choice;
+    saveLocalChoices();
+  }
+  
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('voteToast');
+    toast.textContent = message;
+    toast.style.backgroundColor = isError ? '#c83b2f' : '#d6a536';
+    toast.style.color = '#08090b';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2500);
+  }
+  
+  // Aggiorna il JSONBin con il voto (delta basato su previousChoice e newChoice)
+  async function applyVoteToServer(articleId, previousChoice, newChoice) {
+    // Calcola delta
+    let deltaLikes = 0;
+    let deltaDislikes = 0;
     
-    let voteData = localVotes[articleId];
-    if (!voteData) voteData = { localLikesDelta: 0, localDislikesDelta: 0, userChoice: null };
-    
-    const previous = voteData.userChoice;
-    if (previous === 'like') voteData.localLikesDelta -= 1;
-    if (previous === 'dislike') voteData.localDislikesDelta -= 1;
-    
-    if (previous === type) {
-      voteData.userChoice = null;
+    if (previousChoice === newChoice) {
+      // Stesso bottone premuto due volte → rimuovi voto
+      if (previousChoice === 'like') deltaLikes = -1;
+      else if (previousChoice === 'dislike') deltaDislikes = -1;
+      newChoice = null;   // dopo rimozione
     } else {
-      if (type === 'like') voteData.localLikesDelta += 1;
-      if (type === 'dislike') voteData.localDislikesDelta += 1;
-      voteData.userChoice = type;
+      // Cambio o nuovo voto
+      if (previousChoice === 'like') deltaLikes = -1;
+      if (previousChoice === 'dislike') deltaDislikes = -1;
+      if (newChoice === 'like') deltaLikes += 1;
+      if (newChoice === 'dislike') deltaDislikes += 1;
     }
     
-    localVotes[articleId] = voteData;
-    saveLocalVotes();
+    if (deltaLikes === 0 && deltaDislikes === 0) {
+      return { likes: currentArticle.likes, dislikes: currentArticle.dislikes, newChoice: previousChoice };
+    }
     
-    const counts = getDisplayCounts(currentArticle);
-    const likeSpan = document.querySelector('#likeCount');
-    const dislikeSpan = document.querySelector('#dislikeCount');
-    if (likeSpan) likeSpan.textContent = counts.likes;
-    if (dislikeSpan) dislikeSpan.textContent = counts.dislikes;
+    // Recupera dati attuali dal server (per evitare conflitti)
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    if (!res.ok) throw new Error('Impossibile leggere i dati');
+    const data = await res.json();
+    const articles = data.record.articles || [];
+    const articleIndex = articles.findIndex(a => a.id === articleId);
+    if (articleIndex === -1) throw new Error('Articolo non trovato nel database');
     
-    const likeBtn = document.querySelector('#likeBtn');
-    const dislikeBtn = document.querySelector('#dislikeBtn');
-    if (likeBtn) likeBtn.classList.toggle('active-like', getUserChoice(articleId) === 'like');
-    if (dislikeBtn) dislikeBtn.classList.toggle('active-dislike', getUserChoice(articleId) === 'dislike');
+    const article = articles[articleIndex];
+    // Assicura che likes/dislikes esistano
+    if (typeof article.likes !== 'number') article.likes = 0;
+    if (typeof article.dislikes !== 'number') article.dislikes = 0;
+    
+    article.likes += deltaLikes;
+    article.dislikes += deltaDislikes;
+    if (article.likes < 0) article.likes = 0;
+    if (article.dislikes < 0) article.dislikes = 0;
+    
+    // Salva nel bin
+    const updatedRecord = { ...data.record, articles };
+    const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify(updatedRecord)
+    });
+    if (!putRes.ok) throw new Error('Salvataggio fallito');
+    
+    return { likes: article.likes, dislikes: article.dislikes, newChoice };
+  }
+  
+  async function voteArticle(articleId, clickedType) {
+    if (!currentArticle || currentArticle.id !== articleId) return;
+    
+    const previousChoice = getUserChoice(articleId);
+    let newChoice = clickedType;
+    if (previousChoice === clickedType) newChoice = null;  // toggle off
+    // Caso in cui clicca un bottone diverso → newChoice già = clickedType
+    
+    // UI immediata: disabilita bottoni durante l'operazione
+    const likeBtn = document.getElementById('likeBtn');
+    const dislikeBtn = document.getElementById('dislikeBtn');
+    const originalLikeHtml = likeBtn?.innerHTML;
+    const originalDislikeHtml = dislikeBtn?.innerHTML;
+    if (likeBtn) likeBtn.disabled = true;
+    if (dislikeBtn) dislikeBtn.disabled = true;
+    
+    try {
+      const result = await applyVoteToServer(articleId, previousChoice, newChoice);
+      // Aggiorna l'articolo corrente con i nuovi conteggi
+      currentArticle.likes = result.likes;
+      currentArticle.dislikes = result.dislikes;
+      // Salva la scelta utente locale (result.newChoice è il nuovo stato)
+      setUserChoice(articleId, result.newChoice);
+      
+      // Aggiorna UI contatori e stili
+      const likeSpan = document.getElementById('likeCount');
+      const dislikeSpan = document.getElementById('dislikeCount');
+      if (likeSpan) likeSpan.textContent = result.likes;
+      if (dislikeSpan) dislikeSpan.textContent = result.dislikes;
+      
+      if (likeBtn) {
+        likeBtn.classList.toggle('active-like', result.newChoice === 'like');
+        likeBtn.disabled = false;
+        likeBtn.innerHTML = originalLikeHtml; // ripristina
+      }
+      if (dislikeBtn) {
+        dislikeBtn.classList.toggle('active-dislike', result.newChoice === 'dislike');
+        dislikeBtn.disabled = false;
+        dislikeBtn.innerHTML = originalDislikeHtml;
+      }
+      showToast(result.newChoice ? (result.newChoice === 'like' ? '👍 Like registrato!' : '👎 Dislike registrato!') : '✖️ Voto rimosso');
+    } catch (err) {
+      console.error(err);
+      showToast('❌ Errore nel salvataggio del voto. Riprova.', true);
+      if (likeBtn) likeBtn.disabled = false;
+      if (dislikeBtn) dislikeBtn.disabled = false;
+    }
   }
   
   async function loadArticle() {
@@ -337,6 +431,9 @@
         document.getElementById('articleContainer').innerHTML = '<div class="error">❌ Articolo non trovato</div>';
         return;
       }
+      // Normalizza likes/dislikes
+      if (typeof article.likes !== 'number') article.likes = 0;
+      if (typeof article.dislikes !== 'number') article.dislikes = 0;
       
       currentArticle = article;
       renderArticle(article);
@@ -345,7 +442,6 @@
     }
   }
   
-  // Formattazione solo testo: sostituisce \n con <br> e racchiude in paragrafi
   function formatContent(text) {
     if (!text) return '<p>Contenuto non disponibile.</p>';
     const paragraphs = text.split(/\n\s*\n/);
@@ -405,7 +501,6 @@
   function renderArticle(article) {
     const container = document.getElementById('articleContainer');
     const verifiedBadge = article.verified ? '<span class="verified-badge">✅ Verificato RF</span>' : '';
-    const counts = getDisplayCounts(article);
     const userChoice = getUserChoice(article.id);
     
     let carouselHtml = '';
@@ -450,11 +545,11 @@
         ${formatContent(article.fullContent || article.excerpt || 'Contenuto non disponibile.')}
       </div>
       <div class="like-section">
-        <button class="like-btn ${userChoice === 'like' ? 'active-like' : ''}" id="likeBtn" data-type="like">
-          👍 <span id="likeCount">${counts.likes}</span>
+        <button class="like-btn ${userChoice === 'like' ? 'active-like' : ''}" id="likeBtn">
+          👍 <span id="likeCount">${article.likes}</span>
         </button>
-        <button class="dislike-btn ${userChoice === 'dislike' ? 'active-dislike' : ''}" id="dislikeBtn" data-type="dislike">
-          👎 <span id="dislikeCount">${counts.dislikes}</span>
+        <button class="dislike-btn ${userChoice === 'dislike' ? 'active-dislike' : ''}" id="dislikeBtn">
+          👎 <span id="dislikeCount">${article.dislikes}</span>
         </button>
       </div>
       ${carouselHtml}
@@ -485,7 +580,7 @@
     });
   }
   
-  loadLocalVotes();
+  loadLocalChoices();
   loadArticle();
 </script>
 </body>
