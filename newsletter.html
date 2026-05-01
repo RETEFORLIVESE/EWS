@@ -476,15 +476,7 @@
       <span class="brand-text">Reti Territoriali Forlivesi</span>
     </a>
     <ul class="nav-links">
-      <!-- Aggiunto link OpenParlamento come richiesto -->
       <li><a href="https://parlamento19.openpolis.it" target="_blank" rel="noopener noreferrer">OpenParlamento</a></li>
-      <!-- I seguenti link sono commentati come da originale -->
-      <!-- <li><a href="index.html#community">Comitato</a></li> -->
-      <!-- <li><a href="index.html#obiettivi">Obiettivi</a></li> -->
-      <!-- <li><a href="index.html#unisciti">Parlamento</a></li> -->
-      <!-- <li><a href="index.html#unisciti">Petizioni</a></li> -->
-      <!-- <li class="active"><a href="#" class="active">NewsLetter</a></li> -->
-      <!-- <li><a href="index.html#unisciti">Unisciti</a></li> -->
     </ul>
   </nav>
   <div class="page-header">
@@ -544,7 +536,7 @@
   const BIN_ID = "69f3d0a936566621a80f357f";
   const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";
   const STORAGE_VOTES_KEY = "RF_article_votes";
-  let masterArticles = [];
+  let masterArticles = [];   // contiene SOLO articoli pubblicati (draft !== true)
   let localUserChoices = {};
 
   function showToast(message, isError = false) {
@@ -556,7 +548,6 @@
     setTimeout(() => { toast.style.display = 'none'; }, 4000);
   }
 
-  // Handler per il bottone Diventa volontario
   document.getElementById('volunteerBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     showToast('⚠️ Funzionalità attualmente non attiva. Per collaborare, contattare RTF su Telegram o Instagram.', false);
@@ -638,10 +629,10 @@
     });
     if (!res.ok) throw new Error('Lettura fallita');
     const data = await res.json();
-    const articles = data.record.articles || [];
-    const idx = articles.findIndex(a => a.id === articleId);
+    const allArticles = data.record.articles || [];
+    const idx = allArticles.findIndex(a => a.id === articleId);
     if (idx === -1) throw new Error('Articolo non trovato');
-    const art = articles[idx];
+    const art = allArticles[idx];
     if (typeof art.likes !== 'number') art.likes = 0;
     if (typeof art.dislikes !== 'number') art.dislikes = 0;
     art.likes += deltaLikes;
@@ -649,7 +640,7 @@
     if (art.likes < 0) art.likes = 0;
     if (art.dislikes < 0) art.dislikes = 0;
     
-    const updatedRecord = { ...data.record, articles };
+    const updatedRecord = { ...data.record, articles: allArticles };
     const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
@@ -690,6 +681,7 @@
     }
   }
   
+  // Funzione che recupera TUTTI gli articoli dal DB e poi filtra solo quelli pubblicati (draft !== true)
   async function refreshAllArticles() {
     try {
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
@@ -697,7 +689,9 @@
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      masterArticles = data.record.articles || [];
+      const allArticles = data.record.articles || [];
+      // FILTRO BOZZE: mostro solo articoli con draft !== true (draft = undefined o false)
+      masterArticles = allArticles.filter(art => !art.draft);
       masterArticles.forEach(art => {
         if (typeof art.likes !== 'number') art.likes = 0;
         if (typeof art.dislikes !== 'number') art.dislikes = 0;
@@ -714,7 +708,7 @@
     const container = document.getElementById('articlesGrid');
     if (!container) return;
     if (!masterArticles.length) {
-      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile.</div>';
+      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo pubblicato al momento.</div>';
       return;
     }
     const featured = masterArticles.filter(a => a.featured === true);
@@ -815,13 +809,15 @@
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      masterArticles = data.record.articles || [];
+      const allArticles = data.record.articles || [];
+      // FILTRO BOZZE: mostro solo articoli pubblicati
+      masterArticles = allArticles.filter(art => !art.draft);
       masterArticles.forEach(art => {
         if (typeof art.likes !== 'number') art.likes = 0;
         if (typeof art.dislikes !== 'number') art.dislikes = 0;
       });
       if (masterArticles.length === 0) {
-        container.innerHTML = '<div style="grid-column:1/-1; text-align:center;">📭 Nessun articolo disponibile.</div>';
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center;">📭 Nessun articolo pubblicato al momento.</div>';
         return;
       }
       renderArticles();
