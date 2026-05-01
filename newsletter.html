@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="apple-touch-icon" href="RTFnews-slim.png">
 <link rel="icon" type="image/jpeg" href="RTFnews-slim.png">
 <title>RTF-NewsLetter</title>
@@ -18,8 +18,8 @@
     --rf-panel: #121417;
     --rf-panel-soft: #181c21;
     --rf-paper: #f3efe6;
-    --rf-muted: rgba(243, 239, 230, 0.68);
-    --rf-line: rgba(243, 239, 230, 0.12);
+    --rf-muted: rgba(243,239,230,0.68);
+    --rf-line: rgba(243,239,230,0.12);
     --rf-verified: #2a7f3e;
   }
   body {
@@ -42,6 +42,8 @@
   }
   a { color: inherit; text-decoration: none; }
   .site-shell { min-height: 100vh; display: flex; flex-direction: column; }
+  
+  /* NAVBAR - versione corretta: logo + testo sempre visibili */
   nav {
     position: sticky;
     top: 0;
@@ -49,18 +51,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
-    padding: 1rem clamp(1rem, 4vw, 3rem);
-    background: rgba(8, 9, 11, 0.86);
+    gap: 1rem;
+    padding: 0.8rem clamp(1rem, 4vw, 3rem);
+    background: rgba(8,9,11,0.92);
     backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(214, 165, 54, 0.18);
+    border-bottom: 1px solid rgba(214,165,54,0.18);
+    flex-wrap: wrap;
   }
   .nav-brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
+    gap: 0.6rem;
     text-decoration: none;
-    min-width: max-content;
+    color: white;
   }
   .nav-logo {
     height: 38px;
@@ -70,10 +73,14 @@
   }
   .brand-text {
     font-family: "Barlow Condensed", sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
+    color: var(--rf-paper);
+    white-space: normal;
+    line-height: 1.2;
+    display: inline-block;   /* mai nascosto */
   }
   .nav-links {
     display: flex;
@@ -104,8 +111,7 @@
   }
   .nav-links a:hover { color: #fff; }
   .nav-links a:hover::after { transform: scaleX(1); }
-  .nav-links .active a, .nav-links a.active { color: #fff; }
-  .nav-links .active a::after, .nav-links a.active::after { transform: scaleX(1); background: var(--rf-gold); }
+  
   .page-header {
     padding: clamp(2.5rem, 5vw, 4rem) clamp(1rem, 5vw, 3rem) 2rem;
     text-align: center;
@@ -183,6 +189,13 @@
     text-transform: uppercase;
     border-right: 1px solid var(--rf-line);
     min-height: 240px;
+    overflow: hidden;
+  }
+  .featured-img a, .featured-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .featured-content { flex: 2; padding: 1.5rem 1.5rem 1.5rem 0; }
   .category-badge {
@@ -271,10 +284,11 @@
     border-bottom: 1px solid var(--rf-line);
     overflow: hidden;
   }
-  .card-img img {
+  .card-img a, .card-img img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
   .card-content { padding: 1.3rem 1.2rem 1.5rem; }
   .card-content .article-title { font-size: 1.4rem; margin: 0.4rem 0 0.5rem; }
@@ -338,10 +352,7 @@
     color: white;
   }
   .btn-news:hover { background: #a72e23; }
-  .btn-news:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  .btn-news:disabled { opacity: 0.6; cursor: not-allowed; }
   .popular-list { list-style: none; border-top: 1px solid var(--rf-line); }
   .popular-list li { padding: 1rem 0; border-bottom: 1px solid var(--rf-line); display: flex; gap: 0.8rem; align-items: baseline; }
   .popular-rank { font-family: "Bebas Neue", sans-serif; font-size: 1.6rem; color: var(--rf-gold); line-height: 1; }
@@ -415,6 +426,30 @@
     z-index: 200;
     display: none;
   }
+  
+  /* MOBILE: testo accanto al logo sempre visibile */
+  @media (max-width: 640px) {
+    .brand-text {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      display: inline-block !important;
+    }
+    .nav-logo {
+      height: 30px;
+    }
+    nav {
+      padding: 0.7rem 1rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .brand-text {
+      font-size: 0.6rem;
+    }
+    .nav-logo {
+      height: 28px;
+    }
+  }
+  
   @media (max-width: 920px) {
     .news-layout { grid-template-columns: 1fr; }
     .featured-card { flex-direction: column; }
@@ -422,10 +457,8 @@
     .featured-content { padding: 1.5rem; }
   }
   @media (max-width: 640px) {
-    .brand-text { display: none; }
     .nav-links { gap: 0.8rem; }
     .nav-links a { font-size: 0.7rem; letter-spacing: 0.1em; }
-    .nav-logo { height: 30px; }
   }
 </style>
 </head>
@@ -437,12 +470,7 @@
       <span class="brand-text">Reti Territoriali Forlivesi</span>
     </a>
     <ul class="nav-links">
-     <!-- <li><a href="index.html#community">Comitato</a></li> 
-     '<li><a href="index.html#obiettivi">Obiettivi</a></li>
-     '<li><a href="index.html#unisciti">Parlamento</a></li>
-     '<li><a href="index.html#unisciti">Petizioni</a></li>
-     '<li class="active"><a href="#" class="active">NewsLetter</a></li>
-     '<li><a href="index.html#unisciti">Unisciti</a></li>-->
+      <!-- commentati come da originale -->
     </ul>
   </nav>
   <div class="page-header">
@@ -457,7 +485,6 @@
       <div style="grid-column:1/-1; text-align:center; padding:3rem;">Caricamento articoli...</div>
     </div>
     <aside class="sidebar">
-      <!-- BOX SEGUICI (spostato sopra la newsletter) -->
       <div class="newsletter-module" style="background: rgba(200,59,47,0.09); border-color: var(--rf-red);">
         <h3>📱 Seguici</h3>
         <div class="social-buttons">
@@ -466,12 +493,9 @@
           <a href="https://linktr.ee/reteforlivese" target="_blank" rel="noopener noreferrer" class="social-btn">🌿 LinkTree</a>
         </div>
       </div>
-
-      <!-- MODULO NEWSLETTER -->
       <div class="newsletter-module">
         <h3>✉️ Iscriviti</h3>
-        <p>Ricevi ogni nuovo articolo, le petizioni attive e gli eventi del comitato.</p><!DOCTYPE html>
-
+        <p>Ricevi ogni nuovo articolo, le petizioni attive e gli eventi del comitato.</p>
         <form id="demoNewsletterForm" class="input-group">
           <input type="email" placeholder="La tua email" required id="newsEmail">
           <input type="text" placeholder="Nome o nickname (opzionale)" id="newsName">
@@ -479,19 +503,15 @@
         </form>
         <p style="font-size: 0.7rem; margin-top: 0.8rem;">🔒 I tuoi dati restano sicuri e non verranno condivisi.</p>
       </div>
-
-      <!-- ALTRI MODULI (più letti, partecipa) -->
       <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--rf-line); padding: 1.2rem;">
         <h3 style="font-family: 'Barlow Condensed';">📌 Più letti del mese</h3>
         <ul class="popular-list" id="popularList"></ul>
       </div>
       <div style="background: rgba(0,0,0,0.2); border-left: 3px solid var(--rf-red); padding: 1rem 1.2rem;">
-       <p style="font-family: 'Barlow Condensed'; font-weight: 600;">🗣️ PARTECIPA IN PRIMA PERSONA</p>
-       <a href="javascript:void(0);" class="btn-outline" style="width: 100%; text-align: center;" onclick="showToast('Funzione attualmente non disponibile, per collaborazioni contattateci su Telegram o Instagram', false);">Diventa volontario</a>
-       <div class="topic-tags" style="margin-top: 1rem;">
-        <span>#comunicazione</span><span>#voleredalbasso</span><span>#antifascismo</span>
-  </div>
-</div>
+        <p style="font-family: 'Barlow Condensed'; font-weight: 600;">🗣️ PARTECIPA IN PRIMA PERSONA</p>
+        <a href="index.html#unisciti" class="btn-outline" style="width: 100%; text-align: center;">Diventa volontario</a>
+        <div class="topic-tags" style="margin-top: 1rem;">
+          <span>#antifascismo</span><span>#meritocraziadalbasso</span><span>#spaziodiagorà</span>
         </div>
       </div>
     </aside>
@@ -511,7 +531,6 @@
   let masterArticles = [];
   let localUserChoices = {};
 
-  // Toast helper
   function showToast(message, isError = false) {
     const toast = document.getElementById('voteToast');
     toast.textContent = message;
@@ -521,12 +540,10 @@
     setTimeout(() => { toast.style.display = 'none'; }, 3000);
   }
 
-  // --- Newsletter subscription logic (saves to JSONbin) ---
   async function addSubscriber(email, name) {
     const subscribeBtn = document.getElementById('subscribeBtn');
     if (subscribeBtn) subscribeBtn.disabled = true;
     try {
-      // 1. Fetch current bin data
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
         headers: { 'X-Master-Key': API_KEY }
       });
@@ -534,30 +551,23 @@
       const data = await res.json();
       let record = data.record;
       if (!record.subscribers) record.subscribers = [];
-      
-      // Check for duplicate email
       const existing = record.subscribers.find(s => s.email.toLowerCase() === email.toLowerCase());
       if (existing) {
         showToast(`📧 ${email} è già iscritto/a alla newsletter!`, false);
         return false;
       }
-      
-      // Add new subscriber
       const newSub = {
         email: email,
         name: name.trim() || null,
         subscribedAt: new Date().toISOString()
       };
       record.subscribers.push(newSub);
-      
-      // 2. Update bin
       const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
         body: JSON.stringify(record)
       });
       if (!putRes.ok) throw new Error('Salvataggio fallito');
-      
       showToast(`✅ Grazie ${name ? name : ''}! Ora riceverai la nostra newsletter.`, false);
       return true;
     } catch (err) {
@@ -569,7 +579,6 @@
     }
   }
 
-  // --- Article voting logic (existing) ---
   function loadLocalChoices() {
     const stored = localStorage.getItem(STORAGE_VOTES_KEY);
     if (stored) {
@@ -694,7 +703,7 @@
       const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
       let coverHtml = '';
       if (art.coverImage && art.coverImage.trim() !== '') {
-        coverHtml = `<img src="${escapeHtml(art.coverImage)}" alt="${escapeHtml(art.title)}" style="width:100%; height:100%; object-fit:cover;">`;
+        coverHtml = `<a href="article.html?id=${art.id}" style="display:block; width:100%; height:100%;"><img src="${escapeHtml(art.coverImage)}" alt="${escapeHtml(art.title)}" style="width:100%; height:100%; object-fit:cover;"></a>`;
       } else {
         coverHtml = `<div class="featured-img"><span>${escapeHtml(art.imgLabel || '📷 FOCUS')}</span></div>`;
       }
@@ -726,7 +735,7 @@
       const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
       let coverHtml = '';
       if (art.coverImage && art.coverImage.trim() !== '') {
-        coverHtml = `<img src="${escapeHtml(art.coverImage)}" alt="${escapeHtml(art.title)}">`;
+        coverHtml = `<a href="article.html?id=${art.id}" style="display:block; width:100%; height:100%;"><img src="${escapeHtml(art.coverImage)}" alt="${escapeHtml(art.title)}" style="width:100%; height:100%; object-fit:cover;"></a>`;
       } else {
         coverHtml = `<div class="card-img">${escapeHtml(art.imgLabel || '📰 ATTUALITÀ')}</div>`;
       }
@@ -812,7 +821,6 @@
     });
   }
   
-  // Attach newsletter form handler
   const newsletterForm = document.getElementById('demoNewsletterForm');
   if (newsletterForm) {
     newsletterForm.addEventListener('submit', async (e) => {
