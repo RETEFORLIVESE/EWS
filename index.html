@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/jpeg" href="rf-logo.jpeg">
 <link rel="apple-touch-icon" href="rf-logo.jpeg">
 <title>Reti Territoriali Forlivesi</title>
+<link rel="icon" type="image/jpeg" href="rf-logo.jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -71,6 +71,16 @@
     gap: 0.7rem;
     text-decoration: none;
     min-width: max-content;
+  }
+
+  /* Stile per l'immagine del logo nella navbar */
+  .nav-logo-img {
+    width: 38px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid rgba(214, 165, 54, 0.55);
+    box-shadow: 0 0 0 4px rgba(214, 165, 54, 0.08);
   }
 
   .brand-mark {
@@ -741,7 +751,8 @@
 <div class="site-shell">
   <nav aria-label="Navigazione principale">
     <a href="#" class="nav-brand" aria-label="RF Community">
-      <span class="brand-mark" aria-hidden="true"><span>RF</span></span>
+      <!-- Sostituito il quadrato con RF con l'immagine rf-logo.jpeg -->
+      <img src="rf-logo.jpeg" alt="Logo RF Community" class="nav-logo-img" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\"brand-mark\"><span>RF</span></span>'">
       <span class="brand-text">Comitato Rete Forlivese</span>
     </a>
     <ul class="nav-links">
@@ -931,13 +942,4 @@
           <h2 class="section-title" id="manifesto-title">Manifesto di mobilitazione</h2>
         </div>
         <blockquote>
-          "Aiuto reciproco, dignità e solidarietà: <em>unire le persone</em> contro odio, fascismo e indifferenza."
-        </blockquote>
-      </div>
-    </section>
-
-    <section class="join" id="unisciti">
-      <div class="join-inner">
-        <div class="ig-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 
+          "Aiuto reciproco, dignità e solidarietà: <em
