@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <link rel="apple-touch-icon" href="RTFnews-slim.png">
+<link rel="apple-touch-icon" href="RTFnews-slim.png">
 <link rel="icon" type="image/jpeg" href="RTFnews-slim.png">
 <title>RTF News</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -132,12 +132,27 @@
     color: var(--rf-gold);
     margin-bottom: 1rem;
   }
+  /* Contenitore flessibile per logo + titolo */
+  .title-with-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .header-logo {
+    height: 70px;
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
+  }
   .page-header h1 {
     font-family: "Bebas Neue", sans-serif;
     font-size: clamp(3rem, 8vw, 5.2rem);
     letter-spacing: 0.04em;
     line-height: 1;
     color: #fff;
+    margin: 0;
   }
   .page-header .subhead {
     max-width: 680px;
@@ -383,6 +398,7 @@
     .brand-text { display: none; }
     .nav-links { gap: 0.8rem; }
     .nav-links a { font-size: 0.7rem; letter-spacing: 0.1em; }
+    .header-logo { height: 50px; }
   }
 </style>
 </head>
@@ -404,7 +420,10 @@
   </nav>
   <div class="page-header">
     <div class="eyebrow">Informazione partecipata</div>
-    <h1>RTF-NEWS</h1>
+    <div class="title-with-logo">
+      <img src="RTFnews-slim.png" alt="Logo RTF News" class="header-logo">
+      <h1>RTF-NEWS</h1>
+    </div>
     <p class="subhead">Articoli, inchieste e approfondimenti dal territorio forlivese. Liberi, antifascisti, comunitari.</p>
   </div>
   <div class="news-layout">
