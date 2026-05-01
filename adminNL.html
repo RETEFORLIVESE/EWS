@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>RTF Admin – Gestione articoli</title>
-<link rel="apple-touch-icon" href="RTFnews-slim.png">
-<link rel="icon" type="image/jpeg" href="RTFnews-slim.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
   body { background:#0a0c10; color:#eee; font-family: 'Barlow', sans-serif; padding:2rem; }
@@ -20,8 +18,7 @@
   .image-group { background:#1a1d24; padding:1rem; margin:0.5rem 0; border-radius:8px; }
   .image-item { display:flex; gap:0.5rem; margin-bottom:0.5rem; flex-wrap:wrap; align-items:center; }
   .image-item input { flex:1; min-width:150px; }
-  .remove-img, .set-cover-btn { background:#8b2a1e; padding:0.2rem 0.5rem; }
-  .set-cover-btn { background:#d6a536; color:#000; }
+  .remove-img { background:#8b2a1e; padding:0.2rem 0.5rem; }
   .btn-add-img { background:#2a6230; margin-top:0.5rem; }
   .status-msg { margin-top:1rem; padding:0.5rem; border-radius:4px; display:none; }
   h3 { margin-top:1rem; color: #d6a536; }
@@ -29,38 +26,102 @@
   .login-box input { width:100%; margin:0.5rem 0; }
   .date-options { display:flex; gap:1rem; align-items:center; margin:0.5rem 0; flex-wrap:wrap; }
   .edit-mode-indicator { background:#d6a536; color:#0a0c10; padding:0.2rem 0.5rem; border-radius:4px; display:inline-block; margin-bottom:1rem; }
-  .row-2cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .tags-container {
-    background:#1a1d24; padding:1rem; border-radius:8px; margin:0.5rem 0;
-  }
-  .tag-list { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
-  .tag-item { background:#2a2a3a; padding:0.3rem 0.8rem; border-radius:20px; font-size:0.8rem; display:inline-flex; align-items:center; gap:0.5rem; }
-  .tag-item button { background:none; border:none; color:#c83b2f; cursor:pointer; font-size:1rem; padding:0; margin:0; }
-  .tag-input-group { display:flex; gap:0.5rem; margin-top:0.5rem; }
-  .tag-input-group input { flex:1; }
-  
-  /* Stile per il logo nel titolo */
-  .title-logo {
+  .editor-toolbar {
+    background: #1e1e2a;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
     display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .editor-toolbar button {
+    background: #2a2a3a;
+    border: 1px solid #444;
+    padding: 0.3rem 0.8rem;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .editor-toolbar button:hover { background: #3a3a4a; }
+  .content-editor {
+    width: 100%;
+    min-height: 250px;
+    background: #1e1e2a;
+    border: 1px solid #333;
+    color: white;
+    padding: 0.8rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .preview-area {
+    background: #121417;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border-radius: 4px;
+    border-left: 3px solid #d6a536;
+  }
+  .preview-area h4 { color: #d6a536; margin-bottom: 0.5rem; font-size: 0.8rem; text-transform: uppercase; }
+  .preview-content { font-size: 0.9rem; line-height: 1.5; }
+  .preview-content b, .preview-content strong { color: #d6a536; }
+  .preview-content i, .preview-content em { color: #c83b2f; }
+  .preview-content u { text-decoration: underline; }
+  .tags-container {
+    background: #1a1d24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+  }
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .tag-item {
+    background: #2a2a3a;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: inline-flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.5rem;
   }
-  .title-logo img {
-    height: 40px;
-    width: auto;
-  }
-  .title-logo h1 {
+  .tag-item button {
+    background: none;
+    border: none;
+    color: #c83b2f;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
     margin: 0;
-    font-size: 1.8rem;
   }
+  .tag-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .tag-input-group input {
+    flex: 1;
+  }
+  .row-2cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  select { cursor: pointer; }
+  .email-btn-container { margin: 1rem 0; text-align: right; }
+  .send-email-btn { background: #d6a536; color: #0a0c10; font-weight: bold; padding: 0.6rem 1.2rem; }
+  .send-email-btn:hover { background: #f0b83a; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="title-logo">
-    <img src="RTFnews.png" alt="Logo RTF">
-    <h1>Redazione RTF</h1>
-  </div>
+  <h1>✍️ Redazione RTF</h1>
+  
+  <!-- Login Area -->
   <div id="loginArea">
     <div class="login-box">
       <h2>🔐 Accesso riservato</h2>
@@ -70,47 +131,85 @@
       <p style="font-size:0.8rem; margin-top:1rem; color:#888;">Contatta l'amministratore per le credenziali</p>
     </div>
   </div>
+  
+  <!-- Admin Content -->
   <div id="adminContent" style="display:none;">
     <div id="statusMsg" class="status-msg"></div>
     <div id="editModeIndicator" class="edit-mode-indicator" style="display:none;">✏️ Modalità modifica</div>
+    
     <h2 id="formTitle">➕ Nuovo articolo</h2>
+    
+    <!-- RIGA: Titolo e Categoria -->
     <div class="row-2cols">
       <input id="title" placeholder="Titolo articolo">
       <div>
         <select id="categorySelect">
           <option value="">-- Seleziona categoria --</option>
-          <option value="POLITICA">🏛️ POLITICA</option><option value="ATTUALITÀ">📰 ATTUALITÀ</option>
-          <option value="INCHIESTA">🔍 INCHIESTA</option><option value="INTERVISTA">🎙️ INTERVISTA</option>
-          <option value="SOLIDARIETÀ">🤝 SOLIDARIETÀ</option><option value="TERRITORIO">📍 TERRITORIO</option>
-          <option value="CULTURA">🎭 CULTURA</option><option value="EUROPA">🌍 EUROPA</option>
-          <option value="DIRITTI">⚖️ DIRITTI</option><option value="OPINIONE">💭 OPINIONE</option>
+          <option value="POLITICA">🏛️ POLITICA</option>
+          <option value="ATTUALITÀ">📰 ATTUALITÀ</option>
+          <option value="INCHIESTA">🔍 INCHIESTA</option>
+          <option value="INTERVISTA">🎙️ INTERVISTA</option>
+          <option value="SOLIDARIETÀ">🤝 SOLIDARIETÀ</option>
+          <option value="TERRITORIO">📍 TERRITORIO</option>
+          <option value="CULTURA">🎭 CULTURA</option>
+          <option value="EUROPA">🌍 EUROPA</option>
+          <option value="DIRITTI">⚖️ DIRITTI</option>
+          <option value="OPINIONE">💭 OPINIONE</option>
         </select>
         <input id="categoryCustom" placeholder="Categoria personalizzata (opzionale)" style="margin-top:0.3rem; width:100%;">
       </div>
     </div>
+    
+    <!-- RIGA: Autore e Icona Card -->
     <div class="row-2cols">
       <input id="author" placeholder="Autore">
       <div>
         <select id="iconSelect">
           <option value="">-- Seleziona icona --</option>
-          <option value="📰 POLITICA">📰 POLITICA</option><option value="🔍 INCHIESTA">🔍 INCHIESTA</option>
-          <option value="🎙️ INTERVISTA">🎙️ INTERVISTA</option><option value="🤝 SOLIDARIETÀ">🤝 SOLIDARIETÀ</option>
-          <option value="📍 TERRITORIO">📍 TERRITORIO</option><option value="🎭 CULTURA">🎭 CULTURA</option>
-          <option value="🌍 MONDO">🌍 MONDO</option><option value="⚖️ DIRITTI">⚖️ DIRITTI</option>
-          <option value="💭 OPINIONI">💭 OPINIONI</option><option value="🏛️ POLITICA LOCALE">🏛️ POLITICA LOCALE</option>
+          <option value="📰 POLITICA">📰 POLITICA</option>
+          <option value="🔍 INCHIESTA">🔍 INCHIESTA</option>
+          <option value="🎙️ INTERVISTA">🎙️ INTERVISTA</option>
+          <option value="🤝 SOLIDARIETÀ">🤝 SOLIDARIETÀ</option>
+          <option value="📍 TERRITORIO">📍 TERRITORIO</option>
+          <option value="🎭 CULTURA">🎭 CULTURA</option>
+          <option value="🌍 MONDO">🌍 MONDO</option>
+          <option value="⚖️ DIRITTI">⚖️ DIRITTI</option>
+          <option value="💭 OPINIONI">💭 OPINIONI</option>
+          <option value="🏛️ POLITICA LOCALE">🏛️ POLITICA LOCALE</option>
           <option value="✨ APPROFONDIMENTO">✨ APPROFONDIMENTO</option>
         </select>
         <input id="iconCustom" placeholder="Icona personalizzata (es. ⭐ SPECIALE)" style="margin-top:0.3rem; width:100%;">
       </div>
     </div>
+    
+    <!-- Data -->
     <div class="date-options">
       <label><input type="radio" name="dateType" value="today" checked> 🗓️ Pubblicato oggi</label>
       <label><input type="radio" name="dateType" value="custom"> 📅 Data personalizzata</label>
     </div>
     <input id="customDate" placeholder="Data personalizzata (es. 25 aprile 1975)" style="display:none; width:100%;">
+    
+    <!-- ESTRATTO -->
     <textarea id="excerpt" rows="2" placeholder="Estratto (anteprima nella homepage)" style="width:100%; margin-top:0.5rem;"></textarea>
+    
+    <!-- EDITOR COMPLETO CON TOOLBAR -->
     <h3 style="margin-top:1rem;">📝 Contenuto completo dell'articolo</h3>
-    <textarea id="fullContent" rows="10" style="width:100%; background:#1e1e2a; border:1px solid #333; color:white; padding:0.8rem; font-family:'Barlow',sans-serif; font-size:0.95rem; line-height:1.5;" placeholder="Scrivi qui il contenuto completo dell'articolo..."></textarea>
+    <div class="editor-toolbar">
+      <button type="button" id="boldBtn" title="Grassetto">𝐁</button>
+      <button type="button" id="italicBtn" title="Corsivo">𝑰</button>
+      <button type="button" id="underlineBtn" title="Sottolineato">𝑼</button>
+      <span style="flex:1"></span>
+      <small style="color:#888;">Seleziona il testo e clicca per formattare</small>
+    </div>
+    <textarea id="fullContent" rows="10" class="content-editor" placeholder="Scrivi qui il contenuto completo dell'articolo...&#10;&#10;Puoi usare:&#10;*testo* → grassetto&#10;/testo/ → corsivo&#10;_testo_ → sottolineato"></textarea>
+    
+    <!-- Anteprima live -->
+    <div class="preview-area">
+      <h4>👁️ Anteprima formattazione</h4>
+      <div class="preview-content" id="previewContent"></div>
+    </div>
+    
+    <!-- TAG PERSONALIZZATI -->
     <h3>🏷️ Tag personalizzati</h3>
     <div class="tags-container">
       <p style="font-size:0.8rem; color:#aaa; margin-bottom:0.5rem;">Aggiungi tag per classificare l'articolo (es. #ambiente, #scuola, #sciopero)</p>
@@ -120,47 +219,113 @@
         <button type="button" id="addTagBtn" style="background:#2a6230;">➕ Aggiungi tag</button>
       </div>
     </div>
+    
+    <!-- CAROSELLO IMMAGINI -->
     <h3>🖼️ Carosello immagini (dopo il testo)</h3>
     <div id="imageList"></div>
     <button type="button" id="addImageBtn" class="btn-add-img">➕ Aggiungi immagine al carosello</button>
+    
+    <!-- FONTI -->
     <h3>📚 Fonti e riferimenti</h3>
     <textarea id="sources" rows="3" placeholder="Fonti: (una per riga)&#10;Fonte 1: https://...&#10;Fonte 2: Nome documento"></textarea>
+    
     <hr>
     <div style="margin:0.5rem 0;">
       <label><input type="checkbox" id="verified"> ✅ Verificato RF</label>
       <label style="margin-left:1rem;"><input type="checkbox" id="featured"> ⭐ Articolo in evidenza</label>
     </div>
+    
     <button id="saveArticleBtn" style="background:#2a6230;">💾 Salva articolo</button>
     <button id="cancelEditBtn" style="background:#666; display:none;">❌ Annulla modifica</button>
+    
+    <!-- Bottone per invio email agli iscritti (appare dopo salvataggio) -->
+    <div id="emailButtonContainer" class="email-btn-container" style="display:none;">
+      <button id="sendToSubscribersBtn" class="send-email-btn">📧 Invia articolo a tutti gli iscritti</button>
+    </div>
+    
     <hr>
     <h2>📋 Gestione articoli esistenti</h2>
     <div id="articlesList"></div>
   </div>
 </div>
+
 <script>
+  // ===== CONFIGURAZIONE =====
   const BIN_ID = "69f3d0a936566621a80f357f";
   const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";
-  const VALID_USERS = { "redazione": "RF2026Admin", "TandeePetrenka": "Yugoslavia", "giornalista": "reteforlivese" };
+  
+  const VALID_USERS = {
+    "redazione": "RF2026Admin",
+    "TandeePetrenka": "Yugoslavia",
+    "giornalista": "reteforlivese"
+  };
+  
   let currentArticles = [];
+  let currentSubscribers = [];  // array di {email, name, subscribedAt}
   let tempImages = [];
   let tempTags = [];
   let editingArticleId = null;
   let currentUser = "";
-
+  let lastSavedArticleId = null;  // per ricordare l'ultimo articolo salvato e mostrare il bottone email
+  
+  // Helper per ottenere valore categoria (select o custom)
   function getCategoryValue() {
     const select = document.getElementById('categorySelect').value;
     const custom = document.getElementById('categoryCustom').value.trim();
     return custom || select || "ATTUALITÀ";
   }
+  
   function getIconValue() {
     const select = document.getElementById('iconSelect').value;
     const custom = document.getElementById('iconCustom').value.trim();
     return custom || select || "📰 NOTIZIA";
   }
+  
+  // Formattazione testo
+  function formatTextToHtml(text) {
+    if (!text) return '';
+    let formatted = text.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\/([^\/]+)\//g, '<em>$1</em>');
+    formatted = formatted.replace(/_([^_]+)_/g, '<u>$1</u>');
+    formatted = formatted.replace(/\n\s*\n/g, '</p><p>');
+    formatted = '<p>' + formatted + '</p>';
+    formatted = formatted.replace(/<p><\/p>/g, '');
+    return formatted;
+  }
+  
+  function htmlToMarkup(html) {
+    if (!html) return '';
+    let markup = html.replace(/<strong>([^<]+)<\/strong>/g, '*$1*');
+    markup = markup.replace(/<em>([^<]+)<\/em>/g, '/$1/');
+    markup = markup.replace(/<u>([^<]+)<\/u>/g, '_$1_');
+    markup = markup.replace(/<\/p><p>/g, '\n\n');
+    markup = markup.replace(/<p>|<\/p>/g, '');
+    return markup;
+  }
+  
+  function updatePreview() {
+    const rawText = document.getElementById('fullContent').value;
+    const previewDiv = document.getElementById('previewContent');
+    if (previewDiv) previewDiv.innerHTML = formatTextToHtml(rawText);
+  }
+  
+  function wrapSelection(textarea, before, after) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const replacement = before + selectedText + after;
+    textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+    textarea.selectionStart = start;
+    textarea.selectionEnd = start + replacement.length;
+    textarea.focus();
+    updatePreview();
+  }
+  
   function getTodayDate() {
     const oggi = new Date();
     return oggi.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
   }
+  
   function showMessage(msg, isError = false) {
     const statusDiv = document.getElementById('statusMsg');
     statusDiv.style.display = 'block';
@@ -168,6 +333,7 @@
     statusDiv.innerHTML = isError ? `❌ ${msg}` : `✅ ${msg}`;
     setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
   }
+  
   function handleDateTypeChange() {
     const customDateInput = document.getElementById('customDate');
     const customRadio = document.querySelector('input[value="custom"]');
@@ -175,12 +341,15 @@
     if (todayRadio) todayRadio.addEventListener('change', () => { customDateInput.style.display = 'none'; });
     if (customRadio) customRadio.addEventListener('change', () => { customDateInput.style.display = 'block'; });
   }
+  
   function getSelectedDate() {
     const todayRadio = document.querySelector('input[value="today"]');
     if (todayRadio && todayRadio.checked) return getTodayDate();
     const customDate = document.getElementById('customDate').value.trim();
     return customDate || getTodayDate();
   }
+  
+  // Gestione TAG
   function renderTagsList() {
     const container = document.getElementById('tagsList');
     container.innerHTML = '';
@@ -198,6 +367,7 @@
       });
     });
   }
+  
   document.getElementById('addTagBtn')?.addEventListener('click', () => {
     const input = document.getElementById('newTagInput');
     const newTag = input.value.trim().toLowerCase();
@@ -209,24 +379,25 @@
       showMessage("Tag già presente", true);
     }
   });
+  
+  // Gestione immagini
   function renderImageList() {
     const container = document.getElementById('imageList');
     container.innerHTML = '';
     tempImages.forEach((img, idx) => {
       const div = document.createElement('div');
       div.className = 'image-group';
-      const isCover = (tempImages.coverIndex === idx);
       div.innerHTML = `
         <div class="image-item">
           <input type="text" placeholder="URL immagine" value="${escapeHtml(img.url)}" class="img-url" data-idx="${idx}" style="flex:2;">
           <input type="text" placeholder="Didascalia" value="${escapeHtml(img.caption)}" class="img-caption" data-idx="${idx}" style="flex:1;">
           <input type="text" placeholder="Crediti foto" value="${escapeHtml(img.credit)}" class="img-credit" data-idx="${idx}" style="flex:1;">
-          <button class="set-cover-btn" data-idx="${idx}" style="background:#d6a536; color:#000;">${isCover ? '⭐ Copertina' : '☆ Copertina'}</button>
           <button class="remove-img" data-idx="${idx}">🗑️</button>
         </div>
       `;
       container.appendChild(div);
     });
+    
     document.querySelectorAll('.img-url').forEach(inp => {
       inp.addEventListener('change', (e) => { const idx = parseInt(e.target.dataset.idx); if (tempImages[idx]) tempImages[idx].url = e.target.value; });
     });
@@ -236,37 +407,95 @@
     document.querySelectorAll('.img-credit').forEach(inp => {
       inp.addEventListener('change', (e) => { const idx = parseInt(e.target.dataset.idx); if (tempImages[idx]) tempImages[idx].credit = e.target.value; });
     });
-    document.querySelectorAll('.set-cover-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const idx = parseInt(btn.dataset.idx);
-        tempImages.coverIndex = idx;
-        renderImageList();
-      });
-    });
     document.querySelectorAll('.remove-img').forEach(btn => {
-      btn.addEventListener('click', (e) => { const idx = parseInt(btn.dataset.idx); tempImages.splice(idx, 1); if (tempImages.coverIndex >= idx) tempImages.coverIndex--; renderImageList(); });
+      btn.addEventListener('click', (e) => { const idx = parseInt(btn.dataset.idx); tempImages.splice(idx, 1); renderImageList(); });
     });
   }
+  
+  document.getElementById('addImageBtn')?.addEventListener('click', () => {
+    tempImages.push({ url: '', caption: '', credit: '' });
+    renderImageList();
+  });
+  
+  // Fetch subscribers from JSONbin
+  async function fetchSubscribers() {
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      currentSubscribers = data.record.subscribers || [];
+    } catch(e) {
+      console.warn("Impossibile caricare i subscribers", e);
+      currentSubscribers = [];
+    }
+  }
+  
+  // Mostra/nascondi bottone email in base all'ultimo articolo salvato
+  function showEmailButtonForArticle(articleId) {
+    const container = document.getElementById('emailButtonContainer');
+    if (!container) return;
+    if (articleId && currentSubscribers.length > 0) {
+      container.style.display = 'block';
+      lastSavedArticleId = articleId;
+    } else {
+      container.style.display = 'none';
+      if (currentSubscribers.length === 0) {
+        showMessage("Nessun iscritto alla newsletter. Iscriviti dalla homepage per testare l'invio.", false);
+      }
+    }
+  }
+  
+  // Funzione per comporre mailto: con tutti gli iscritti in BCC
+  function composeMailTo(article) {
+    if (!article) return;
+    const subject = encodeURIComponent(article.title);
+    const link = `${window.location.origin}/article.html?id=${article.id}`;
+    // Se siamo in locale o su file system, usiamo un fallback relativo
+    const finalLink = (window.location.protocol === 'file:' || window.location.hostname === 'localhost') 
+      ? `article.html?id=${article.id}` 
+      : link;
+    const bodyText = `${article.excerpt || "Leggi l'articolo completo"}\n\nLeggi l'articolo completo qui: ${finalLink}`;
+    const body = encodeURIComponent(bodyText);
+    
+    const emails = currentSubscribers.map(s => s.email).filter(e => e && e.includes('@'));
+    if (emails.length === 0) {
+      showMessage("Nessuna email valida tra gli iscritti.", true);
+      return;
+    }
+    const bcc = encodeURIComponent(emails.join(','));
+    // Creiamo mailto con BCC, subject e body
+    const mailtoLink = `mailto:?bcc=${bcc}&subject=${subject}&body=${body}`;
+    window.open(mailtoLink, '_blank');
+    showMessage(`Aperto client email con ${emails.length} destinatari in copia nascosta. Verifica e invia.`, false);
+  }
+  
+  // Fetch e salvataggio
   async function fetchArticles() {
     try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       currentArticles = data.record.articles || [];
+      currentSubscribers = data.record.subscribers || [];
       renderArticleList();
-      showMessage(`Caricati ${currentArticles.length} articoli`);
+      showMessage(`Caricati ${currentArticles.length} articoli e ${currentSubscribers.length} iscritti`);
     } catch (err) {
       showMessage(`Errore: ${err.message}`, true);
       currentArticles = [];
       renderArticleList();
     }
   }
+  
   async function saveArticlesToCloud() {
     try {
       const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-        body: JSON.stringify({ articles: currentArticles })
+        body: JSON.stringify({ articles: currentArticles, subscribers: currentSubscribers })
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       showMessage("Articoli salvati!");
@@ -276,6 +505,7 @@
       return false;
     }
   }
+  
   function resetForm() {
     document.getElementById('title').value = '';
     document.getElementById('categorySelect').value = '';
@@ -292,21 +522,25 @@
     document.querySelector('input[value="today"]').checked = true;
     document.getElementById('customDate').style.display = 'none';
     tempImages = [];
-    tempImages.coverIndex = undefined;
     tempTags = [];
     renderImageList();
     renderTagsList();
     editingArticleId = null;
+    lastSavedArticleId = null;
+    document.getElementById('emailButtonContainer').style.display = 'none';
     document.getElementById('formTitle').innerHTML = '➕ Nuovo articolo';
     document.getElementById('editModeIndicator').style.display = 'none';
     document.getElementById('cancelEditBtn').style.display = 'none';
     document.getElementById('saveArticleBtn').innerHTML = '💾 Salva articolo';
+    updatePreview();
   }
+  
   function loadArticleForEdit(articleId) {
     const art = currentArticles.find(a => a.id === articleId);
     if (!art) return;
     editingArticleId = articleId;
     document.getElementById('title').value = art.title || '';
+    
     const categorySelect = document.getElementById('categorySelect');
     const categoryCustom = document.getElementById('categoryCustom');
     const predefinedCategories = Array.from(categorySelect.options).map(o => o.value);
@@ -317,6 +551,7 @@
       categorySelect.value = '';
       categoryCustom.value = art.category || '';
     }
+    
     const iconSelect = document.getElementById('iconSelect');
     const iconCustom = document.getElementById('iconCustom');
     const predefinedIcons = Array.from(iconSelect.options).map(o => o.value);
@@ -327,23 +562,19 @@
       iconSelect.value = '';
       iconCustom.value = art.imgLabel || '';
     }
+    
     document.getElementById('author').value = art.author || currentUser;
     document.getElementById('excerpt').value = art.excerpt || '';
-    document.getElementById('fullContent').value = art.fullContent || '';
+    document.getElementById('fullContent').value = htmlToMarkup(art.fullContent || '');
     document.getElementById('sources').value = (art.sources || []).join('\n');
     document.getElementById('verified').checked = art.verified || false;
     document.getElementById('featured').checked = art.featured || false;
     tempImages = art.images || [];
-    if (art.coverImage && tempImages.length) {
-      const coverIndex = tempImages.findIndex(img => img.url === art.coverImage);
-      if (coverIndex !== -1) tempImages.coverIndex = coverIndex;
-      else tempImages.coverIndex = undefined;
-    } else {
-      tempImages.coverIndex = undefined;
-    }
     tempTags = art.tags || [];
     renderImageList();
     renderTagsList();
+    updatePreview();
+    
     const isToday = art.date === getTodayDate();
     if (isToday) {
       document.querySelector('input[value="today"]').checked = true;
@@ -353,22 +584,24 @@
       document.getElementById('customDate').value = art.date || '';
       document.getElementById('customDate').style.display = 'block';
     }
+    
     document.getElementById('formTitle').innerHTML = '✏️ Modifica articolo';
     document.getElementById('editModeIndicator').style.display = 'inline-block';
     document.getElementById('cancelEditBtn').style.display = 'inline-block';
     document.getElementById('saveArticleBtn').innerHTML = '💾 Aggiorna articolo';
+    document.getElementById('formTitle').scrollIntoView({ behavior: 'smooth' });
   }
+  
   async function saveArticle() {
     const title = document.getElementById('title').value.trim();
     if (!title) { showMessage("Titolo obbligatorio", true); return; }
+    
     const sourcesList = document.getElementById('sources').value.split('\n').filter(s => s.trim());
     const rawContent = document.getElementById('fullContent').value;
+    const formattedContent = formatTextToHtml(rawContent);
     const category = getCategoryValue();
     const iconLabel = getIconValue();
-    let coverUrl = '';
-    if (tempImages.coverIndex !== undefined && tempImages[tempImages.coverIndex]) {
-      coverUrl = tempImages[tempImages.coverIndex].url;
-    }
+    
     const articleData = {
       id: editingArticleId || Date.now(),
       title: title,
@@ -377,40 +610,68 @@
       date: getSelectedDate(),
       author: document.getElementById('author').value.trim() || currentUser,
       excerpt: document.getElementById('excerpt').value.trim() || "Contenuto in arrivo...",
-      fullContent: rawContent,
+      fullContent: formattedContent,
+      rawContent: rawContent,
       imgLabel: iconLabel,
       featured: document.getElementById('featured').checked,
       verified: document.getElementById('verified').checked,
       images: tempImages.filter(img => img.url && img.url.trim()),
-      coverImage: coverUrl,
       sources: sourcesList,
       tags: tempTags,
       likes: editingArticleId ? (currentArticles.find(a => a.id === editingArticleId)?.likes || 0) : 0,
       dislikes: editingArticleId ? (currentArticles.find(a => a.id === editingArticleId)?.dislikes || 0) : 0
     };
+    
     if (editingArticleId) {
       const index = currentArticles.findIndex(a => a.id === editingArticleId);
       if (index !== -1) currentArticles[index] = articleData;
     } else {
       currentArticles.push(articleData);
     }
+    
     const saved = await saveArticlesToCloud();
     if (saved) {
+      // Ricarichiamo la lista aggiornata e anche i subscribers per sicurezza
+      await fetchArticles();  // aggiorna currentArticles e currentSubscribers
       resetForm();
       renderArticleList();
       showMessage(`Articolo "${title}" salvato!`);
+      // Mostra il bottone email per l'articolo appena salvato/modificato
+      const savedArticle = currentArticles.find(a => a.id === articleData.id);
+      if (savedArticle && currentSubscribers.length > 0) {
+        showEmailButtonForArticle(savedArticle.id);
+        // Aggiungo un event listener dinamico per il bottone
+        const sendBtn = document.getElementById('sendToSubscribersBtn');
+        if (sendBtn) {
+          // Rimuovo vecchi listener e ne aggiungo uno nuovo
+          const newBtn = sendBtn.cloneNode(true);
+          sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+          newBtn.addEventListener('click', () => {
+            const art = currentArticles.find(a => a.id === savedArticle.id);
+            if (art) composeMailTo(art);
+            else showMessage("Articolo non trovato", true);
+          });
+        }
+      } else if (currentSubscribers.length === 0) {
+        showEmailButtonForArticle(null);
+      }
     }
   }
+  
   function cancelEdit() { resetForm(); renderArticleList(); }
+  
   async function deleteArticle(articleId) {
     const article = currentArticles.find(a => a.id === articleId);
     if (confirm(`Eliminare "${article?.title}"?`)) {
       currentArticles = currentArticles.filter(a => a.id !== articleId);
       await saveArticlesToCloud();
+      await fetchArticles();
       renderArticleList();
       showMessage("Articolo eliminato");
+      if (lastSavedArticleId === articleId) document.getElementById('emailButtonContainer').style.display = 'none';
     }
   }
+  
   function renderArticleList() {
     const container = document.getElementById('articlesList');
     if (!container) return;
@@ -434,6 +695,7 @@
       `;
       container.appendChild(div);
     });
+    
     document.querySelectorAll('.delete-article').forEach(btn => {
       btn.addEventListener('click', (e) => { deleteArticle(parseInt(btn.dataset.id)); });
     });
@@ -448,8 +710,11 @@
       });
     });
   }
+  
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-  document.getElementById('loginBtn').onclick = () => {
+  
+  // LOGIN
+  document.getElementById('loginBtn').onclick = async () => {
     const username = document.getElementById('adminUsername').value.trim();
     const password = document.getElementById('adminPassword').value;
     if (VALID_USERS[username] && VALID_USERS[username] === password) {
@@ -458,15 +723,19 @@
       document.getElementById('adminContent').style.display = 'block';
       document.getElementById('author').value = username;
       handleDateTypeChange();
-      fetchArticles();
+      await fetchArticles();  // carica articoli e subscribers
+      const contentArea = document.getElementById('fullContent');
+      document.getElementById('boldBtn').onclick = () => wrapSelection(contentArea, '*', '*');
+      document.getElementById('italicBtn').onclick = () => wrapSelection(contentArea, '/', '/');
+      document.getElementById('underlineBtn').onclick = () => wrapSelection(contentArea, '_', '_');
+      contentArea.addEventListener('input', updatePreview);
+      updatePreview();
+      showMessage(`Benvenuto, ${username}!`);
     } else { alert("Credenziali errate"); }
   };
+  
   document.getElementById('saveArticleBtn').onclick = saveArticle;
   document.getElementById('cancelEditBtn').onclick = cancelEdit;
-  document.getElementById('addImageBtn').onclick = () => {
-    tempImages.push({ url: '', caption: '', credit: '' });
-    renderImageList();
-  };
 </script>
 </body>
 </html>
