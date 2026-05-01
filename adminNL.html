@@ -38,11 +38,29 @@
   .tag-item button { background:none; border:none; color:#c83b2f; cursor:pointer; font-size:1rem; padding:0; margin:0; }
   .tag-input-group { display:flex; gap:0.5rem; margin-top:0.5rem; }
   .tag-input-group input { flex:1; }
+  
+  /* Stile per il logo nel titolo */
+  .title-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .title-logo img {
+    height: 40px;
+    width: auto;
+  }
+  .title-logo h1 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>✍️ Redazione RTF</h1>
+  <div class="title-logo">
+    <img src="RTFnews.png" alt="Logo RTF">
+    <h1>Redazione RTF</h1>
+  </div>
   <div id="loginArea">
     <div class="login-box">
       <h2>🔐 Accesso riservato</h2>
