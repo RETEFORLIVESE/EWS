@@ -6,9 +6,7 @@
 <title>RTF News</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  /* ========== STILI COMPLETI ========== */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --rf-red: #c83b2f;
     --rf-blue: #173b73;
@@ -22,14 +20,12 @@
     --rf-line: rgba(243, 239, 230, 0.12);
     --rf-verified: #2a7f3e;
   }
-
   body {
     background: var(--rf-ink);
     color: var(--rf-paper);
     font-family: "Barlow", sans-serif;
     overflow-x: hidden;
   }
-
   body::before {
     content: "";
     position: fixed;
@@ -42,11 +38,8 @@
       linear-gradient(135deg, rgba(200,59,47,0.10), transparent 34%, rgba(23,59,115,0.16) 68%, transparent);
     background-size: 72px 72px, 72px 72px, 100% 100%;
   }
-
   a { color: inherit; text-decoration: none; }
   .site-shell { min-height: 100vh; display: flex; flex-direction: column; }
-
-  /* NAVBAR */
   nav {
     position: sticky;
     top: 0;
@@ -118,17 +111,8 @@
   }
   .nav-links a:hover { color: #fff; }
   .nav-links a:hover::after { transform: scaleX(1); }
-  .nav-links .active a,
-  .nav-links a.active {
-    color: #fff;
-  }
-  .nav-links .active a::after,
-  .nav-links a.active::after {
-    transform: scaleX(1);
-    background: var(--rf-gold);
-  }
-
-  /* PAGE HEADER */
+  .nav-links .active a, .nav-links a.active { color: #fff; }
+  .nav-links .active a::after, .nav-links a.active::after { transform: scaleX(1); background: var(--rf-gold); }
   .page-header {
     padding: clamp(2.5rem, 5vw, 4rem) clamp(1rem, 5vw, 3rem) 2rem;
     text-align: center;
@@ -160,8 +144,6 @@
     font-size: 1.1rem;
     font-weight: 300;
   }
-
-  /* NEWS LAYOUT */
   .news-layout {
     display: grid;
     grid-template-columns: minmax(0, 2.4fr) minmax(280px, 0.8fr);
@@ -170,8 +152,6 @@
     margin: 2rem auto 3rem;
     padding: 0 clamp(1rem, 4vw, 2.5rem);
   }
-
-  /* ARTICLES GRID */
   .articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -247,6 +227,7 @@
     margin-bottom: 0.75rem;
     font-weight: 300;
     flex-wrap: wrap;
+    align-items: center;
   }
   .article-excerpt {
     color: rgba(243,239,230,0.8);
@@ -287,6 +268,12 @@
     font-size: 0.75rem;
     letter-spacing: 0.2em;
     border-bottom: 1px solid var(--rf-line);
+    overflow: hidden;
+  }
+  .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .card-content { padding: 1.3rem 1.2rem 1.5rem; }
   .card-content .article-title { font-size: 1.4rem; margin: 0.4rem 0 0.5rem; }
@@ -316,8 +303,6 @@
   .dislike-btn:hover { background: rgba(200,59,47,0.2); border-color: var(--rf-red); }
   .like-btn.active-like { background: rgba(214,165,54,0.3); border-color: var(--rf-gold); color: var(--rf-gold); }
   .dislike-btn.active-dislike { background: rgba(200,59,47,0.3); border-color: var(--rf-red); color: #ff8a7a; }
-
-  /* SIDEBAR */
   .sidebar { display: flex; flex-direction: column; gap: 2rem; }
   .newsletter-module {
     background: linear-gradient(135deg, rgba(23,59,115,0.5), rgba(8,9,11,0.9));
@@ -372,7 +357,6 @@
     transition: 0.2s;
   }
   .btn-outline:hover { border-color: var(--rf-gold); background: rgba(214,165,54,0.09); }
-
   footer {
     margin-top: auto;
     padding: 2.8rem clamp(1rem, 5vw, 4rem);
@@ -387,7 +371,6 @@
   }
   .footer-logo .r { color: var(--rf-red); }
   .footer-logo .f { color: var(--rf-blue); }
-
   @media (max-width: 920px) {
     .news-layout { grid-template-columns: 1fr; }
     .featured-card { flex-direction: column; }
@@ -403,7 +386,6 @@
 </head>
 <body>
 <div class="site-shell">
-  <!-- NAVBAR -->
   <nav aria-label="Navigazione principale">
     <a href="index.html" class="nav-brand" aria-label="RF Community Home">
       <span class="brand-mark" aria-hidden="true"><span>RF</span></span>
@@ -418,21 +400,15 @@
       <li><a href="index.html#unisciti">Unisciti</a></li>
     </ul>
   </nav>
-
-  <!-- HEADER -->
   <div class="page-header">
     <div class="eyebrow">Informazione partecipata</div>
     <h1>RF • QUOTIDIANO DELLA RETE</h1>
     <p class="subhead">Articoli, inchieste e approfondimenti dal territorio forlivese. Liberi, antifascisti, comunitari.</p>
   </div>
-
   <div class="news-layout">
-    <!-- ARTICOLI -->
     <div class="articles-grid" id="articlesGrid">
       <div style="grid-column:1/-1; text-align:center; padding:3rem;">Caricamento articoli...</div>
     </div>
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="newsletter-module">
         <h3>✉️ La RF‑Newsletter</h3>
@@ -464,35 +440,28 @@
       </div>
     </aside>
   </div>
-
   <footer>
     <div class="footer-logo"><span class="r">R</span><span class="f">F</span></div>
     <p>Community · Informazione · Coordinazione · Dialogo · Solidarietà</p>
     <p>© 2026 RF Community - Quotidiano indipendente della Rete Forlivese</p>
   </footer>
 </div>
-
 <script>
-  // ===== CONFIGURAZIONE CON LE TUE CREDENZIALI FUNZIONANTI =====
   const BIN_ID = "69f3d0a936566621a80f357f";
   const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";
   const STORAGE_VOTES_KEY = "RF_article_votes";
-
   let masterArticles = [];
   let localVotes = {};
 
-  // Carica voti locali
   function loadLocalVotes() {
     const stored = localStorage.getItem(STORAGE_VOTES_KEY);
     if (stored) {
       try { localVotes = JSON.parse(stored); } catch(e) { localVotes = {}; }
     } else { localVotes = {}; }
   }
-
   function saveLocalVotes() {
     localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localVotes));
   }
-
   function getDisplayCounts(article) {
     const baseLikes = article.likes || 0;
     const baseDislikes = article.dislikes || 0;
@@ -502,22 +471,17 @@
       dislikes: baseDislikes + (voteData.localDislikesDelta || 0)
     };
   }
-
   function getUserChoice(articleId) {
     return localVotes[articleId]?.userChoice || null;
   }
-
   function voteArticle(articleId, type) {
     const article = masterArticles.find(a => a.id == articleId);
     if (!article) return;
-    
     let voteData = localVotes[articleId];
     if (!voteData) voteData = { localLikesDelta: 0, localDislikesDelta: 0, userChoice: null };
-    
     const previous = voteData.userChoice;
     if (previous === 'like') voteData.localLikesDelta -= 1;
     if (previous === 'dislike') voteData.localDislikesDelta -= 1;
-    
     if (previous === type) {
       voteData.userChoice = null;
     } else {
@@ -525,13 +489,11 @@
       if (type === 'dislike') voteData.localDislikesDelta += 1;
       voteData.userChoice = type;
     }
-    
     localVotes[articleId] = voteData;
     saveLocalVotes();
     renderArticles();
     updatePopularSidebar();
   }
-
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -542,75 +504,88 @@
     });
   }
   function renderArticles() {
-  const container = document.getElementById('articlesGrid');
-  if (!container) return;
-  
-  if (!masterArticles.length) {
-    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile al momento.</div>';
-    return;
-  }
-  
-  const featured = masterArticles.filter(a => a.featured === true);
-  const normal = masterArticles.filter(a => !a.featured);
-  let html = '';
-  
-  // Articolo in evidenza
-  if (featured.length) {
-    const art = featured[0];
-    const counts = getDisplayCounts(art);
-    const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
-    html += `
-      <article class="featured-card">
-        <div class="featured-img"><span>${escapeHtml(art.imgLabel || '📷 FOCUS')}</span></div>
-        <div class="featured-content">
-          <div><span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${escapeHtml(art.category || 'INCHIESTA')}</span>${verifiedBadge}</div>
-          <h2 class="article-title">${escapeHtml(art.title)}</h2>
-          <div class="article-meta"><span>📅 ${escapeHtml(art.date || '')}</span><span>✍️ ${escapeHtml(art.author || 'Redazione')}</span></div>
-          <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
-          <div class="like-bar">
-            <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
-            <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+    const container = document.getElementById('articlesGrid');
+    if (!container) return;
+    if (!masterArticles.length) {
+      container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile al momento.</div>';
+      return;
+    }
+    const featured = masterArticles.filter(a => a.featured === true);
+    const normal = masterArticles.filter(a => !a.featured);
+    let html = '';
+    if (featured.length) {
+      const art = featured[0];
+      const counts = getDisplayCounts(art);
+      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato RF</span>` : '';
+      let coverHtml = '';
+      if (art.coverImage && art.coverImage.trim() !== '') {
+        coverHtml = `<img src="${escapeHtml(art.coverImage)}" alt="${escapeHtml(art.title)}" style="width:100%; height:100%; object-fit:cover;">`;
+      } else {
+        coverHtml = `<div class="featured-img"><span>${escapeHtml(art.imgLabel || '📷 FOCUS')}</span></div>`;
+      }
+      html += `
+        <article class="featured-card">
+          <div style="flex:1.2; min-width:220px; min-height:240px; overflow:hidden;">${coverHtml}</div>
+          <div class="featured-content">
+            <div class="article-meta">
+              <span class="category-badge" style="background:${art.categoryColor || '#c83b2f'}">${escapeHtml(art.category || 'INCHIESTA')}</span>
+              ${verifiedBadge}
+              <span>${escapeHtml(art.imgLabel || '📷')}</span>
+              <span>📅 ${escapeHtml(art.date || '')}</span>
+              <span>✍️ ${escapeHtml(art.author || 'Redazione')}</span>
+            </div>
+            <h2 class="article-title">${escapeHtml(art.title)}</h2>
+            <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
+            <div class="like-bar">
+              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+            </div>
+            <a href="article.html?id=${art.id}" class="read-more">Leggi approfondimento →</a>
           </div>
-          <a href="article.html?id=${art.id}" class="read-more">Leggi approfondimento →</a>
-        </div>
-      </article>
-    `;
-  }
-  
-  // Articoli normali
-  normal.forEach(art => {
-    const counts = getDisplayCounts(art);
-    const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
-    html += `
-      <article class="article-card">
-        <div class="card-img">${escapeHtml(art.imgLabel || '📰 ATTUALITÀ')}</div>
-        <div class="card-content">
-          <div><span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${escapeHtml(art.category || 'TERRITORIO')}</span>${verifiedBadge}</div>
-          <h3 class="article-title">${escapeHtml(art.title)}</h3>
-          <div class="article-meta">📅 ${escapeHtml(art.date || '')} • ${escapeHtml(art.author || '')}</div>
-          <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
-          <div class="like-bar">
-            <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
-            <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+        </article>
+      `;
+    }
+    normal.forEach(art => {
+      const counts = getDisplayCounts(art);
+      const verifiedBadge = art.verified ? `<span class="verified-badge">✅ Verificato</span>` : '';
+      let coverHtml = '';
+      if (art.coverImage && art.coverImage.trim() !== '') {
+        coverHtml = `<img src="${escapeHtml(art.coverImage)}" alt="${escapeHtml(art.title)}">`;
+      } else {
+        coverHtml = `<div class="card-img">${escapeHtml(art.imgLabel || '📰 ATTUALITÀ')}</div>`;
+      }
+      html += `
+        <article class="article-card">
+          <div class="card-img">${coverHtml}</div>
+          <div class="card-content">
+            <div class="article-meta">
+              <span class="category-badge" style="background:${art.categoryColor || '#173b73'}">${escapeHtml(art.category || 'TERRITORIO')}</span>
+              ${verifiedBadge}
+              <span>${escapeHtml(art.imgLabel || '📰')}</span>
+              <span>📅 ${escapeHtml(art.date || '')}</span>
+              <span>✍️ ${escapeHtml(art.author || 'Redazione')}</span>
+            </div>
+            <h3 class="article-title">${escapeHtml(art.title)}</h3>
+            <p class="article-excerpt">${escapeHtml(art.excerpt)}</p>
+            <div class="like-bar">
+              <button class="like-btn ${getUserChoice(art.id) === 'like' ? 'active-like' : ''}" data-id="${art.id}" data-type="like">👍 ${counts.likes}</button>
+              <button class="dislike-btn ${getUserChoice(art.id) === 'dislike' ? 'active-dislike' : ''}" data-id="${art.id}" data-type="dislike">👎 ${counts.dislikes}</button>
+            </div>
+            <a href="article.html?id=${art.id}" class="read-more">Leggi tutto →</a>
           </div>
-          <a href="article.html?id=${art.id}" class="read-more">Leggi tutto →</a>
-        </div>
-      </article>
-    `;
-  });
-  
-  container.innerHTML = html;
-  
-  // Attacca event listener ai bottoni like/dislike
-  document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const id = parseInt(btn.getAttribute('data-id'));
-      const type = btn.getAttribute('data-type');
-      voteArticle(id, type);
+        </article>
+      `;
     });
-  });
-}
+    container.innerHTML = html;
+    document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = parseInt(btn.getAttribute('data-id'));
+        const type = btn.getAttribute('data-type');
+        voteArticle(id, type);
+      });
+    });
+  }
   function updatePopularSidebar() {
     if (!masterArticles.length) return;
     const scored = masterArticles.map(art => {
@@ -622,42 +597,34 @@
     const listContainer = document.getElementById('popularList');
     if (listContainer) {
       listContainer.innerHTML = top5.map((item, idx) => `
-        <li><span class="popular-rank">${String(idx + 1).padStart(2, '0')}</span><a href="#">${escapeHtml(item.title)}</a></li>
+        <li><span class="popular-rank">${String(idx + 1).padStart(2, '0')}</span><a href="article.html?id=${item.id}">${escapeHtml(item.title)}</a></li>
       `).join('');
     }
   }
-
   async function loadArticles() {
     try {
       const container = document.getElementById('articlesGrid');
       if (container) container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;">📡 Caricamento articoli in corso...</div>';
-      
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
         headers: { 'X-Master-Key': API_KEY }
       });
-      
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
       const data = await res.json();
       masterArticles = data.record.articles || [];
-      
       if (masterArticles.length === 0) {
         container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">📭 Nessun articolo disponibile. Torna più tardi.</div>';
         return;
       }
-      
       renderArticles();
       updatePopularSidebar();
     } catch(e) {
-      console.error('Errore dettagliato:', e);
+      console.error(e);
       const container = document.getElementById('articlesGrid');
       if (container) {
-        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:#c83b2f;">❌ Errore nel caricamento degli articoli. Verifica la connessione o riprova più tardi.</div>';
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:#c83b2f;">❌ Errore nel caricamento degli articoli.</div>';
       }
     }
   }
-
-  // Newsletter form
   document.getElementById('demoNewsletterForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('newsEmail')?.value.trim();
@@ -668,8 +635,6 @@
       alert('Inserisci un indirizzo email valido.');
     }
   });
-
-  // Inizializzazione
   loadLocalVotes();
   loadArticles();
 </script>
