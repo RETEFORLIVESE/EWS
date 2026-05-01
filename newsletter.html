@@ -62,7 +62,12 @@
     text-decoration: none;
     min-width: max-content;
   }
-  /* brand-mark completamente rimosso: non più presente nell'HTML, quindi le regole per .brand-mark non vengono più applicate */
+  .nav-logo {
+    height: 38px;
+    width: auto;
+    max-width: 120px;
+    object-fit: contain;
+  }
   .brand-text {
     font-family: "Barlow Condensed", sans-serif;
     font-size: 1rem;
@@ -125,12 +130,7 @@
     gap: 1.2rem;
     flex-wrap: wrap;
   }
-  .header-logo {
-    height: 70px;
-    width: auto;
-    max-width: 180px;
-    object-fit: contain;
-  }
+  /* rimossa l'immagine dall'header: la classe .header-logo non più utilizzata */
   .page-header h1 {
     font-family: "Bebas Neue", sans-serif;
     font-size: clamp(3rem, 8vw, 5.2rem);
@@ -397,7 +397,7 @@
     .brand-text { display: none; }
     .nav-links { gap: 0.8rem; }
     .nav-links a { font-size: 0.7rem; letter-spacing: 0.1em; }
-    .header-logo { height: 50px; }
+    .nav-logo { height: 30px; }
   }
 </style>
 </head>
@@ -405,7 +405,8 @@
 <div class="site-shell">
   <nav aria-label="Navigazione principale">
     <a href="index.html" class="nav-brand" aria-label="RF Community Home">
-      <!-- Quadrato rosso/blu con scritta RF rimosso completamente su richiesta -->
+      <!-- Immagine spostata qui, al posto del quadrato rimosso -->
+      <img src="RTFnews.png" alt="Logo RTF News" class="nav-logo">
       <span class="brand-text">Reti Territoriali Forlivesi</span>
     </a>
     <ul class="nav-links">
@@ -420,7 +421,7 @@
   <div class="page-header">
     <div class="eyebrow">Informazione partecipata</div>
     <div class="title-with-logo">
-      <img src="RTFnews.png" alt="Logo RTF News" class="header-logo">
+      <!-- Immagine rimossa dall'header -->
       <h1>NewsLetter</h1>
     </div>
     <p class="subhead">Articoli, inchieste e approfondimenti dal territorio forlivese al mondo.</p>
