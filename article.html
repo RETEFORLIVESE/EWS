@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RTF News – Articolo</title>
+<title>RTF News – Articolo · Rete Forlivese</title>
 <link rel="apple-touch-icon" href="RTFnews-slim.png">
 <link rel="icon" type="image/jpeg" href="RTFnews-slim.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -12,21 +12,38 @@
   :root {
     --rf-red: #c83b2f;
     --rf-blue: #173b73;
+    --rf-blue-deep: #0b1d38;
     --rf-gold: #d6a536;
     --rf-ink: #08090b;
     --rf-panel: #121417;
+    --rf-panel-soft: #181c21;
     --rf-paper: #f3efe6;
     --rf-muted: rgba(243,239,230,0.68);
     --rf-line: rgba(243,239,230,0.12);
+    --rf-verified: #2a7f3e;
   }
   body {
     background: var(--rf-ink);
     color: var(--rf-paper);
     font-family: "Barlow", sans-serif;
+    overflow-x: hidden;
   }
-  .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+  /* sfondo sottile a griglia (coerente con newsletter) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(135deg, rgba(200,59,47,0.08), transparent 34%, rgba(23,59,115,0.12) 68%, transparent);
+    background-size: 72px 72px, 72px 72px, 100% 100%;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem; }
   
-  /* Navbar */
+  /* Navbar identica alla newsletter */
   nav {
     position: sticky;
     top: 0;
@@ -34,8 +51,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 2rem;
-    background: rgba(8,9,11,0.95);
+    gap: 1.5rem;
+    padding: 1rem clamp(1rem, 4vw, 3rem);
+    background: rgba(8,9,11,0.92);
     backdrop-filter: blur(18px);
     border-bottom: 1px solid rgba(214,165,54,0.18);
   }
@@ -70,9 +88,13 @@
     text-decoration: none;
     font-family: "Barlow Condensed", sans-serif;
     letter-spacing: 0.1em;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    border-bottom: 1px solid transparent;
   }
+  .back-link:hover { opacity: 0.8; border-bottom-color: var(--rf-gold); }
   
-  /* Articolo */
+  /* intestazione articolo (fuori dalla card, per contrasto) */
   .article-header { margin-bottom: 2rem; border-bottom: 1px solid var(--rf-line); padding-bottom: 1rem; }
   .category-badge {
     display: inline-block;
@@ -81,23 +103,113 @@
     font-family: "Barlow Condensed", sans-serif;
     font-size: 0.7rem;
     letter-spacing: 0.18em;
-    margin-bottom: 1rem;
+    font-weight: 700;
   }
   .verified-badge {
     display: inline-block;
-    background: #2a7f3e;
+    background: var(--rf-verified);
     padding: 0.2rem 0.5rem;
     font-size: 0.7rem;
     margin-left: 0.5rem;
+    font-family: "Barlow Condensed", sans-serif;
   }
-  h1 { font-family: "Bebas Neue", sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); margin: 0.5rem 0; }
-  .article-meta { color: var(--rf-muted); font-size: 0.9rem; margin: 1rem 0; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  h1 { 
+    font-family: "Bebas Neue", sans-serif; 
+    font-size: clamp(2rem, 5vw, 3.6rem); 
+    margin: 0.5rem 0; 
+    letter-spacing: 0.02em;
+    color: #fff;
+  }
+  .article-meta { 
+    color: var(--rf-muted); 
+    font-size: 0.85rem; 
+    margin: 1rem 0; 
+    display: flex; 
+    gap: 1.5rem; 
+    flex-wrap: wrap;
+    font-weight: 300;
+  }
   
-  /* Carosello */
-  .carousel-section {
-    margin: 3rem 0 2rem 0;
+  /* ⭐ Rettangolo contenitivo principale (sfondo identico alle card della newsletter) */
+  .content-card {
+    background: var(--rf-panel);        /* #121417 — stesso sfondo delle card newsletter */
+    border: 1px solid var(--rf-line);
+    padding: 2rem 2rem 1.8rem 2rem;
+    margin: 1.2rem 0 2rem 0;
+    transition: border-color 0.2s ease;
+  }
+  .content-card:hover {
+    border-color: rgba(214,165,54,0.35);
+  }
+  
+  /* stile del testo articolo dentro la card */
+  .article-content {
+    font-size: 1.08rem;
+    line-height: 1.7;
+    color: rgba(243,239,230,0.92);
+    font-weight: 350;
+  }
+  .article-content p {
+    margin: 1.3rem 0;
+    white-space: pre-wrap;
+  }
+  .article-content strong, .article-content b { color: var(--rf-gold); font-weight: 600; }
+  .article-content a { color: var(--rf-gold); text-decoration: underline; text-underline-offset: 3px; }
+  
+  /* sezione like / dislike (dentro la card) */
+  .like-section {
+    display: flex;
+    gap: 1.2rem;
+    margin: 2rem 0 1rem 0;
+    padding-top: 1.2rem;
     border-top: 1px solid var(--rf-line);
-    padding-top: 2rem;
+  }
+  .like-btn, .dislike-btn {
+    background: none;
+    border: 1px solid rgba(243,239,230,0.2);
+    padding: 0.5rem 1.4rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--rf-paper);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 0px;
+  }
+  .like-btn:hover { background: rgba(214,165,54,0.2); border-color: var(--rf-gold); }
+  .dislike-btn:hover { background: rgba(200,59,47,0.2); border-color: var(--rf-red); }
+  .like-btn.active-like { background: rgba(214,165,54,0.25); border-color: var(--rf-gold); color: var(--rf-gold); }
+  .dislike-btn.active-dislike { background: rgba(200,59,47,0.25); border-color: var(--rf-red); color: #ff8a7a; }
+  
+  /* fonti (dentro card) */
+  .sources-section {
+    background: rgba(0,0,0,0.35);
+    padding: 1.2rem 1.5rem;
+    border-left: 3px solid var(--rf-gold);
+    margin-top: 1.5rem;
+  }
+  .sources-section h3 {
+    color: var(--rf-gold);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+  }
+  .sources-section ul {
+    margin-left: 1.5rem;
+    color: rgba(243,239,230,0.75);
+    font-size: 0.9rem;
+  }
+  .sources-section li { margin: 0.3rem 0; }
+  
+  /* CAROSELLO (fuori dalla card, ma coerente) */
+  .carousel-section {
+    margin: 2.5rem 0 2rem 0;
+    border-top: 1px solid var(--rf-line);
+    padding-top: 1.8rem;
   }
   .carousel-title {
     font-family: "Barlow Condensed", sans-serif;
@@ -108,13 +220,13 @@
   }
   .carousel {
     position: relative;
-    background: var(--rf-panel);
-    border-radius: 8px;
+    background: var(--rf-panel-soft);
+    border: 1px solid var(--rf-line);
     overflow: hidden;
   }
   .carousel-inner {
     position: relative;
-    min-height: 400px;
+    min-height: 380px;
   }
   .carousel-slide {
     display: none;
@@ -123,13 +235,14 @@
   .carousel-slide.active { display: block; }
   .carousel-slide img {
     max-width: 100%;
-    max-height: 500px;
+    max-height: 480px;
     object-fit: contain;
+    background: #0a0c0f;
   }
   .carousel-caption {
-    padding: 1rem;
+    padding: 0.8rem;
     background: rgba(0,0,0,0.7);
-    margin-top: -4px;
+    font-size: 0.85rem;
   }
   .carousel-controls {
     position: absolute;
@@ -144,10 +257,9 @@
     background: rgba(0,0,0,0.6);
     color: white;
     border: none;
-    padding: 0.8rem 1.2rem;
+    padding: 0.7rem 1.1rem;
     cursor: pointer;
     font-size: 1.2rem;
-    border-radius: 50%;
     transition: background 0.2s;
   }
   .carousel-btn:hover { background: rgba(0,0,0,0.9); }
@@ -159,68 +271,24 @@
     display: inline-block;
     width: 10px;
     height: 10px;
-    background: #666;
-    border-radius: 50%;
-    margin: 0 5px;
+    background: #555;
+    margin: 0 6px;
     cursor: pointer;
+    border-radius: 50%;
   }
   .dot.active { background: var(--rf-gold); }
   
-  /* Contenuto articolo (solo testo) */
-  .article-content {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    margin: 2rem 0;
-  }
-  .article-content p { margin: 1rem 0; white-space: pre-wrap; }
-  
-  /* Fonti */
-  .sources-section {
-    background: var(--rf-panel);
-    padding: 1.5rem;
-    border-left: 3px solid var(--rf-gold);
-    margin-top: 2rem;
-  }
-  .sources-section h3 { color: var(--rf-gold); margin-bottom: 0.5rem; }
-  .sources-section ul { margin-left: 1.5rem; }
-  
-  /* Like/dislike */
-  .like-section {
-    display: flex;
-    gap: 1rem;
-    margin: 2rem 0;
-    padding-top: 1rem;
-    border-top: 1px solid var(--rf-line);
-  }
-  .like-btn, .dislike-btn {
-    background: none;
-    border: 1px solid rgba(243,239,230,0.2);
-    padding: 0.5rem 1.2rem;
-    font-family: "Barlow Condensed", sans-serif;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--rf-paper);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-radius: 4px;
-  }
-  .like-btn:hover { background: rgba(214,165,54,0.2); border-color: var(--rf-gold); }
-  .dislike-btn:hover { background: rgba(200,59,47,0.2); border-color: var(--rf-red); }
-  .like-btn.active-like { background: rgba(214,165,54,0.3); border-color: var(--rf-gold); color: var(--rf-gold); }
-  .dislike-btn.active-dislike { background: rgba(200,59,47,0.3); border-color: var(--rf-red); color: #ff8a7a; }
-  
   footer {
     text-align: center;
-    padding: 2rem;
-    border-top: 1px solid var(--rf-line);
+    padding: 2.5rem clamp(1rem, 4vw, 2rem);
+    border-top: 1px solid rgba(214,165,54,0.2);
+    background: #060709;
     margin-top: 3rem;
+    font-size: 0.85rem;
   }
   
-  .loading { text-align: center; padding: 3rem; }
-  .error { text-align: center; padding: 3rem; color: var(--rf-red); }
+  .loading, .error { text-align: center; padding: 3rem; font-family: "Barlow Condensed", sans-serif; }
+  .error { color: var(--rf-red); }
   .toast-msg {
     position: fixed;
     bottom: 20px;
@@ -228,18 +296,23 @@
     transform: translateX(-50%);
     background: var(--rf-gold);
     color: #08090b;
-    padding: 0.6rem 1.2rem;
-    border-radius: 30px;
+    padding: 0.5rem 1.2rem;
+    border-radius: 40px;
     font-family: "Barlow Condensed", sans-serif;
     font-weight: bold;
     z-index: 200;
     display: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
   
   @media (max-width: 768px) {
     .container { padding: 1rem; }
+    .content-card { padding: 1.3rem; }
     .carousel-controls { padding: 0 0.5rem; }
-    .carousel-btn { padding: 0.5rem 0.8rem; font-size: 1rem; }
+    .carousel-btn { padding: 0.4rem 0.7rem; font-size: 1rem; }
+    .like-btn, .dislike-btn { padding: 0.4rem 1rem; font-size: 0.9rem; }
+    .toast-msg { white-space: normal; width: 90%; text-align: center; font-size: 0.8rem; }
   }
 </style>
 </head>
@@ -255,10 +328,11 @@
 <div class="container" id="articleContainer">
   <div class="loading">⏳ Caricamento articolo...</div>
 </div>
-<div id="voteToast" class="toast-msg">👍 Voto registrato</div>
+<div id="voteToast" class="toast-msg"></div>
 
 <footer>
-  <p>Rete Forlivese - Informazione partecipata e antifascista</p>
+  <p>Rete Forlivese · Informazione partecipata, indipendente e antifascista</p>
+  <p style="margin-top:0.5rem; font-size:0.75rem;">© 2026 RTF Community – dal territorio forlivese al mondo</p>
 </footer>
 
 <script>
@@ -267,7 +341,7 @@
   const STORAGE_VOTES_KEY = "RF_article_votes_page";
   
   let currentArticle = null;
-  let localUserChoices = {};  // solo per memorizzare la scelta dell'utente (null, 'like', 'dislike')
+  let localUserChoices = {};
   
   function getArticleIdFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -301,22 +375,18 @@
     toast.style.backgroundColor = isError ? '#c83b2f' : '#d6a536';
     toast.style.color = '#08090b';
     toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    setTimeout(() => { toast.style.display = 'none'; }, 2700);
   }
   
-  // Aggiorna il JSONBin con il voto (delta basato su previousChoice e newChoice)
   async function applyVoteToServer(articleId, previousChoice, newChoice) {
-    // Calcola delta
     let deltaLikes = 0;
     let deltaDislikes = 0;
     
     if (previousChoice === newChoice) {
-      // Stesso bottone premuto due volte → rimuovi voto
       if (previousChoice === 'like') deltaLikes = -1;
       else if (previousChoice === 'dislike') deltaDislikes = -1;
-      newChoice = null;   // dopo rimozione
+      newChoice = null;
     } else {
-      // Cambio o nuovo voto
       if (previousChoice === 'like') deltaLikes = -1;
       if (previousChoice === 'dislike') deltaDislikes = -1;
       if (newChoice === 'like') deltaLikes += 1;
@@ -327,27 +397,22 @@
       return { likes: currentArticle.likes, dislikes: currentArticle.dislikes, newChoice: previousChoice };
     }
     
-    // Recupera dati attuali dal server (per evitare conflitti)
     const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
       headers: { 'X-Master-Key': API_KEY }
     });
-    if (!res.ok) throw new Error('Impossibile leggere i dati');
+    if (!res.ok) throw new Error('Lettura fallita');
     const data = await res.json();
     const articles = data.record.articles || [];
     const articleIndex = articles.findIndex(a => a.id === articleId);
-    if (articleIndex === -1) throw new Error('Articolo non trovato nel database');
-    
+    if (articleIndex === -1) throw new Error('Articolo non trovato');
     const article = articles[articleIndex];
-    // Assicura che likes/dislikes esistano
     if (typeof article.likes !== 'number') article.likes = 0;
     if (typeof article.dislikes !== 'number') article.dislikes = 0;
-    
     article.likes += deltaLikes;
     article.dislikes += deltaDislikes;
     if (article.likes < 0) article.likes = 0;
     if (article.dislikes < 0) article.dislikes = 0;
     
-    // Salva nel bin
     const updatedRecord = { ...data.record, articles };
     const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
       method: 'PUT',
@@ -358,35 +423,26 @@
       body: JSON.stringify(updatedRecord)
     });
     if (!putRes.ok) throw new Error('Salvataggio fallito');
-    
     return { likes: article.likes, dislikes: article.dislikes, newChoice };
   }
   
   async function voteArticle(articleId, clickedType) {
     if (!currentArticle || currentArticle.id !== articleId) return;
-    
     const previousChoice = getUserChoice(articleId);
     let newChoice = clickedType;
-    if (previousChoice === clickedType) newChoice = null;  // toggle off
-    // Caso in cui clicca un bottone diverso → newChoice già = clickedType
+    if (previousChoice === clickedType) newChoice = null;
     
-    // UI immediata: disabilita bottoni durante l'operazione
     const likeBtn = document.getElementById('likeBtn');
     const dislikeBtn = document.getElementById('dislikeBtn');
-    const originalLikeHtml = likeBtn?.innerHTML;
-    const originalDislikeHtml = dislikeBtn?.innerHTML;
     if (likeBtn) likeBtn.disabled = true;
     if (dislikeBtn) dislikeBtn.disabled = true;
     
     try {
       const result = await applyVoteToServer(articleId, previousChoice, newChoice);
-      // Aggiorna l'articolo corrente con i nuovi conteggi
       currentArticle.likes = result.likes;
       currentArticle.dislikes = result.dislikes;
-      // Salva la scelta utente locale (result.newChoice è il nuovo stato)
       setUserChoice(articleId, result.newChoice);
       
-      // Aggiorna UI contatori e stili
       const likeSpan = document.getElementById('likeCount');
       const dislikeSpan = document.getElementById('dislikeCount');
       if (likeSpan) likeSpan.textContent = result.likes;
@@ -395,66 +451,32 @@
       if (likeBtn) {
         likeBtn.classList.toggle('active-like', result.newChoice === 'like');
         likeBtn.disabled = false;
-        likeBtn.innerHTML = originalLikeHtml; // ripristina
       }
       if (dislikeBtn) {
         dislikeBtn.classList.toggle('active-dislike', result.newChoice === 'dislike');
         dislikeBtn.disabled = false;
-        dislikeBtn.innerHTML = originalDislikeHtml;
       }
-      showToast(result.newChoice ? (result.newChoice === 'like' ? '👍 Like registrato!' : '👎 Dislike registrato!') : '✖️ Voto rimosso');
+      showToast(result.newChoice ? (result.newChoice === 'like' ? '👍 Like registrato' : '👎 Dislike registrato') : '✖️ Voto rimosso');
     } catch (err) {
       console.error(err);
-      showToast('❌ Errore nel salvataggio del voto. Riprova.', true);
+      showToast('❌ Errore durante il voto, riprova', true);
       if (likeBtn) likeBtn.disabled = false;
       if (dislikeBtn) dislikeBtn.disabled = false;
     }
   }
   
-  async function loadArticle() {
-    const articleId = getArticleIdFromURL();
-    if (!articleId) {
-      document.getElementById('articleContainer').innerHTML = '<div class="error">❌ Articolo non specificato</div>';
-      return;
-    }
-    
-    try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': API_KEY }
-      });
-      if (!res.ok) throw new Error('Errore caricamento');
-      const data = await res.json();
-      const articles = data.record.articles || [];
-      const article = articles.find(a => a.id === articleId);
-      
-      if (!article) {
-        document.getElementById('articleContainer').innerHTML = '<div class="error">❌ Articolo non trovato</div>';
-        return;
-      }
-      // Normalizza likes/dislikes
-      if (typeof article.likes !== 'number') article.likes = 0;
-      if (typeof article.dislikes !== 'number') article.dislikes = 0;
-      
-      currentArticle = article;
-      renderArticle(article);
-    } catch(e) {
-      document.getElementById('articleContainer').innerHTML = `<div class="error">❌ Errore: ${e.message}</div>`;
-    }
-  }
-  
   function formatContent(text) {
-    if (!text) return '<p>Contenuto non disponibile.</p>';
+    if (!text) return '<p>⚠️ Contenuto in aggiornamento, torna presto.</p>';
     const paragraphs = text.split(/\n\s*\n/);
     return paragraphs.map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
   }
   
   function initCarousel(images) {
     if (!images || images.length === 0) return;
-    
     let currentIndex = 0;
     const inner = document.getElementById('carouselInner');
     const dotsContainer = document.getElementById('carouselDots');
-    
+    if (!inner || !dotsContainer) return;
     inner.innerHTML = '';
     dotsContainer.innerHTML = '';
     
@@ -463,10 +485,10 @@
       slide.className = 'carousel-slide';
       if (idx === 0) slide.classList.add('active');
       slide.innerHTML = `
-        <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.caption || 'Immagine')}" onerror="this.src='https://placehold.co/800x400/333/white?text=Immagine+non+disponibile'">
+        <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.caption || 'Immagine reportage')}" onerror="this.src='https://placehold.co/800x450/1a1e24/bfa56e?text=Immagine+non+disponibile'">
         <div class="carousel-caption">
           <p>${escapeHtml(img.caption || '')}</p>
-          <small>${escapeHtml(img.credit || '')}</small>
+          <small>${escapeHtml(img.credit || 'Archivio RTF')}</small>
         </div>
       `;
       inner.appendChild(slide);
@@ -478,19 +500,15 @@
       dotsContainer.appendChild(dot);
     });
     
-    function showSlide(index) {
+    const showSlide = (index) => {
       const slides = document.querySelectorAll('.carousel-slide');
       const dots = document.querySelectorAll('.dot');
       if (index < 0) index = slides.length - 1;
       if (index >= slides.length) index = 0;
-      slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-      });
-      dots.forEach((dot, i) => {
-        dot.classList.toggle('active', i === index);
-      });
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
       currentIndex = index;
-    }
+    };
     
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
@@ -498,28 +516,42 @@
     if (nextBtn) nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));
   }
   
-  function renderArticle(article) {
+  async function loadArticle() {
+    const articleId = getArticleIdFromURL();
+    if (!articleId) {
+      document.getElementById('articleContainer').innerHTML = '<div class="error">❌ Articolo non specificato</div>';
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      if (!res.ok) throw new Error('Errore caricamento dati');
+      const data = await res.json();
+      const articles = data.record.articles || [];
+      const article = articles.find(a => a.id === articleId);
+      if (!article) {
+        document.getElementById('articleContainer').innerHTML = '<div class="error">📭 Articolo non trovato</div>';
+        return;
+      }
+      if (typeof article.likes !== 'number') article.likes = 0;
+      if (typeof article.dislikes !== 'number') article.dislikes = 0;
+      currentArticle = article;
+      renderFullArticle(article);
+    } catch(e) {
+      document.getElementById('articleContainer').innerHTML = `<div class="error">⚠️ Errore di connessione: ${e.message}</div>`;
+    }
+  }
+  
+  function renderFullArticle(article) {
     const container = document.getElementById('articleContainer');
     const verifiedBadge = article.verified ? '<span class="verified-badge">✅ Verificato RF</span>' : '';
     const userChoice = getUserChoice(article.id);
     
-    let carouselHtml = '';
-    if (article.images && article.images.length > 0) {
-      carouselHtml = `
-        <div class="carousel-section">
-          <div class="carousel-title">📷 GALLERY FOTOGRAFICA</div>
-          <div class="carousel" id="articleCarousel">
-            <div class="carousel-inner" id="carouselInner"></div>
-            <div class="carousel-controls">
-              <button class="carousel-btn" id="prevBtn">◀</button>
-              <button class="carousel-btn" id="nextBtn">▶</button>
-            </div>
-            <div class="carousel-dots" id="carouselDots"></div>
-          </div>
-        </div>
-      `;
-    }
+    // costruzione contenuto principale dentro la card rettangolare (sfondo nero come newsletter)
+    const articleTextHtml = formatContent(article.fullContent || article.excerpt || 'Approfondimento in fase di scrittura, consulta la newsletter per aggiornamenti.');
     
+    // sezione fonti
     let sourcesHtml = '';
     if (article.sources && article.sources.length > 0) {
       sourcesHtml = `
@@ -532,51 +564,78 @@
       `;
     }
     
-    container.innerHTML = `
-      <div class="article-header">
-        <span class="category-badge">${escapeHtml(article.category || 'ATTUALITÀ')}</span>${verifiedBadge}
-        <h1>${escapeHtml(article.title)}</h1>
-        <div class="article-meta">
-          <span>📅 ${escapeHtml(article.date || 'Data non specificata')}</span>
-          <span>✍️ ${escapeHtml(article.author || 'Redazione')}</span>
+    // CARD PRINCIPALE: rettangolo contenitivo con sfondo identico alle card newsletter
+    const mainCardHtml = `
+      <div class="content-card">
+        <div class="article-content">
+          ${articleTextHtml}
         </div>
+        <div class="like-section">
+          <button class="like-btn ${userChoice === 'like' ? 'active-like' : ''}" id="likeBtn">
+            👍 <span id="likeCount">${article.likes}</span>
+          </button>
+          <button class="dislike-btn ${userChoice === 'dislike' ? 'active-dislike' : ''}" id="dislikeBtn">
+            👎 <span id="dislikeCount">${article.dislikes}</span>
+          </button>
+        </div>
+        ${sourcesHtml}
       </div>
-      <div class="article-content">
-        ${formatContent(article.fullContent || article.excerpt || 'Contenuto non disponibile.')}
-      </div>
-      <div class="like-section">
-        <button class="like-btn ${userChoice === 'like' ? 'active-like' : ''}" id="likeBtn">
-          👍 <span id="likeCount">${article.likes}</span>
-        </button>
-        <button class="dislike-btn ${userChoice === 'dislike' ? 'active-dislike' : ''}" id="dislikeBtn">
-          👎 <span id="dislikeCount">${article.dislikes}</span>
-        </button>
-      </div>
-      ${carouselHtml}
-      ${sourcesHtml}
     `;
     
+    // Galleria carosello (opzionale) fuori dalla card per dare respiro
+    let carouselHtml = '';
+    if (article.images && article.images.length > 0) {
+      carouselHtml = `
+        <div class="carousel-section">
+          <div class="carousel-title">📷 GALLERY · REPORTAGE VISUALE</div>
+          <div class="carousel" id="articleCarousel">
+            <div class="carousel-inner" id="carouselInner"></div>
+            <div class="carousel-controls">
+              <button class="carousel-btn" id="prevBtn">◀</button>
+              <button class="carousel-btn" id="nextBtn">▶</button>
+            </div>
+            <div class="carousel-dots" id="carouselDots"></div>
+          </div>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = `
+      <div class="article-header">
+        <span class="category-badge" style="background:${article.categoryColor || '#c83b2f'}">${escapeHtml(article.category || 'INCHIESTA')}</span>
+        ${verifiedBadge}
+        <h1>${escapeHtml(article.title)}</h1>
+        <div class="article-meta">
+          <span>📅 ${escapeHtml(article.date || 'Data in aggiornamento')}</span>
+          <span>✍️ ${escapeHtml(article.author || 'Redazione RTF')}</span>
+          ${article.imgLabel ? `<span>📷 ${escapeHtml(article.imgLabel)}</span>` : ''}
+        </div>
+      </div>
+      ${mainCardHtml}
+      ${carouselHtml}
+    `;
+    
+    // Attiva carosello se esistono immagini
     if (article.images && article.images.length > 0) {
       initCarousel(article.images);
     }
     
+    // Attach eventi like/dislike
     const likeBtn = document.getElementById('likeBtn');
     const dislikeBtn = document.getElementById('dislikeBtn');
-    if (likeBtn) {
-      likeBtn.addEventListener('click', () => voteArticle(article.id, 'like'));
-    }
-    if (dislikeBtn) {
-      dislikeBtn.addEventListener('click', () => voteArticle(article.id, 'dislike'));
-    }
+    if (likeBtn) likeBtn.addEventListener('click', () => voteArticle(article.id, 'like'));
+    if (dislikeBtn) dislikeBtn.addEventListener('click', () => voteArticle(article.id, 'dislike'));
   }
   
   function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
+    return String(str).replace(/[&<>]/g, function(m) {
       if (m === '&') return '&amp;';
       if (m === '<') return '&lt;';
       if (m === '>') return '&gt;';
       return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+      return c;
     });
   }
   
