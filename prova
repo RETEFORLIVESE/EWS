@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>R.T.F. - Reti Territoriali Forlivesi | Windows 7 Aero Style</title>
+  <link rel="icon" type="image/jpeg" href="rf-logo.jpeg">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* optional: give win7 vibe, but text can be selected */
+    }
+
+    body {
+      background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cGF0aCBmaWxsPSIjMjI4OEQxIiBmaWxsLW9wYWNpdHk9IjAuMTUiIGQ9Ik0wIDBoNDB2NDBIMHoiLz48cGF0aCBmaWxsPSIjMkZDN0Y0IiBmaWxsLW9wYWNpdHk9IjAuMSIgZD0iTTAgMjBoNDB2MjBIMHoiLz48L3N2Zz4=');
+      background-size: 40px 40px;
+      background-color: #e5f0fa;
+      font-family: 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Glassmorphism Aero Core */
+    .aero-glass {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    /* Window frame (taskbar style) */
+    .win7-taskbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 48px;
+      background: rgba(210, 230, 248, 0.85);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      z-index: 1200;
+      font-size: 13px;
+    }
+
+    .start-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 120, 215, 0.2);
+      padding: 6px 14px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      font-weight: 600;
+      color: #1e3c72;
+      backdrop-filter: blur(4px);
+      cursor: pointer;
+      transition: 0.1s linear;
+    }
+
+    .start-btn:hover {
+      background: rgba(0, 120, 215, 0.4);
+      transform: scale(0.98);
+    }
+
+    .taskbar-icons {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 30px;
+      backdrop-filter: blur(4px);
+    }
+
+    .taskbar-time {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    /* main container */
+    .desktop-area {
+      padding: 24px 32px 70px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* navbar aero style (floating like a top bar) */
+    .aero-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding: 12px 28px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(16px);
+      border-radius: 48px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .win-logo-place {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #00a2ff, #2b5797);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    .win-logo-place img {
+      width: 70%;
+      border-radius: 6px;
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #0058a3, #0086e6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-weight: 600;
+      color: #1c3f5c;
+      padding: 6px 14px;
+      border-radius: 40px;
+      transition: 0.1s linear;
+      background: rgba(255,255,240,0.2);
+    }
+
+    .nav-links a:hover {
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      color: #0078d7;
+    }
+
+    /* Hero Card */
+    .hero-card {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      margin-bottom: 48px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      border-radius: 36px;
+      padding: 36px 40px;
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    }
+
+    .hero-text {
+      flex: 2;
+    }
+
+    .hero-logo {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .badge-win {
+      background: #e6f2ff;
+      display: inline-block;
+      border-radius: 40px;
+      padding: 4px 16px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #0067b8;
+      border: 1px solid #cce4ff;
+    }
+
+    .hero-title {
+      font-size: 5rem;
+      font-weight: 700;
+      letter-spacing: -2px;
+      margin: 12px 0 8px;
+    }
+
+    .hero-title span.r { color: #005a9e; text-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .hero-title span.t { color: #c42b1c; }
+    .hero-title span.f { color: #2c6c2f; }
+
+    .hero-sub {
+      font-size: 1.9rem;
+      font-weight: 500;
+      margin-bottom: 18px;
+    }
+
+    .glass-button {
+      display: inline-block;
+      padding: 12px 28px;
+      background: rgba(0, 120, 215, 0.75);
+      backdrop-filter: blur(8px);
+      border-radius: 40px;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      margin-right: 16px;
+      border: 1px solid rgba(255,255,255,0.5);
+      transition: 0.1s linear;
+    }
+
+    .glass-button-outline {
+      background: rgba(255,255,240,0.6);
+      backdrop-filter: blur(8px);
+      color: #0060a0;
+      border: 1px solid rgba(0,100,200,0.3);
+    }
+
+    /* windows grid panel (pillars) */
+    .windows-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 24px;
+      margin: 32px 0;
+    }
+
+    .aero-window-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      transition: 0.1s linear;
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+
+    .aero-window-card:hover {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 245, 0.8);
+      box-shadow: 0 18px 28px -8px rgba(0,0,0,0.15);
+    }
+
+    .win-bullet {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(145deg, #53b8ff, #0078d7);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 14px;
+    }
+
+    .stat-badge-win {
+      background: #eef4fc;
+      border-radius: 48px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #ffffffaa;
+    }
+
+    .stat-number {
+      font-size: 2.6rem;
+      font-weight: 800;
+    }
+
+    /* layout doppia colonna stile explorer */
+    .two-columns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      margin: 48px 0;
+    }
+
+    .column-main {
+      flex: 2;
+    }
+
+    .column-side {
+      flex: 1.2;
+    }
+
+    .obj-win-list {
+      background: rgba(255,255,245,0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 28px;
+      overflow: hidden;
+    }
+
+    .obj-win-item {
+      display: flex;
+      gap: 18px;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      align-items: flex-start;
+    }
+
+    .obj-number {
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: #0078d7;
+      font-family: monospace;
+    }
+
+    .identity-gadget {
+      background: linear-gradient(125deg, #eef9ff, #ffffffd0);
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 28px;
+      border: 1px solid rgba(0,160,255,0.3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    .manif-box {
+      background: rgba(245, 250, 255, 0.9);
+      border-radius: 36px;
+      padding: 36px;
+      margin: 36px 0;
+      border-left: 12px solid #3cbc3c;
+    }
+
+    .join-box {
+      text-align: center;
+      background: rgba(0, 180, 255, 0.1);
+      border-radius: 48px;
+      padding: 40px;
+    }
+
+    footer {
+      margin: 32px 0 20px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #2a4f6e;
+    }
+
+    @media (max-width: 780px) {
+      .desktop-area { padding: 16px; }
+      .hero-title { font-size: 3rem; }
+      .hero-card { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TASKBAR STILE WINDOWS 7 -->
+<div class="win7-taskbar">
+  <div class="start-btn" onclick="alert('Start Menu: Benvenuto nel comitato R.T.F.')">
+    <span style="font-size: 18px;">🪟</span> 
+    <span>Start</span>
+  </div>
+  <div class="taskbar-icons">
+    <span>📡 R.T.F. Community</span>
+  </div>
+  <div class="taskbar-time" id="liveClock"></div>
+</div>
+
+<div class="desktop-area">
+  <!-- BARRA DI NAVIGAZIONE AERO / VISTA STYLE -->
+  <div class="aero-nav">
+    <div class="logo-area">
+      <div class="win-logo-place">
+        <!-- logo RF -->
+        <img src="rf-logo.jpeg" alt="RF" style="width: 32px; height: 32px; object-fit: cover; border-radius: 6px;" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23173b73%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23d6a536%22%20font-size%3D%2250%22%20font-weight%3D%22bold%22%3ERF%3C%2Ftext%3E%3C%2Fsvg%3E'">
+      </div>
+      <span class="brand-name">Reti Territoriali Forlivesi</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#">NewsLetter</a></li>
+      <li><a href="#">Comitato</a></li>
+      <li><a href="#">OpenParl</a></li>
+      <li><a href="#">Petizioni</a></li>
+    </ul>
+  </div>
+
+  <!-- HERO CARD AERO -->
+  <div class="hero-card">
+    <div class="hero-text">
+      <span class="badge-win">🔵 COMITATO TERRITORIALE · WINDOWS 7 EDITION</span>
+      <div class="hero-title">
+        <span class="r">R</span><span class="t">T</span><span class="f">F</span>
+      </div>
+      <div class="hero-sub">reti territoriali Forlivesi</div>
+      <p style="font-size: 1.1rem; margin-bottom: 28px; color: #1e3a5f;">
+        Un comitato nato per informare, coordinare iniziative e dare possibilità a un confronto e di un dialogo politico reale tra persone che credono in un futuro diverso.
+      </p>
+      <div>
+        <a href="#" class="glass-button">🌟 Unisciti a noi</a>
+        <a href="#" class="glass-button glass-button-outline">📖 Scopri gli obiettivi</a>
+      </div>
+    </div>
+    <div class="hero-logo">
+      <div style="width: 160px; height: 160px; background: radial-gradient(circle, rgba(0,160,255,0.3), rgba(200,230,255,0.6)); border-radius: 60px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(12px); border: 2px solid white;">
+        <img src="rf-logo.jpeg" alt="RF emblem" style="width: 120px; border-radius: 28px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size: 70px; font-weight: bold; color:#005a9e;\'>RF</span>'">
+      </div>
+    </div>
+  </div>
+
+  <!-- SEZIONE PILASTRI (GRIGLIA) -->
+  <h2 style="font-weight: 600; margin: 28px 0 12px 0; font-size: 1.8rem; backdrop-filter: blur(2px); display: inline-block;">🪟 I Pilastri del Comitato</h2>
+  <div class="windows-panel-grid">
+    <div class="aero-window-card"><div class="win-bullet">01</div><h3>Informazione</h3><p>Aggiornamenti chiari, verificati, per capire Italia e Mondo.</p></div>
+    <div class="aero-window-card"><div class="win-bullet">02</div><h3>Coordinazione</h3><p>Incontri ed eventi organizzati semplici e accessibili.</p></div>
+    <div class="aero-window-card"><div class="win-bullet">03</div><h3>Collaborazione</h3><p>Rete che aggrega gruppi locali e comunanza.</p></div>
+    <div class="aero-window-card"><div class="win-bullet">04</div><h3>Dialogo</h3><p>Confronto rispettoso per idee condivise.</p></div>
+    <div class="aero-window-card"><div class="win-bullet">05</div><h3>Solidarietà</h3><p>Aiuto reciproco e presenza concreta.</p></div>
+  </div>
+
+  <!-- STATS IN STILE GADGET -->
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0;">
+    <div class="stat-badge-win"><div class="stat-number">1+</div><div>Community attiva</div></div>
+    <div class="stat-badge-win"><div class="stat-number">4</div><div>Pilastri fondanti</div></div>
+    <div class="stat-badge-win"><div class="stat-number">0€</div><div>No profit</div></div>
+    <div class="stat-badge-win"><div class="stat-number">∞</div><div>Obiettivi condivisi</div></div>
+  </div>
+
+  <!-- OBIETTIVI + SIDEBAR (IDENTITY) -->
+  <div class="two-columns">
+    <div class="column-main">
+      <span class="badge-win">🎯 MISSIONE</span>
+      <h2 style="font-size: 2.4rem; margin: 8px 0 18px 0;">I nostri obiettivi</h2>
+      <div class="obj-win-list">
+        <div class="obj-win-item"><div class="obj-number">01</div><div><strong>Dare spazio alla comunità</strong><br>Piattaforma per esprimersi ed essere ascoltati.</div></div>
+        <div class="obj-win-item"><div class="obj-number">02</div><div><strong>Diffondere informazione autentica</strong><br>Contrastare disinformazione con dati verificati.</div></div>
+        <div class="obj-win-item"><div class="obj-number">03</div><div><strong>Costruire reti di supporto</strong><br>Connessione fra persone con valori comuni.</div></div>
+        <div class="obj-win-item"><div class="obj-number">04</div><div><strong>Mobilitare la partecipazione</strong><br>Eventi e azioni condivise.</div></div>
+      </div>
+    </div>
+    <div class="column-side">
+      <div class="identity-gadget">
+        <div style="font-size: 4rem; font-weight: 800; color: #105e9e;">05</div>
+        <h3 style="font-size: 1.9rem;">Antifascismo</h3>
+        <p style="margin: 12px 0;">Difendere dignità, libertà e uguaglianza contro fascismo, odio e discriminazione, costruendo una comunità fondata su solidarietà e rispetto reciproco.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px;">
+          <span style="background: #c3e0ff; border-radius: 40px; padding: 4px 12px;">Dignità</span>
+          <span style="background: #c3e0ff; border-radius: 40px; padding: 4px 12px;">Libertà</span>
+          <span style="background: #c3e0ff; border-radius: 40px; padding: 4px 12px;">Uguaglianza</span>
+          <span style="background: #c3e0ff; border-radius: 40px; padding: 4px 12px;">Solidarietà</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANIFESTO STILE finestra AERO -->
+  <div class="manif-box">
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;">
+      <div><span class="badge-win">📜 MANIFESTO RTF</span><h2 style="font-size: 2rem;">Manifesto di mobilitazione</h2></div>
+      <div style="font-size: 1.9rem; font-style: italic; max-width: 500px;">“Aiuto reciproco, dignità e solidarietà: <span style="color:#0066b3;">un’altra politica è possibile”</span></div>
+    </div>
+  </div>
+
+  <!-- JOIN -->
+  <div class="join-box">
+    <div style="background: white; width: 70px; height: 70px; margin: 0 auto 16px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 38px;">📱</div>
+    <h3>Rimani connesso · Seguici</h3>
+    <p style="margin: 12px auto; max-width: 500px;">Canali ufficiali, aggiornamenti e iniziative in tempo reale. Community aperta e trasparente.</p>
+    <a href="#" class="glass-button" style="background: #0086e6;">Unisciti alla community</a>
+  </div>
+
+  <footer>
+    <p>© 2025 · Reti Territoriali Forlivesi · Comitato apartitico senza fini di lucro</p>
+    <p style="margin-top: 6px;">🎨 Design ispirato a Windows 7 Aero / Frutiger Aero · trasparenza, chiarezza, comunità</p>
+  </footer>
+</div>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('liveClock').innerText = timeStr;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
