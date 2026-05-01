@@ -91,7 +91,7 @@
   h1 { font-family: "Bebas Neue", sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); margin: 0.5rem 0; }
   .article-meta { color: var(--rf-muted); font-size: 0.9rem; margin: 1rem 0; display: flex; gap: 1.5rem; flex-wrap: wrap; }
   
-  /* Carosello - ora sotto l'articolo */
+  /* Carosello */
   .carousel-section {
     margin: 3rem 0 2rem 0;
     border-top: 1px solid var(--rf-line);
@@ -164,13 +164,13 @@
   }
   .dot.active { background: var(--rf-gold); }
   
-  /* Contenuto articolo */
+  /* Contenuto articolo (solo testo) */
   .article-content {
     font-size: 1.1rem;
     line-height: 1.7;
     margin: 2rem 0;
   }
-  .article-content p { margin: 1rem 0; }
+  .article-content p { margin: 1rem 0; white-space: pre-wrap; }
   
   /* Fonti */
   .sources-section {
@@ -182,7 +182,7 @@
   .sources-section h3 { color: var(--rf-gold); margin-bottom: 0.5rem; }
   .sources-section ul { margin-left: 1.5rem; }
   
-  /* Like/dislike sotto l'articolo */
+  /* Like/dislike */
   .like-section {
     display: flex;
     gap: 1rem;
@@ -303,14 +303,12 @@
     localVotes[articleId] = voteData;
     saveLocalVotes();
     
-    // Aggiorna solo i contatori nella pagina
     const counts = getDisplayCounts(currentArticle);
     const likeSpan = document.querySelector('#likeCount');
     const dislikeSpan = document.querySelector('#dislikeCount');
     if (likeSpan) likeSpan.textContent = counts.likes;
     if (dislikeSpan) dislikeSpan.textContent = counts.dislikes;
     
-    // Aggiorna classi attive
     const likeBtn = document.querySelector('#likeBtn');
     const dislikeBtn = document.querySelector('#dislikeBtn');
     if (likeBtn) likeBtn.classList.toggle('active-like', getUserChoice(articleId) === 'like');
@@ -345,6 +343,7 @@
     }
   }
   
+  // Formattazione solo testo: sostituisce \n con <br> e racchiude in paragrafi
   function formatContent(text) {
     if (!text) return '<p>Contenuto non disponibile.</p>';
     const paragraphs = text.split(/\n\s*\n/);
@@ -407,7 +406,6 @@
     const counts = getDisplayCounts(article);
     const userChoice = getUserChoice(article.id);
     
-    // Carosello HTML (ora va DOPO il contenuto, nella sezione dedicata)
     let carouselHtml = '';
     if (article.images && article.images.length > 0) {
       carouselHtml = `
@@ -425,7 +423,6 @@
       `;
     }
     
-    // Fonti HTML
     let sourcesHtml = '';
     if (article.sources && article.sources.length > 0) {
       sourcesHtml = `
@@ -439,7 +436,6 @@
     }
     
     container.innerHTML = `
-      <!-- HEADER ARTICOLO (titolo, categoria, data, autore) -->
       <div class="article-header">
         <span class="category-badge">${escapeHtml(article.category || 'ATTUALITÀ')}</span>${verifiedBadge}
         <h1>${escapeHtml(article.title)}</h1>
@@ -448,13 +444,9 @@
           <span>✍️ ${escapeHtml(article.author || 'Redazione')}</span>
         </div>
       </div>
-      
-      <!-- CONTENUTO ARTICOLO (TESTO PRINCIPALE) -->
       <div class="article-content">
         ${formatContent(article.fullContent || article.excerpt || 'Contenuto non disponibile.')}
       </div>
-      
-      <!-- LIKE / DISLIKE (subito dopo il testo) -->
       <div class="like-section">
         <button class="like-btn ${userChoice === 'like' ? 'active-like' : ''}" id="likeBtn" data-type="like">
           👍 <span id="likeCount">${counts.likes}</span>
@@ -463,20 +455,14 @@
           👎 <span id="dislikeCount">${counts.dislikes}</span>
         </button>
       </div>
-      
-      <!-- CAROSELLO IMMAGINI (ORA SOTTO L'ARTICOLO) -->
       ${carouselHtml}
-      
-      <!-- FONTI -->
       ${sourcesHtml}
     `;
     
-    // Inizializza carosello (dopo che l'HTML è stato inserito)
     if (article.images && article.images.length > 0) {
       initCarousel(article.images);
     }
     
-    // Attacca event listener like/dislike
     const likeBtn = document.getElementById('likeBtn');
     const dislikeBtn = document.getElementById('dislikeBtn');
     if (likeBtn) {
