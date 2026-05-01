@@ -1,3 +1,6 @@
+Ecco il file HTML corretto: la funzione di parsing delle date ora riconosce mesi italiani in lettere (es. "15 Marzo 2025" o "aprile 14 2026") sia con iniziale maiuscola che minuscola, anche in formato abbreviato (3 lettere). Gli articoli vengono ordinati dal più recente al più vecchio in base a queste date.
+
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -536,7 +539,7 @@
   const BIN_ID = "69f3d0a936566621a80f357f";
   const API_KEY = "$2a$10$JWsV3hKpO6l.WAB//Gdnw.WMMlUmclCw5mT1gTzHJVsdef/p0swoO";
   const STORAGE_VOTES_KEY = "RF_article_votes";
-  let masterArticles = [];   // contiene SOLO articoli pubblicati (draft !== true)
+  let masterArticles = [];
   let localUserChoices = {};
 
   function showToast(message, isError = false) {
@@ -546,6 +549,103 @@
     toast.style.color = '#08090b';
     toast.style.display = 'block';
     setTimeout(() => { toast.style.display = 'none'; }, 4000);
+  }
+
+  // Mappa dei mesi italiani (nome completo e abbreviazioni 3 lettere, case-insensitive)
+  const monthMap = {
+    'gennaio': 0, 'gen': 0, 'genn': 0,
+    'febbraio': 1, 'feb': 1,
+    'marzo': 2, 'mar': 2,
+    'aprile': 3, 'apr': 3,
+    'maggio': 4, 'mag': 4,
+    'giugno': 5, 'giu': 5,
+    'luglio': 6, 'lug': 6,
+    'agosto': 7, 'ago': 7,
+    'settembre': 8, 'set': 8, 'sett': 8,
+    'ottobre': 9, 'ott': 9,
+    'novembre': 10, 'nov': 10,
+    'dicembre': 11, 'dic': 11
+  };
+
+  // Parsing robusto: supporta "15 marzo 2025", "marzo 15 2025", "15 Mar 2025", "15/Mar/2025", "15-03-2025", "2025-03-15" e varianti con virgole
+  function parseArticleDate(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return null;
+    let str = dateStr.trim().replace(/,/g, ' ').replace(/\s+/g, ' ').toLowerCase();
+    
+    // 1) Prova formati numerici standard (ISO/DD-MM-YYYY/DD/MM/YYYY)
+    let isoDate = new Date(str);
+    if (!isNaN(isoDate.getTime())) return isoDate;
+    
+    // 2) Prova pattern con mese in lettere
+    // pattern: giorno mese anno  (es. 15 marzo 2025)
+    let match = str.match(/(\d{1,2})\s+([a-z]+)\s+(\d{4})/);
+    if (match) {
+      let day = parseInt(match[1], 10);
+      let monthName = match[2];
+      let year = parseInt(match[3], 10);
+      let month = monthMap[monthName];
+      if (month !== undefined && day >= 1 && day <= 31 && year > 1000 && year < 3000) {
+        let d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+    // pattern: mese giorno anno (es. marzo 15 2025)
+    match = str.match(/([a-z]+)\s+(\d{1,2})\s+(\d{4})/);
+    if (match) {
+      let monthName = match[1];
+      let day = parseInt(match[2], 10);
+      let year = parseInt(match[3], 10);
+      let month = monthMap[monthName];
+      if (month !== undefined && day >= 1 && day <= 31 && year > 1000 && year < 3000) {
+        let d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+    // pattern: giorno/mese/anno con mese in lettere (es. 15/mar/2025)
+    match = str.match(/(\d{1,2})\/([a-z]+)\/(\d{4})/);
+    if (match) {
+      let day = parseInt(match[1], 10);
+      let monthName = match[2];
+      let year = parseInt(match[3], 10);
+      let month = monthMap[monthName];
+      if (month !== undefined && day >= 1 && day <= 31 && year > 1000 && year < 3000) {
+        let d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+    // ultimo tentativo: split generico per spazi e cerca tripletta (numero, parola, numero)
+    let parts = str.split(/\s+/);
+    for (let i = 0; i <= parts.length - 3; i++) {
+      let a = parts[i], b = parts[i+1], c = parts[i+2];
+      // cerca giorno, mese, anno in qualsiasi ordine
+      let day = null, month = null, year = null;
+      if (/^\d{1,2}$/.test(a) && /^\d{4}$/.test(c) && monthMap[b] !== undefined) {
+        day = parseInt(a,10); month = monthMap[b]; year = parseInt(c,10);
+      } else if (/^\d{1,2}$/.test(c) && /^\d{4}$/.test(a) && monthMap[b] !== undefined) {
+        day = parseInt(c,10); month = monthMap[b]; year = parseInt(a,10);
+      } else if (/^\d{1,2}$/.test(b) && /^\d{4}$/.test(c) && monthMap[a] !== undefined) {
+        day = parseInt(b,10); month = monthMap[a]; year = parseInt(c,10);
+      } else if (/^\d{1,2}$/.test(b) && /^\d{4}$/.test(a) && monthMap[c] !== undefined) {
+        day = parseInt(b,10); month = monthMap[c]; year = parseInt(a,10);
+      }
+      if (day && month !== undefined && year && day>=1 && day<=31 && year>1000 && year<3000) {
+        let d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+    return null;
+  }
+
+  // Ordina articoli dal più recente al più vecchio
+  function sortArticlesByDateDesc(articles) {
+    return [...articles].sort((a, b) => {
+      const dateA = parseArticleDate(a.date);
+      const dateB = parseArticleDate(b.date);
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;   // senza data vanno dopo
+      if (!dateB) return -1;
+      return dateB - dateA;   // decrescente
+    });
   }
 
   document.getElementById('volunteerBtn')?.addEventListener('click', (e) => {
@@ -681,7 +781,6 @@
     }
   }
   
-  // Funzione che recupera TUTTI gli articoli dal DB e poi filtra solo quelli pubblicati (draft !== true)
   async function refreshAllArticles() {
     try {
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
@@ -690,12 +789,12 @@
       if (!res.ok) throw new Error();
       const data = await res.json();
       const allArticles = data.record.articles || [];
-      // FILTRO BOZZE: mostro solo articoli con draft !== true (draft = undefined o false)
-      masterArticles = allArticles.filter(art => !art.draft);
-      masterArticles.forEach(art => {
+      let published = allArticles.filter(art => !art.draft);
+      published.forEach(art => {
         if (typeof art.likes !== 'number') art.likes = 0;
         if (typeof art.dislikes !== 'number') art.dislikes = 0;
       });
+      masterArticles = sortArticlesByDateDesc(published);
       renderArticles();
       updatePopularSidebar();
     } catch(e) {
@@ -810,12 +909,12 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const allArticles = data.record.articles || [];
-      // FILTRO BOZZE: mostro solo articoli pubblicati
-      masterArticles = allArticles.filter(art => !art.draft);
-      masterArticles.forEach(art => {
+      let published = allArticles.filter(art => !art.draft);
+      published.forEach(art => {
         if (typeof art.likes !== 'number') art.likes = 0;
         if (typeof art.dislikes !== 'number') art.dislikes = 0;
       });
+      masterArticles = sortArticlesByDateDesc(published);
       if (masterArticles.length === 0) {
         container.innerHTML = '<div style="grid-column:1/-1; text-align:center;">📭 Nessun articolo pubblicato al momento.</div>';
         return;
@@ -862,3 +961,4 @@
 </script>
 </body>
 </html>
+```
