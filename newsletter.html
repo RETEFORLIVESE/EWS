@@ -362,6 +362,31 @@
     transition: 0.2s;
   }
   .btn-outline:hover { border-color: var(--rf-gold); background: rgba(214,165,54,0.09); }
+  .social-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  .social-btn {
+    background: #1a1e24;
+    padding: 0.5rem 0.9rem;
+    border-radius: 30px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid rgba(214,165,54,0.2);
+  }
+  .social-btn:hover {
+    background: var(--rf-gold);
+    color: #08090b;
+    border-color: var(--rf-gold);
+  }
   footer {
     margin-top: auto;
     padding: 2.8rem clamp(1rem, 5vw, 4rem);
@@ -432,6 +457,17 @@
       <div style="grid-column:1/-1; text-align:center; padding:3rem;">Caricamento articoli...</div>
     </div>
     <aside class="sidebar">
+      <!-- BOX SEGUICI (spostato sopra la newsletter) -->
+      <div class="newsletter-module" style="background: rgba(200,59,47,0.09); border-color: var(--rf-red);">
+        <h3>📱 Seguici</h3>
+        <div class="social-buttons">
+          <a href="https://www.instagram.com/rete_forlivese?igsh=ZnZwcHd2dTY2OWw2" target="_blank" rel="noopener noreferrer" class="social-btn">📸 Instagram</a>
+          <a href="https://t.me/RETEFORLIVESE" target="_blank" rel="noopener noreferrer" class="social-btn">💬 Telegram</a>
+          <a href="https://linktr.ee/reteforlivese" target="_blank" rel="noopener noreferrer" class="social-btn">🌿 LinkTree</a>
+        </div>
+      </div>
+
+      <!-- MODULO NEWSLETTER -->
       <div class="newsletter-module">
         <h3>✉️ La RF‑Newsletter</h3>
         <p>Ricevi ogni venerdì gli articoli, le petizioni attive e gli eventi del comitato.</p>
@@ -442,6 +478,8 @@
         </form>
         <p style="font-size: 0.7rem; margin-top: 0.8rem;">🔒 I tuoi dati restano sicuri e non verranno condivisi.</p>
       </div>
+
+      <!-- ALTRI MODULI (più letti, partecipa) -->
       <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--rf-line); padding: 1.2rem;">
         <h3 style="font-family: 'Barlow Condensed';">📌 Più letti del mese</h3>
         <ul class="popular-list" id="popularList"></ul>
@@ -451,13 +489,6 @@
         <a href="index.html#unisciti" class="btn-outline" style="width: 100%; text-align: center;">Diventa volontario</a>
         <div class="topic-tags" style="margin-top: 1rem;">
           <span>#antifascismo</span><span>#meritocraziadalbasso</span><span>#spaziodiagorà</span>
-        </div>
-      </div>
-      <div class="newsletter-module" style="background: rgba(200,59,47,0.09); border-color: var(--rf-red);">
-        <h3>📱 Seguici</h3>
-        <div style="display: flex; gap: 0.8rem; justify-content: center;">
-          <a href="#" style="background:#1a1e24; padding:0.3rem 0.8rem;">📸 Instagram</a>
-          <a href="#" style="background:#1a1e24; padding:0.3rem 0.8rem;">💬 Telegram</a>
         </div>
       </div>
     </aside>
@@ -778,7 +809,7 @@
     });
   }
   
-  // --- Attach newsletter form handler ---
+  // Attach newsletter form handler
   const newsletterForm = document.getElementById('demoNewsletterForm');
   if (newsletterForm) {
     newsletterForm.addEventListener('submit', async (e) => {
