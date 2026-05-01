@@ -115,6 +115,9 @@
   .email-btn-container { margin: 1rem 0; text-align: right; }
   .send-email-btn { background: #d6a536; color: #0a0c10; font-weight: bold; padding: 0.6rem 1.2rem; }
   .send-email-btn:hover { background: #f0b83a; }
+  .cover-preview { margin-top: 0.5rem; max-width: 200px; border-radius: 8px; border: 1px solid #333; background: #1e1e2a; padding: 0.3rem; }
+  .cover-preview img { max-width: 100%; border-radius: 4px; }
+  .cover-preview span { font-size: 0.8rem; color: #aaa; }
 </style>
 </head>
 <body>
@@ -179,6 +182,16 @@
           <option value="✨ APPROFONDIMENTO">✨ APPROFONDIMENTO</option>
         </select>
         <input id="iconCustom" placeholder="Icona personalizzata (es. ⭐ SPECIALE)" style="margin-top:0.3rem; width:100%;">
+      </div>
+    </div>
+    
+    <!-- NUOVO: Immagine di copertina (cover) -->
+    <div style="margin-top: 0.8rem;">
+      <label style="color:#d6a536; font-weight:bold;">🖼️ Immagine di copertina (anteprima nell'articolo e nella card)</label>
+      <input type="text" id="coverImageUrl" placeholder="URL immagine copertina (es. https://...jpg)" style="width:100%;">
+      <div id="coverPreview" class="cover-preview" style="display:none;">
+        <img id="coverPreviewImg" src="" alt="anteprima copertina">
+        <span></span>
       </div>
     </div>
     
@@ -266,7 +279,7 @@
   let tempTags = [];
   let editingArticleId = null;
   let currentUser = "";
-  let lastSavedArticleId = null;  // per ricordare l'ultimo articolo salvato e mostrare il bottone email
+  let lastSavedArticleId = null;
   
   // Helper per ottenere valore categoria (select o custom)
   function getCategoryValue() {
@@ -279,6 +292,19 @@
     const select = document.getElementById('iconSelect').value;
     const custom = document.getElementById('iconCustom').value.trim();
     return custom || select || "📰 NOTIZIA";
+  }
+  
+  // Anteprima copertina
+  function updateCoverPreview() {
+    const url = document.getElementById('coverImageUrl').value.trim();
+    const previewDiv = document.getElementById('coverPreview');
+    const img = document.getElementById('coverPreviewImg');
+    if (url && (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/'))) {
+      img.src = url;
+      previewDiv.style.display = 'block';
+    } else {
+      previewDiv.style.display = 'none';
+    }
   }
   
   // Formattazione testo
@@ -380,7 +406,7 @@
     }
   });
   
-  // Gestione immagini
+  // Gestione immagini carosello
   function renderImageList() {
     const container = document.getElementById('imageList');
     container.innerHTML = '';
@@ -432,7 +458,6 @@
     }
   }
   
-  // Mostra/nascondi bottone email in base all'ultimo articolo salvato
   function showEmailButtonForArticle(articleId) {
     const container = document.getElementById('emailButtonContainer');
     if (!container) return;
@@ -447,31 +472,26 @@
     }
   }
   
-  // Funzione per comporre mailto: con tutti gli iscritti in BCC
   function composeMailTo(article) {
     if (!article) return;
     const subject = encodeURIComponent(article.title);
     const link = `${window.location.origin}/article.html?id=${article.id}`;
-    // Se siamo in locale o su file system, usiamo un fallback relativo
     const finalLink = (window.location.protocol === 'file:' || window.location.hostname === 'localhost') 
       ? `article.html?id=${article.id}` 
       : link;
     const bodyText = `${article.excerpt || "Leggi l'articolo completo"}\n\nLeggi l'articolo completo qui: ${finalLink}`;
     const body = encodeURIComponent(bodyText);
-    
     const emails = currentSubscribers.map(s => s.email).filter(e => e && e.includes('@'));
     if (emails.length === 0) {
       showMessage("Nessuna email valida tra gli iscritti.", true);
       return;
     }
     const bcc = encodeURIComponent(emails.join(','));
-    // Creiamo mailto con BCC, subject e body
     const mailtoLink = `mailto:?bcc=${bcc}&subject=${subject}&body=${body}`;
     window.open(mailtoLink, '_blank');
     showMessage(`Aperto client email con ${emails.length} destinatari in copia nascosta. Verifica e invia.`, false);
   }
   
-  // Fetch e salvataggio
   async function fetchArticles() {
     try {
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
@@ -521,6 +541,8 @@
     document.getElementById('customDate').value = '';
     document.querySelector('input[value="today"]').checked = true;
     document.getElementById('customDate').style.display = 'none';
+    document.getElementById('coverImageUrl').value = '';
+    updateCoverPreview();
     tempImages = [];
     tempTags = [];
     renderImageList();
@@ -569,6 +591,8 @@
     document.getElementById('sources').value = (art.sources || []).join('\n');
     document.getElementById('verified').checked = art.verified || false;
     document.getElementById('featured').checked = art.featured || false;
+    document.getElementById('coverImageUrl').value = art.coverImage || '';
+    updateCoverPreview();
     tempImages = art.images || [];
     tempTags = art.tags || [];
     renderImageList();
@@ -601,6 +625,7 @@
     const formattedContent = formatTextToHtml(rawContent);
     const category = getCategoryValue();
     const iconLabel = getIconValue();
+    const coverImage = document.getElementById('coverImageUrl').value.trim() || "";
     
     const articleData = {
       id: editingArticleId || Date.now(),
@@ -613,6 +638,7 @@
       fullContent: formattedContent,
       rawContent: rawContent,
       imgLabel: iconLabel,
+      coverImage: coverImage,
       featured: document.getElementById('featured').checked,
       verified: document.getElementById('verified').checked,
       images: tempImages.filter(img => img.url && img.url.trim()),
@@ -631,19 +657,15 @@
     
     const saved = await saveArticlesToCloud();
     if (saved) {
-      // Ricarichiamo la lista aggiornata e anche i subscribers per sicurezza
-      await fetchArticles();  // aggiorna currentArticles e currentSubscribers
+      await fetchArticles();
       resetForm();
       renderArticleList();
       showMessage(`Articolo "${title}" salvato!`);
-      // Mostra il bottone email per l'articolo appena salvato/modificato
       const savedArticle = currentArticles.find(a => a.id === articleData.id);
       if (savedArticle && currentSubscribers.length > 0) {
         showEmailButtonForArticle(savedArticle.id);
-        // Aggiungo un event listener dinamico per il bottone
         const sendBtn = document.getElementById('sendToSubscribersBtn');
         if (sendBtn) {
-          // Rimuovo vecchi listener e ne aggiungo uno nuovo
           const newBtn = sendBtn.cloneNode(true);
           sendBtn.parentNode.replaceChild(newBtn, sendBtn);
           newBtn.addEventListener('click', () => {
@@ -723,12 +745,13 @@
       document.getElementById('adminContent').style.display = 'block';
       document.getElementById('author').value = username;
       handleDateTypeChange();
-      await fetchArticles();  // carica articoli e subscribers
+      await fetchArticles();
       const contentArea = document.getElementById('fullContent');
       document.getElementById('boldBtn').onclick = () => wrapSelection(contentArea, '*', '*');
       document.getElementById('italicBtn').onclick = () => wrapSelection(contentArea, '/', '/');
       document.getElementById('underlineBtn').onclick = () => wrapSelection(contentArea, '_', '_');
       contentArea.addEventListener('input', updatePreview);
+      document.getElementById('coverImageUrl').addEventListener('input', updateCoverPreview);
       updatePreview();
       showMessage(`Benvenuto, ${username}!`);
     } else { alert("Credenziali errate"); }
