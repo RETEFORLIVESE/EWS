@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RTF News – Articolo · Rete Forlivese</title>
 <link rel="apple-touch-icon" href="RTFnews-slim.png">
 <link rel="icon" type="image/jpeg" href="RTFnews-slim.png">
@@ -43,7 +43,7 @@
   }
   .container { max-width: 960px; margin: 0 auto; padding: 2rem; }
   
-  /* Navbar identica alla newsletter (logo png + testo) */
+  /* Navbar — logo + testo sempre visibile anche su iPhone */
   nav {
     position: sticky;
     top: 0;
@@ -51,18 +51,20 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
-    padding: 1rem clamp(1rem, 4vw, 3rem);
-    background: rgba(8,9,11,0.92);
+    gap: 1rem;
+    padding: 0.8rem clamp(1rem, 4vw, 3rem);
+    background: rgba(8,9,11,0.94);
     backdrop-filter: blur(18px);
     border-bottom: 1px solid rgba(214,165,54,0.18);
+    flex-wrap: wrap;
   }
   .nav-brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
+    gap: 0.6rem;
     text-decoration: none;
     color: white;
+    flex-wrap: wrap;
   }
   .nav-logo {
     height: 38px;
@@ -72,12 +74,13 @@
   }
   .brand-text {
     font-family: "Barlow Condensed", sans-serif;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    background: none;
     color: var(--rf-paper);
+    white-space: normal;
+    line-height: 1.2;
   }
   .back-link {
     color: var(--rf-gold);
@@ -87,6 +90,7 @@
     font-weight: 600;
     transition: opacity 0.2s;
     border-bottom: 1px solid transparent;
+    white-space: nowrap;
   }
   .back-link:hover { opacity: 0.8; border-bottom-color: var(--rf-gold); }
   
@@ -302,6 +306,43 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
   
+  /* ===== ADATTAMENTO MOBILE: il testo "Reti Territoriali Forlivesi" resta visibile ===== */
+  @media (max-width: 640px) {
+    .nav-brand {
+      gap: 0.4rem;
+      flex: 1;
+    }
+    .brand-text {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      display: inline-block !important;   /* forziamo visibilità */
+    }
+    .nav-logo {
+      height: 30px;
+    }
+    .back-link {
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    nav {
+      padding: 0.7rem 1rem;
+      gap: 0.7rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .brand-text {
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+    }
+    .nav-logo {
+      height: 28px;
+    }
+  }
+  /* garantiamo che non ci sia mai display:none sul brand-text */
+  .brand-text {
+    display: inline-block;
+  }
+  
   @media (max-width: 768px) {
     .container { padding: 1rem; }
     .content-card { padding: 1.3rem; }
@@ -309,21 +350,16 @@
     .carousel-btn { padding: 0.4rem 0.7rem; font-size: 1rem; }
     .like-btn, .dislike-btn { padding: 0.4rem 1rem; font-size: 0.9rem; }
     .toast-msg { white-space: normal; width: 90%; text-align: center; font-size: 0.8rem; }
-    .brand-text { display: none; } /* su schermi piccoli nasconde testo per pulizia */
-    .nav-logo { height: 30px; }
-  }
-  /* per schermi medi resta visibile il testo */
-  @media (max-width: 640px) {
-    .brand-text { display: none; }
   }
 </style>
 </head>
 <body>
 <nav>
   <a href="newsletter.html" class="nav-brand">
-    <!-- Sostituito il quadrato rosso/blu con il logo RTFnews.png -->
+    <!-- Logo RTFnews.png visibile sempre -->
     <img src="RTFnews.png" alt="Logo RTF News" class="nav-logo">
-    <span class="brand-text">Rete Forlivese</span>
+    <!-- Testo "Reti Territoriali Forlivesi" sempre visibile anche su iPhone -->
+    <span class="brand-text">Reti Territoriali Forlivesi</span>
   </a>
   <a href="newsletter.html" class="back-link">← Torna alla home</a>
 </nav>
