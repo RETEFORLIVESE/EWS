@@ -1,0 +1,12 @@
+# Nascondi file di configurazione locali con password e chiavi
+.env
+*.env
+.env.local
+
+# Nascondi le cartelle generate da Node (se le usi)
+node_modules/
+.npm
+
+# Nascondi file di sistema macOS/Windows
+.DS_Store
+Thumbs.db
