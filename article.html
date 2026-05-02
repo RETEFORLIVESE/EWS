@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>RTF News – Articolo · Rete Forlivese</title>
+<link rel="apple-touch-icon" href="RTFstar.png">
+<link rel="icon" type="image/png" href="RTFstar.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --rf-red: #c83b2f;
+    --rf-blue: #173b73;
+    --rf-blue-deep: #0b1d38;
+    --rf-gold: #d6a536;
+    --rf-ink: #08090b;
+    --rf-panel: #121417;
+    --rf-panel-soft: #181c21;
+    --rf-paper: #f3efe6;
+    --rf-muted: rgba(243,239,230,0.68);
+    --rf-line: rgba(243,239,230,0.12);
+    --rf-verified: #2a7f3e;
+  }
+  body {
+    background: var(--rf-ink);
+    color: var(--rf-paper);
+    font-family: "Barlow", sans-serif;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(135deg, rgba(200,59,47,0.08), transparent 34%, rgba(23,59,115,0.12) 68%, transparent);
+    background-size: 72px 72px, 72px 72px, 100% 100%;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem; }
+  
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem clamp(1rem, 4vw, 3rem);
+    background: rgba(8,9,11,0.94);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(214,165,54,0.18);
+    flex-wrap: wrap;
+  }
+  .nav-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: white;
+    flex-wrap: wrap;
+  }
+  .nav-logo {
+    height: 38px;
+    width: auto;
+    max-width: 120px;
+    object-fit: contain;
+  }
+  .brand-text {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rf-paper);
+    white-space: normal;
+    line-height: 1.2;
+  }
+  .back-link {
+    color: var(--rf-gold);
+    text-decoration: none;
+    font-family: "Barlow Condensed", sans-serif;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    border-bottom: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .back-link:hover { opacity: 0.8; border-bottom-color: var(--rf-gold); }
+  
+  .article-header { margin-bottom: 2rem; border-bottom: 1px solid var(--rf-line); padding-bottom: 1rem; }
+  .category-badge {
+    display: inline-block;
+    background: var(--rf-red);
+    padding: 0.25rem 0.7rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+  .verified-badge {
+    display: inline-block;
+    background: var(--rf-verified);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+    font-family: "Barlow Condensed", sans-serif;
+  }
+  h1 { 
+    font-family: "Bebas Neue", sans-serif; 
+    font-size: clamp(2rem, 5vw, 3.6rem); 
+    margin: 0.5rem 0; 
+    letter-spacing: 0.02em;
+    color: #fff;
+  }
+  .article-meta { 
+    color: var(--rf-muted); 
+    font-size: 0.85rem; 
+    margin: 1rem 0; 
+    display: flex; 
+    gap: 1.5rem; 
+    flex-wrap: wrap;
+    font-weight: 300;
+  }
+  
+  .content-card {
+    background: var(--rf-panel);
+    border: 1px solid var(--rf-line);
+    padding: 2rem 2rem 1.8rem 2rem;
+    margin: 1.2rem 0 2rem 0;
+    transition: border-color 0.2s ease;
+  }
+  .content-card:hover {
+    border-color: rgba(214,165,54,0.35);
+  }
+  
+  .article-content {
+    font-size: 1.08rem;
+    line-height: 1.7;
+    color: rgba(243,239,230,0.92);
+    font-weight: 350;
+  }
+  .article-content p {
+    margin: 1.3rem 0;
+    white-space: pre-wrap;
+  }
+  .article-content strong, .article-content b { color: var(--rf-gold); font-weight: 600; }
+  .article-content a { color: var(--rf-gold); text-decoration: underline; text-underline-offset: 3px; }
+  
+  .like-section {
+    display: flex;
+    gap: 1.2rem;
+    margin: 2rem 0 1rem 0;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--rf-line);
+  }
+  .like-btn, .dislike-btn {
+    background: none;
+    border: 1px solid rgba(243,239,230,0.2);
+    padding: 0.5rem 1.4rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--rf-paper);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 0px;
+  }
+  .like-btn:hover { background: rgba(214,165,54,0.2); border-color: var(--rf-gold); }
+  .dislike-btn:hover { background: rgba(200,59,47,0.2); border-color: var(--rf-red); }
+  .like-btn.active-like { background: rgba(214,165,54,0.25); border-color: var(--rf-gold); color: var(--rf-gold); }
+  .dislike-btn.active-dislike { background: rgba(200,59,47,0.25); border-color: var(--rf-red); color: #ff8a7a; }
+  
+  .sources-section {
+    background: rgba(0,0,0,0.35);
+    padding: 1.2rem 1.5rem;
+    border-left: 3px solid var(--rf-gold);
+    margin-top: 1.5rem;
+  }
+  .sources-section h3 {
+    color: var(--rf-gold);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+  }
+  .sources-section ul {
+    margin-left: 1.5rem;
+    color: rgba(243,239,230,0.75);
+    font-size: 0.9rem;
+  }
+  .sources-section li { margin: 0.3rem 0; }
+  
+  .carousel-section {
+    margin: 2.5rem 0 2rem 0;
+    border-top: 1px solid var(--rf-line);
+    padding-top: 1.8rem;
+  }
+  .carousel-title {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    color: var(--rf-gold);
+  }
+  .carousel {
+    position: relative;
+    background: var(--rf-panel-soft);
+    border: 1px solid var(--rf-line);
+    overflow: hidden;
+  }
+  .carousel-inner {
+    position: relative;
+    min-height: 380px;
+  }
+  .carousel-slide {
+    display: none;
+    text-align: center;
+  }
+  .carousel-slide.active { display: block; }
+  .carousel-slide img {
+    max-width: 100%;
+    max-height: 480px;
+    object-fit: contain;
+    background: #0a0c0f;
+  }
+  .carousel-caption {
+    padding: 0.8rem;
+    background: rgba(0,0,0,0.7);
+    font-size: 0.85rem;
+  }
+  .carousel-controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    padding: 0 1rem;
+  }
+  .carousel-btn {
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    padding: 0.7rem 1.1rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+  }
+  .carousel-btn:hover { background: rgba(0,0,0,0.9); }
+  .carousel-dots {
+    text-align: center;
+    padding: 1rem;
+  }
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: #555;
+    margin: 0 6px;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  .dot.active { background: var(--rf-gold); }
+  
+  footer {
+    text-align: center;
+    padding: 2.5rem clamp(1rem, 4vw, 2rem);
+    border-top: 1px solid rgba(214,165,54,0.2);
+    background: #060709;
+    margin-top: 3rem;
+    font-size: 0.85rem;
+  }
+  
+  .loading, .error { text-align: center; padding: 3rem; font-family: "Barlow Condensed", sans-serif; }
+  .error { color: var(--rf-red); }
+  .toast-msg {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--rf-gold);
+    color: #08090b;
+    padding: 0.5rem 1.2rem;
+    border-radius: 40px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: bold;
+    z-index: 200;
+    display: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  
+  @media (max-width: 640px) {
+    .nav-brand {
+      gap: 0.4rem;
+      flex: 1;
+    }
+    .brand-text {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      display: inline-block !important;
+    }
+    .nav-logo {
+      height: 30px;
+    }
+    .back-link {
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    nav {
+      padding: 0.7rem 1rem;
+      gap: 0.7rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .brand-text {
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+    }
+    .nav-logo {
+      height: 28px;
+    }
+  }
+  .brand-text { display: inline-block; }
+  
+  @media (max-width: 768px) {
+    .container { padding: 1rem; }
+    .content-card { padding: 1.3rem; }
+    .carousel-controls { padding: 0 0.5rem; }
+    .carousel-btn { padding: 0.4rem 0.7rem; font-size: 1rem; }
+    .like-btn, .dislike-btn { padding: 0.4rem 1rem; font-size: 0.9rem; }
+    .toast-msg { white-space: normal; width: 90%; text-align: center; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="newsletter.html" class="nav-brand">
+    <img src="RTFnews.png" alt="Logo RTF News" class="nav-logo">
+    <span class="brand-text">Reti Territoriali Forlivesi</span>
+  </a>
+  <a href="newsletter.html" class="back-link">← Torna alla home</a>
+</nav>
+
+<div class="container" id="articleContainer">
+  <div class="loading">⏳ Caricamento articolo...</div>
+</div>
+<div id="voteToast" class="toast-msg"></div>
+
+<footer>
+  <p>Rete Forlivese · Informazione partecipata, indipendente e antifascista</p>
+  <p style="margin-top:0.5rem; font-size:0.75rem;">© 2026 RTF Community – dal territorio forlivese al mondo</p>
+</footer>
+
+<script>
+  const STORAGE_VOTES_KEY = "RF_article_votes_page";
+  
+  let currentArticle = null;
+  let localUserChoices = {};
+  
+  function getArticleIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return parseInt(params.get('id'));
+  }
+  
+  function loadLocalChoices() {
+    const stored = localStorage.getItem(STORAGE_VOTES_KEY);
+    if (stored) {
+      try { localUserChoices = JSON.parse(stored); } catch(e) { localUserChoices = {}; }
+    }
+  }
+  
+  function saveLocalChoices() {
+    localStorage.setItem(STORAGE_VOTES_KEY, JSON.stringify(localUserChoices));
+  }
+  
+  function getUserChoice(articleId) {
+    return localUserChoices[articleId] || null;
+  }
+  
+  function setUserChoice(articleId, choice) {
+    if (choice === null) delete localUserChoices[articleId];
+    else localUserChoices[articleId] = choice;
+    saveLocalChoices();
+  }
+  
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('voteToast');
+    toast.textContent = message;
+    toast.style.backgroundColor = isError ? '#c83b2f' : '#d6a536';
+    toast.style.color = '#08090b';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2700);
+  }
+  
+  async function applyVoteToServer(articleId, previousChoice, newChoice) {
+    let deltaLikes = 0;
+    let deltaDislikes = 0;
+    
+    if (previousChoice === newChoice) {
+      if (previousChoice === 'like') deltaLikes = -1;
+      else if (previousChoice === 'dislike') deltaDislikes = -1;
+      newChoice = null;
+    } else {
+      if (previousChoice === 'like') deltaLikes = -1;
+      if (previousChoice === 'dislike') deltaDislikes = -1;
+      if (newChoice === 'like') deltaLikes += 1;
+      if (newChoice === 'dislike') deltaDislikes += 1;
+    }
+    
+    if (deltaLikes === 0 && deltaDislikes === 0) {
+      return { likes: currentArticle.likes, dislikes: currentArticle.dislikes, newChoice: previousChoice };
+    }
+    
+    // Invia i delta tramite il nostro backend sicuro
+    const res = await fetch('/api/article', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleId, deltaLikes, deltaDislikes })
+    });
+    
+    if (!res.ok) throw new Error('Salvataggio fallito');
+    const data = await res.json();
+    return { likes: data.likes, dislikes: data.dislikes, newChoice };
+  }
+  
+  async function voteArticle(articleId, clickedType) {
+    if (!currentArticle || currentArticle.id !== articleId) return;
+    const previousChoice = getUserChoice(articleId);
+    let newChoice = clickedType;
+    if (previousChoice === clickedType) newChoice = null;
+    
+    const likeBtn = document.getElementById('likeBtn');
+    const dislikeBtn = document.getElementById('dislikeBtn');
+    if (likeBtn) likeBtn.disabled = true;
+    if (dislikeBtn) dislikeBtn.disabled = true;
+    
+    try {
+      const result = await applyVoteToServer(articleId, previousChoice, newChoice);
+      currentArticle.likes = result.likes;
+      currentArticle.dislikes = result.dislikes;
+      setUserChoice(articleId, result.newChoice);
+      
+      const likeSpan = document.getElementById('likeCount');
+      const dislikeSpan = document.getElementById('dislikeCount');
+      if (likeSpan) likeSpan.textContent = result.likes;
+      if (dislikeSpan) dislikeSpan.textContent = result.dislikes;
+      
+      if (likeBtn) {
+        likeBtn.classList.toggle('active-like', result.newChoice === 'like');
+        likeBtn.disabled = false;
+      }
+      if (dislikeBtn) {
+        dislikeBtn.classList.toggle('active-dislike', result.newChoice === 'dislike');
+        dislikeBtn.disabled = false;
+      }
+      showToast(result.newChoice ? (result.newChoice === 'like' ? '👍 Like registrato' : '👎 Dislike registrato') : '✖️ Voto rimosso');
+    } catch (err) {
+      console.error(err);
+      showToast('❌ Errore durante il voto, riprova', true);
+      if (likeBtn) likeBtn.disabled = false;
+      if (dislikeBtn) dislikeBtn.disabled = false;
+    }
+  }
+  
+  function formatContent(text) {
+    if (!text) return '<p>⚠️ Contenuto in aggiornamento, torna presto.</p>';
+    const paragraphs = text.split(/\n\s*\n/);
+    return paragraphs.map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+  }
+  
+  function initCarousel(images) {
+    if (!images || images.length === 0) return;
+    let currentIndex = 0;
+    const inner = document.getElementById('carouselInner');
+    const dotsContainer = document.getElementById('carouselDots');
+    if (!inner || !dotsContainer) return;
+    inner.innerHTML = '';
+    dotsContainer.innerHTML = '';
+    
+    images.forEach((img, idx) => {
+      const slide = document.createElement('div');
+      slide.className = 'carousel-slide';
+      if (idx === 0) slide.classList.add('active');
+      slide.innerHTML = `
+        <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.caption || 'Immagine reportage')}" onerror="this.src='https://placehold.co/800x450/1a1e24/bfa56e?text=Immagine+non+disponibile'">
+        <div class="carousel-caption">
+          <p>${escapeHtml(img.caption || '')}</p>
+          <small>${escapeHtml(img.credit || 'Archivio RTF')}</small>
+        </div>
+      `;
+      inner.appendChild(slide);
+      
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      if (idx === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => showSlide(idx));
+      dotsContainer.appendChild(dot);
+    });
+    
+    const showSlide = (index) => {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.dot');
+      if (index < 0) index = slides.length - 1;
+      if (index >= slides.length) index = 0;
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+      currentIndex = index;
+    };
+    
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (prevBtn) prevBtn.addEventListener('click', () => showSlide(currentIndex - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));
+  }
+  
+  async function loadArticle() {
+    const articleId = getArticleIdFromURL();
+    if (!articleId) {
+      document.getElementById('articleContainer').innerHTML = '<div class="error">❌ Articolo non specificato</div>';
+      return;
+    }
+    try {
+      const res = await fetch('/api/article');
+      if (!res.ok) throw new Error('Errore caricamento dati');
+      const data = await res.json();
+      const articles = data.record.articles || [];
+      const article = articles.find(a => a.id === articleId);
+      
+      if (!article) {
+        document.getElementById('articleContainer').innerHTML = '<div class="error">📭 Articolo non trovato</div>';
+        return;
+      }
+      if (typeof article.likes !== 'number') article.likes = 0;
+      if (typeof article.dislikes !== 'number') article.dislikes = 0;
+      currentArticle = article;
+      renderFullArticle(article);
+    } catch(e) {
+      document.getElementById('articleContainer').innerHTML = `<div class="error">⚠️ Errore di connessione: ${e.message}</div>`;
+    }
+  }
+  
+  function renderFullArticle(article) {
+    const container = document.getElementById('articleContainer');
+    const verifiedBadge = article.verified ? '<span class="verified-badge">✅ Verificato RF</span>' : '';
+    const userChoice = getUserChoice(article.id);
+    
+    const articleTextHtml = formatContent(article.fullContent || article.excerpt || 'Approfondimento in fase di scrittura, consulta la newsletter per aggiornamenti.');
+    
+    let sourcesHtml = '';
+    if (article.sources && article.sources.length > 0) {
+      sourcesHtml = `
+        <div class="sources-section">
+          <h3>📚 Fonti e approfondimenti</h3>
+          <ul>
+            ${article.sources.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+    
+    const mainCardHtml = `
+      <div class="content-card">
+        <div class="article-content">
+          ${articleTextHtml}
+        </div>
+        <div class="like-section">
+          <button class="like-btn ${userChoice === 'like' ? 'active-like' : ''}" id="likeBtn">
+            👍 <span id="likeCount">${article.likes}</span>
+          </button>
+          <button class="dislike-btn ${userChoice === 'dislike' ? 'active-dislike' : ''}" id="dislikeBtn">
+            👎 <span id="dislikeCount">${article.dislikes}</span>
+          </button>
+        </div>
+        ${sourcesHtml}
+      </div>
+    `;
+    
+    let carouselHtml = '';
+    if (article.images && article.images.length > 0) {
+      carouselHtml = `
+        <div class="carousel-section">
+          <div class="carousel-title">📷 GALLERY · REPORTAGE VISUALE</div>
+          <div class="carousel" id="articleCarousel">
+            <div class="carousel-inner" id="carouselInner"></div>
+            <div class="carousel-controls">
+              <button class="carousel-btn" id="prevBtn">◀</button>
+              <button class="carousel-btn" id="nextBtn">▶</button>
+            </div>
+            <div class="carousel-dots" id="carouselDots"></div>
+          </div>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = `
+      <div class="article-header">
+        <span class="category-badge" style="background:${article.categoryColor || '#c83b2f'}">${escapeHtml(article.category || 'INCHIESTA')}</span>
+        ${verifiedBadge}
+        <h1>${escapeHtml(article.title)}</h1>
+        <div class="article-meta">
+          <span>📅 ${escapeHtml(article.date || 'Data in aggiornamento')}</span>
+          <span>✍️ ${escapeHtml(article.author || 'Redazione RTF')}</span>
+          ${article.imgLabel ? `<span>📷 ${escapeHtml(article.imgLabel)}</span>` : ''}
+        </div>
+      </div>
+      ${mainCardHtml}
+      ${carouselHtml}
+    `;
+    
+    if (article.images && article.images.length > 0) {
+      initCarousel(article.images);
+    }
+    
+    const likeBtn = document.getElementById('likeBtn');
+    const dislikeBtn = document.getElementById('dislikeBtn');
+    if (likeBtn) likeBtn.addEventListener('click', () => voteArticle(article.id, 'like'));
+    if (dislikeBtn) dislikeBtn.addEventListener('click', () => voteArticle(article.id, 'dislike'));
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+      return c;
+    });
+  }
+  
+  loadLocalChoices();
+  loadArticle();
+</script>
+</body>
+</html>
