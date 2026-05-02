@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="apple-touch-icon" href="RTFstar.png">
 <link rel="icon" type="image/png" href="RTFstar.png">
-<title>Reti Territoriali Forlivesi</title>
+<title>RTF – Comitato Politico Territoriale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -73,7 +73,6 @@
     min-width: max-content;
   }
 
-  /* Stile per l'immagine del logo nella navbar */
   .nav-logo-img {
     width: 38px;
     height: 38px;
@@ -225,7 +224,6 @@
     text-shadow: 0 18px 44px rgba(0,0,0,0.45);
   }
 
-  /* Nuovi colori richiesti: R blu, T rossa, F bianca */
   .hero-tagline .r { color: var(--rf-blue); }
   .hero-tagline .t { color: var(--rf-red); }
   .hero-tagline .f { color: #fff; }
@@ -396,7 +394,7 @@
 
   .pillars-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     border: 1px solid var(--rf-line);
     background: rgba(255,255,255,0.035);
   }
@@ -717,6 +715,10 @@
 
     .pillar-card:nth-child(2) { border-right: 0; }
     .pillar-card:nth-child(-n+2) { border-bottom: 1px solid var(--rf-line); }
+    .pillars-grid { grid-template-columns: repeat(2, 1fr); }
+    .pillar-card:nth-child(5) { border-right: 0; }
+    .pillar-card:nth-child(3) { border-right: 1px solid var(--rf-line); }
+    .pillar-card:nth-child(3), .pillar-card:nth-child(4) { border-bottom: 1px solid var(--rf-line); }
 
     .identity-panel { position: relative; top: auto; }
   }
@@ -751,51 +753,52 @@
 <div class="site-shell">
   <nav aria-label="Navigazione principale">
    <a href="#" class="nav-brand" aria-label="RF Community">
-    <img src="rf-logo.jpeg" alt="Logo RF Community" class="nav-logo-img">
-     <span class="brand-text">Comitato Rete Forlivese</span>
+    <img src="rf-logo.jpeg" alt="Logo RTF Comitato" class="nav-logo-img">
+     <span class="brand-text">Comitato Politico Territoriale</span>
       </a>
     <ul class="nav-links">
       <li><a href="newsletter.html">NewsLetter</a></li>
-      <li><a href="#communitato">Comitato</a></li>
-      <li><a href="#openparlamento">OpenParl</a></li>
-      <li><a href="#petizioni">Petizioni</a></li>
+      <li><a href="#comitato">Comitato</a></li>
+      <li><a href="#obiettivi">Obiettivi</a></li>
+      <li><a href="#manifesto">Manifesto</a></li>
+      <li><a href="#unisciti">Partecipa</a></li>
     </ul>
   </nav>
 
   <header class="hero">
     <div class="hero-content">
       <div class="hero-copy">
-        <p class="eyebrow">Comitato territoriale</p>
+        <p class="eyebrow">Comitato politico di base</p>
         <h1 class="hero-tagline"><span class="r">R</span><span class="t">T</span><span class="f">F</span></h1>
         <h2 class="hero-title">reti territoriali Forlivesi</h2>
         <p class="hero-desc">
-          Un comitato nato per informare, coordinare iniziative e dare possibilità a un confronto e di un dialogo politico reale tra persone che credono in un futuro diverso.
+          Siamo un comitato politico nato per riorganizzare la partecipazione dal basso: informazione trasparente, mobilitazione collettiva e antifascismo concreto. Crediamo in una politica che non delega, ma coinvolge.
         </p>
         <div class="cta-row">
-          <a href="#unisciti" class="btn btn-primary">Unisciti a noi</a>
-          <a href="#obiettivi" class="btn btn-outline">Scopri gli obiettivi</a>
+          <a href="#unisciti" class="btn btn-primary">Organizzati con noi</a>
+          <a href="#manifesto" class="btn btn-outline">Leggi il manifesto</a>
         </div>
       </div>
 
       <div class="hero-emblem" aria-hidden="true">
         <div class="logo-wrap">
           <span class="logo-fallback">RF</span>
-          <img src="rf-logo.jpeg" alt="Logo RF Rete Forlivese" onerror="this.style.display='none'">
+          <img src="rf-logo.jpeg" alt="Logo RTF" onerror="this.style.display='none'">
         </div>
       </div>
     </div>
   </header>
 
   <main>
-    <section class="pillars" id="community">
+    <section class="pillars" id="comitato">
       <div class="section-inner">
         <div class="section-head">
           <div>
-            <p class="section-label">Cosa facciamo</p>
-            <h2 class="section-title">I Pilastri del Comitato</h2>
+            <p class="section-label">I nostri cardini</p>
+            <h2 class="section-title">Pilastri politici</h2>
           </div>
           <p class="section-kicker">
-            RF mette insieme informazione, partecipazione e solidarietà con uno stile diretto dal basso, ordinato e riconoscibile.
+            Costruiamo azione e pensiero critico attorno a cinque direttrici: partecipazione, informazione veritiera, coordinamento territoriale, dialogo democratico e solidarietà antifascista.
           </p>
         </div>
 
@@ -806,8 +809,8 @@
               <div class="pillar-code">01</div>
             </div>
             <div>
-              <h3 class="pillar-title">Informazione</h3>
-              <p class="pillar-text">Aggiornamenti chiari, contenuti verificati e notizie utili per capire cosa accade in Italia, in Europa e nel Mondo.</p>
+              <h3 class="pillar-title">Partecipazione dal basso</h3>
+              <p class="pillar-text">Ogni voce conta. Promuoviamo assemblee aperte, discussioni pubbliche e decisioni orizzontali per ridare potere alla comunità.</p>
             </div>
           </article>
 
@@ -817,8 +820,8 @@
               <div class="pillar-code">02</div>
             </div>
             <div>
-              <h3 class="pillar-title">Coordinazione</h3>
-              <p class="pillar-text">Iniziative, incontri ed eventi organizzati in modo semplice, concreto e accessibile.</p>
+              <h3 class="pillar-title">Informazione trasparente</h3>
+              <p class="pillar-text">Contrastiamo disinformazione e narrazioni tossiche con dati, fonti aperte e analisi politica accessibile a tutti.</p>
             </div>
           </article>
 
@@ -828,8 +831,8 @@
               <div class="pillar-code">03</div>
             </div>
             <div>
-              <h3 class="pillar-title">Collaborazione</h3>
-              <p class="pillar-text">La Rete Forlivese è un luogo di comunanza, uno spazio di comunicazione che vuole aggregare tutti i gruppi locali.</p>
+              <h3 class="pillar-title">Coordinamento territoriale</h3>
+              <p class="pillar-text">Colleghiamo realtà locali, associazioni e gruppi informali per creare una rete capace di incidere sulle politiche del territorio.</p>
             </div>
           </article>
 
@@ -839,8 +842,8 @@
               <div class="pillar-code">04</div>
             </div>
             <div>
-              <h3 class="pillar-title">Dialogo</h3>
-              <p class="pillar-text">Uno spazio di confronto rispettoso, dove opinioni diverse possono diventare idee condivise.</p>
+              <h3 class="pillar-title">Dialogo democratico</h3>
+              <p class="pillar-text">Spazio di confronto leale, senza esclusioni, dove anche il disaccordo diventa strumento di crescita collettiva.</p>
             </div>
           </article>
 
@@ -850,31 +853,31 @@
               <div class="pillar-code">05</div>
             </div>
             <div>
-              <h3 class="pillar-title">Solidarietà</h3>
-              <p class="pillar-text">Aiuto reciproco, ascolto e presenza concreta come base per una comunità più forte.</p>
+              <h3 class="pillar-title">Solidarietà e antifascismo</h3>
+              <p class="pillar-text">Lotta quotidiana contro ogni forma di odio, discriminazione e autoritarismo. La memoria è impegno, il presente è mobilitazione.</p>
             </div>
           </article>
         </div>
       </div>
     </section>
 
-    <div class="stats" aria-label="Valori della community">
+    <div class="stats" aria-label="Identità della comunità">
       <div class="stats-grid">
         <div class="stat-item">
           <div class="stat-num">1<span>+</span></div>
-          <div class="stat-label">Community attiva</div>
+          <div class="stat-label">Comunità in costruzione</div>
         </div>
         <div class="stat-item">
-          <div class="stat-num">4</div>
-          <div class="stat-label">Pilastri fondanti</div>
+          <div class="stat-num">5</div>
+          <div class="stat-label">Direttive d’azione</div>
         </div>
         <div class="stat-item">
           <div class="stat-num">0<span>$</span></div>
-          <div class="stat-label">Senza fini di lucro</div>
+          <div class="stat-label">Nessun fine di lucro</div>
         </div>
         <div class="stat-item">
           <div class="stat-num">∞</div>
-          <div class="stat-label">Obiettivi condivisi</div>
+          <div class="stat-label">Orizzonti condivisi</div>
         </div>
       </div>
     </div>
@@ -882,35 +885,35 @@
     <section class="objectives" id="obiettivi">
       <div class="section-inner objectives-layout">
         <div>
-          <p class="section-label">La nostra missione</p>
-          <h2 class="section-title">I nostri obiettivi</h2>
+          <p class="section-label">La nostra agenda politica</p>
+          <h2 class="section-title">Obiettivi strategici</h2>
           <ul class="obj-list">
             <li>
               <span class="obj-num">01</span>
               <div>
-                <strong>Dare spazio alla comunità</strong>
-                <p>Creare una piattaforma dove le persone possano esprimersi, essere ascoltate e contribuire in modo concreto.</p>
+                <strong>Democrazia partecipata</strong>
+                <p>Dal quartiere al consiglio comunale: vogliamo strumenti di democrazia diretta, bilanci partecipati e assemblee sovrane.</p>
               </div>
             </li>
             <li>
               <span class="obj-num">02</span>
               <div>
-                <strong>Diffondere informazione autentica</strong>
-                <p>Contrastare confusione e disinformazione con contenuti chiari, verificati e accessibili.</p>
+                <strong>Contrasto all’astensionismo</strong>
+                <p>Ricostruire fiducia nella politica attraverso trasparenza, azione concreta e lotta alla corruzione di discorsi e idee.</p>
               </div>
             </li>
             <li>
               <span class="obj-num">03</span>
               <div>
-                <strong>Costruire reti di supporto</strong>
-                <p>Mettere in connessione persone con valori comuni per creare solidarietà e sostegno reciproco.</p>
+                <strong>Reti di mutuo aiuto</strong>
+                <p>Sostegno abitativo, sportelli sociali e banche del tempo: la solidarietà organizzata come risposta alla crisi dei diritti.</p>
               </div>
             </li>
             <li>
               <span class="obj-num">04</span>
               <div>
-                <strong>Mobilitare la partecipazione</strong>
-                <p>Stimolare presenza attiva attraverso eventi, discussioni e azioni condivise.</p>
+                <strong>Mobilitazione per i diritti</strong>
+                <p>Iniziative, presidi, campagne e pressione politica su scuola, lavoro, salute e ambiente. Non delegare, agire.</p>
               </div>
             </li>
           </ul>
@@ -918,25 +921,52 @@
 
         <aside class="identity-panel">
           <div class="identity-initial">05</div>
-          <h3>Antifascismo</h3>
+          <h3>Antifascismo radicale</h3>
           <p>
-            Difendere dignità, libertà e uguaglianza contro fascismo, odio e discriminazione, costruendo una comunità fondata su solidarietà e rispetto reciproco.
+            La nostra bussola è la Costituzione nata dalla Resistenza. Combattiamo ogni nostalgia fascista, ogni deriva autoritaria e ogni discriminazione. Essere antifascisti oggi significa difendere i corpi, le idee e i diritti di chi viene messo ai margini.
           </p>
-          <div class="identity-tags" aria-label="Temi identitari">
-            <span>Dignità</span>
-            <span>Libertà</span>
+          <div class="identity-tags" aria-label="Valori fondanti">
+            <span>Resistenza</span>
             <span>Uguaglianza</span>
-            <span>Solidarietà</span>
+            <span>Libertà</span>
+            <span>Riscatto sociale</span>
           </div>
         </aside>
       </div>
     </section>
 
-    <section class="manifesto" aria-labelledby="manifesto-title">
+    <section class="manifesto" aria-labelledby="manifesto-title" id="manifesto">
       <div class="manifesto-inner">
         <div>
-          <p class="section-label">Manifesto</p>
-          <h2 class="section-title" id="manifesto-title">Manifesto di mobilitazione</h2>
+          <p class="section-label">Manifesto politico</p>
+          <h2 class="section-title" id="manifesto-title">Mobilitazione permanente</h2>
         </div>
         <blockquote>
-          "Aiuto reciproco, dignità e solidarietà: <em
+          "Non chiedere cosa la città può fare per te, ma <em>organizzati con chi vuole cambiarla</em>. La politica è partecipazione, non spettacolo. Decidiamo insieme, dal basso, senza padroni."
+        </blockquote>
+      </div>
+    </section>
+
+    <section class="join" id="unisciti">
+      <div class="join-inner">
+        <div class="ig-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4c0 3.2-2.6 5.8-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8C2 4.6 4.6 2 7.8 2zm-.2 2C5.6 4 4 5.6 4 7.6v8.8C4 18.4 5.6 20 7.6 20h8.8c2 0 3.6-1.6 3.6-3.6V7.6C20 5.6 18.4 4 16.4 4H7.6zm9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5zM12 7c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5 2.24-5 5-5zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+        </div>
+        <h2 class="section-title" style="color:#fff;">Entra nella Rete</h2>
+        <p>
+          Il comitato è aperto a tutte le persone che condividono i valori della partecipazione, dell’antifascismo e della solidarietà. Non servono tessere, serve impegno. Seguici, vieni agli incontri, scrivici.
+        </p>
+        <a href="https://instagram.com/reteforlivese" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Seguici su Instagram</a>
+        <p style="font-size:0.85rem; margin-top:1.2rem;">✉️ reteforlivese@proton.me  –  assemblee ogni primo martedì del mese</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-logo"><span class="r">R</span><span class="t">T</span><span class="f">F</span></div>
+    <p>Comitato politico Reti Territoriali Forlivesi – autorganizzazione, antifascismo, democrazia dal basso</p>
+    <p style="margin-top:0.5rem;">✊ Nessuno escluso, tutt* per tutt*.</p>
+  </footer>
+</div>
+</body>
+</html>
