@@ -12,7 +12,8 @@ export default async function handler(req, res) {
   const VALID_USERS = {
     "redazione": "RF2026Admin",
     "TandeePetrenka": "Yugoslavia",
-    "giornalista": "reteforlivese"
+    "giornalista": "reteforlivese",
+    "RitaBoattini" : "diocane2007"
   };
 
   // Recuperiamo le chiavi da Vercel
