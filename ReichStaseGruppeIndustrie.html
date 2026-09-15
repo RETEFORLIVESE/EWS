@@ -1,22 +1,135 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html><head>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Einheitlicher Standort</title>
+<link rel="apple-touch-icon" href="USSEcoat.png">
+<link rel="icon" type="image/png" href="USSEcoat.png">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --ist-blue-deep: #0B3D6E;
+    --ist-blue: #1B5FA8;
+    --ist-blue-mid: #2E77C9;
+    --ist-azure: #E7F1FA;
+    --ist-azure-mid: #CFE3F5;
+    --ist-ink: #1F2A33;
+    --ist-text: #3C4750;
+    --ist-line: #D6E2ED;
+    --ist-gold: #C9A227;
+    --ist-white: #FFFFFF;
+  }
 
+  html { scroll-behavior: smooth; }
 
+  body {
+    background: var(--ist-white);
+    color: var(--ist-text);
+    font-family: "Titillium Web", "Segoe UI", Arial, sans-serif;
+    line-height: 1.5;
+  }
 
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+  /* ---------- Top institutional strip ---------- */
+  .top-strip {
+    background: var(--ist-blue-deep);
+    color: rgba(255,255,255,0.85);
+    font-size: 0.8rem;
+    padding: 0.4rem clamp(1rem, 4vw, 3rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 0.01em;
+  }
 
+  .top-strip a {
+    text-decoration: none;
+    color: rgba(255,255,255,0.85);
+    margin-left: 1.25rem;
+  }
+  .top-strip a:hover { text-decoration: underline; }
 
-  
-    <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>ReichStaseGrupeIndustrie</title></head><body style="color: rgb(0, 0, 0); background-color: rgb(191, 191, 191);" alink="#000099" link="#000099" vlink="#990099">
-    <a target="_blank" href="Accedi.html">Accedi</a><table style="text-align: left; width: 100%; font-weight: bold; font-family: Courier New,Courier,monospace;" border="1" cellpadding="2" cellspacing="2">
-      <tbody>
-        <tr>
-          <td style="vertical-align: top; background-color: rgb(255, 255, 203); text-align: center;"><big><big><span style="color: red;">&#24093;&#22283;&#24037;&#26989;&#38598;&#22296;<span style="color: black;">ReichStaseGruppeIndustrie</span></span><br>
-              </big></big></td>
-        </tr>
-      </tbody>
-    </table>
-    
+  /* ---------- Main header band ---------- */
+  header.main-band {
+    background: linear-gradient(180deg, var(--ist-blue-mid) 0%, var(--ist-blue) 100%);
+    color: #fff;
+    padding: 1.1rem clamp(1rem, 4vw, 3rem);
+  }
+
+  .band-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .brand-seal {
+    width: 76px;
+    height: 76px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .brand-seal img {
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.75)) drop-shadow(0 0 28px rgba(255,255,255,0.5));
+  }
+
+  .brand-seal svg { width: 30px; height: 30px; }
+
+  .brand-text-group { display: flex; flex-direction: column; line-height: 1.15; }
+
+  .brand-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.72);
+    font-weight: 400;
+  }
+
+  .brand-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  /* ---------- Flag stripe ---------- */
+  .flag-stripe {
+    display: flex;
+    height: 8px;
+  }
+  .flag-stripe span { flex: 1 1 0; }
+  .flag-stripe .stripe-1 { background: #0072CE; }
+  .flag-stripe .stripe-2 { background: #000000; }
+  .flag-stripe .stripe-3 { background: #FFFFFF; }
+
+  </style>
+</head>
+<body>
+
+  <div class="top-strip">
+    <span>Zentraler Exekutivrat der Union</span>
+    <div>
+      <a href="#">Deutscher</a>
+      <a href="#">Italiano</a>
+      <a href="#">English</a>
+    </div>
+  </div>
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
 
       <tbody>
@@ -37,10 +150,10 @@
           </td>
           <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Beteiligt an der staatlichen Wirtschaftskontrolle und -verwaltung<br>
           </td>
-          <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Engagiert für Umverteilung und kollektive landwirtschaftliche Produktion</td>
-          <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Bereit für die Arbeit und die Entwicklung des Staates<br>
+          <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Engagiert fÃ¼r Umverteilung und kollektive landwirtschaftliche Produktion</td>
+          <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Bereit fÃ¼r die Arbeit und die Entwicklung des Staates<br>
           </td>
-          <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Dem Dienst für die Proletarier des Arbeiterstaates verpflichtet<br>
+          <td style="vertical-align: top; background-color: rgb(255, 255, 203);">Dem Dienst fÃ¼r die Proletarier des Arbeiterstaates verpflichtet<br>
           </td>
         </tr><tr>
       <td style="vertical-align: top; background-color: rgb(255, 255, 203); text-align: center;"><br>
