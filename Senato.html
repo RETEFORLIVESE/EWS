@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Senato della Repubblica — Sito istituzionale (demo)</title>
+<style>
+  :root{
+    --blu: #1B2A4A;
+    --blu-scuro: #10192E;
+    --bordeaux: #7A1F2B;
+    --bordeaux-scuro: #5E1620;
+    --oro: #A9843C;
+    --carta: #F6F4EF;
+    --carta-scura: #EDE9DF;
+    --testo: #20242B;
+    --testo-chiaro: #5B616C;
+    --bianco: #FFFFFF;
+    --riga: #D9D3C4;
+    --radius: 2px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family: "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+    color:var(--testo);
+    background:var(--carta);
+    line-height:1.55;
+  }
+  h1,h2,h3,h4{
+    font-family: "Source Serif Pro", Georgia, "Times New Roman", serif;
+    font-weight:600;
+    line-height:1.2;
+    color:var(--blu-scuro);
+  }
+  a{color:inherit; text-decoration:none;}
+  img{max-width:100%; display:block;}
+  .container{max-width:1180px; margin:0 auto; padding:0 28px;}
+  .eyebrow{
+    font-size:0.78rem;
+    letter-spacing:0.02em;
+    color:var(--bordeaux);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+
+  /* Skip link */
+  .skip-link{
+    position:absolute; left:-999px; top:0;
+    background:var(--bordeaux); color:#fff; padding:10px 16px; z-index:200;
+  }
+  .skip-link:focus{ left:10px; top:10px; }
+
+  /* Topbar */
+  .topbar{
+    background:var(--blu-scuro);
+    color:#cfd6e4;
+    font-size:0.82rem;
+  }
+  .topbar .container{
+    display:flex; justify-content:space-between; align-items:center;
+    padding-top:7px; padding-bottom:7px;
+    flex-wrap:wrap; gap:8px;
+  }
+  .topbar-links{display:flex; gap:18px; flex-wrap:wrap;}
+  .topbar-links button{
+    background:none; border:none; color:#cfd6e4; font-size:0.82rem;
+    cursor:pointer; border-bottom:1px solid transparent;
+  }
+  .topbar-links button:hover, .topbar-links button:focus-visible{
+    border-bottom:1px solid var(--oro); color:#fff; outline:none;
+  }
+  .lang-group{display:flex; gap:10px;}
+  .lang-group button[aria-pressed="true"]{color:#fff; font-weight:700;}
+
+  /* Header */
+  header.site-header{
+    background:var(--bianco);
+    border-bottom:3px solid var(--bordeaux);
+    position:sticky; top:0; z-index:100;
+  }
+  .header-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 0;
+    gap:20px;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .emblem{
+    width:48px; height:48px; flex-shrink:0;
+    border-radius:50%;
+    background: radial-gradient(circle at 32% 30%, #8b2431, var(--bordeaux-scuro));
+    display:flex; align-items:center; justify-content:center;
+    color:var(--oro); font-family:"Source Serif Pro", serif; font-weight:700; font-size:1.1rem;
+    border:2px solid var(--oro);
+  }
+  .brand-text .title-1{
+    font-family:"Source Serif Pro", serif;
+    font-size:1.18rem; font-weight:700; color:var(--blu-scuro);
+    letter-spacing:0.01em;
+  }
+  .brand-text .title-2{
+    font-size:0.78rem; color:var(--testo-chiaro);
+  }
+  nav.main-nav ul{
+    display:flex; gap:30px; list-style:none;
+  }
+  nav.main-nav a{
+    font-size:0.94rem; font-weight:600; color:var(--blu-scuro);
+    padding:6px 2px; border-bottom:2px solid transparent;
+  }
+  nav.main-nav a:hover, nav.main-nav a:focus-visible{
+    border-bottom:2px solid var(--bordeaux); outline:none;
+  }
+  .nav-toggle{
+    display:none; background:none; border:1px solid var(--blu); border-radius:var(--radius);
+    width:42px; height:38px; cursor:pointer; color:var(--blu-scuro); font-size:1.2rem;
+  }
+
+  /* Hero */
+  .hero{
+    background:
+      linear-gradient(115deg, rgba(16,25,46,0.93), rgba(27,42,74,0.86)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 90px);
+    color:#fff;
+    padding:76px 0 84px;
+  }
+  .hero-inner{
+    display:grid; grid-template-columns: 1.3fr 0.9fr; gap:50px; align-items:end;
+  }
+  .hero .eyebrow{color:var(--oro);}
+  .hero h1{
+    color:#fff; font-size:2.6rem; max-width:16ch; margin-bottom:20px;
+  }
+  .hero p{
+    color:#d8dce6; max-width:52ch; font-size:1.05rem; margin-bottom:28px;
+  }
+  .hero-actions{display:flex; gap:14px; flex-wrap:wrap;}
+  .btn{
+    display:inline-block; padding:13px 24px; font-weight:600; font-size:0.94rem;
+    border-radius:var(--radius); cursor:pointer; border:1px solid transparent;
+  }
+  .btn-primary{background:var(--oro); color:var(--blu-scuro); border-color:var(--oro);}
+  .btn-primary:hover{background:#c19a4c;}
+  .btn-outline{background:transparent; color:#fff; border-color:rgba(255,255,255,0.5);}
+  .btn-outline:hover{border-color:#fff;}
+  .hero-panel{
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.16);
+    padding:26px;
+  }
+  .hero-panel h2{color:#fff; font-size:1.05rem; margin-bottom:14px;}
+  .hero-stat{
+    display:flex; justify-content:space-between; padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.14);
+    font-size:0.92rem; color:#d8dce6;
+  }
+  .hero-stat:last-child{border-bottom:none;}
+  .hero-stat strong{color:#fff; font-family:"Source Serif Pro", serif; font-size:1.15rem;}
+
+  /* Quick access */
+  .quick{
+    background:var(--carta-scura);
+    border-bottom:1px solid var(--riga);
+  }
+  .quick .container{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    gap:0;
+  }
+  .quick a{
+    padding:22px 22px; border-right:1px solid var(--riga);
+    display:block;
+  }
+  .quick a:last-child{border-right:none;}
+  .quick a:hover, .quick a:focus-visible{ background:rgba(122,31,43,0.06); outline:none;}
+  .quick .label{font-weight:700; font-size:0.92rem; color:var(--blu-scuro); margin-bottom:4px;}
+  .quick .desc{font-size:0.82rem; color:var(--testo-chiaro);}
+
+  /* Section spacing */
+  section{padding:70px 0;}
+  .section-head{max-width:640px; margin-bottom:40px;}
+  .section-head h2{font-size:1.9rem;}
+  .section-head p{color:var(--testo-chiaro); margin-top:12px; font-size:1rem;}
+
+  /* Chi siamo */
+  .chi-grid{
+    display:grid; grid-template-columns: 0.95fr 1.05fr; gap:56px; align-items:start;
+  }
+  .chi-grid > p{color:var(--testo-chiaro); font-size:1.02rem;}
+  .funzioni{display:grid; grid-template-columns:1fr 1fr; gap:24px 30px;}
+  .funzione{border-top:2px solid var(--bordeaux); padding-top:14px;}
+  .funzione h3{font-size:1.02rem; margin-bottom:8px;}
+  .funzione p{font-size:0.9rem; color:var(--testo-chiaro);}
+
+  .numeri{
+    background:var(--blu-scuro); color:#fff; padding:44px 0;
+  }
+  .numeri .container{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:30px;
+  }
+  .numero strong{
+    display:block; font-family:"Source Serif Pro", serif; font-size:2.3rem; color:var(--oro);
+  }
+  .numero span{font-size:0.85rem; color:#c7cdda;}
+
+  /* Servizi */
+  .servizi{background:var(--carta-scura);}
+  .card-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--riga); border:1px solid var(--riga);
+  }
+  .card{background:var(--bianco); padding:28px; }
+  .card .num{font-family:"Source Serif Pro", serif; color:var(--riga); font-size:1.6rem; margin-bottom:10px;}
+  .card h3{font-size:1.05rem; margin-bottom:10px;}
+  .card p{font-size:0.9rem; color:var(--testo-chiaro); margin-bottom:14px;}
+  .card a{font-size:0.86rem; font-weight:700; color:var(--bordeaux); border-bottom:1px solid var(--bordeaux); padding-bottom:2px;}
+
+  /* Novità */
+  .novita-list{display:flex; flex-direction:column;}
+  .novita-item{
+    display:grid; grid-template-columns:110px 1fr auto; gap:26px; align-items:center;
+    padding:22px 0; border-bottom:1px solid var(--riga);
+  }
+  .novita-item:first-child{border-top:1px solid var(--riga);}
+  .novita-data{font-size:0.85rem; color:var(--testo-chiaro);}
+  .novita-data strong{display:block; font-family:"Source Serif Pro", serif; font-size:1.5rem; color:var(--blu-scuro);}
+  .novita-cont h3{font-size:1.05rem; margin-bottom:6px;}
+  .novita-cont p{font-size:0.88rem; color:var(--testo-chiaro);}
+  .tag{
+    font-size:0.72rem; font-weight:700; color:var(--bordeaux);
+    border:1px solid var(--bordeaux); padding:3px 9px; border-radius:20px; white-space:nowrap;
+  }
+
+  /* Contatti */
+  .contatti-grid{display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px;}
+  form .field{margin-bottom:18px;}
+  form label{display:block; font-size:0.85rem; font-weight:700; color:var(--blu-scuro); margin-bottom:6px;}
+  form input, form textarea, form select{
+    width:100%; padding:12px 14px; border:1px solid var(--riga); background:var(--bianco);
+    font-family:inherit; font-size:0.95rem; border-radius:var(--radius);
+  }
+  form input:focus, form textarea:focus, form select:focus{
+    outline:2px solid var(--bordeaux); outline-offset:1px; border-color:var(--bordeaux);
+  }
+  form textarea{resize:vertical; min-height:120px;}
+  .form-note{font-size:0.8rem; color:var(--testo-chiaro); margin-top:6px;}
+  #formMsg{margin-top:14px; font-size:0.9rem; font-weight:600;}
+
+  .info-box{background:var(--carta-scura); border:1px solid var(--riga); padding:26px;}
+  .info-box h3{font-size:1rem; margin-bottom:16px;}
+  .info-row{display:flex; gap:12px; margin-bottom:16px; font-size:0.9rem;}
+  .info-row .ic{color:var(--bordeaux); font-weight:700;}
+  .info-row div strong{display:block; font-size:0.85rem; color:var(--blu-scuro);}
+
+  /* Footer */
+  footer{background:var(--blu-scuro); color:#c7cdda; padding-top:56px;}
+  .footer-grid{
+    display:grid; grid-template-columns: 1.3fr repeat(3,1fr); gap:40px;
+    padding-bottom:40px; border-bottom:1px solid rgba(255,255,255,0.12);
+  }
+  .footer-grid h4{color:#fff; font-size:0.92rem; margin-bottom:16px;}
+  .footer-grid ul{list-style:none;}
+  .footer-grid li{margin-bottom:9px; font-size:0.86rem;}
+  .footer-grid a:hover{color:#fff; text-decoration:underline;}
+  .footer-brand .title-1{color:#fff; font-family:"Source Serif Pro", serif; font-size:1.1rem; margin-bottom:10px;}
+  .footer-brand p{font-size:0.85rem; color:#a9b0c0; max-width:32ch;}
+  .footer-bottom{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 0; font-size:0.78rem; color:#8b93a6; flex-wrap:wrap; gap:10px;
+  }
+  .footer-bottom .disclaimer{color:#6f7794;}
+
+  /* Accessibility panel */
+  .a11y-panel{
+    position:fixed; top:0; right:-320px; width:300px; height:100%;
+    background:#fff; box-shadow:-4px 0 18px rgba(0,0,0,0.18);
+    padding:24px; z-index:300; transition:right 0.25s ease; overflow-y:auto;
+  }
+  .a11y-panel.open{right:0;}
+  .a11y-panel h2{font-size:1.05rem; margin-bottom:18px;}
+  .a11y-panel .close{
+    position:absolute; top:16px; right:16px; background:none; border:none; font-size:1.3rem; cursor:pointer;
+  }
+  .a11y-opt{margin-bottom:16px;}
+  .a11y-opt label{display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; font-weight:600;}
+  .a11y-opt .row{display:flex; gap:8px; margin-top:8px;}
+  .a11y-opt button{
+    flex:1; padding:8px; border:1px solid var(--riga); background:var(--carta); cursor:pointer; border-radius:var(--radius);
+  }
+  .a11y-opt button[aria-pressed="true"]{background:var(--bordeaux); color:#fff; border-color:var(--bordeaux);}
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,14,24,0.4); z-index:290; display:none;
+  }
+  .overlay.show{display:block;}
+
+  body.contrast-alto{ --carta:#000; --carta-scura:#0d0d0d; --testo:#fff; --testo-chiaro:#ddd; --riga:#444; --bianco:#111; --blu-scuro:#000; }
+  body.contrast-alto h1, body.contrast-alto h2, body.contrast-alto h3, body.contrast-alto h4{color:#fff;}
+  body.font-grande{font-size:1.14rem;}
+  body.font-grande h1{font-size:2.9rem;}
+
+  @media (max-width:920px){
+    .hero-inner{grid-template-columns:1fr;}
+    .quick .container{grid-template-columns:1fr 1fr;}
+    .quick a{border-right:none; border-bottom:1px solid var(--riga);}
+    .chi-grid, .contatti-grid{grid-template-columns:1fr;}
+    .funzioni{grid-template-columns:1fr;}
+    .numeri .container{grid-template-columns:1fr 1fr; gap:26px;}
+    .card-grid{grid-template-columns:1fr;}
+    nav.main-nav{
+      display:none; position:absolute; top:100%; left:0; right:0; background:#fff;
+      border-bottom:3px solid var(--bordeaux); padding:10px 0;
+    }
+    nav.main-nav.open{display:block;}
+    nav.main-nav ul{flex-direction:column; gap:0;}
+    nav.main-nav li{border-bottom:1px solid var(--riga);}
+    nav.main-nav a{display:block; padding:14px 28px;}
+    .nav-toggle{display:block;}
+    .novita-item{grid-template-columns:70px 1fr; row-gap:8px;}
+    .novita-item .tag{grid-column:2; justify-self:start;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#contenuto">Vai al contenuto principale</a>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-links">
+      <button type="button" id="a11yOpen">Accessibilità</button>
+      <button type="button">Trasparenza</button>
+      <button type="button">Amministrazione aperta</button>
+    </div>
+    <div class="lang-group" role="group" aria-label="Seleziona lingua">
+      <button type="button" aria-pressed="true">ITA</button>
+      <button type="button" aria-pressed="false">ENG</button>
+    </div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#">
+      <span class="emblem" aria-hidden="true">SR</span>
+      <span class="brand-text">
+        <span class="title-1">Senato della Repubblica</span>
+        <span class="title-2">Sito istituzionale — modello dimostrativo</span>
+      </span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNav" aria-label="Apri menu di navigazione">☰</button>
+    <nav class="main-nav" id="mainNav">
+      <ul>
+        <li><a href="#chi-siamo">Istituzione</a></li>
+        <li><a href="#servizi">Attività</a></li>
+        <li><a href="#novita">Comunicati</a></li>
+        <li><a href="#documenti">Documenti</a></li>
+        <li><a href="#contatti">Contatti</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="contenuto">
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <p class="eyebrow">Comunicazione istituzionale</p>
+        <h1>Il lavoro parlamentare, spiegato con chiarezza</h1>
+        <p>Un portale unico per seguire i lavori d'Aula e delle Commissioni, consultare gli atti e i resoconti, e comprendere l'iter delle leggi dalla presentazione all'approvazione.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#documenti">Consulta gli atti</a>
+          <a class="btn btn-outline" href="#novita">Segui i lavori d'Aula</a>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <h2>Seduta odierna</h2>
+        <div class="hero-stat"><span>Aula — discussione generale</span><strong>10:00</strong></div>
+        <div class="hero-stat"><span>Commissione Affari costituzionali</span><strong>14:30</strong></div>
+        <div class="hero-stat"><span>Commissione Bilancio</span><strong>15:00</strong></div>
+        <div class="hero-stat"><span>Votazioni previste</span><strong>3</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="quick">
+    <div class="container">
+      <a href="#">
+        <div class="label">Come funziona l'iter di una legge</div>
+        <div class="desc">Dalla proposta al voto finale</div>
+      </a>
+      <a href="#">
+        <div class="label">Composizione dell'Assemblea</div>
+        <div class="desc">Gruppi parlamentari e cariche</div>
+      </a>
+      <a href="#">
+        <div class="label">Visite guidate a Palazzo</div>
+        <div class="desc">Prenotazione per cittadini e scuole</div>
+      </a>
+      <a href="#">
+        <div class="label">Accesso agli atti</div>
+        <div class="desc">Ricerca in archivio storico</div>
+      </a>
+    </div>
+  </div>
+
+  <section id="chi-siamo">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Istituzione</p>
+        <h2>Che cos'è e cosa fa il Senato</h2>
+      </div>
+      <div class="chi-grid">
+        <p>Il Senato è una delle due Camere che compongono il Parlamento ed esercita, insieme alla Camera dei deputati, la funzione legislativa. Esamina i disegni di legge, li discute in Commissione e in Aula, e partecipa al controllo sull'operato del Governo attraverso interrogazioni, interpellanze e mozioni.</p>
+        <div class="funzioni">
+          <div class="funzione">
+            <h3>Funzione legislativa</h3>
+            <p>Esame, modifica e approvazione dei disegni di legge, in collaborazione con l'altra Camera.</p>
+          </div>
+          <div class="funzione">
+            <h3>Funzione di controllo</h3>
+            <p>Interrogazioni e interpellanze rivolte al Governo su atti e politiche pubbliche.</p>
+          </div>
+          <div class="funzione">
+            <h3>Funzione di indirizzo</h3>
+            <p>Mozioni e risoluzioni con cui l'Assemblea orienta l'azione dell'Esecutivo.</p>
+          </div>
+          <div class="funzione">
+            <h3>Attività conoscitiva</h3>
+            <p>Audizioni e indagini conoscitive nelle Commissioni permanenti.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="numeri">
+    <div class="container">
+      <div class="numero"><strong>200</strong><span>Senatori eletti</span></div>
+      <div class="numero"><strong>14</strong><span>Commissioni permanenti</span></div>
+      <div class="numero"><strong>8</strong><span>Gruppi parlamentari</span></div>
+      <div class="numero"><strong>XIX</strong><span>Legislatura in corso</span></div>
+    </div>
+  </div>
+
+  <section id="servizi" class="servizi">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Attività e servizi</p>
+        <h2>Strumenti per seguire e partecipare</h2>
+        <p>Servizi pensati per cittadini, studiosi e operatori dell'informazione che vogliono seguire da vicino il lavoro parlamentare.</p>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="num">01</div>
+          <h3>Diretta dei lavori</h3>
+          <p>Segui in streaming le sedute d'Aula e i principali lavori delle Commissioni.</p>
+          <a href="#">Guarda la diretta →</a>
+        </div>
+        <div class="card">
+          <div class="num">02</div>
+          <h3>Archivio degli atti</h3>
+          <p>Ricerca disegni di legge, resoconti stenografici e documenti parlamentari.</p>
+          <a href="#">Vai all'archivio →</a>
+        </div>
+        <div class="card">
+          <div class="num">03</div>
+          <h3>Visite a Palazzo</h3>
+          <p>Prenota una visita guidata alle sale storiche, singolarmente o con la scuola.</p>
+          <a href="#">Prenota una visita →</a>
+        </div>
+        <div class="card">
+          <div class="num">04</div>
+          <h3>Open data</h3>
+          <p>Dataset su votazioni, presenze e attività parlamentare in formati aperti.</p>
+          <a href="#">Scarica i dati →</a>
+        </div>
+        <div class="card">
+          <div class="num">05</div>
+          <h3>Educazione civica</h3>
+          <p>Materiali didattici sul funzionamento del Parlamento per le scuole.</p>
+          <a href="#">Materiali per docenti →</a>
+        </div>
+        <div class="card">
+          <div class="num">06</div>
+          <h3>Accredito stampa</h3>
+          <p>Modulistica e procedure per i giornalisti accreditati a Palazzo.</p>
+          <a href="#">Richiedi accredito →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="novita">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Comunicati</p>
+        <h2>Ultime notizie dall'Aula</h2>
+      </div>
+      <div class="novita-list">
+        <div class="novita-item">
+          <div class="novita-data"><strong>12</strong>settembre</div>
+          <div class="novita-cont">
+            <h3>Approvato in prima lettura il disegno di legge sulla semplificazione amministrativa</h3>
+            <p>Il testo passa ora all'esame della Camera dei deputati per il completamento dell'iter.</p>
+          </div>
+          <span class="tag">Aula</span>
+        </div>
+        <div class="novita-item">
+          <div class="novita-data"><strong>09</strong>settembre</div>
+          <div class="novita-cont">
+            <h3>Audizioni in Commissione Bilancio sulla manovra economica</h3>
+            <p>Ascoltate le parti sociali nell'ambito dell'indagine conoscitiva sul disegno di legge di bilancio.</p>
+          </div>
+          <span class="tag">Commissione</span>
+        </div>
+        <div class="novita-item">
+          <div class="novita-data"><strong>03</strong>settembre</div>
+          <div class="novita-cont">
+            <h3>Pubblicato il calendario dei lavori per il mese di ottobre</h3>
+            <p>Definite le date delle sedute d'Aula e delle principali Commissioni permanenti.</p>
+          </div>
+          <span class="tag">Calendario</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="documenti" class="servizi">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Documenti</p>
+        <h2>Consulta atti e resoconti</h2>
+        <p>Cerca per numero di atto, materia o parola chiave nell'archivio dei lavori parlamentari.</p>
+      </div>
+      <form id="searchForm" style="display:flex; gap:12px; flex-wrap:wrap; max-width:640px;" onsubmit="event.preventDefault();">
+        <input type="search" placeholder="Es. disegno di legge n. 1234, oppure 'bilancio'" style="flex:1; min-width:240px; padding:13px 16px; border:1px solid var(--riga); font-size:0.95rem;" aria-label="Cerca negli atti parlamentari">
+        <button type="submit" class="btn btn-primary" style="border:1px solid var(--blu-scuro); background:var(--blu-scuro); color:#fff;">Cerca</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="contatti">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Contatti</p>
+        <h2>Scrivi all'ufficio competente</h2>
+        <p>Questo modulo è dimostrativo: non invia dati a nessun server e non genera comunicazioni reali.</p>
+      </div>
+      <div class="contatti-grid">
+        <form id="contactForm" novalidate>
+          <div class="field">
+            <label for="nome">Nome e cognome</label>
+            <input type="text" id="nome" name="nome" required>
+          </div>
+          <div class="field">
+            <label for="email">Indirizzo email</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="field">
+            <label for="ufficio">Ufficio destinatario</label>
+            <select id="ufficio" name="ufficio">
+              <option>Ufficio relazioni con il pubblico</option>
+              <option>Ufficio stampa</option>
+              <option>Servizio visite guidate</option>
+              <option>Ufficio accrediti</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="messaggio">Messaggio</label>
+            <textarea id="messaggio" name="messaggio" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="background:var(--bordeaux); border-color:var(--bordeaux); color:#fff;">Invia richiesta</button>
+          <p class="form-note">Campi obbligatori. I dati inseriti non vengono trasmessi: questa è una pagina dimostrativa.</p>
+          <p id="formMsg" role="status"></p>
+        </form>
+        <div class="info-box">
+          <h3>Informazioni di contatto</h3>
+          <div class="info-row"><span class="ic">📍</span><div><strong>Sede</strong>Piazza (esempio), 00186 Roma</div></div>
+          <div class="info-row"><span class="ic">📞</span><div><strong>Centralino</strong>06 0000 0000</div></div>
+          <div class="info-row"><span class="ic">✉️</span><div><strong>Email</strong>urp@esempio-senato.it</div></div>
+          <div class="info-row"><span class="ic">🕘</span><div><strong>Orari URP</strong>Lun–Ven, 9:00–17:00</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="title-1">Senato della Repubblica</div>
+        <p>Portale istituzionale dedicato al lavoro parlamentare, agli atti e ai servizi per cittadini e istituzioni.</p>
+      </div>
+      <div>
+        <h4>Istituzione</h4>
+        <ul>
+          <li><a href="#chi-siamo">Chi siamo</a></li>
+          <li><a href="#">Organi e cariche</a></li>
+          <li><a href="#">Trasparenza</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Attività</h4>
+        <ul>
+          <li><a href="#servizi">Servizi</a></li>
+          <li><a href="#documenti">Documenti</a></li>
+          <li><a href="#novita">Comunicati</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Assistenza</h4>
+        <ul>
+          <li><a href="#contatti">Contatti</a></li>
+          <li><a href="#">Note legali</a></li>
+          <li><a href="#">Privacy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Senato della Repubblica — modello grafico dimostrativo.</span>
+      <span class="disclaimer">Sito realizzato a scopo dimostrativo/didattico, non affiliato a enti reali.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="overlay" id="overlay"></div>
+<aside class="a11y-panel" id="a11yPanel" aria-hidden="true">
+  <button class="close" id="a11yClose" aria-label="Chiudi pannello accessibilità">✕</button>
+  <h2>Accessibilità</h2>
+  <div class="a11y-opt">
+    <label>Dimensione testo</label>
+    <div class="row">
+      <button type="button" id="fontNormale" aria-pressed="true">Normale</button>
+      <button type="button" id="fontGrande" aria-pressed="false">Grande</button>
+    </div>
+  </div>
+  <div class="a11y-opt">
+    <label>Contrasto</label>
+    <div class="row">
+      <button type="button" id="contrastoNormale" aria-pressed="true">Standard</button>
+      <button type="button" id="contrastoAlto" aria-pressed="false">Alto</button>
+    </div>
+  </div>
+</aside>
+
+<script>
+  // Menu mobile
+  const navToggle = document.getElementById('navToggle');
+  const mainNav = document.getElementById('mainNav');
+  navToggle.addEventListener('click', () => {
+    const isOpen = mainNav.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', isOpen);
+  });
+
+  // Pannello accessibilità
+  const a11yOpen = document.getElementById('a11yOpen');
+  const a11yClose = document.getElementById('a11yClose');
+  const a11yPanel = document.getElementById('a11yPanel');
+  const overlay = document.getElementById('overlay');
+
+  function openPanel(){
+    a11yPanel.classList.add('open');
+    a11yPanel.setAttribute('aria-hidden','false');
+    overlay.classList.add('show');
+  }
+  function closePanel(){
+    a11yPanel.classList.remove('open');
+    a11yPanel.setAttribute('aria-hidden','true');
+    overlay.classList.remove('show');
+  }
+  a11yOpen.addEventListener('click', openPanel);
+  a11yClose.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+
+  function setPressed(btnOn, btnOff){
+    btnOn.setAttribute('aria-pressed','true');
+    btnOff.setAttribute('aria-pressed','false');
+  }
+
+  const fontNormale = document.getElementById('fontNormale');
+  const fontGrande = document.getElementById('fontGrande');
+  fontGrande.addEventListener('click', () => {
+    document.body.classList.add('font-grande');
+    setPressed(fontGrande, fontNormale);
+  });
+  fontNormale.addEventListener('click', () => {
+    document.body.classList.remove('font-grande');
+    setPressed(fontNormale, fontGrande);
+  });
+
+  const contrastoNormale = document.getElementById('contrastoNormale');
+  const contrastoAlto = document.getElementById('contrastoAlto');
+  contrastoAlto.addEventListener('click', () => {
+    document.body.classList.add('contrast-alto');
+    setPressed(contrastoAlto, contrastoNormale);
+  });
+  contrastoNormale.addEventListener('click', () => {
+    document.body.classList.remove('contrast-alto');
+    setPressed(contrastoNormale, contrastoAlto);
+  });
+
+  // Form contatti (demo, nessun invio reale)
+  const contactForm = document.getElementById('contactForm');
+  const formMsg = document.getElementById('formMsg');
+  contactForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    formMsg.textContent = 'Richiesta registrata (demo): nessun dato è stato inviato a un server reale.';
+    formMsg.style.color = '#7A1F2B';
+    contactForm.reset();
+  });
+</script>
+</body>
+</html>
