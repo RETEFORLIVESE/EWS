@@ -144,13 +144,13 @@ svg {
   flex: 1 1 0;
 }
 .fascia-tricolore .verde {
-  background: var(--verde);
+  background: #0072CE;
 }
 .fascia-tricolore .bianco {
-  background: var(--bianco);
+  background: #000000;
 }
 .fascia-tricolore .rosso {
-  background: var(--rosso);
+  background: #FFFFFF);
 }
 
 /* Barra di navigazione blu */
