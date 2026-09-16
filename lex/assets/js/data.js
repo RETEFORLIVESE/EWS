@@ -7,55 +7,55 @@
 
 const ATTI = [
   {
-    id: "Legge-Digitalizzazione",
-    categoria: "Statuto Ordinario",
-    numero: "134",
-    anno: "2026",
-    titolo: "Legge sulla Digitalizzazione degli atti pubblici",
-    dataEmanazione: "03 settebre 2026",
-    promulgatoDa: "Congresso Unitario",
-    stato: "vigente",
-    sommario:
-      "Istituisce i siti istituzionali, ne definisce i quadri operativi di competenza, gli organi di governo e i servizi.",
-    articoli: [
-      {
-        numero: 1,
-        rubrica: "Utilità",
-        testo:
-          "Per garantire la Trasparenza costituzionale, vengono istituiti i soti istituzionali della Fazione degli Estji.",
-      },
-      {
-        numero: 2,
-        rubrica: "Organi di governo",
-        testo:
-          "Sono organi della Fazione: il Consiglio dei Fondatori, con funzione di indirizzo generale e modifica dello Statuto; il Comandante di Fazione, con funzione esecutiva e di rappresentanza; il Consiglio degli Ufficiali, con funzione consultiva e di gestione operativa.",
-      },
-      {
-        numero: 3,
-        rubrica: "Diritti dei membri",
-        testo:
-          "Ogni membro regolarmente affiliato ha diritto di accesso ai territori comuni, di partecipazione alle attività di fazione e di tutela secondo le norme del Codice di Giustizia. Ha altresì diritto di recedere dall'affiliazione in qualsiasi momento, salvo obblighi assunti.",
-      },
-      {
-        numero: 4,
-        rubrica: "Doveri dei membri",
-        testo:
-          "Ogni membro è tenuto al rispetto del presente Statuto, dei regolamenti derivati e delle decisioni legittimamente assunte dagli organi di governo. È tenuto altresì a contribuire alla difesa e al sostentamento comune secondo le proprie possibilità.",
-      },
-      {
-        numero: 5,
-        rubrica: "Gerarchia delle fonti",
-        testo:
-          "I regolamenti, gli editti e i decreti emanati dagli organi di governo non possono contraddire il presente Statuto. In caso di contrasto, prevale la norma di rango superiore.",
-      },
-      {
-        numero: 6,
-        rubrica: "Revisione dello Statuto",
-        testo:
-          "Il presente Statuto può essere modificato solo con delibera del Consiglio dei Fondatori adottata a maggioranza qualificata dei due terzi.",
-      },
-    ],
-  },
+  id: "Legge-Digitalizzazione",
+  categoria: "Statuto Ordinario",
+  numero: "134",
+  anno: "2026",
+  titolo: "Legge sulla Digitalizzazione degli atti pubblici",
+  dataEmanazione: "03 settembre 2026",
+  promulgatoDa: "Congresso Unitario",
+  stato: "vigente",
+  sommario:
+    "Istituisce la piattaforma digitale unitaria per la pubblicazione degli atti pubblici, la partecipazione democratica e il controllo popolare, in conformità alla Costituzione dell'USSE.",
+  articoli: [
+    {
+      numero: 1,
+      rubrica: "Finalità e utilità costituzionale",
+      testo:
+        "Per garantire la trasparenza costituzionale e l'effettivo esercizio della sovranità popolare, sono istituiti i siti istituzionali e la piattaforma digitale unitaria dell'Unione degli Stati Sociali degli Estji (USSE). La piattaforma assicura l'accesso universale, gratuito e permanente agli atti pubblici, ai lavori delle Assemblee e dei Congressi, nonché agli strumenti di partecipazione previsti dalla Costituzione.",
+    },
+    {
+      numero: 2,
+      rubrica: "Organi di governo e competenze",
+      testo:
+        "Sono organi competenti per la digitalizzazione: il Congresso Unitario, che emana le leggi e approva il piano digitale unitario; il Consolato dell'Unione, che attua e coordina i servizi digitali; il Comitato Tecnico-Scientifico dell'Unione (CTSU), che esprime parere obbligatorio di fattibilità tecnica e scientifica; l'Ispettorato di Vigilanza e Integrità dell'Unione (IVIdU), che vigila su trasparenza, integrità e conflitti d'interesse; la Commissione Elettorale Permanente dell'Unione (CEPU), che gestisce le procedure elettorali e referendarie digitali. Le Assemblee e i Congressi a tutti i livelli partecipano alla definizione dei contenuti e al controllo popolare.",
+    },
+    {
+      numero: 3,
+      rubrica: "Diritti dei cittadini",
+      testo:
+        "Ogni cittadino dell'USSE ha diritto di accesso telematico agli atti pubblici, di consultazione dei dati in formato aperto, di partecipazione digitale alle assemblee popolari, di presentare iniziative legislative popolari e richieste di referendum, di esercitare il diritto di revoca dei deputati e di ricevere informazioni tempestive sulle attività degli organi costituzionali. È garantita la tutela dei dati personali e il diritto all'oblio nei limiti della legge.",
+    },
+    {
+      numero: 4,
+      rubrica: "Doveri dei cittadini e degli organi",
+      testo:
+        "Ogni cittadino è tenuto a utilizzare i servizi digitali nel rispetto della Costituzione, delle leggi e dei diritti altrui. Gli organi pubblici hanno il dovere di pubblicare tempestivamente gli atti, di garantire l'accessibilità digitale, di colmare il divario digitale e di assicurare la continuità dei servizi, secondo i principi di solidarietà e uguaglianza.",
+    },
+    {
+      numero: 5,
+      rubrica: "Gerarchia delle fonti",
+      testo:
+        "La Costituzione dell'USSE prevale su ogni norma digitale. I regolamenti, gli editti e i decreti emanati dagli organi competenti non possono contraddire la Costituzione, le leggi unitarie e i diritti fondamentali. In caso di contrasto, prevale la norma di rango superiore. Le misure tecniche adottate devono essere conformi ai pareri del CTSU e sottoposte al controllo dell'IVIdU.",
+    },
+    {
+      numero: 6,
+      rubrica: "Revisione e modifiche",
+      testo:
+        "La presente legge può essere modificata solo con delibera del Congresso Unitario adottata a maggioranza qualificata dei due terzi. Le modifiche che riguardano i principi fondamentali, i diritti dei cittadini o la forma dell'Unione sono sottoposte a referendum popolare confermativo a livello unitario, ai sensi della Costituzione.",
+    },
+  ],
+}
   {
     id: "regolamento-territoriale",
     categoria: "Regolamento",
