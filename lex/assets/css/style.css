@@ -50,9 +50,9 @@ img,svg{max-width:100%;}
 
 .fascia-tricolore{height:7px;display:flex;}
 .fascia-tricolore span{flex:1 1 0;}
-.fascia-tricolore .verde{background:var(--verde);}
-.fascia-tricolore .bianco{background:var(--bianco);}
-.fascia-tricolore .rosso{background:var(--rosso);}
+.fascia-tricolore .verde{background: #0072CE;}
+.fascia-tricolore .bianco{background: #000000;}
+.fascia-tricolore .rosso{background: #FFFFFF;}
 
 .nav-principale{background:#fff;border-bottom:3px solid var(--blu-700);position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(11,61,110,.08);}
 .nav-principale ul{list-style:none;display:flex;flex-wrap:wrap;gap:2px;margin:0;padding:0;}
