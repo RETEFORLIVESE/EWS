@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   // ⚠️ Cambia queste credenziali con quelle della tua redazione
   const VALID_USERS = {
-    "redazione": "prova",
+    "TandeePetrenka": "TandeePetrenka",
     "admin": "CambiamiAnche",
   };
 
