@@ -794,21 +794,15 @@
   ===================================================================== */
   var LINES = {
     rossa:  { name: "Linea Rossa",  color: "var(--line-rossa)",  hex: "#bf2008" },
-    dorata: { name: "Linea Dorata", color: "var(--line-dorata)", hex: "#c9971f" },
     blu:    { name: "Linea Blu",    color: "var(--line-blu)",    hex: "#0a5f96" }
   };
 
   var STATIONS = [
     { id: "reichstadt",     name: "Reichstadt",        x: 120, y: 350, lines: ["rossa"] },
     { id: "soviet",         name: "Soviet-Allee",      x: 310, y: 350, lines: ["rossa"] },
-    { id: "centrale",       name: "Terlin Centrale",   x: 500, y: 350, lines: ["rossa","dorata","verde","blu"], interchange: true },
+    { id: "centrale",       name: "Terlin Centrale",   x: 500, y: 350, lines: ["rossa","blu"], interchange: true },
     { id: "kanzler",        name: "Kanzlerplatz",      x: 690, y: 350, lines: ["rossa"] },
     { id: "ostmark",        name: "Ostmark",           x: 880, y: 350, lines: ["rossa"] },
-
-    { id: "nordhafen",      name: "Nordhafen",         x: 500, y: 70,  lines: ["dorata"] },
-    { id: "bundesallee",    name: "Bundesallee",       x: 500, y: 210, lines: ["dorata"] },
-    { id: "marktplatz",     name: "Marktplatz",        x: 500, y: 490, lines: ["dorata"] },
-    { id: "suditz",         name: "Süditz",            x: 500, y: 630, lines: ["dorata"] },
 
     { id: "aeroporto",      name: "Aeroporto Terlin",  x: 810, y: 110, lines: ["blu"] },
     { id: "fiera",          name: "Fiera",             x: 655, y: 230, lines: ["blu"] },
@@ -818,8 +812,6 @@
 
   var LINE_PATHS = {
     rossa:  ["reichstadt", "soviet", "centrale", "kanzler", "ostmark"],
-    dorata: ["nordhafen", "bundesallee", "centrale", "marktplatz", "suditz"],
-    verde:  ["estjifall", "werftweg", "centrale", "industriering", "kuroburg"],
     blu:    ["aeroporto", "fiera", "centrale", "rathausviertel", "neustadt"]
   };
 
