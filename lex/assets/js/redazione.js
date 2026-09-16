@@ -1,3 +1,4 @@
+// assets/js/redazione.js
 (function () {
   let vista = "menu";
   let idInModifica = null;
@@ -26,6 +27,67 @@
   function mostraMessaggio(msg) {
     const el = document.getElementById("redazione-messaggio");
     if (el) { el.textContent = msg; el.style.display = msg ? "block" : "none"; }
+  }
+
+  /* ---------- LOGIN / LOGOUT ---------- */
+
+  function mostraLogin() {
+    const la = document.getElementById('login-area');
+    const ac = document.getElementById('admin-content');
+    if (la) la.style.display = 'block';
+    if (ac) ac.style.display = 'none';
+  }
+
+  function mostraAdmin() {
+    const la = document.getElementById('login-area');
+    const ac = document.getElementById('admin-content');
+    if (la) la.style.display = 'none';
+    if (ac) ac.style.display = 'block';
+  }
+
+  function setupLoginUI() {
+    const btn   = document.getElementById('loginBtn');
+    const err   = document.getElementById('loginError');
+    const user  = document.getElementById('adminUsername');
+    const pass  = document.getElementById('adminPassword');
+    const out   = document.getElementById('logoutBtn');
+    const label = document.getElementById('adminUsernameLabel');
+
+    if (!btn || !user || !pass) return; // sicurezza se il markup non c'è
+
+    btn.addEventListener('click', async () => {
+      err.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Accesso…';
+      const u = user.value.trim();
+      const p = pass.value;
+      try {
+        await API.login(u, p);
+        // salva il nome utente per la topbar (sopravvive al refresh)
+        try { sessionStorage.setItem('fz_user', u); } catch (e) {}
+        if (label) label.textContent = u;
+        mostraAdmin();
+        await avviaRedazione();
+      } catch (e) {
+        err.textContent = '❌ ' + (e.message || 'Errore di accesso');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Accedi';
+      }
+    });
+
+    // Invio da qualsiasi campo → click sul bottone
+    [user, pass].forEach(el => el.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); }
+    }));
+
+    if (out) {
+      out.addEventListener('click', () => {
+        API.clearCredentials();
+        try { sessionStorage.removeItem('fz_user'); } catch (e) {}
+        location.reload();
+      });
+    }
   }
 
   /* ---------- VISTE ---------- */
@@ -301,21 +363,41 @@
     });
   }
 
-  /* ---------- INIT ---------- */
+  /* ---------- AVVIO REDAZIONE (ex-init) ---------- */
 
-  async function init() {
-    renderTestata("redazione");
-    renderFooter();
+  async function avviaRedazione() {
     initEventi();
 
     try {
       atti = await API.loadAtti();
     } catch (e) {
-      alert("Errore nel caricamento degli atti: " + e.message + "\n\nVerifica API_CONFIG in assets/js/config.js");
+      alert("Errore nel caricamento degli atti: " + e.message);
       atti = [];
     }
 
     vai("menu");
+  }
+
+  /* ---------- INIT ---------- */
+
+  async function init() {
+    // Testata e footer sempre visibili (anche durante il login)
+    renderTestata("redazione");
+    renderFooter();
+
+    setupLoginUI();
+
+    if (API.isAuthenticated()) {
+      // ripristina il nome utente mostrato in topbar
+      const saved = (() => { try { return sessionStorage.getItem('fz_user'); } catch (e) { return null; } })();
+      const label = document.getElementById('adminUsernameLabel');
+      if (label && saved) label.textContent = saved;
+
+      mostraAdmin();
+      await avviaRedazione();
+    } else {
+      mostraLogin();
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);
