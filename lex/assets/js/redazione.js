@@ -141,22 +141,68 @@
       <p style="margin-top:20px;"><button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">&larr; Torna al menu</button></p>`;
   }
 
+  /* ---------- COMMI E SOTTOCOMMI (editor) ---------- */
+
+  function renderSottocomma(testo, iSotto) {
+    return `
+      <div class="redazione-sottocomma">
+        <span class="redazione-sottocomma__lettera">${letteraDa(iSotto)})</span>
+        <textarea class="redazione-sottocomma-testo" rows="1" placeholder="Testo del sottocomma">${escapeHtml(testo)}</textarea>
+        <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-sottocomma title="Rimuovi sottocomma">✕</button>
+      </div>`;
+  }
+
+  function renderComma(comma, iComma) {
+    const sottocommi = (comma.sottocommi || []).map((s, iSotto) => renderSottocomma(s, iSotto)).join("");
+    return `
+      <div class="redazione-comma">
+        <div class="redazione-comma__intestazione">
+          <span class="redazione-comma__numero">Comma ${iComma + 1}</span>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-aggiungi-sottocomma>+ sottocomma</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-comma style="margin-left:auto;">Rimuovi comma</button>
+        </div>
+        <textarea class="redazione-comma-testo" placeholder="Testo del comma" rows="2">${escapeHtml(comma.testo)}</textarea>
+        <div class="redazione-sottocommi">${sottocommi}</div>
+      </div>`;
+  }
+
+  // Legge lo stato attuale dei commi/sottocommi direttamente dal DOM di un articolo.
+  function raccogliCommiDalDOM(articoloEl) {
+    return [...articoloEl.querySelectorAll(":scope > .redazione-commi > .redazione-comma")].map(commaEl => ({
+      testo: commaEl.querySelector(".redazione-comma-testo").value,
+      sottocommi: [...commaEl.querySelectorAll(".redazione-sottocomma-testo")].map(t => t.value)
+    }));
+  }
+
   function renderRigaArticolo(art, i) {
+    const commi = commiDiArticolo(art);
+    const commiHtml = commi.map((c, ic) => renderComma(c, ic)).join("");
     return `
       <div class="redazione-articolo" data-indice="${i}">
         <div class="redazione-articolo__intestazione">
           <span>Articolo</span>
           <input type="text" class="redazione-art-numero" value="${escapeHtml(art.numero)}" style="width:70px;" />
-          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-articolo="${i}" style="margin-left:auto;">Rimuovi</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-articolo="${i}" style="margin-left:auto;">Rimuovi articolo</button>
         </div>
         <input type="text" class="redazione-art-rubrica" placeholder="Rubrica dell'articolo" value="${escapeHtml(art.rubrica)}" />
-        <textarea class="redazione-art-testo" placeholder="Testo dell'articolo" rows="4">${escapeHtml(art.testo)}</textarea>
+        <div class="redazione-commi">${commiHtml}</div>
+        <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-aggiungi-comma>+ Aggiungi comma</button>
+        <details class="redazione-strumento-analisi">
+          <summary>Strumento: suddividi automaticamente un testo incollato</summary>
+          <p style="font-size:.82rem;color:var(--inchiostro-tenue);margin:6px 0;">
+            Incolla qui il testo completo dell'articolo, un comma o sottocomma per riga
+            (es. "1. Testo del comma", "a) testo del sottocomma"). Verrà suddiviso automaticamente,
+            <strong>sostituendo</strong> i commi attualmente presenti qui sopra.
+          </p>
+          <textarea class="redazione-analisi-testo" rows="4" placeholder="1. Testo del primo comma...&#10;a) primo sottocomma&#10;b) secondo sottocomma&#10;2. Testo del secondo comma..."></textarea>
+          <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-analizza-testo>Suddividi automaticamente</button>
+        </details>
       </div>`;
   }
 
   function renderEditor(atto) {
     idInModifica = atto ? atto.id : null;
-    const articoli = atto ? atto.articoli.map(a => ({ ...a })) : [{ numero: 1, rubrica: "", testo: "" }];
+    const articoli = atto ? atto.articoli.map(a => ({ ...a })) : [{ numero: 1, rubrica: "", commi: [{ testo: "", sottocommi: [] }] }];
     const cat = atto ? atto.categoria : "";
     const opzioni = categorieDisponibili()
       .map(c => `<option value="${escapeHtml(c)}" ${c === cat ? "selected" : ""}>${escapeHtml(c)}</option>`).join("");
@@ -219,7 +265,10 @@
     return [...document.querySelectorAll("#redazione-articoli .redazione-articolo")].map(el => ({
       numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
       rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
-      testo: el.querySelector(".redazione-art-testo").value.trim(),
+      commi: raccogliCommiDalDOM(el).map(c => ({
+        testo: c.testo.trim(),
+        sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
+      })),
     }));
   }
 
@@ -323,7 +372,75 @@
       if (e.target.id === "redazione-aggiungi-articolo") {
         const c = document.getElementById("redazione-articoli");
         const n = c.querySelectorAll(".redazione-articolo").length + 1;
-        c.insertAdjacentHTML("beforeend", renderRigaArticolo({ numero: n, rubrica: "", testo: "" }, n));
+        c.insertAdjacentHTML("beforeend", renderRigaArticolo({ numero: n, rubrica: "", commi: [{ testo: "", sottocommi: [] }] }, n));
+        return;
+      }
+
+      // ---- Aggiungi comma a un articolo ----
+      const aggComma = e.target.closest("[data-aggiungi-comma]");
+      if (aggComma) {
+        const articoloEl = aggComma.closest(".redazione-articolo");
+        const commi = raccogliCommiDalDOM(articoloEl);
+        commi.push({ testo: "", sottocommi: [] });
+        articoloEl.querySelector(".redazione-commi").innerHTML =
+          commi.map((c, ic) => renderComma(c, ic)).join("");
+        return;
+      }
+
+      // ---- Rimuovi comma ----
+      const rimComma = e.target.closest("[data-rimuovi-comma]");
+      if (rimComma) {
+        const articoloEl = rimComma.closest(".redazione-articolo");
+        if (articoloEl.querySelectorAll(".redazione-comma").length <= 1) {
+          alert("Deve rimanere almeno un comma per articolo.");
+          return;
+        }
+        rimComma.closest(".redazione-comma").remove();
+        // Rinumera le etichette "Comma N" rimaste, preservando i testi già inseriti.
+        const commi = raccogliCommiDalDOM(articoloEl);
+        articoloEl.querySelector(".redazione-commi").innerHTML =
+          commi.map((c, ic) => renderComma(c, ic)).join("");
+        return;
+      }
+
+      // ---- Aggiungi sottocomma a un comma ----
+      const aggSotto = e.target.closest("[data-aggiungi-sottocomma]");
+      if (aggSotto) {
+        const commaEl = aggSotto.closest(".redazione-comma");
+        const valori = [...commaEl.querySelectorAll(".redazione-sottocomma-testo")].map(t => t.value);
+        valori.push("");
+        commaEl.querySelector(".redazione-sottocommi").innerHTML =
+          valori.map((v, iv) => renderSottocomma(v, iv)).join("");
+        return;
+      }
+
+      // ---- Rimuovi sottocomma ----
+      const rimSotto = e.target.closest("[data-rimuovi-sottocomma]");
+      if (rimSotto) {
+        const commaEl = rimSotto.closest(".redazione-comma");
+        rimSotto.closest(".redazione-sottocomma").remove();
+        // Rilettera i sottocommi rimasti (a, b, c...), preservando i testi.
+        const valori = [...commaEl.querySelectorAll(".redazione-sottocomma-testo")].map(t => t.value);
+        commaEl.querySelector(".redazione-sottocommi").innerHTML =
+          valori.map((v, iv) => renderSottocomma(v, iv)).join("");
+        return;
+      }
+
+      // ---- Suddividi automaticamente un testo incollato ----
+      const analizza = e.target.closest("[data-analizza-testo]");
+      if (analizza) {
+        const articoloEl = analizza.closest(".redazione-articolo");
+        const ta = articoloEl.querySelector(".redazione-analisi-testo");
+        const testo = ta.value.trim();
+        if (!testo) {
+          alert("Incolla prima il testo da suddividere.");
+          return;
+        }
+        if (!confirm("Questo sostituirà i commi attualmente presenti in questo articolo. Continuare?")) return;
+        const commi = analizzaTesto(testo);
+        articoloEl.querySelector(".redazione-commi").innerHTML =
+          commi.map((c, ic) => renderComma(c, ic)).join("");
+        ta.value = "";
         return;
       }
 
