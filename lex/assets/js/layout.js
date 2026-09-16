@@ -33,6 +33,7 @@ function renderTestata(paginaAttiva) {
           <li><a href="https://rtf-rose.vercel.app/lex/atto.html?id=costituzione-union-estji-2026" class="${paginaAttiva === "statuto" ? "attiva" : ""}">Statuto</a></li>
           <li><a href="index.html?categoria=Regolamento" class="${paginaAttiva === "regolamenti" ? "attiva" : ""}">Regolamenti</a></li>
           <li><a href="index.html?categoria=Codice" class="${paginaAttiva === "codici" ? "attiva" : ""}">Codici</a></li>
+          <li><a href="elezioni.html" class="${paginaAttiva === "elezioni" ? "attiva" : ""}">Elezioni</a></li>
           <li><a href="redazione.html" class="${paginaAttiva === "redazione" ? "attiva" : ""}">Redazione</a></li>
         </ul>
       </div>
