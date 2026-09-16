@@ -31,3 +31,5 @@ const API_CONFIG = Object.freeze({
   baseUrl: "/api/atti",   // le letture ora passano dal proxy server-side
   key: "atti"             // chiave dentro il record JSONBin
 });
+ <link rel="apple-touch-icon" href="NormAktiv.png">
+<link rel="icon" type="image/png" href="NormAktiv.png">
