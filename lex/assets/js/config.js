@@ -18,8 +18,8 @@ const SITE_CONFIG = {
   sitoServer: "",                   // es. "https://minecraft-server.example"
 
   // ---- Testi / branding (facoltativo) ----
-  titoloSito: "Raccolta degli Atti Normativi",
-  descrizioneSito: "Raccolta ufficiale degli atti normativi della fazione."
+  titoloSito: "NormAktiv",
+  descrizioneSito: ""
 };
 
 // Espone una "config API" vuota per retrocompatibilità:
