@@ -8,6 +8,14 @@ function renderTestata(paginaAttiva) {
   if (!el) return;
 
   el.innerHTML = `
+    <div class="striscia-top">
+      <div class="container">
+        <span>${SITE_CONFIG.nomeFazione} &middot; Raccolta ufficiale degli atti normativi</span>
+        <span>
+          <a href="redazione.html">Area redazione</a>${SITE_CONFIG.discord ? `<a href="${SITE_CONFIG.discord}" target="_blank" rel="noopener">Discord</a>` : ""}
+        </span>
+      </div>
+    </div>
     <header class="testata">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">${SITE_CONFIG.emblema}</div>
@@ -28,6 +36,7 @@ function renderTestata(paginaAttiva) {
           <li><a href="index.html?categoria=Statuto%20Costituzionale" class="${paginaAttiva === "statuto" ? "attiva" : ""}">Statuto</a></li>
           <li><a href="index.html?categoria=Regolamento" class="${paginaAttiva === "regolamenti" ? "attiva" : ""}">Regolamenti</a></li>
           <li><a href="index.html?categoria=Codice" class="${paginaAttiva === "codici" ? "attiva" : ""}">Codici</a></li>
+          <li><a href="redazione.html" class="${paginaAttiva === "redazione" ? "attiva" : ""}">Redazione</a></li>
         </ul>
       </div>
     </nav>
