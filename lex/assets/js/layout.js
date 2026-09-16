@@ -1,18 +1,13 @@
-/* ============================================================
-   Genera testata, fascia tricolore, barra blu e footer,
-   comuni a tutte le pagine. Legge i dati da config.js.
-   ============================================================ */
-
 function renderTestata(paginaAttiva) {
   const el = document.getElementById("testata-root");
   if (!el) return;
-
   el.innerHTML = `
     <div class="striscia-top">
       <div class="container">
         <span>${SITE_CONFIG.nomeFazione} &middot; Raccolta ufficiale degli atti normativi</span>
         <span>
-          <a href="redazione.html">Area redazione</a>${SITE_CONFIG.discord ? `<a href="${SITE_CONFIG.discord}" target="_blank" rel="noopener">Discord</a>` : ""}
+          <a href="redazione.html">Area redazione</a>
+          ${SITE_CONFIG.discord ? `<a href="${SITE_CONFIG.discord}" target="_blank" rel="noopener">Discord</a>` : ""}
         </span>
       </div>
     </div>
@@ -39,22 +34,15 @@ function renderTestata(paginaAttiva) {
           <li><a href="redazione.html" class="${paginaAttiva === "redazione" ? "attiva" : ""}">Redazione</a></li>
         </ul>
       </div>
-    </nav>
-  `;
+    </nav>`;
 }
 
 function renderFooter() {
   const el = document.getElementById("footer-root");
   if (!el) return;
-
   const linkExtra = [];
-  if (SITE_CONFIG.discord) {
-    linkExtra.push(`<a href="${SITE_CONFIG.discord}" target="_blank" rel="noopener">Discord</a>`);
-  }
-  if (SITE_CONFIG.sitoServer) {
-    linkExtra.push(`<a href="${SITE_CONFIG.sitoServer}" target="_blank" rel="noopener">Sito del server</a>`);
-  }
-
+  if (SITE_CONFIG.discord) linkExtra.push(`<a href="${SITE_CONFIG.discord}" target="_blank" rel="noopener">Discord</a>`);
+  if (SITE_CONFIG.sitoServer) linkExtra.push(`<a href="${SITE_CONFIG.sitoServer}" target="_blank" rel="noopener">Sito del server</a>`);
   el.innerHTML = `
     <div class="fascia-tricolore" role="presentation">
       <span class="verde"></span><span class="bianco"></span><span class="rosso"></span>
@@ -64,6 +52,5 @@ function renderFooter() {
         <span>&copy; ${SITE_CONFIG.annoFondazione}&ndash;${new Date().getFullYear()} ${SITE_CONFIG.nomeFazione}. Raccolta amministrata a fini interni, senza valore legale reale.</span>
         <span>${linkExtra.join(" &middot; ")}</span>
       </div>
-    </footer>
-  `;
+    </footer>`;
 }
