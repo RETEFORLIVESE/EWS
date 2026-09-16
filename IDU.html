@@ -336,9 +336,19 @@
   .map-station circle { transition: r 0.15s ease, stroke-width 0.15s ease; }
   .map-station:hover circle, .map-station.active circle { stroke-width: 4; }
   .map-station text { font-family: "Titillium Web", sans-serif; font-size: 13px; fill: var(--fa-ink); font-weight: 600; pointer-events: none; }
-  .map-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; padding: 0.9rem 0.4rem 0.2rem; font-size: 0.82rem; }
-  .map-legend span { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--fa-ink); font-weight: 600; }
+  .map-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; padding: 0 0 0.9rem; font-size: 0.82rem; }
+  .map-legend button {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    color: var(--fa-ink); font-weight: 700; font-family: inherit; font-size: 0.82rem;
+    background: var(--fa-glass-strong); border: 2px solid transparent; border-radius: 999px;
+    padding: 0.4rem 0.9rem; cursor: pointer; transition: border-color 0.15s ease, opacity 0.15s ease;
+    opacity: 0.55;
+  }
+  .map-legend button.active { border-color: var(--fa-ink); opacity: 1; }
+  .map-legend button:hover { opacity: 1; }
   .map-legend i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  .map-station.dimmed { opacity: 0.15; }
+  .map-station.dimmed:hover { opacity: 0.4; }
 
   .map-info {
     background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
@@ -603,8 +613,8 @@
 
       <div class="map-layout">
         <div class="map-panel">
-          <svg id="network-map" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA"></svg>
           <div class="map-legend" id="map-legend"></div>
+          <svg id="network-map" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA"></svg>
         </div>
         <div class="map-info" id="map-info">
           <h3>Seleziona una stazione</h3>
@@ -784,45 +794,87 @@
   "use strict";
 
   /* =====================================================================
-     DATI DELLA RETE — modifica qui linee e stazioni per aggiornare
-     sia la mappa sia l'elenco stazioni. Le coordinate x/y sono su una
-     tela (viewBox) di 1000x700.
+     DATI DELLA RETE
+     Le stazioni sono caricate da stazioni_coordinate.csv (nome, x, y) su
+     una tela (viewBox) di 1000x700. Le LINEE non sono ancora definite:
+     per ora ogni stazione ha solo un "system" (metropolitano / bus / tram)
+     cosi' si puo' usare la barra dei filtri in alto sulla mappa per
+     mostrare un sistema alla volta ed evitare il "casino" di tutte le
+     stazioni assieme. Di default sono tutte impostate su "metro":
+     modifica il campo "system" di ogni stazione qui sotto per assegnarle
+     al sistema giusto (metro / bus / tram) quando avrai il dato reale.
+     Quando saranno pronte anche le linee, si potra' reintrodurre un
+     LINE_PATHS come nella versione precedente per disegnarle sulla mappa.
   ===================================================================== */
-  var LINES = {
-    rossa:  { name: "Linea Rossa",  color: "var(--line-rossa)",  hex: "#bf2008" },
-    blu:    { name: "Linea Blu",    color: "var(--line-blu)",    hex: "#0a5f96" },
-    passante: {name: "Passante",    color: "var(--line-dorata)",    hex: "#c9971f" }
+  var SYSTEMS = {
+    metro: { name: "Metropolitana", color: "var(--line-blu)" },
+    bus:   { name: "Bus",           color: "var(--line-verde)" },
+    tram:  { name: "Tram",          color: "var(--line-dorata)" }
   };
 
   var STATIONS = [
-    { id: "agora",     name: "Agorà",        x: 200, y: 500, lines: ["rossa"] },
-    { id: "turiar",         name: "Tùria",      x: 300, y: 500, lines: ["rossa","blu"],interchange: true },
-    { id: "zhenturia",       name: "Zhen-Tùria",   x: 400, y: 500, lines: ["rossa"] },
-    { id: "zhenis",        name: "Zhenis",      x: 500, y: 450, lines: ["rossa"] },
-    { id: "yksi",        name: "Yksi Kylla",           x: 600, y: 450, lines: ["rossa"] },
-    { id: "minoris",        name: "Minoris",           x: 700, y: 500, lines: ["rossa"] },
-    { id: "majoris",        name: "Majoris",           x: 750, y: 500, lines: ["rossa"] },
-    { id: "enos",        name: "Enos",           x: 800, y: 500, lines: ["rossa"] },
-    { id: "funfzhen",        name: "FunfZhen",           x: 850, y: 450, lines: ["rossa"] },
-    { id: "kerasjine",        name: "Kerasjine",           x: 900, y: 400, lines: ["rossa"] },
-    { id: "yotta",        name: "Yotta",           x: 900, y: 250, lines: ["rossa"] },
-
-    { id: "tbrint",      name: "Tabara International",  x: 200, y: 200, lines: ["blu"] },
-    { id: "tbrw",      name: "Tabara West",  x: 200, y: 300, lines: ["blu","passante"],interchange:true },
-    { id: "neun",          name: "NeunStrasse",             x: 300, y: 400, lines: ["blu"] },
-    { id: "elfte", name: "ElfteStrasse",    x: 300, y: 450, lines: ["blu"] },
-    { id: "turiab",       name: "Tùria",          x: 300, y: 500, lines: ["blu","rossa"],interchange:true },
-
-    { id: "tbrawest", name: "Tabara West",  x: 200, y: 300, lines: ["blu","passante"],interchange:true },
-    { id: "tbracle",       name: "Haupt Tabara",          x: 300, y: 300, lines: ["passante"]},
-    { id: "tabaraturia",       name: "Terlin",          x: 350, y: 350, lines: ["passante"]}
+    { id: "ikebukuro", name: "Ikebukuro", x: 45, y: 218, system: "metro" },
+    { id: "samar", name: "Samar", x: 194, y: 145, system: "metro" },
+    { id: "s_fulcrea", name: "S.Fulcrea", x: 194, y: 202, system: "metro" },
+    { id: "estji_kaßache", name: "Estji-Kaßache", x: 212, y: 234, system: "metro" },
+    { id: "kaßazion", name: "Kaßazion", x: 403, y: 202, system: "metro" },
+    { id: "sars_f", name: "Sars F.", x: 453, y: 202, system: "metro" },
+    { id: "fluvia", name: "Fluvia", x: 463, y: 185, system: "metro" },
+    { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 528, y: 218, system: "metro" },
+    { id: "a_t_c", name: "A.T.C.", x: 565, y: 100, system: "metro" },
+    { id: "ankita_nord", name: "Ankita Nord", x: 739, y: 131, system: "metro" },
+    { id: "pernety", name: "Pernety", x: 669, y: 159, system: "metro" },
+    { id: "mariotte", name: "Mariotte", x: 669, y: 202, system: "metro" },
+    { id: "viktorplatz", name: "ViktorPlatz", x: 796, y: 216, system: "metro" },
+    { id: "estji_viter", name: "Estji-Viter", x: 403, y: 233, system: "metro" },
+    { id: "cotoplatz", name: "CotoPlatz", x: 403, y: 261, system: "metro" },
+    { id: "sarsovg", name: "SarsOVG", x: 403, y: 292, system: "metro" },
+    { id: "alina", name: "Alina", x: 547, y: 226, system: "metro" },
+    { id: "natio", name: "Natio", x: 403, y: 347, system: "metro" },
+    { id: "toer", name: "Toer", x: 460, y: 347, system: "metro" },
+    { id: "tegelg", name: "TegelG.", x: 597, y: 361, system: "metro" },
+    { id: "1_le", name: "1 Île", x: 518, y: 316, system: "metro" },
+    { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, system: "metro" },
+    { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, system: "metro" },
+    { id: "ostiense", name: "Ostiense", x: 815, y: 312, system: "metro" },
+    { id: "ecles", name: "Ecles", x: 864, y: 290, system: "metro" },
+    { id: "bobigny", name: "Bobigny", x: 801, y: 364, system: "metro" },
+    { id: "estjilinn", name: "EstjiLinn", x: 744, y: 364, system: "metro" },
+    { id: "monparnass", name: "MonParnass", x: 600, y: 228, system: "metro" },
+    { id: "suomenlapsi", name: "SuomenLapsi", x: 164, y: 292, system: "metro" },
+    { id: "suomentaku", name: "SuomenTaku", x: 164, y: 324, system: "metro" },
+    { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 201, y: 349, system: "metro" },
+    { id: "prolet", name: "Prolet", x: 100, y: 406, system: "metro" },
+    { id: "fsd", name: "FSD", x: 202, y: 413, system: "metro" },
+    { id: "unionplz", name: "UnionPlz", x: 306, y: 451, system: "metro" },
+    { id: "alx_der", name: "Alx.der", x: 306, y: 484, system: "metro" },
+    { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, system: "metro" },
+    { id: "outlx", name: "Outlx", x: 306, y: 406, system: "metro" },
+    { id: "kompasse", name: "Kompasse", x: 406, y: 394, system: "metro" },
+    { id: "newpenn", name: "NewPenn", x: 597, y: 394, system: "metro" },
+    { id: "oberdan", name: "Oberdan", x: 632, y: 394, system: "metro" },
+    { id: "thalè", name: "Thalè", x: 675, y: 430, system: "metro" },
+    { id: "iketal", name: "IkeTal", x: 744, y: 430, system: "metro" },
+    { id: "hotspot", name: "Hotspot", x: 781, y: 451, system: "metro" },
+    { id: "alexander_platz", name: "Alexander Platz", x: 712, y: 484, system: "metro" },
+    { id: "goberdan", name: "Goberdan", x: 371, y: 498, system: "metro" },
+    { id: "webariik", name: "WebaRiik", x: 508, y: 463, system: "metro" },
+    { id: "anarkios", name: "Anarkios", x: 371, y: 527, system: "metro" },
+    { id: "t_littoria", name: "T.Littoria", x: 316, y: 535, system: "metro" },
+    { id: "p_littoria", name: "P.Littoria", x: 254, y: 553, system: "metro" },
+    { id: "royale", name: "Royale", x: 164, y: 551, system: "metro" },
+    { id: "port", name: "Port", x: 403, y: 551, system: "metro" },
+    { id: "n_t_c", name: "N.T.C.", x: 506, y: 545, system: "metro" },
+    { id: "nationes", name: "Nationes", x: 634, y: 531, system: "metro" },
+    { id: "lufte", name: "Lufte", x: 710, y: 506, system: "metro" },
+    { id: "gallier", name: "Gallier", x: 710, y: 551, system: "metro" },
+    { id: "chatillon", name: "Chatillon", x: 727, y: 569, system: "metro" },
+    { id: "bennon", name: "Bennon", x: 403, y: 580, system: "metro" },
+    { id: "dakisula", name: "DakIsula", x: 403, y: 609, system: "metro" },
+    { id: "talindam", name: "TalinDam", x: 423, y: 651, system: "metro" },
+    { id: "baterina", name: "Baterina", x: 45, y: 637, system: "metro" },
+    { id: "lampugniano", name: "Lampugniano", x: 269, y: 637, system: "metro" },
   ];
-
-  var LINE_PATHS = {
-    rossa:  ["agora", "turiar", "zhenturia", "zhenis", "yksi","minoris","majoris","enos","funfzhen","kerasjine","yotta"],
-    blu:    ["tbrint","tbrw", "neun", "elfte", "turiab"],
-    passante: ["tbrawest","tbracle","tabaraturia"]
-  };
 
   var svgNS = "http://www.w3.org/2000/svg";
   function el(tag, attrs) {
@@ -833,43 +885,22 @@
   function byId(id) { for (var i=0;i<STATIONS.length;i++){ if (STATIONS[i].id===id) return STATIONS[i]; } return null; }
 
   var svg = document.getElementById("network-map");
+  var activeSystem = null; // null = mostra tutti i sistemi
 
-  // disegna le linee (percorsi colorati)
-  Object.keys(LINE_PATHS).forEach(function (lineKey) {
-    var pathStations = LINE_PATHS[lineKey].map(byId);
-    var points = pathStations.map(function (s) { return s.x + "," + s.y; }).join(" ");
-    var pl = el("polyline", {
-      points: points,
-      fill: "none",
-      stroke: LINES[lineKey].color,
-      "stroke-width": "7",
-      "stroke-linecap": "round",
-      "stroke-linejoin": "round",
-      opacity: "0.92"
-    });
-    svg.appendChild(pl);
-  });
-
-  // disegna le stazioni
-  var activeStation = null;
+  // disegna le stazioni (le linee non sono ancora disponibili: solo punti)
   STATIONS.forEach(function (st) {
-    var g = el("g", { class: "map-station", "data-id": st.id, tabindex: "0", role: "button", "aria-label": st.name });
-    var mainColor = LINES[st.lines[0]].color;
+    var g = el("g", { class: "map-station", "data-id": st.id, "data-system": st.system, tabindex: "0", role: "button", "aria-label": st.name });
+    var color = SYSTEMS[st.system] ? SYSTEMS[st.system].color : "var(--fa-ink)";
 
-    if (st.interchange) {
-      var c = el("circle", { cx: st.x, cy: st.y, r: 13, fill: "#fff", stroke: "var(--fa-ink)", "stroke-width": "3" });
-      g.appendChild(c);
-      var c2 = el("circle", { cx: st.x, cy: st.y, r: 6, fill: "var(--fa-ink)" });
-      g.appendChild(c2);
-    } else {
-      var c3 = el("circle", { cx: st.x, cy: st.y, r: 9, fill: mainColor, stroke: "#fff", "stroke-width": "3" });
-      g.appendChild(c3);
-    }
+    var c = el("circle", { cx: st.x, cy: st.y, r: 9, fill: color, stroke: "#fff", "stroke-width": "3" });
+    g.appendChild(c);
 
-    var labelX = st.x + (st.x > 500 ? 16 : st.x < 500 ? -16 : 0);
-    var anchor = st.x > 500 ? "start" : st.x < 500 ? "end" : "middle";
-    var labelY = st.y < 100 ? st.y - 16 : st.y > 600 ? st.y + 24 : st.y - 16;
-    if (st.x === 500 && st.y === 350) { labelX = st.x; anchor = "middle"; labelY = st.y - 22; }
+    // vicino al bordo sinistro l'etichetta va scritta a destra del punto,
+    // altrimenti con nomi lunghi finirebbe fuori dalla tela (x < 0)
+    var nearLeftEdge = st.x < 80;
+    var labelX = nearLeftEdge ? st.x + 16 : st.x + (st.x > 500 ? 16 : st.x < 500 ? -16 : 0);
+    var anchor = nearLeftEdge ? "start" : (st.x > 500 ? "start" : st.x < 500 ? "end" : "middle");
+    var labelY = st.y < 40 ? st.y + 24 : st.y - 16;
 
     var t = el("text", { x: labelX, y: labelY, "text-anchor": anchor });
     t.textContent = st.name;
@@ -887,25 +918,45 @@
     document.querySelectorAll(".map-station").forEach(function (n) { n.classList.remove("active"); });
     var node = svg.querySelector('.map-station[data-id="' + id + '"]');
     if (node) node.classList.add("active");
-    activeStation = id;
 
     var info = document.getElementById("map-info");
-    var pills = st.lines.map(function (lk) {
-      return '<span class="map-pill" style="background:' + LINES[lk].color + '">' + LINES[lk].name + "</span>";
-    }).join("");
+    var sys = SYSTEMS[st.system];
     info.innerHTML =
       "<h3>" + st.name + "</h3>" +
-      "<p>" + (st.interchange ? "Stazione di interscambio tra tutte le linee della rete." : "Servita da " + LINES[st.lines[0]].name + ".") + "</p>" +
-      '<div class="pill-row">' + pills + "</div>";
+      "<p>Sistema: " + (sys ? sys.name : st.system) + "</p>" +
+      '<div class="pill-row"><span class="map-pill" style="background:' + (sys ? sys.color : "var(--fa-ink)") + '">' + (sys ? sys.name : st.system) + "</span></div>";
   }
 
-  // legenda
+  // barra dei filtri in alto: mostra un sistema alla volta (o tutti)
   var legend = document.getElementById("map-legend");
-  Object.keys(LINES).forEach(function (lk) {
-    var span = document.createElement("span");
-    span.innerHTML = '<i style="background:' + LINES[lk].color + '"></i>' + LINES[lk].name;
-    legend.appendChild(span);
+
+  function applyFilter() {
+    document.querySelectorAll(".map-station").forEach(function (n) {
+      var isMatch = !activeSystem || n.getAttribute("data-system") === activeSystem;
+      n.classList.toggle("dimmed", !isMatch);
+    });
+    legend.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle("active", (b.dataset.system || null) === activeSystem);
+    });
+  }
+
+  function makeFilterButton(key, label, color) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    if (key) btn.dataset.system = key;
+    btn.innerHTML = (color ? '<i style="background:' + color + '"></i>' : "") + label;
+    btn.addEventListener("click", function () {
+      activeSystem = (activeSystem === key) ? null : key;
+      applyFilter();
+    });
+    legend.appendChild(btn);
+  }
+
+  makeFilterButton(null, "Tutti");
+  Object.keys(SYSTEMS).forEach(function (key) {
+    makeFilterButton(key, SYSTEMS[key].name, SYSTEMS[key].color);
   });
+  applyFilter();
 
   // elenco / ricerca stazioni
   var grid = document.getElementById("station-grid");
@@ -923,10 +974,9 @@
     results.forEach(function (s) {
       var card = document.createElement("article");
       card.className = "station-card";
-      var dots = s.lines.map(function (lk) {
-        return '<span class="dot" style="background:' + LINES[lk].color + '" title="' + LINES[lk].name + '"></span>';
-      }).join(" ");
-      card.innerHTML = "<h4>" + s.name + "</h4><div class='pill-row'>" + dots + "</div>";
+      var sys = SYSTEMS[s.system];
+      var dot = '<span class="dot" style="background:' + (sys ? sys.color : "var(--fa-ink)") + '" title="' + (sys ? sys.name : s.system) + '"></span>';
+      card.innerHTML = "<h4>" + s.name + "</h4><div class='pill-row'>" + dot + "</div>";
       card.style.cursor = "pointer";
       card.addEventListener("click", function () {
         document.getElementById("mappa").scrollIntoView({ behavior: "smooth", block: "center" });
