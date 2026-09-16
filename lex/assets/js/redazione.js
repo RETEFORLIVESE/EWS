@@ -69,7 +69,8 @@
         mostraAdmin();
         await avviaRedazione();
       } catch (e) {
-        err.textContent = '❌ ' + (e.message || 'Errore di accesso');
+  err.textContent = '❌ ' + (e.message || 'Errore di accesso');
+  err.classList.add('show');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Accedi';
