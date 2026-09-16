@@ -16,7 +16,7 @@ function renderTestata(paginaAttiva) {
     <header class="testata">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">
-        <img src="NormAktiv.png" alt="NormAktiv.png">
+        <img src=${SITE_CONFIG.emblema} alt="NormAktiv.png">
         </div>
         <div class="testata__testi">
           <p class="testata__eyebrow"></p>
