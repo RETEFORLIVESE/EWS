@@ -14,8 +14,8 @@ function renderTestata(paginaAttiva) {
     <header class="testata">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">
-  <img src="${SITE_CONFIG.emblema}" alt="">
-</div>
+        <img src="${SITE_CONFIG.emblema}" alt="">
+        </div>
         <div class="testata__testi">
           <p class="testata__eyebrow">Raccolta ufficiale degli atti normativi</p>
           <h2 class="testata__nome">${SITE_CONFIG.nomeFazione}</h2>
