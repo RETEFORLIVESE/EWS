@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elezioni — NormAktiv</title>
+  <meta name="description" content="Portale delle elezioni della fazione: consulta affluenza e risultati delle consultazioni." />
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="apple-touch-icon" href="NormAktiv.png">
+  <link rel="icon" type="image/png" href="NormAktiv.png">
+</head>
+<body>
+  <div id="testata-root"></div>
+
+  <main class="container">
+    <section class="hero" style="margin:-1px -24px 0; padding-left:24px; padding-right:24px;">
+      <div class="container hero__inner" style="padding:0;">
+        <div>
+          <span class="hero__kicker">Portale elettorale</span>
+          <h1 class="hero__titolo">Il portale delle elezioni</h1>
+          <p class="hero__sottotitolo">
+            Segui affluenza e risultati delle consultazioni elettorali della fazione,
+            in tempo reale e nell'archivio delle elezioni passate.
+          </p>
+        </div>
+        <div class="hero__pannello">
+          <h2>Area di redazione</h2>
+          <ul>
+            <li><a href="redazione-elezioni.html">Redazione elettorale<span>Crea una consultazione e inserisci i risultati</span></a></li>
+            <li><a href="redazione.html">Redazione atti<span>Gestisci lo Statuto e gli altri atti normativi</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-band" style="margin:0 -24px; padding:0;">
+      <div class="container">
+        <div class="stat-item"><b id="stat-totale">0</b><span>Consultazioni pubblicate</span></div>
+        <div class="stat-item"><b id="stat-corso">0</b><span>Scrutini in corso</span></div>
+        <div class="stat-item"><b id="stat-definitive">0</b><span>Risultati definitivi</span></div>
+      </div>
+    </section>
+
+    <h2 class="sezione-titolo" style="margin-top:40px;">Consultazioni</h2>
+    <div id="filtri-root" class="filtri"></div>
+    <p id="conteggio-risultati" style="font-family:var(--font-chrome); font-size:0.85rem; color:var(--inchiostro-tenue); margin:0 0 16px;"></p>
+    <div id="elenco-root" class="elenco-atti"></div>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api-elezioni.js"></script>
+  <script src="assets/js/layout.js"></script>
+  <script src="assets/js/elezioni.js"></script>
+</body>
+</html>
