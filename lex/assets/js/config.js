@@ -9,9 +9,8 @@
 
 const SITE_CONFIG = {
   // ---- Identità della fazione ----
-  nomeFazione: "Fazione",
-  motto: "Ordine, memoria, disciplina.",
-  emblema: "★",                     // emoji o carattere usato come emblema
+  nomeFazione: "NormAktiv",
+  motto: "Union der Wohlfartsstaaten von Estji",
   annoFondazione: 2024,
 
   // ---- Link esterni (facoltativi) ----
