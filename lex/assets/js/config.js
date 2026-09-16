@@ -19,7 +19,7 @@ const SITE_CONFIG = {
 
   // ---- Testi / branding (facoltativo) ----
   titoloSito: "NormAktiv",
-  descrizioneSito: ""
+  descrizioneSito: "-USSE"
 };
 
 // Espone una "config API" vuota per retrocompatibilità:
