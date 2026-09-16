@@ -6,16 +6,16 @@
 
 const SITE_CONFIG = {
   // Nome ufficiale per esteso, usato in testata e titoli pagina
-  nomeFazione: "Fazione di Eldoria",
+  nomeFazione: "Union der Wohlfartsstaaten von Estji",
 
   // Forma breve, usata in punti stretti (badge, footer)
-  siglaFazione: "F.E.",
+  siglaFazione: "",
 
   // Iniziale/e mostrate nell'emblema circolare in testata (max 3 caratteri)
-  emblema: "FE",
+  emblema: "",
 
   // Motto istituzionale, mostrato sotto il nome in testata
-  motto: "Unità, Territorio, Ordine",
+  motto: "NormAktiv",
 
   // Anno di fondazione, usato nel footer
   annoFondazione: "2024",
