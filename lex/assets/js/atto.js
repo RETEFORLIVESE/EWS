@@ -35,10 +35,28 @@
     // l'articolo ha più di un comma, un sotto-elenco con i link ai singoli commi.
     const indice = atto.articoli.map(art => {
       const commi = commiDiArticolo(art);
-      const sottoIndice = commi.length > 1
-        ? `<ul class="indice-commi">${commi.map((c, ic) =>
-            `<li><a href="#art-${art.numero}-c${ic + 1}">Comma ${ic + 1}</a></li>`).join("")}</ul>`
-        : "";
+
+      // Elenco delle lettere dei sottocommi di un comma, per l'indice
+      const indiceSottocommi = (comma, ic) => {
+        const sottocommi = (comma.sottocommi || []).filter(s => s && s.trim() !== "");
+        return sottocommi.length
+          ? `<ul class="indice-sottocommi">${sottocommi.map((s, is) =>
+              `<li><a href="#art-${art.numero}-c${ic + 1}-s${is + 1}">${letteraDa(is)})</a></li>`).join("")}</ul>`
+          : "";
+      };
+
+      let sottoIndice = "";
+      if (commi.length > 1) {
+        // Più commi: un livello "Comma N", ed eventuali sottocommi annidati sotto ciascuno
+        sottoIndice = `<ul class="indice-commi">${commi.map((c, ic) =>
+          `<li><a href="#art-${art.numero}-c${ic + 1}">Comma ${ic + 1}</a>${indiceSottocommi(c, ic)}</li>`
+        ).join("")}</ul>`;
+      } else {
+        // Comma unico: se ha sottocommi, li mostriamo direttamente sotto l'articolo
+        const soloSottocommi = indiceSottocommi(commi[0], 0);
+        if (soloSottocommi) sottoIndice = soloSottocommi;
+      }
+
       return `<li><a href="#art-${art.numero}">Art. ${art.numero} &mdash; ${art.rubrica}</a>${sottoIndice}</li>`;
     }).join("");
 
@@ -50,7 +68,8 @@
       const corpoCommi = commi.map((comma, ic) => {
         const sottocommi = (comma.sottocommi || []).filter(s => s && s.trim() !== "");
         const listaSottocommi = sottocommi.length
-          ? `<ol class="sottocommi">${sottocommi.map(s => `<li>${s}</li>`).join("")}</ol>`
+          ? `<ol class="sottocommi">${sottocommi.map((s, is) =>
+              `<li id="art-${art.numero}-c${ic + 1}-s${is + 1}">${s}</li>`).join("")}</ol>`
           : "";
         const numeroComma = commi.length > 1 ? `<span class="comma__numero">${ic + 1}.</span> ` : "";
         return `
