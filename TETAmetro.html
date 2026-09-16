@@ -801,25 +801,29 @@
     { id: "agora",     name: "Agorà",        x: 200, y: 500, lines: ["rossa"] },
     { id: "turiar",         name: "Tùria",      x: 300, y: 500, lines: ["rossa","blu"],interchange: true },
     { id: "zhenturia",       name: "Zhen-Tùria",   x: 400, y: 500, lines: ["rossa"] },
-    { id: "zhenis",        name: "Zhenis",      x: 500, y: 400, lines: ["rossa"] },
+    { id: "zhenis",        name: "Zhenis",      x: 500, y: 450, lines: ["rossa"] },
     { id: "yksi",        name: "Yksi Kylla",           x: 600, y: 450, lines: ["rossa"] },
     { id: "minoris",        name: "Minoris",           x: 700, y: 500, lines: ["rossa"] },
-    { id: "majoris",        name: "Majoris",           x: 800, y: 500, lines: ["rossa"] },
-    { id: "enos",        name: "Enos",           x: 850, y: 500, lines: ["rossa"] },
-    { id: "funfzhen",        name: "FunfZhen",           x: 900, y: 450, lines: ["rossa"] },
-    { id: "kerasjine",        name: "Kerasjine",           x: 950, y: 400, lines: ["rossa"] },
-    { id: "yotta",        name: "Yotta",           x: 950, y: 250, lines: ["rossa"] },
+    { id: "majoris",        name: "Majoris",           x: 750, y: 500, lines: ["rossa"] },
+    { id: "enos",        name: "Enos",           x: 800, y: 500, lines: ["rossa"] },
+    { id: "funfzhen",        name: "FunfZhen",           x: 850, y: 450, lines: ["rossa"] },
+    { id: "kerasjine",        name: "Kerasjine",           x: 900, y: 400, lines: ["rossa"] },
+    { id: "yotta",        name: "Yotta",           x: 900, y: 250, lines: ["rossa"] },
 
     { id: "tbrint",      name: "Tabara International",  x: 200, y: 200, lines: ["blu"] },
-   { id: "tbrw",      name: "Tabara West",  x: 200, y: 300, lines: ["blu"] },
+    { id: "tbrw",      name: "Tabara West",  x: 200, y: 300, lines: ["blu"."passante"],interchange:true },
     { id: "neun",          name: "NeunStrasse",             x: 300, y: 400, lines: ["blu"] },
     { id: "elfte", name: "ElfteStrasse",    x: 300, y: 450, lines: ["blu"] },
-    { id: "turiab",       name: "Tùria",          x: 300, y: 500, lines: ["blu","rossa"],interchange:true }
+    { id: "turiab",       name: "Tùria",          x: 300, y: 500, lines: ["blu","rossa"],interchange:true },
+
+    { id: "tbrawest", name:"TabaraWest", x: 200, y: 300, lines: ["blu","passante"],interchange:true},
+    { id: "tbracle", name:"HauptTabara", x: 400, y: 300, lines: ["passante"]}
   ];
 
   var LINE_PATHS = {
     rossa:  ["agora", "turiar", "zhenturia", "zhenis", "yksi","minoris","majoris","enos","funfzhen","kerasjine","yotta"],
-    blu:    ["tbrint","tbrw", "neun", "elfte", "turiab"]
+    blu:    ["tbrint","tbrw", "neun", "elfte", "turiab"],
+    passante:["tbrawest","tbracle"]
   };
 
   var svgNS = "http://www.w3.org/2000/svg";
