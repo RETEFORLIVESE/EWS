@@ -567,31 +567,13 @@
           <span class="line-chip">1</span>
           <div class="line-info">
             <h3>Linea Rossa</h3>
-            <p>Reichstadt ↔ Soviet-Allee ↔ Terlin Centrale ↔ Kanzlerplatz ↔ Ostmark</p>
+            <p>Agorà ↔ Tùria ↔ YksiKylla ↔ Minoris ↔ Yotta </p>
           </div>
           <div class="line-meta"><span class="freq">Ogni 8 min</span>05:00 – 00:30</div>
         </article>
 
-        <article class="line-row" style="--line-color:var(--line-dorata)">
-          <span class="line-chip">2</span>
-          <div class="line-info">
-            <h3>Linea Dorata</h3>
-            <p>Nordhafen ↔ Bundesallee ↔ Terlin Centrale ↔ Marktplatz ↔ Süditz</p>
-          </div>
-          <div class="line-meta"><span class="freq">Ogni 10 min</span>05:00 – 00:00</div>
-        </article>
-
-        <article class="line-row" style="--line-color:var(--line-verde)">
-          <span class="line-chip">3</span>
-          <div class="line-info">
-            <h3>Linea Verde</h3>
-            <p>EstjiFall Porto ↔ Werftweg ↔ Terlin Centrale ↔ Industriering ↔ Kuroburg</p>
-          </div>
-          <div class="line-meta"><span class="freq">Ogni 12 min</span>04:30 – 23:30</div>
-        </article>
-
         <article class="line-row" style="--line-color:var(--line-blu)">
-          <span class="line-chip">4</span>
+          <span class="line-chip">2</span>
           <div class="line-info">
             <h3>Linea Blu</h3>
             <p>Aeroporto Terlin ↔ Fiera ↔ Terlin Centrale ↔ Rathausviertel ↔ Neustadt</p>
@@ -813,7 +795,6 @@
   var LINES = {
     rossa:  { name: "Linea Rossa",  color: "var(--line-rossa)",  hex: "#bf2008" },
     dorata: { name: "Linea Dorata", color: "var(--line-dorata)", hex: "#c9971f" },
-    verde:  { name: "Linea Verde",  color: "var(--line-verde)",  hex: "#2f8f4e" },
     blu:    { name: "Linea Blu",    color: "var(--line-blu)",    hex: "#0a5f96" }
   };
 
@@ -828,11 +809,6 @@
     { id: "bundesallee",    name: "Bundesallee",       x: 500, y: 210, lines: ["dorata"] },
     { id: "marktplatz",     name: "Marktplatz",        x: 500, y: 490, lines: ["dorata"] },
     { id: "suditz",         name: "Süditz",            x: 500, y: 630, lines: ["dorata"] },
-
-    { id: "estjifall",      name: "EstjiFall Porto",   x: 190, y: 110, lines: ["verde"] },
-    { id: "werftweg",       name: "Werftweg",          x: 345, y: 230, lines: ["verde"] },
-    { id: "industriering",  name: "Industriering",     x: 655, y: 470, lines: ["verde"] },
-    { id: "kuroburg",       name: "Kuroburg",          x: 810, y: 590, lines: ["verde"] },
 
     { id: "aeroporto",      name: "Aeroporto Terlin",  x: 810, y: 110, lines: ["blu"] },
     { id: "fiera",          name: "Fiera",             x: 655, y: 230, lines: ["blu"] },
