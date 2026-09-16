@@ -799,8 +799,8 @@
 
   var STATIONS = [
     { id: "agora",     name: "Agorà",        x: 200, y: 100, lines: ["rossa"] },
-    { id: "turia",         name: "Tùria",      x: 300, y: 100, lines: ["rossa"] },
-    { id: "zhenturia",       name: "Zhen-Tùria",   x: 400, y: 100, lines: ["rossa","blu"], interchange: true },
+    { id: "turia",         name: "Tùria",      x: 300, y: 100, lines: ["rossa"],interchange: true },
+    { id: "zhenturia",       name: "Zhen-Tùria",   x: 400, y: 100, lines: ["rossa","blu"] },
     { id: "zhenis",        name: "Zhenis",      x: 500, y: 200, lines: ["rossa"] },
     { id: "yksi",        name: "Yksi Kylla",           x: 600, y: 100, lines: ["rossa"] },
     { id: "minoris",        name: "Minoris",           x: 700, y: 100, lines: ["rossa"] },
@@ -810,15 +810,15 @@
     { id: "kerasjine",        name: "Kerasjine",           x: 950, y: 200, lines: ["rossa"] },
     { id: "yotta",        name: "Yotta",           x: 950, y: 300, lines: ["rossa"] },
 
-    { id: "aeroporto",      name: "Aeroporto Terlin",  x: 810, y: 110, lines: ["blu"] },
-    { id: "fiera",          name: "Fiera",             x: 655, y: 230, lines: ["blu"] },
-    { id: "rathausviertel", name: "Rathausviertel",    x: 345, y: 470, lines: ["blu"] },
-    { id: "neustadt",       name: "Neustadt",          x: 190, y: 590, lines: ["blu"] }
+    { id: "tbrw",      name: "Tabara West",  x: 810, y: 110, lines: ["blu"] },
+    { id: "neun",          name: "NeunStrasse",             x: 655, y: 230, lines: ["blu"] },
+    { id: "elfte", name: "ElfteStrasse",    x: 345, y: 470, lines: ["blu"] },
+    { id: "turia",       name: "Tùria",          x: 190, y: 590, lines: ["blu"] }
   ];
 
   var LINE_PATHS = {
     rossa:  ["agora", "turia", "zhenturia", "zhenis", "yksi","minoris","makoris","enos","funfzhen","kerasjine","yotta"],
-    blu:    ["aeroporto", "fiera", "centrale", "rathausviertel", "neustadt"]
+    blu:    ["tbrw", "neun", "elfte", "turia"]
   };
 
   var svgNS = "http://www.w3.org/2000/svg";
