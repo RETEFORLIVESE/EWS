@@ -7,22 +7,22 @@
 
 const ATTI = [
   {
-    id: "statuto-fondamentale",
-    categoria: "Statuto Costituzionale",
-    numero: "1",
-    anno: "2024",
-    titolo: "Statuto Fondamentale della Fazione",
-    dataEmanazione: "03 marzo 2024",
-    promulgatoDa: "Assemblea dei Fondatori",
+    id: "Legge-Digitalizzazione",
+    categoria: "Statuto Ordinario",
+    numero: "134",
+    anno: "2026",
+    titolo: "Legge sulla Digitalizzazione degli atti pubblici",
+    dataEmanazione: "03 settebre 2026",
+    promulgatoDa: "Congresso Unitario",
     stato: "vigente",
     sommario:
-      "Istituisce la Fazione, ne definisce i confini di competenza, gli organi di governo e i diritti fondamentali dei membri.",
+      "Istituisce i siti istituzionali, ne definisce i quadri operativi di competenza, gli organi di governo e i servizi.",
     articoli: [
       {
         numero: 1,
-        rubrica: "Costituzione della Fazione",
+        rubrica: "Utilità",
         testo:
-          "È costituita la Fazione, comunità organizzata di giocatori operante sul server, con potere di autogoverno sui territori rivendicati secondo le procedure del Regolamento Territoriale.",
+          "Per garantire la Trasparenza costituzionale, vengono istituiti i soti istituzionali della Fazione degli Estji.",
       },
       {
         numero: 2,
