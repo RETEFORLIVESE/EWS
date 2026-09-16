@@ -18,7 +18,7 @@ const SITE_CONFIG = {
   sitoServer: "",                   // es. "https://minecraft-server.example"
 
   // ---- Testi / branding (facoltativo) ----
-  titoloSito: "NormAktiv",
+  titoloSito: "NormaAktiv",
   descrizioneSito: "-USSE"
 };
 
