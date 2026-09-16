@@ -124,6 +124,9 @@ main{padding:40px 0 64px;}
 .indice-commi{list-style:none;margin:2px 0 4px 12px;padding:0 0 0 10px;display:flex;flex-direction:column;gap:1px;border-left:2px solid var(--bordo);}
 .indice-commi a{font-size:.76rem;color:var(--inchiostro-tenue);padding:3px 8px;}
 .indice-commi a:hover{background:var(--carta-scura);color:var(--blu-800);}
+.indice-sottocommi{list-style:none;margin:1px 0 3px 10px;padding:0 0 0 8px;display:flex;flex-direction:column;gap:1px;border-left:1px dashed var(--bordo);}
+.indice-sottocommi a{font-size:.72rem;color:var(--inchiostro-tenue);padding:2px 8px;}
+.indice-sottocommi a:hover{background:var(--carta-scura);color:var(--blu-800);}
 .articoli{display:flex;flex-direction:column;gap:22px;}
 .articolo{background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:22px 26px;scroll-margin-top:76px;}
 .articolo__numero{font-family:var(--font-chrome);font-weight:700;font-size:.8rem;color:#fff;background:var(--blu-700);display:inline-block;padding:3px 10px;border-radius:var(--radius);margin-bottom:10px;}
@@ -133,8 +136,20 @@ main{padding:40px 0 64px;}
 .articolo .comma:last-child{margin-bottom:0;}
 .comma__numero{font-weight:700;color:var(--blu-800);}
 .sottocommi{list-style:lower-alpha;margin:8px 0 0 1.5em;padding:0;display:flex;flex-direction:column;gap:4px;}
-.sottocommi li{font-size:.97rem;color:#232a35;padding-left:2px;}
+.sottocommi li{font-size:.97rem;color:#232a35;padding-left:2px;scroll-margin-top:76px;}
 
+@media (min-width:761px){
+  .indice-articoli{
+    max-height:calc(100vh - 100px);
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:var(--blu-accento) var(--carta-scura);
+  }
+  .indice-articoli::-webkit-scrollbar{width:8px;}
+  .indice-articoli::-webkit-scrollbar-track{background:var(--carta-scura);border-radius:8px;}
+  .indice-articoli::-webkit-scrollbar-thumb{background:var(--blu-accento);border-radius:8px;}
+  .indice-articoli::-webkit-scrollbar-thumb:hover{background:var(--blu-800);}
+}
 @media (max-width:860px){
   .hero__inner{grid-template-columns:1fr;}
   .stats-band .container{grid-template-columns:1fr 1fr;}
