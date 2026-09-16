@@ -2,6 +2,8 @@ function renderTestata(paginaAttiva) {
   const el = document.getElementById("testata-root");
   if (!el) return;
   el.innerHTML = `
+  <link rel="apple-touch-icon" href="NormAktiv.png">
+<link rel="icon" type="image/png" href="NormAktiv.png">
     <div class="striscia-top">
       <div class="container">
         <span>${SITE_CONFIG.nomeFazione} &middot; Raccolta ufficiale degli atti normativi</span>
@@ -14,7 +16,7 @@ function renderTestata(paginaAttiva) {
     <header class="testata">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">
-        <img src="${SITE_CONFIG.emblema}" alt="NormAktiv.png">
+        <img src="${SITE_CONFIG.emblema}" alt="lex/NormAktiv.png">
         </div>
         <div class="testata__testi">
           <p class="testata__eyebrow"></p>
@@ -29,8 +31,8 @@ function renderTestata(paginaAttiva) {
     <nav class="nav-principale" aria-label="Navigazione principale">
       <div class="container">
         <ul>
-          <li><a href="index.html" class="${paginaAttiva === "home" ? "attiva" : ""}">Home</a></li>
-          <li><a href="index.html?categoria=Statuto%20Costituzionale" class="${paginaAttiva === "statuto" ? "attiva" : ""}">Statuto</a></li>
+          <li><a href="NormAktiv.html" class="${paginaAttiva === "home" ? "attiva" : ""}">Home</a></li>
+          <li><a href="https://rtf-rose.vercel.app/lex/atto.html?id=costituzione-union-estji-2026" class="${paginaAttiva === "statuto" ? "attiva" : ""}">Statuto</a></li>
           <li><a href="index.html?categoria=Regolamento" class="${paginaAttiva === "regolamenti" ? "attiva" : ""}">Regolamenti</a></li>
           <li><a href="index.html?categoria=Codice" class="${paginaAttiva === "codici" ? "attiva" : ""}">Codici</a></li>
           <li><a href="redazione.html" class="${paginaAttiva === "redazione" ? "attiva" : ""}">Redazione</a></li>
