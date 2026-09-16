@@ -12,7 +12,7 @@ const SITE_CONFIG = {
   nomeFazione: "NormAktiv",
   motto: "Union der Wohlfartsstaaten von Estji",
   annoFondazione: 2024,
-  emblema:"/NormAktiv.png",
+  testata__emblema:"/NormAktiv.png",
   // ---- Link esterni (facoltativi) ----
   discord: "",                      // es. "https://discord.gg/xxxxx"
   sitoServer: "",                   // es. "https://minecraft-server.example"
