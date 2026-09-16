@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Île-de-USSE Mobilités</title>
+<link rel="apple-touch-icon" href="IDU.png">
+<link rel="icon" type="image/png" href="IDU.png">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --fa-sky-top: #bfe9ff;
+    --fa-sky-mid: #e3f7ff;
+    --fa-sky-bottom: #ffffff;
+    --fa-blue-deep: #0a4d78;
+    --fa-blue: #1ba0e2;
+    --fa-blue-mid: #4fc3f7;
+    --fa-blue-light: #9fe3ff;
+    --fa-azure: #eafcff;
+    --fa-azure-mid: #cdf3ff;
+    --fa-ink: #0d3350;
+    --fa-text: #2f5871;
+    --fa-line: #bfe6f5;
+    --fa-green: #7ed957;
+    --fa-gold: #ffd24a;
+    --fa-white: #ffffff;
+    --fa-glass: rgba(255,255,255,0.55);
+    --fa-glass-strong: rgba(255,255,255,0.82);
+    --fa-glass-nav: rgba(255,255,255,0.6);
+
+    /* linee della rete — modificabili */
+    --line-rossa: #bf2008;
+    --line-dorata: #c9971f;
+    --line-verde: #2f8f4e;
+    --line-blu: #0a5f96;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fa-sky-top: #071826;
+      --fa-sky-mid: #0a2338;
+      --fa-sky-bottom: #0d1f30;
+      --fa-blue-deep: #7fd6f7;
+      --fa-ink: #eaf6ff;
+      --fa-text: #b7d3e6;
+      --fa-line: rgba(255,255,255,0.14);
+      --fa-azure: #0c2438;
+      --fa-azure-mid: #123049;
+      --fa-glass: rgba(18,38,58,0.55);
+      --fa-glass-strong: rgba(16,34,52,0.86);
+      --fa-glass-nav: rgba(9,24,38,0.72);
+    }
+  }
+  :root[data-theme="dark"] {
+    --fa-sky-top: #071826;
+    --fa-sky-mid: #0a2338;
+    --fa-sky-bottom: #0d1f30;
+    --fa-blue-deep: #7fd6f7;
+    --fa-ink: #eaf6ff;
+    --fa-text: #b7d3e6;
+    --fa-line: rgba(255,255,255,0.14);
+    --fa-azure: #0c2438;
+    --fa-azure-mid: #123049;
+    --fa-glass: rgba(18,38,58,0.55);
+    --fa-glass-strong: rgba(16,34,52,0.86);
+    --fa-glass-nav: rgba(9,24,38,0.72);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background:
+      radial-gradient(ellipse 900px 500px at 8% -10%, rgba(255,255,255,0.9), rgba(255,255,255,0) 60%),
+      radial-gradient(ellipse 700px 500px at 105% 15%, rgba(255,255,255,0.75), rgba(255,255,255,0) 55%),
+      radial-gradient(circle 380px at 92% 55%, rgba(180,240,180,0.25), rgba(180,240,180,0) 70%),
+      linear-gradient(180deg, var(--fa-sky-top) 0%, var(--fa-sky-mid) 22%, var(--fa-sky-bottom) 55%);
+    background-color: var(--fa-sky-bottom);
+    background-attachment: fixed;
+    color: var(--fa-text);
+    font-family: "Titillium Web", "Segoe UI", Arial, sans-serif;
+    line-height: 1.5;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 30% 28%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.15) 30%, rgba(255,255,255,0) 60%),
+      radial-gradient(circle at 65% 70%, rgba(120,210,255,0.35) 0%, rgba(120,210,255,0) 55%);
+    box-shadow: inset 0 0 30px rgba(255,255,255,0.4);
+    opacity: 0.6;
+  }
+  body::before { width: 260px; height: 260px; top: 8%; left: -80px; }
+  body::after { width: 180px; height: 180px; bottom: 6%; right: -50px; }
+
+  a { color: inherit; }
+  img, svg { max-width: 100%; display: block; }
+
+  /* ---------- Top institutional strip ---------- */
+  .top-strip {
+    background: linear-gradient(180deg, #0e5c8c 0%, #073a5c 100%);
+    color: rgba(255,255,255,0.9);
+    font-size: 0.8rem;
+    padding: 0.4rem clamp(1rem, 4vw, 3rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    letter-spacing: 0.01em;
+    position: relative;
+    z-index: 3;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 4px rgba(0,0,0,0.2);
+  }
+  .top-strip a { text-decoration: none; color: rgba(255,255,255,0.9); margin-left: 1.25rem; }
+  .top-strip a:hover { text-decoration: underline; }
+
+  /* ---------- Main header band ---------- */
+  header.main-band {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 45%),
+      linear-gradient(180deg, #4fc7f2 0%, #1487c9 55%, #0a5f96 100%);
+    color: #fff;
+    padding: 1.1rem clamp(1rem, 4vw, 3rem);
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 4px 18px rgba(10,77,120,0.35), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+
+  .band-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .brand { display: flex; align-items: center; gap: 0.9rem; text-decoration: none; color: #fff; }
+
+  .brand-seal {
+    width: 72px; height: 72px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 25%, rgba(255,255,255,0.65), rgba(255,255,255,0) 55%);
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.6)) drop-shadow(0 0 16px rgba(255,255,255,0.35));
+  }
+  .brand-seal svg { width: 46px; height: 46px; }
+
+  .brand-text-group { display: flex; flex-direction: column; line-height: 1.15; }
+  .brand-eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,0.85); font-weight: 400; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .brand-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.01em; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+
+  .header-utility {
+    display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap;
+    font-size: 0.88rem; color: rgba(255,255,255,0.92);
+  }
+  .header-utility strong { display: block; font-size: 0.98rem; }
+  .header-utility span { display: block; font-size: 0.74rem; color: rgba(255,255,255,0.7); }
+
+  /* ---------- Flag stripe ---------- */
+  .flag-stripe { display: flex; height: 8px; position: relative; z-index: 2; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .flag-stripe span { flex: 1 1 0; }
+  .flag-stripe .stripe-1 { background: linear-gradient(180deg, #bf2008, #6E0001); }
+  .flag-stripe .stripe-2 { background: linear-gradient(180deg, #333, #000); }
+  .flag-stripe .stripe-3 { background: linear-gradient(180deg, #ce5f14, #ff7a0d); }
+
+  /* ---------- Nav bar (glass) ---------- */
+  nav.main-nav {
+    background: var(--fa-glass-nav);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border-bottom: 1px solid rgba(255,255,255,0.4);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(10,77,120,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .nav-inner {
+    max-width: 1240px; margin: 0 auto;
+    display: flex; gap: 0.25rem;
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    flex-wrap: wrap;
+  }
+  .nav-inner a {
+    display: inline-block; padding: 0.95rem 1.1rem; font-size: 0.9rem; font-weight: 600;
+    text-decoration: none; color: var(--fa-blue-deep); border-bottom: 3px solid transparent;
+    border-radius: 8px 8px 0 0; transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .nav-inner a:hover { background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(207,243,255,0.35)); border-bottom-color: var(--fa-blue-mid); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    background: linear-gradient(180deg, rgba(234,252,255,0.6) 0%, rgba(255,255,255,0.15) 100%);
+    border-bottom: 1px solid var(--fa-line);
+    position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute; width: 380px; height: 380px; border-radius: 50%;
+    top: -140px; right: -110px;
+    background:
+      radial-gradient(circle at 30% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.1) 35%, rgba(255,255,255,0) 60%),
+      radial-gradient(circle at 65% 70%, rgba(79,199,242,0.35) 0%, rgba(79,199,242,0) 55%);
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    max-width: 1240px; margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 4vw, 3rem);
+    display: grid; grid-template-columns: minmax(0,1.15fr) minmax(280px, 1fr);
+    gap: clamp(2rem, 5vw, 4rem); align-items: center;
+    position: relative; z-index: 1;
+  }
+
+  .hero-kicker {
+    display: inline-block; background: linear-gradient(180deg, #5fd0f5 0%, #1487c9 100%); color: #fff;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; padding: 0.35rem 0.9rem;
+    border-radius: 999px; margin-bottom: 1.1rem;
+    box-shadow: 0 3px 10px rgba(10,77,120,0.3), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .hero h1 {
+    font-size: clamp(2.1rem, 4.4vw, 3rem); font-weight: 900; color: var(--fa-blue-deep);
+    line-height: 1.12; margin-bottom: 1.1rem; max-width: 18ch; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .hero p { font-size: 1.05rem; color: var(--fa-text); max-width: 56ch; margin-bottom: 1.6rem; }
+  .btn-row { display: flex; gap: 0.9rem; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;
+    font-size: 0.95rem; font-weight: 600; text-decoration: none; border-radius: 999px;
+    position: relative; overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer; border: none; font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn::before {
+    content: ""; position: absolute; top: 0; left: 6%; width: 88%; height: 46%;
+    border-radius: 999px 999px 60% 60% / 100% 100% 20% 20%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0)); pointer-events: none;
+  }
+  .btn-primary { background: linear-gradient(180deg, #5fd0f5 0%, #0f7fbf 100%); color: #fff; box-shadow: 0 6px 16px rgba(10,77,120,0.35), inset 0 1px 0 rgba(255,255,255,0.5); }
+  .btn-primary:hover { box-shadow: 0 10px 22px rgba(10,77,120,0.45), inset 0 1px 0 rgba(255,255,255,0.6); }
+  .btn-outline { background: var(--fa-glass); color: var(--fa-blue-deep); border: 1.5px solid rgba(79,199,242,0.6); backdrop-filter: blur(6px); }
+  .btn-outline:hover { background: var(--fa-glass-strong); }
+
+  /* ---------- Glass panel (stato linee) ---------- */
+  .hero-panel {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.5); border-top: 4px solid var(--fa-blue-mid);
+    border-radius: 18px; padding: 1.6rem;
+    box-shadow: 0 16px 40px rgba(10,77,120,0.18), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .hero-panel h2 { font-size: 1.02rem; color: var(--fa-blue-deep); margin-bottom: 0.3rem; }
+  .hero-panel .panel-updated { font-size: 0.76rem; color: var(--fa-text); margin-bottom: 0.9rem; opacity: 0.85; }
+  .status-list { list-style: none; display: grid; gap: 0.6rem; }
+  .status-row {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.55rem 0.65rem; border-radius: 10px; background: rgba(255,255,255,0.35);
+    font-size: 0.88rem;
+  }
+  .status-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 1px 1px rgba(0,0,0,0.15); }
+  .status-row strong { color: var(--fa-ink); font-weight: 700; }
+  .status-tag { margin-left: auto; font-size: 0.74rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+  .status-ok { background: rgba(80,180,90,0.18); color: #2f8f4e; }
+  .status-warn { background: rgba(230,160,20,0.2); color: #a0680a; }
+
+  /* ---------- Alert ticker ---------- */
+  .alert-band {
+    background: linear-gradient(180deg, #fff3d6, #ffe6ad);
+    border-bottom: 1px solid #f0cf7f;
+    color: #6b4a06;
+    padding: 0.7rem clamp(1rem, 4vw, 3rem);
+    position: relative; z-index: 1;
+  }
+  .alert-inner { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 0.7rem; font-size: 0.88rem; flex-wrap: wrap; }
+  .alert-inner .alert-icon { font-size: 1.05rem; }
+  .alert-inner a { font-weight: 700; text-decoration: underline; }
+
+  /* ---------- Section shared ---------- */
+  section { padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 4vw, 3rem); position: relative; z-index: 1; }
+  .section-inner { max-width: 1240px; margin: 0 auto; }
+  .section-head { max-width: 700px; margin-bottom: 2.5rem; }
+  .section-label { color: var(--fa-blue); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); color: var(--fa-blue-deep); font-weight: 700; line-height: 1.2; }
+  .section-desc { color: var(--fa-text); margin-top: 0.9rem; font-size: 1rem; max-width: 62ch; }
+
+  /* ---------- Le nostre linee: colonna elenco ---------- */
+  .lines-column { display: grid; gap: 1rem; }
+  .line-row {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1.1rem;
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-left: 6px solid var(--line-color, var(--fa-blue));
+    border-radius: 14px; padding: 1.1rem 1.4rem;
+    box-shadow: 0 8px 20px rgba(10,77,120,0.1);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .line-row:hover { transform: translateX(4px); box-shadow: 0 12px 26px rgba(10,77,120,0.18); }
+  .line-chip {
+    width: 46px; height: 46px; border-radius: 50%; background: var(--line-color, var(--fa-blue));
+    color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 1.05rem;
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.35), 0 3px 8px rgba(0,0,0,0.2); flex-shrink: 0;
+  }
+  .line-info h3 { font-size: 1.05rem; color: var(--fa-ink); margin-bottom: 0.2rem; }
+  .line-info p { font-size: 0.88rem; color: var(--fa-text); }
+  .line-meta { text-align: right; font-size: 0.82rem; color: var(--fa-text); white-space: nowrap; }
+  .line-meta .freq { display: block; font-weight: 700; color: var(--fa-ink); }
+
+  @media (max-width: 640px) {
+    .line-row { grid-template-columns: auto 1fr; }
+    .line-meta { grid-column: 1 / -1; text-align: left; padding-top: 0.4rem; border-top: 1px dashed var(--fa-line); }
+  }
+
+  /* ---------- Mappa della rete ---------- */
+  .map-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 1.6rem; align-items: start; }
+  .map-panel {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    border: 1px solid rgba(255,255,255,0.55); border-radius: 18px; padding: 1rem;
+    box-shadow: 0 14px 34px rgba(10,77,120,0.14);
+    backdrop-filter: blur(8px);
+  }
+  #network-map { width: 100%; height: auto; cursor: default; }
+  .map-station { cursor: pointer; }
+  .map-station circle { transition: r 0.15s ease, stroke-width 0.15s ease; }
+  .map-station:hover circle, .map-station.active circle { stroke-width: 4; }
+  .map-station text { font-family: "Titillium Web", sans-serif; font-size: 13px; fill: var(--fa-ink); font-weight: 600; pointer-events: none; }
+  .map-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; padding: 0.9rem 0.4rem 0.2rem; font-size: 0.82rem; }
+  .map-legend span { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--fa-ink); font-weight: 600; }
+  .map-legend i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+
+  .map-info {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    border: 1px solid rgba(255,255,255,0.55); border-top: 4px solid var(--fa-blue-mid);
+    border-radius: 16px; padding: 1.4rem; min-height: 220px;
+    box-shadow: 0 10px 26px rgba(10,77,120,0.12);
+  }
+  .map-info h3 { color: var(--fa-blue-deep); font-size: 1.05rem; margin-bottom: 0.5rem; }
+  .map-info p { font-size: 0.9rem; color: var(--fa-text); margin-bottom: 0.8rem; }
+  .map-info .pill-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .map-pill { font-size: 0.76rem; font-weight: 700; color: #fff; padding: 0.25rem 0.65rem; border-radius: 999px; }
+  .map-info-placeholder { color: var(--fa-text); font-size: 0.9rem; opacity: 0.8; }
+
+  @media (max-width: 900px) { .map-layout { grid-template-columns: 1fr; } }
+
+  /* ---------- Stazioni: ricerca ---------- */
+  .station-search {
+    width: 100%; max-width: 420px; padding: 0.75rem 1rem; font-family: inherit; font-size: 0.95rem;
+    border-radius: 999px; border: 1px solid var(--fa-line); background: var(--fa-glass-strong);
+    color: var(--fa-text); box-shadow: inset 0 1px 3px rgba(10,77,120,0.08); margin-bottom: 1.6rem;
+  }
+  .station-search:focus { outline: 2px solid var(--fa-blue-mid); outline-offset: 1px; }
+  .station-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; }
+  .station-card {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    border: 1px solid rgba(255,255,255,0.55); border-radius: 12px; padding: 0.9rem 1.1rem;
+    box-shadow: 0 6px 16px rgba(10,77,120,0.08);
+  }
+  .station-card h4 { font-size: 0.96rem; color: var(--fa-ink); margin-bottom: 0.4rem; }
+  .station-card .pill-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .station-card .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .no-results { color: var(--fa-text); font-size: 0.92rem; opacity: 0.8; grid-column: 1 / -1; }
+
+  /* ---------- Tariffe ---------- */
+  .fare-table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+  .fare-table table { width: 100%; border-collapse: collapse; min-width: 480px; }
+  .fare-table thead th {
+    text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--fa-blue-deep); padding: 0.7rem 1rem; border-bottom: 2px solid var(--fa-blue-mid);
+  }
+  .fare-table td { padding: 0.8rem 1rem; font-size: 0.92rem; color: var(--fa-text); border-bottom: 1px solid var(--fa-line); }
+  .fare-table tr:last-child td { border-bottom: none; }
+  .fare-table td.price { font-weight: 700; color: var(--fa-ink); }
+  .fare-wrap {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    border: 1px solid rgba(255,255,255,0.55); border-radius: 16px; padding: 0.6rem;
+    box-shadow: 0 10px 26px rgba(10,77,120,0.1); overflow-x: auto;
+  }
+
+  /* ---------- Cards / service ---------- */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.5rem; }
+  .service-card {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.6); border-radius: 16px; padding: 1.6rem;
+    box-shadow: 0 8px 22px rgba(10,77,120,0.1); transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .service-card:hover { box-shadow: 0 14px 32px rgba(10,77,120,0.2); transform: translateY(-3px); }
+
+  /* ---------- Highlight band ---------- */
+  .stats-band {
+    background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 40%), linear-gradient(180deg, #0f7fbf 0%, #073a5c 100%);
+    color: #fff; position: relative; z-index: 1; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); max-width: 1240px; margin: 0 auto; }
+  .stat-item { text-align: center; padding: 2rem 1rem; border-left: 1px solid rgba(255,255,255,0.18); }
+  .stat-item:first-child { border-left: none; }
+  .stat-num { font-size: 2.3rem; font-weight: 900; color: var(--fa-gold); text-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+  .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-top: 0.3rem; }
+
+  /* ---------- News / avvisi ---------- */
+  .news-list { display: grid; gap: 1.1rem; }
+  .news-item {
+    display: grid; grid-template-columns: 110px 1fr; gap: 1.4rem; padding: 1.2rem; border-radius: 14px;
+    background: var(--fa-glass); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.5);
+    align-items: start; box-shadow: 0 6px 16px rgba(10,77,120,0.08);
+  }
+  .news-date { background: linear-gradient(180deg, var(--fa-azure), var(--fa-azure-mid)); color: var(--fa-blue-deep); border-radius: 10px; padding: 0.6rem 0.4rem; text-align: center; font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+  .news-date .day { display: block; font-size: 1.4rem; line-height: 1; }
+  .news-date .month { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .news-item h3 { font-size: 1.02rem; color: var(--fa-blue-deep); margin-bottom: 0.3rem; }
+  .news-item p { font-size: 0.9rem; color: var(--fa-text); }
+  .news-item a { color: var(--fa-blue); font-weight: 600; text-decoration: none; font-size: 0.85rem; }
+  .news-item .sev { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; margin-bottom: 0.4rem; }
+  .sev-minore { background: rgba(80,180,90,0.18); color: #2f8f4e; }
+  .sev-media { background: rgba(230,160,20,0.2); color: #a0680a; }
+
+  /* ---------- Contact / CTA ---------- */
+  .contact-section { background: linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0)); border-top: 1px solid var(--fa-line); }
+  .contact-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(260px, 380px); gap: 3rem; }
+  .contact-form { display: grid; gap: 1rem; }
+  .contact-form label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--fa-blue-deep); margin-bottom: 0.3rem; }
+  .contact-form input, .contact-form textarea, .contact-form select {
+    width: 100%; background: var(--fa-glass-strong); border: 1px solid var(--fa-line); border-radius: 10px;
+    padding: 0.7rem 0.9rem; font-family: inherit; font-size: 0.92rem; color: var(--fa-text);
+    box-shadow: inset 0 1px 3px rgba(10,77,120,0.08);
+  }
+  .contact-form input:focus, .contact-form textarea:focus, .contact-form select:focus { outline: 2px solid var(--fa-blue-mid); outline-offset: 1px; }
+  .contact-info {
+    background: linear-gradient(180deg, var(--fa-glass-strong), var(--fa-glass));
+    backdrop-filter: blur(8px); border-radius: 16px; padding: 1.75rem; border-top: 4px solid var(--fa-gold);
+    box-shadow: 0 10px 26px rgba(10,77,120,0.12);
+  }
+  .contact-info h3 { color: var(--fa-blue-deep); margin-bottom: 1rem; font-size: 1.05rem; }
+  .contact-info p { font-size: 0.9rem; margin-bottom: 0.7rem; color: var(--fa-text); }
+
+  /* ---------- Footer ---------- */
+  footer {
+    background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 30%), linear-gradient(180deg, #0a4d78 0%, #052235 100%);
+    color: rgba(255,255,255,0.82); padding: 2.5rem clamp(1rem, 4vw, 3rem) 1.5rem; position: relative; z-index: 1;
+  }
+  .footer-logos { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; padding: 1.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.16); }
+  .footer-logos span.logos-label { font-size: 0.78rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.5rem; }
+  .logo-placeholder { width: 140px; height: 52px; background: rgba(255,255,255,0.08); border: 1px dashed rgba(255,255,255,0.35); border-radius: 10px; display: grid; place-items: center; font-size: 0.72rem; color: rgba(255,255,255,0.6); text-align: center; padding: 0.4rem; }
+  .footer-inner { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.16); padding-top: 2rem; }
+  .footer-col h4 { color: #fff; font-size: 0.92rem; margin-bottom: 0.9rem; letter-spacing: 0.02em; }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 0.55rem; }
+  .footer-col a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+  .footer-col a:hover { color: #fff; text-decoration: underline; }
+  .footer-bottom { max-width: 1240px; margin: 1.2rem auto 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+
+  @media (max-width: 860px) {
+    .hero-inner, .contact-grid { grid-template-columns: 1fr; }
+    .stat-item { border-left: none; border-top: 1px solid rgba(255,255,255,0.18); }
+    .stat-item:first-child { border-top: none; }
+    .news-item { grid-template-columns: 70px 1fr; }
+  }
+
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :focus-visible { outline: 2px solid var(--fa-blue-mid); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-strip">
+    <span>TDR-Wirtschaftskommission</span>
+    <div>
+      <a href="#">Deutsch</a>
+      <a href="#">English</a>
+    </div>
+  </div>
+
+  <header class="main-band">
+    <div class="band-inner">
+      <a href="#top" class="brand">
+        <span class="brand-seal">
+         <img src="TETAmetro.png" alt="Logo TETA">
+        </svg>
+        </span>
+        <span class="brand-text-group">
+          <span class="brand-eyebrow">Île-de-USSE Mobilités</span>
+          <span class="brand-title">EstjiLinn-Taleen</span>
+        </span>
+      </a>
+     <div class="header-utility">
+        <div><strong>[TB]</strong><span>Rete Ferroviaria Statale</span></div>
+        <a href="#tariffe" class="btn btn-outline" style="color:#fff; background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.5);">Sito Web</a>
+     </div>
+     </div>
+  </header>
+
+  <div class="flag-stripe" aria-hidden="true">
+    <span class="stripe-1"></span>
+    <span class="stripe-2"></span>
+    <span class="stripe-3"></span>
+  </div>
+
+  <nav class="main-nav" aria-label="Navigazione principale">
+    <div class="nav-inner">
+      <a href="#linee">Linee Metropolitane</a>
+      <a href="#mappa">Mappa della rete</a>
+      <a href="#stazioni">Stazioni</a>
+      <a href="#rete terrestre">Rete Terrestre</a>
+      <a href="#shutle">Shùtle</a>
+      <a href="#avvisi">Avvisi di servizio</a>
+    </div>
+  </nav>
+
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <div>
+        <span class="hero-kicker">Rete Metropolitana</span>
+        <h1>IDU</h1>
+        <p>Sistema Unico di Trasporto della Città Metropolitana di Taleen.</p>
+        <div class="btn-row">
+          <a href="#mappa" class="btn btn-primary">Esplora la mappa della rete</a>
+          <a href="#avvisi" class="btn btn-outline">Stato del servizio</a>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <h2>Stato delle linee in tempo reale</h2>
+        <p class="panel-updated">Aggiornato alle 08:42</p>
+        <ul class="status-list">
+          <li class="status-row"><span class="status-dot" style="background:var(--line-rossa)"></span><strong>Linea 1</strong><span class="status-tag status-ok">Regolare</span></li>
+          <li class="status-row"><span class="status-dot" style="background:var(--line-blu)"></span><strong>Linea 2</strong><span class="status-tag status-ok">Parzialmente Aperto</span></li>
+          <li class="status-row"><span class="status-dot" style="background:var(--line-dorata)"></span><strong>Passante Ferroviario</strong><span class="status-tag status-warn">In Costruzione</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="alert-band">
+    <div class="alert-inner">
+      <span class="alert-icon">⚠️</span>
+      <span>Lavori di espansione sulla Linea 2 dal 26 agosto 2026, da Tùria a Bal'Esh.</span>
+      <a href="#avvisi">Dettagli →</a>
+    </div>
+  </div>
+
+  <section id="linee">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label">Linee Metropolitane</p>
+        <h2 class="section-title">Due linee attraverso Tabara e Terlin</h2>
+        <p class="section-desc">Ogni linea collega da Est a Ovest Tabara e Terlin, con interscambi per permettere il miglior trasporto urbano possibile.</p>
+      </div>
+
+      <div class="lines-column">
+        <article class="line-row" style="--line-color:var(--line-rossa)">
+          <span class="line-chip">1</span>
+          <div class="line-info">
+            <h3>Linea 1</h3>
+            <p>Agorà ↔ Tùria ↔ YksiKylla ↔ Minoris ↔ Yotta </p>
+          </div>
+          <div class="line-meta"><span class="freq">Aperta</span>24/7</div>
+        </article>
+
+        <article class="line-row" style="--line-color:var(--line-blu)">
+          <span class="line-chip">2</span>
+          <div class="line-info">
+            <h3>Linea 2</h3>
+            <p>Aeroporto Terlin ↔ Fiera ↔ Terlin Centrale ↔ Rathausviertel ↔ Neustadt</p>
+          </div>
+          <div class="line-meta"><span class="freq">Aperta</span>24/7</div>
+        </article>
+
+       <article class="line-row" style="--line-color:var(--line-dorata)">
+          <span class="line-chip">1</span>
+          <div class="line-info">
+            <h3>Passante</h3>
+            <p>Tabara West ↔ Haupt Tabara ↔ Terlin ↔ Ost Tabara</p>
+          </div>
+          <div class="line-meta"><span class="freq">Chiusa</span>x/x</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="mappa" style="background: var(--fa-azure);">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label">Mappa della rete</p>
+        <h2 class="section-title">Schema della Metropolitana di Terlin-Tabara</h2>
+        <p class="section-desc">Aggiornata al 15/09/2026</p>
+      </div>
+
+      <div class="map-layout">
+        <div class="map-panel">
+          <svg id="network-map" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA"></svg>
+          <div class="map-legend" id="map-legend"></div>
+        </div>
+        <div class="map-info" id="map-info">
+          <h3>Seleziona una stazione</h3>
+          <p class="map-info-placeholder">Tocca un punto sulla mappa per vedere il nome della stazione e le linee che vi transitano.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="stazioni">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label">Stazioni</p>
+        <h2 class="section-title">Tutte le stazioni della rete</h2>
+        <p class="section-desc">Cerca una stazione per nome per vedere subito su quali linee si trova.</p>
+      </div>
+      <input type="search" id="station-search" class="station-search" placeholder="Cerca una stazione…" aria-label="Cerca una stazione">
+      <div class="station-grid" id="station-grid"></div>
+    </div>
+  </section>
+
+  <section id="partecipate" style="background: var(--fa-azure);">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label">Partecipate della TETA metro</p>
+        <h2 class="section-title">Sistema Unificato</h2>
+        <p class="section-desc">TETA metro è parte del gruppo TETA ed è formato dalle seguenti parti.</p>
+      </div>
+      <div class="fare-wrap">
+        <div class="fare-table">
+          <table>
+            <thead>
+              <tr><th>Nome</th><th>Funzione</th><th>Ingresso</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Te.Tr.A</td><td>Sistema di Trasporti Terrestri [est]</td><td class="price">2024</td></tr>
+              <tr><td>TerlinGeneralBhanHoff</td><td>Gestore del Passante Ferroviario</td><td class="price">2024</td></tr>
+              <tr><td>WestTbrAg</td><td>7 Sistema di Trasporti Sotterranei [ovest]</td><td class="price">2025</td></tr>
+              <tr><td>OstericherTransit</td><td>Sistema di Trasporti Sotterranei [est]</td><td class="price">2025</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-band" aria-label="Dati in evidenza">
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-num">2</div><div class="stat-label">Linee Metropolitane</div></div>
+      <div class="stat-item"><div class="stat-num">19</div><div class="stat-label">Stazioni servite</div></div>
+      <div class="stat-item"><div class="stat-num">96%</div><div class="stat-label">Puntualità media</div></div>
+      <div class="stat-item"><div class="stat-num">120~</div><div class="stat-label">Passeggeri al giorno</div></div>
+    </div>
+  </div>
+
+  <section id="avvisi">
+    <div class="section-inner">
+      <div class="section-head">
+        <p class="section-label">Avvisi di servizio</p>
+        <h2 class="section-title">Comunicati e aggiornamenti</h2>
+      </div>
+      <div class="news-list">
+        <article class="news-item">
+          <div class="news-date"><span class="day">26</span><span class="month">Ago</span></div>
+          <div>
+            <span class="sev sev-media">Modifica al servizio</span>
+            <h3>Lavori di Espansione sulla Linea 2</h3>
+            <p>Dal 26 agosto 2026 iniziano i lavori sulla Linea 2 per l'espansione fino a Bal'Esh dalla stazione Tùria.</p>
+            <a href="#">Leggi di più →</a>
+          </div>
+        </article>
+        <article class="news-item">
+          <div class="news-date"><span class="day">18</span><span class="month">Set</span></div>
+          <div>
+            <span class="sev sev-minore">Comunicato</span>
+            <h3>Inaugurazione Terlin BhanHoff</h3>
+            <p>Inaugurazioned della stazione ferroviaria del passante di Terlin</p>
+            <a href="#">Leggi di più →</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contatti">
+    <div class="section-inner contact-grid">
+      <div>
+        <div class="section-head">
+          <p class="section-label">Contatti</p>
+          <h2 class="section-title">Scrivi all'ufficio assistenza</h2>
+          <p class="section-desc">Per segnalazioni, oggetti smarriti o richieste di informazioni, compila il modulo: ti risponderemo entro due giorni lavorativi.</p>
+        </div>
+        <form class="contact-form" onsubmit="return false;">
+          <div>
+            <label for="nome">Nome e cognome</label>
+            <input id="nome" type="text" placeholder="Es. Anna Reichmann">
+          </div>
+          <div>
+            <label for="email">Indirizzo email</label>
+            <input id="email" type="email" placeholder="anna.reichmann@est.ei">
+          </div>
+          <div>
+            <label for="oggetto">Motivo della richiesta</label>
+            <select id="oggetto">
+              <option>Informazioni su orari e tariffe</option>
+              <option>Reclamo o disservizio</option>
+              <option>Altro</option>
+            </select>
+          </div>
+          <div>
+            <label for="messaggio">Messaggio</label>
+            <textarea id="messaggio" rows="4" placeholder="Descrivi la tua richiesta"></textarea>
+          </div>
+          <div>
+            <button type="submit" class="btn btn-primary">Invia richiesta</button>
+          </div>
+        </form>
+      </div>
+      <aside class="contact-info">
+        <h3>Informazioni e Sedi</h3>
+        <p>📍 AchtStag, 13,TETAplatz – Terlin MC</p>
+        <p>✉️ TETAmetro@teta.est.ei</p>
+      </aside>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logos" aria-label="Collegamenti con le città servite">
+      <span class="logos-label">Città Metropolitana</span>
+      <div class="logo-placeholder">Terlin</div>
+      <div class="logo-placeholder">West-Tabara</div>
+      <div class="logo-placeholder">Haupt-Tabara</div>
+      <div class="logo-placeholder">Ost-Tabara</div>
+    </div>
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h4>TETA</h4>
+        <ul>
+          <li><a href="partecipate">Holding</a></li>
+          <li><a href="#">Lavora con noi</a></li>
+          <li><a href="#">Bandi di gara</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Servizi</h4>
+        <ul>
+          <li><a href="#stazioni">Stazioni</a></li>
+          <li><a href="#">Sito mobile</a></li>
+          <li><a href="#mappa">Mappa della rete</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Documenti</h4>
+        <ul>
+          <li><a href="#">Carta dei servizi</a></li>
+          <li><a href="#">Regolamento tariffario</a></li>
+          <li><a href="#">Bilancio e trasparenza</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Assistenza</h4>
+        <ul>
+          <li><a href="#contatti">Contatti</a></li>
+          <li><a href="#">Porblemi di Servizio</a></li>
+          <li><a href="#">Reclami</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 TETA — Terlin Transit Autority.</span>
+      <span>Agenzia della TDR per il trasporto locale[estjibundes.me.ei]</span>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================================
+     DATI DELLA RETE — modifica qui linee e stazioni per aggiornare
+     sia la mappa sia l'elenco stazioni. Le coordinate x/y sono su una
+     tela (viewBox) di 1000x700.
+  ===================================================================== */
+  var LINES = {
+    rossa:  { name: "Linea Rossa",  color: "var(--line-rossa)",  hex: "#bf2008" },
+    blu:    { name: "Linea Blu",    color: "var(--line-blu)",    hex: "#0a5f96" },
+    passante: {name: "Passante",    color: "var(--line-dorata)",    hex: "#c9971f" }
+  };
+
+  var STATIONS = [
+    { id: "agora",     name: "Agorà",        x: 200, y: 500, lines: ["rossa"] },
+    { id: "turiar",         name: "Tùria",      x: 300, y: 500, lines: ["rossa","blu"],interchange: true },
+    { id: "zhenturia",       name: "Zhen-Tùria",   x: 400, y: 500, lines: ["rossa"] },
+    { id: "zhenis",        name: "Zhenis",      x: 500, y: 450, lines: ["rossa"] },
+    { id: "yksi",        name: "Yksi Kylla",           x: 600, y: 450, lines: ["rossa"] },
+    { id: "minoris",        name: "Minoris",           x: 700, y: 500, lines: ["rossa"] },
+    { id: "majoris",        name: "Majoris",           x: 750, y: 500, lines: ["rossa"] },
+    { id: "enos",        name: "Enos",           x: 800, y: 500, lines: ["rossa"] },
+    { id: "funfzhen",        name: "FunfZhen",           x: 850, y: 450, lines: ["rossa"] },
+    { id: "kerasjine",        name: "Kerasjine",           x: 900, y: 400, lines: ["rossa"] },
+    { id: "yotta",        name: "Yotta",           x: 900, y: 250, lines: ["rossa"] },
+
+    { id: "tbrint",      name: "Tabara International",  x: 200, y: 200, lines: ["blu"] },
+    { id: "tbrw",      name: "Tabara West",  x: 200, y: 300, lines: ["blu","passante"],interchange:true },
+    { id: "neun",          name: "NeunStrasse",             x: 300, y: 400, lines: ["blu"] },
+    { id: "elfte", name: "ElfteStrasse",    x: 300, y: 450, lines: ["blu"] },
+    { id: "turiab",       name: "Tùria",          x: 300, y: 500, lines: ["blu","rossa"],interchange:true },
+
+    { id: "tbrawest", name: "Tabara West",  x: 200, y: 300, lines: ["blu","passante"],interchange:true },
+    { id: "tbracle",       name: "Haupt Tabara",          x: 300, y: 300, lines: ["passante"]},
+    { id: "tabaraturia",       name: "Terlin",          x: 350, y: 350, lines: ["passante"]}
+  ];
+
+  var LINE_PATHS = {
+    rossa:  ["agora", "turiar", "zhenturia", "zhenis", "yksi","minoris","majoris","enos","funfzhen","kerasjine","yotta"],
+    blu:    ["tbrint","tbrw", "neun", "elfte", "turiab"],
+    passante: ["tbrawest","tbracle","tabaraturia"]
+  };
+
+  var svgNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(svgNS, tag);
+    for (var k in attrs) { e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+  function byId(id) { for (var i=0;i<STATIONS.length;i++){ if (STATIONS[i].id===id) return STATIONS[i]; } return null; }
+
+  var svg = document.getElementById("network-map");
+
+  // disegna le linee (percorsi colorati)
+  Object.keys(LINE_PATHS).forEach(function (lineKey) {
+    var pathStations = LINE_PATHS[lineKey].map(byId);
+    var points = pathStations.map(function (s) { return s.x + "," + s.y; }).join(" ");
+    var pl = el("polyline", {
+      points: points,
+      fill: "none",
+      stroke: LINES[lineKey].color,
+      "stroke-width": "7",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      opacity: "0.92"
+    });
+    svg.appendChild(pl);
+  });
+
+  // disegna le stazioni
+  var activeStation = null;
+  STATIONS.forEach(function (st) {
+    var g = el("g", { class: "map-station", "data-id": st.id, tabindex: "0", role: "button", "aria-label": st.name });
+    var mainColor = LINES[st.lines[0]].color;
+
+    if (st.interchange) {
+      var c = el("circle", { cx: st.x, cy: st.y, r: 13, fill: "#fff", stroke: "var(--fa-ink)", "stroke-width": "3" });
+      g.appendChild(c);
+      var c2 = el("circle", { cx: st.x, cy: st.y, r: 6, fill: "var(--fa-ink)" });
+      g.appendChild(c2);
+    } else {
+      var c3 = el("circle", { cx: st.x, cy: st.y, r: 9, fill: mainColor, stroke: "#fff", "stroke-width": "3" });
+      g.appendChild(c3);
+    }
+
+    var labelX = st.x + (st.x > 500 ? 16 : st.x < 500 ? -16 : 0);
+    var anchor = st.x > 500 ? "start" : st.x < 500 ? "end" : "middle";
+    var labelY = st.y < 100 ? st.y - 16 : st.y > 600 ? st.y + 24 : st.y - 16;
+    if (st.x === 500 && st.y === 350) { labelX = st.x; anchor = "middle"; labelY = st.y - 22; }
+
+    var t = el("text", { x: labelX, y: labelY, "text-anchor": anchor });
+    t.textContent = st.name;
+    g.appendChild(t);
+
+    g.addEventListener("click", function () { selectStation(st.id); });
+    g.addEventListener("keypress", function (ev) { if (ev.key === "Enter" || ev.key === " ") selectStation(st.id); });
+
+    svg.appendChild(g);
+  });
+
+  function selectStation(id) {
+    var st = byId(id);
+    if (!st) return;
+    document.querySelectorAll(".map-station").forEach(function (n) { n.classList.remove("active"); });
+    var node = svg.querySelector('.map-station[data-id="' + id + '"]');
+    if (node) node.classList.add("active");
+    activeStation = id;
+
+    var info = document.getElementById("map-info");
+    var pills = st.lines.map(function (lk) {
+      return '<span class="map-pill" style="background:' + LINES[lk].color + '">' + LINES[lk].name + "</span>";
+    }).join("");
+    info.innerHTML =
+      "<h3>" + st.name + "</h3>" +
+      "<p>" + (st.interchange ? "Stazione di interscambio tra tutte le linee della rete." : "Servita da " + LINES[st.lines[0]].name + ".") + "</p>" +
+      '<div class="pill-row">' + pills + "</div>";
+  }
+
+  // legenda
+  var legend = document.getElementById("map-legend");
+  Object.keys(LINES).forEach(function (lk) {
+    var span = document.createElement("span");
+    span.innerHTML = '<i style="background:' + LINES[lk].color + '"></i>' + LINES[lk].name;
+    legend.appendChild(span);
+  });
+
+  // elenco / ricerca stazioni
+  var grid = document.getElementById("station-grid");
+  function renderStations(filter) {
+    grid.innerHTML = "";
+    var f = (filter || "").trim().toLowerCase();
+    var results = STATIONS.filter(function (s) { return s.name.toLowerCase().indexOf(f) !== -1; });
+    if (results.length === 0) {
+      var p = document.createElement("p");
+      p.className = "no-results";
+      p.textContent = "Nessuna stazione trovata per \"" + filter + "\".";
+      grid.appendChild(p);
+      return;
+    }
+    results.forEach(function (s) {
+      var card = document.createElement("article");
+      card.className = "station-card";
+      var dots = s.lines.map(function (lk) {
+        return '<span class="dot" style="background:' + LINES[lk].color + '" title="' + LINES[lk].name + '"></span>';
+      }).join(" ");
+      card.innerHTML = "<h4>" + s.name + "</h4><div class='pill-row'>" + dots + "</div>";
+      card.style.cursor = "pointer";
+      card.addEventListener("click", function () {
+        document.getElementById("mappa").scrollIntoView({ behavior: "smooth", block: "center" });
+        selectStation(s.id);
+      });
+      grid.appendChild(card);
+    });
+  }
+  renderStations("");
+  document.getElementById("station-search").addEventListener("input", function (e) { renderStations(e.target.value); });
+})();
+</script>
+</body>
+</html>
