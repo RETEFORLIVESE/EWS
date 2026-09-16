@@ -798,11 +798,17 @@
   };
 
   var STATIONS = [
-    { id: "reichstadt",     name: "Reichstadt",        x: 120, y: 350, lines: ["rossa"] },
-    { id: "soviet",         name: "Soviet-Allee",      x: 310, y: 350, lines: ["rossa"] },
-    { id: "centrale",       name: "Terlin Centrale",   x: 500, y: 350, lines: ["rossa","blu"], interchange: true },
-    { id: "kanzler",        name: "Kanzlerplatz",      x: 690, y: 350, lines: ["rossa"] },
-    { id: "ostmark",        name: "Ostmark",           x: 880, y: 350, lines: ["rossa"] },
+    { id: "agora",     name: "Agorà",        x: 200, y: 100, lines: ["rossa"] },
+    { id: "turia",         name: "Tùria",      x: 300, y: 100, lines: ["rossa"] },
+    { id: "zhenturia",       name: "Zhen-Tùria",   x: 400, y: 100, lines: ["rossa","blu"], interchange: true },
+    { id: "zhenis",        name: "Zhenis",      x: 500, y: 200, lines: ["rossa"] },
+    { id: "yksi",        name: "Yksi Kylla",           x: 600, y: 100, lines: ["rossa"] },
+    { id: "minoris",        name: "Minoris",           x: 700, y: 100, lines: ["rossa"] },
+    { id: "majoris",        name: "Majoris",           x: 800, y: 100, lines: ["rossa"] },
+    { id: "enos",        name: "Enos",           x: 850, y: 100, lines: ["rossa"] },
+    { id: "funfzhen",        name: "FunfZhen",           x: 900, y: 150, lines: ["rossa"] },
+    { id: "kerasjine",        name: "Kerasjine",           x: 950, y: 200, lines: ["rossa"] },
+    { id: "yotta",        name: "Yotta",           x: 950, y: 300, lines: ["rossa"] },
 
     { id: "aeroporto",      name: "Aeroporto Terlin",  x: 810, y: 110, lines: ["blu"] },
     { id: "fiera",          name: "Fiera",             x: 655, y: 230, lines: ["blu"] },
@@ -811,7 +817,7 @@
   ];
 
   var LINE_PATHS = {
-    rossa:  ["reichstadt", "soviet", "centrale", "kanzler", "ostmark"],
+    rossa:  ["agora", "turia", "zhenturia", "zhenis", "yksi","minoris","makoris","enos","funfzhen","kerasjine","yotta"],
     blu:    ["aeroporto", "fiera", "centrale", "rathausviertel", "neustadt"]
   };
 
