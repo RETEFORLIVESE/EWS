@@ -6,9 +6,9 @@ function renderTestata(paginaAttiva) {
 <link rel="icon" type="image/png" href="NormAktiv.png">
     <div class="striscia-top">
       <div class="container">
-        <span>${SITE_CONFIG.nomeFazione} &middot; Raccolta ufficiale degli atti normativi</span>
+        <span>${SITE_CONFIG.nomeFazione} &middot;  [estjibundes.me.ei]</span>
         <span>
-          <a href="redazione.html">Area redazione</a>
+          <a href="redazione.html">Area Amministrativa</a>
           ${SITE_CONFIG.discord ? `<a href="${SITE_CONFIG.discord}" target="_blank" rel="noopener">Discord</a>` : ""}
         </span>
       </div>
@@ -16,7 +16,7 @@ function renderTestata(paginaAttiva) {
     <header class="testata">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">
-        <img src="${SITE_CONFIG.emblema}" alt="lex/NormAktiv.png">
+        <img src="lex/NormAktiv.png" alt="lex/NormAktiv.png">
         </div>
         <div class="testata__testi">
           <p class="testata__eyebrow"></p>
