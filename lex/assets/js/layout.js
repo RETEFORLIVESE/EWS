@@ -12,8 +12,6 @@ function renderTestata(paginaAttiva) {
       </div>
     </div>
     <header class="testata">
-    <link rel="apple-touch-icon" href="NormAktiv.png">
-    <link rel="icon" type="image/png" href="NormAktiv.png">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">
         <img src=${SITE_CONFIG.emblema} alt="NormAktiv.png">
