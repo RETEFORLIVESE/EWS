@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Archivio Elezioni - CEPU</title>
-    <link rel="apple-touch-icon" href="CEPU.png">
-    <link rel="icon" type="image/png" href="CEPU.png">
+    <link rel="apple-touch-icon" href="Estji.png">
+    <link rel="icon" type="image/png" href="Estji.png">
     <meta name="description" content="Consulta i risultati elettorali">
 
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -525,13 +525,13 @@
                         <input type="radio" name="tpel" value="G" id="comunali" checked="checked">
                         Comunali
                     </label>
-                    <label for="camera">
-                        <input type="radio" name="tpel" value="C" id="camera">
-                        Camera
+                    <label for="congresso_statale">
+                        <input type="radio" name="tpel" value="C" id="congresso_statale">
+                        Congresso Statale
                     </label>
-                    <label for="senato">
-                        <input type="radio" name="tpel" value="S" id="senato">
-                        Senato
+                    <label for="congresso_unitario">
+                        <input type="radio" name="tpel" value="S" id="congresso_unitario">
+                        Congresso Unitario
                     </label>
                 </div>
             </div>
@@ -544,12 +544,15 @@
                     <option value="0">Caricamento date...</option>
                 </select>
 
-                <label class="select-des" for="sel_comune">Comune</label>
-                <select name="sel_comune" class="form-control" id="sel_comune" disabled>
-                    <option value="0">Scegli Comune</option>
-                </select>
+                <div id="gruppo-sezione">
+                    <label class="select-des" for="sel_comune">Sezione</label>
+                    <select name="sel_comune" class="form-control" id="sel_comune" disabled>
+                        <option value="0">Scegli Sezione</option>
+                    </select>
+                </div>
             </div>
         </div>
+
 
         <!-- PANNELLO CENTRALE -->
         <div class="center-panel" id="main-content">
@@ -669,7 +672,13 @@
         let elezioniCache = null;
 
         // Mappa codice radio -> etichetta testuale, usata come fallback se manca "tipo_codice" nel dato
-        const MAPPA_TIPO = { G: 'comunali', C: 'camera', S: 'senato' };
+        const MAPPA_TIPO = { G: 'comunali', C: 'congresso statale', S: 'congresso unitario' };
+
+        // Il Congresso Unitario è su circoscrizione unica: non richiede la scelta della Sezione.
+        // Comunali e Congresso Statale invece sí.
+        function richiedeSezione(codice) {
+            return codice !== 'S';
+        }
 
         function codiceTipoSelezionato() {
             const radio = document.querySelector('input[name="tpel"]:checked');
@@ -740,22 +749,26 @@
             return elezioniCache;
         }
 
-        // Ripopola la select "Data" con le date effettive presenti nel dataset,
-        // filtrate in base al tipo di elezione selezionato (Comunali/Camera/Senato)
+        // Ripopola la select "Data" con le date UNIVOCHE presenti nel dataset,
+        // filtrate in base al tipo di elezione selezionato (Comunali/Camera/Senato).
+        // Una stessa data può corrispondere a più record (più comuni): qui mostriamo
+        // la data una sola volta, la scelta del comune avviene nel passo successivo.
         async function aggiornaSelettoreDate() {
             const selDate = document.getElementById('sel_date');
             const selComune = document.getElementById('sel_comune');
+            const gruppoSezione = document.getElementById('gruppo-sezione');
+            const codice = codiceTipoSelezionato();
+            gruppoSezione.style.display = richiedeSezione(codice) ? '' : 'none';
             selDate.disabled = true;
             selDate.innerHTML = '<option value="0">Caricamento date...</option>';
             selComune.disabled = true;
-            selComune.innerHTML = '<option value="0">Scegli Comune</option>';
+            selComune.innerHTML = '<option value="0">Scegli Sezione</option>';
             document.getElementById('dati-elettorali').style.display = 'none';
             document.getElementById('dati-elettorali').innerHTML = '';
             document.getElementById('messaggio-iniziale').style.display = 'block';
 
             try {
                 const dataset = await caricaDataset();
-                const codice = codiceTipoSelezionato();
                 const corrispondenti = dataset
                     .map((elezione, indice) => ({ elezione, indice }))
                     .filter(({ elezione }) => elezioneCorrispondeAlTipo(elezione, codice));
@@ -766,10 +779,20 @@
                     return;
                 }
 
-                let opzioni = '<option value="0">Scegli Data</option>';
+                // Raggruppa i record per valore di data "grezzo", cosí ogni data
+                // compare una sola volta nella tendina anche se più comuni votano
+                // nello stesso giorno
+                const dateUniche = new Map(); // valoreData -> [indici]
                 corrispondenti.forEach(({ elezione, indice }) => {
                     const valoreData = estraiValoreData(elezione);
-                    opzioni += `<option value="${indice}">${formattaData(valoreData)}</option>`;
+                    if (!dateUniche.has(valoreData)) dateUniche.set(valoreData, []);
+                    dateUniche.get(valoreData).push(indice);
+                });
+
+                let opzioni = '<option value="0">Scegli Data</option>';
+                dateUniche.forEach((indici, valoreData) => {
+                    // Il valore dell'opzione è la lista di indici corrispondenti a quella data
+                    opzioni += `<option value="${indici.join(',')}">${formattaData(valoreData)}</option>`;
                 });
                 selDate.innerHTML = opzioni;
                 selDate.disabled = false;
@@ -792,10 +815,73 @@
             radio.addEventListener('change', aggiornaSelettoreDate);
         });
 
+        // Al cambio della Data: popola la tendina Comune con le sole località
+        // disponibili per quella data. Se c'è un solo comune lo seleziona in automatico
+        // e mostra subito i risultati; altrimenti aspetta la scelta dell'utente.
         document.getElementById('sel_date').addEventListener('change', async function() {
+            const selComune = document.getElementById('sel_comune');
+            const valoreSelezionato = this.value;
+            const codice = codiceTipoSelezionato();
+
+            document.getElementById('dati-elettorali').style.display = 'none';
+            document.getElementById('dati-elettorali').innerHTML = '';
+
+            if (valoreSelezionato === "0") {
+                selComune.innerHTML = '<option value="0">Scegli Sezione</option>';
+                selComune.disabled = true;
+                document.getElementById('messaggio-iniziale').style.display = 'block';
+                return;
+            }
+
+            const indici = valoreSelezionato.split(',').map(v => parseInt(v, 10));
+
+            // Il Congresso Unitario è su circoscrizione unica: nessuna Sezione da scegliere,
+            // si mostra subito il risultato del record trovato per quella data
+            if (!richiedeSezione(codice)) {
+                selComune.innerHTML = '<option value="0">Non richiesta</option>';
+                selComune.disabled = true;
+                await mostraRisultati(indici[0]);
+                return;
+            }
+
+            try {
+                const dataset = await caricaDataset();
+                let opzioni = '<option value="0">Scegli Sezione</option>';
+                indici.forEach(indice => {
+                    opzioni += `<option value="${indice}">${dataset[indice].comune}</option>`;
+                });
+                selComune.innerHTML = opzioni;
+                selComune.disabled = false;
+
+                if (indici.length === 1) {
+                    // Una sola sezione per questa data: la selezioniamo e mostriamo subito i risultati
+                    selComune.value = String(indici[0]);
+                    await mostraRisultati(indici[0]);
+                } else {
+                    document.getElementById('messaggio-iniziale').style.display = 'block';
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('messaggio-iniziale').style.display = 'none';
+                document.getElementById('dati-elettorali').innerHTML = `
+                    <div class="alert-danger">
+                        <strong>&#9888; Dettaglio Errore di Connessione:</strong>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('dati-elettorali').style.display = 'block';
+            }
+        });
+
+        // Al cambio del Comune: mostra i risultati del record scelto
+        document.getElementById('sel_comune').addEventListener('change', async function() {
             const indiceSelezionato = this.value;
             if (indiceSelezionato === "0") return;
+            await mostraRisultati(parseInt(indiceSelezionato, 10));
+        });
 
+        // Recupera il record scelto (tipo + data + comune) e disegna i risultati a schermo
+        async function mostraRisultati(indice) {
             // Mostra loader
             document.getElementById('messaggio-iniziale').style.display = 'none';
             document.getElementById('dati-elettorali').style.display = 'none';
@@ -803,7 +889,7 @@
 
             try {
                 const dataset = await caricaDataset();
-                const elezione = dataset[parseInt(indiceSelezionato, 10)];
+                const elezione = dataset[indice];
                 const partiti = elezione.risultati_partiti;
 
                 // Creiamo le righe della tabella in base ai dati, includendo la foto/logo se presente
@@ -831,7 +917,7 @@
                 // Il box "vincitore" mostra il Sindaco eletto per le comunali, oppure la prima
                 // forza politica (in automatico dai seggi) per le elezioni parlamentari
                 const codiceTipo = elezione.tipo_codice ? elezione.tipo_codice.toUpperCase() : codiceTipoSelezionato();
-                const etichettaTerritorio = codiceTipo === 'G' ? 'Comune' : 'Circoscrizione';
+                const etichettaTerritorio = richiedeSezione(codiceTipo) ? 'Sezione' : 'Circoscrizione';
                 let etichettaVincitore, valoreVincitore;
                 if (codiceTipo === 'G') {
                     etichettaVincitore = 'Eletto Sindaco';
@@ -878,11 +964,6 @@
                 document.getElementById('dati-elettorali').innerHTML = htmlRisultati;
                 document.getElementById('dati-elettorali').style.display = 'block';
 
-                // Popola la tendina del comune con quello trovato nel database
-                const selComune = document.getElementById('sel_comune');
-                selComune.innerHTML = `<option value="1">${elezione.comune}</option>`;
-                selComune.disabled = false;
-
             } catch (error) {
                 console.error(error);
 
@@ -896,7 +977,7 @@
                 `;
                 document.getElementById('dati-elettorali').style.display = 'block';
             }
-        });
+        }
 
         // Al caricamento della pagina, popola subito le date per il tipo selezionato di default (Comunali)
         aggiornaSelettoreDate();
