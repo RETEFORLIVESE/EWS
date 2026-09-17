@@ -280,10 +280,12 @@
     background: linear-gradient(180deg, #fff3d6, #ffe6ad);
     border-bottom: 1px solid #f0cf7f;
     color: #6b4a06;
+    padding: 0.7rem 1.5rem;
     padding: 0.7rem clamp(1rem, 4vw, 3rem);
     position: relative; z-index: 1;
+    width: 100%;
   }
-  .alert-inner { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 0.7rem; font-size: 0.88rem; flex-wrap: wrap; }
+  .alert-inner { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 0.7rem; row-gap: 0.35rem; font-size: 0.88rem; line-height: 1.45; flex-wrap: wrap; }
   .alert-inner .alert-icon { font-size: 1.05rem; }
   .alert-inner a { font-weight: 700; text-decoration: underline; }
 
@@ -330,13 +332,19 @@
     border: 1px solid rgba(255,255,255,0.55); border-radius: 18px; padding: 1rem;
     box-shadow: 0 14px 34px rgba(10,77,120,0.14);
     backdrop-filter: blur(8px);
+    min-width: 0; overflow: hidden;
   }
-  #network-map { width: 100%; height: auto; cursor: default; }
+  /* la tela della mappa: su schermi stretti scorre in orizzontale
+     invece di rimpicciolire tutto fino a renderlo illeggibile */
+  .map-canvas { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+  .map-canvas::-webkit-scrollbar { height: 8px; }
+  .map-canvas::-webkit-scrollbar-thumb { background: rgba(10,77,120,0.25); border-radius: 999px; }
+  #network-map { width: 100%; height: auto; display: block; cursor: default; overflow: visible; }
   .map-station { cursor: pointer; }
   .map-station circle { transition: r 0.15s ease, stroke-width 0.15s ease; }
   .map-station:hover circle, .map-station.active circle { stroke-width: 4; }
   .map-station text { font-family: "Titillium Web", sans-serif; font-size: 13px; fill: var(--fa-ink); font-weight: 600; pointer-events: none; }
-  .map-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; padding: 0 0 0.9rem; font-size: 0.82rem; }
+  .map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; row-gap: 0.5rem; padding: 0.1rem 0.2rem 0.9rem; font-size: 0.82rem; width: 100%; overflow: visible; }
   .map-legend button {
     display: inline-flex; align-items: center; gap: 0.45rem;
     color: var(--fa-ink); font-weight: 700; font-family: inherit; font-size: 0.82rem;
@@ -347,20 +355,20 @@
   .map-legend button.active { border-color: var(--fa-ink); opacity: 1; }
   .map-legend button:hover { opacity: 1; }
   .map-legend i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
-  .line-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0 0.2rem 0.9rem; font-size: 0.78rem; }
+  .line-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.45rem; padding: 0 0.2rem 0.9rem; font-size: 0.78rem; width: 100%; overflow: visible; }
   .line-legend button {
-    display: inline-flex; align-items: center; justify-content: center;
+    display: block; flex: 0 0 auto;
     padding: 3px; border: 2px solid transparent; border-radius: 50%;
-    background: transparent; cursor: pointer; line-height: 0;
+    background: transparent; cursor: pointer; line-height: 1; font-family: inherit;
     transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
   }
   .line-legend button:hover { transform: scale(1.08); }
   .line-legend button.active { border-color: var(--fa-ink); }
   .line-legend button.dimmed { opacity: 0.35; }
   .line-chip-badge {
-    width: 28px; height: 28px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 700; font-size: 0.68rem; letter-spacing: 0.01em;
+    width: 28px; height: 28px; min-width: 28px; border-radius: 50%;
+    display: grid; place-items: center; text-align: center;
+    color: #fff; font-weight: 700; font-size: 0.68rem; line-height: 28px; letter-spacing: 0.01em;
     box-shadow: 0 2px 4px rgba(0,0,0,0.25);
   }
   .map-station.dimmed { opacity: 0.15; }
@@ -381,7 +389,45 @@
   .map-pill { font-size: 0.76rem; font-weight: 700; color: #fff; padding: 0.25rem 0.65rem; border-radius: 999px; }
   .map-info-placeholder { color: var(--fa-text); font-size: 0.9rem; opacity: 0.8; }
 
-  @media (max-width: 900px) { .map-layout { grid-template-columns: 1fr; } }
+  /* dettagli scritti facoltativi (testo libero) mostrati sotto le pillole delle linee */
+  .map-info .station-details {
+    font-size: 0.87rem;
+    color: var(--fa-text);
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--fa-line);
+    white-space: pre-line;
+  }
+
+  /* elenco di link facoltativi (es. sito ufficiale, orari, mappa uscite...) */
+  .map-info .station-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.7rem;
+  }
+  .map-info-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--fa-blue-deep);
+    background: rgba(255,255,255,0.55);
+    border: 1px solid var(--fa-blue-mid);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .map-info-link:hover { background: var(--fa-blue-mid); color: #fff; }
+  .map-info-link::after { content: "↗"; font-size: 0.78rem; }
+
+  @media (max-width: 900px) {
+    .map-layout { grid-template-columns: 1fr; }
+    .map-panel { padding: 0.8rem; }
+    #network-map { min-width: 720px; }
+  }
 
   /* ---------- Stazioni: ricerca ---------- */
   .station-search {
@@ -673,13 +719,14 @@
         </article>       
       </div>
     </div>
+  </section>
 
-<section id="lineeRER">
+  <section id="lineeRER">
     <div class="section-inner">
       <div class="section-head">
         <p class="section-label">Linee RER</p>
         <h2 class="section-title">Rete Espressa Regionale</h2>
-        <p class="section-desc">Collegamenti a lunga percorrenza dalla Capitale dell'EstjiLinn<p>
+        <p class="section-desc">Collegamenti a lunga percorrenza dalla Capitale dell'EstjiLinn</p>
       </div>
 
       <div class="lines-column">
@@ -730,7 +777,9 @@
         <div class="map-panel">
           <div class="map-legend" id="map-legend"></div>
           <div class="line-legend" id="line-legend"></div>
-          <svg id="network-map" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA"></svg>
+          <div class="map-canvas">
+            <svg id="network-map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA"></svg>
+          </div>
         </div>
         
         <div class="map-info" id="map-info">
@@ -908,6 +957,12 @@
 
 <script>
 (function () {
+  // alcuni motori vecchi non hanno NodeList.prototype.forEach: senza questo
+  // il filtro delle linee andava in errore e la banda delle linee sopra la
+  // mappa restava vuota
+  if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+  }
   "use strict";
 
   /* =====================================================================
@@ -940,7 +995,10 @@
     ma: { name: "Linea A", color: "#687ab3", system: "metro", icon: "Ma" },
     ra: { name: "RERa", color: "#8a060c", system: "rer", icon: "Ra" },
     rb: { name: "RERb", color: "#068a20", system: "rer", icon: "Rb" },
-    rc: { name: "RERc", color: "#063d8a", system: "rer", icon: "Rc" }
+    rc: { name: "RERc", color: "#063d8a", system: "rer", icon: "Rc" },
+    s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
+    s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
+    s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" }
   };
 
   var SYSTEM_LABELS = { metro: "Metropolitana", rer: "RER", tram: "Tram", shutle: "Shùtle" };
@@ -952,7 +1010,7 @@
   // disegnata solo con i pallini, senza il tratto colorato che le unisce.
   // Esempio: var LINE_PATHS = { m1: ["samar", "fluvia", "alina"] };
   var LINE_PATHS = {
-   m1: ["talindam","dakisula","bennon","port","anarkios","webariik","newpenn","thalè","iketal","estjilinn","port_d_expo","monparnass","a_t_c"],
+   m1: ["talindam","dakisula","bennon","port","anarkios","webariik","newpenn","thalè","iketal","estjilinn","port_d_expo","portmailotte","monparnass","a_t_c"],
    m2: ["baterina","royale", "p_littoria", "t_littoria","port","n_t_c","newshinguku","nationes","gallier"],
    m3: ["lampugnano","t_littoria","alx_der","unionplz","outlx","tallin_akuna","natio","sarsovg","sars_f"],
    m4: ["s_fulcrea","kaßazion","estji_viter","tamperan_tassavalta","tallin_akuna","kompasse","toer","cotoplatz","alina","monparnass","mariotte","viktorplatz"],
@@ -961,77 +1019,96 @@
    m7: ["ecles","ostiense","port_d_expo","tegelg","oberdan","thalè","alexander_platz","lufte","gallier","chatillon"],
    m8: ["estji_viter","estji_kaßache","suomenlapsi","prolet","fsd","unionplz","goberdan"],
    ma: ["fluvia","ankita_nord","viktorplatz","ostiense","estjilinn","tegelg","1_le","cotoplatz","alina","hopera_cyrcula","sars_f","fluvia"],
-   ra: ["noviforum","sars_f","estji_viter","sarsovg","1_le","toer","newpenn","thalè","hotspot","lufte","gallier","colonia"],
+   ra: ["noviforum","sars_f","estji_viter","sarsovg","1_le","newpenn","thalè","hotspot","lufte","gallier","colonia"],
    rb: ["ikebukuro","s_fulcrea","sars_f","hopera_cyrcula","monparnass","portmailotte","port_d_expo","ostiense","lybica"],
-   rc: ["n_t_c","newshinguku","nationes","lufte","hotspot","iketal","oberdan","tegelg","1_le","hopera_cycula","sars_f"]
+   rc: ["n_t_c","newshinguku","nationes","lufte","hotspot","iketal","oberdan","tegelg","1_le","hopera_cycula","sars_f"],
+   s1: ["lampugnano","alx_der","goberdan","bennon","port","anarkios","webariik","regio","termini","toer","cotoplatz","fluvia","pernety","bovaes","1_le"],
+   s3: ["port_d_expo","bovaes","pernety","ankita_nord","ankita_feld","ecles"],
+   s6: ["bennon","t_littoria","alx_der","unionplz","fsd","suomentaku"]
   };
 
+  // Ogni stazione puo' avere due campi facoltativi, oltre a id/name/x/y/lines:
+  //  - details: testo libero (una stringa; usa \n per andare a capo) mostrato
+  //             nel pannello quando la stazione viene selezionata.
+  //  - links:   elenco di link utili, es. [{ label: "Sito ufficiale", url: "https://..." },
+  //             { label: "Orari", url: "https://..." }]. Si possono aggiungere
+  //             quanti link si vuole, o ometterli del tutto.
+  // Esempio:
+  //   { id: "es", name: "Esempio", x: 0, y: 0, lines: ["m1"],
+  //     details: "Interscambio con la linea storica.\nAscensori su entrambi i lati.",
+  //     links: [{ label: "Sito ufficiale", url: "https://example.com" }] }
   var STATIONS = [
-        { id: "ikebukuro", name: "Ikebukuro", x: -100, y: 202, lines: ["rb"] },
+        { id: "ikebukuro", name: "Ikebukuro", x: 0, y: 202, lines: ["rb"],
+          details: "Capolinea nord della rete. Interscambio con i bus regionali diretti verso l'aeroporto.",
+          links: [{ label: "Orari bus aeroporto", url: "https://example.com/ikebukuro-bus" }] },
         { id: "samar", name: "Samar", x: 194, y: 145, lines: ["m6"] },
-        { id: "s_fulcrea", name: "S.Fulcrea", x: 194, y: 202, lines: ["rb","m4","m6"] },
+        { id: "s_fulcrea", name: "S.Fulcrea", x: 194, y: 202, lines: ["rb","rc","m4","m6"] },
         { id: "estji_kaßache", name: "Estji-Kaßache", x: 212, y: 234, lines: ["m8","m6"] },
         { id: "kaßazion", name: "Kaßazion", x: 300, y: 202, lines: ["m4"] },
-        { id: "sars_f", name: "Sars F.", x: 453, y: 202, lines: ["m3","ma","rb","ra","m8"] },
-        { id: "noviforum", name: "NoviForum", x: 453, y: -100, lines: ["ra"] },
-        { id: "fluvia", name: "Fluvia", x: 503, y: 131, lines: ["ma"] },
+        { id: "sars_f", name: "Sars F.", x: 453, y: 202, lines: ["m3","ma","rb","ra"] },
+        { id: "noviforum", name: "NoviForum", x: 453, y: 0, lines: ["ra"] },
+        { id: "fluvia", name: "Fluvia", x: 503, y: 131, lines: ["ma","s1"] },
         { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 500, y: 202, lines: ["ma","rb","rc"] },
         { id: "a_t_c", name: "A.T.C.", x: 600, y: 100, lines: ["m1"] },
-        { id: "ankita_nord", name: "Ankita Nord", x: 739, y: 131, lines: ["ma"] },
-        { id: "pernety", name: "Pernety", x: 669, y: 159, lines: ["m5"] },
+        { id: "ankita_nord", name: "Ankita Nord", x: 739, y: 131, lines: ["s3","ma"] },
+        { id: "ankita_feld", name: "Ankita Feld", x: 850, y: 131, lines: ["s3"] },
+        { id: "pernety", name: "Pernety", x: 669, y: 131, lines: ["s1","m5","s3"] },
+        { id: "bovaes", name: "Bovaes", x: 570, y: 270, lines: ["s1","s3"] },
         { id: "mariotte", name: "Mariotte", x: 669, y: 228, lines: ["m4","m5"] },
         { id: "viktorplatz", name: "ViktorPlatz", x: 815, y: 216, lines: ["ma","m4"] },
         { id: "estji_viter", name: "Estji-Viter", x: 350, y: 233, lines: ["m4","ra","m8"] },
-        { id: "cotoplatz", name: "CotoPlatz", x: 460, y: 261, lines: ["ma","m4"] },
+        { id: "cotoplatz", name: "CotoPlatz", x: 500, y: 261, lines: ["ma","s1","m4"] },
         { id: "sarsovg", name: "SarsOVG", x: 403, y: 292, lines: ["m3","ra"] },
         { id: "alina", name: "Alina", x: 547, y: 226, lines: ["ma","m4"] },
         { id: "natio", name: "Natio", x: 403, y: 347, lines: ["m3"] },
-        { id: "toer", name: "Toer", x: 460, y: 347, lines: ["m4","ra"] },
+        { id: "toer", name: "Toer", x: 453, y: 347, lines: ["m4","s1"] },
         { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["rc","ma","m7"] },
-        { id: "1_le", name: "1 Île", x: 460, y: 316, lines: ["ra","rc","ma"] },
+        { id: "1_le", name: "1 Île", x: 500, y: 316, lines: ["ra","rc","ma","s1"] },
         { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["rb","m1"] },
-        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["m5","m8","rb","m1"] },
-        { id: "ostiense", name: "Ostiense", x: 815, y: 300, lines: ["rb","m8","ma"] },
-        { id: "lybica", name: "Lybica", x: 1100, y: 300, lines: ["rb"] },
-        { id: "ecles", name: "Ecles", x: 900, y: 250, lines: ["m7"] },
+        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["s3","m7","m5","rb","m1"] },
+        { id: "ostiense", name: "Ostiense", x: 815, y: 300, lines: ["rb","m7","ma"] },
+        { id: "lybica", name: "Lybica", x: 950, y: 300, lines: ["rb"] },
+        { id: "ecles", name: "Ecles", x: 900, y: 250, lines: ["m7","s3"] },
         { id: "bobigny", name: "Bobigny", x: 801, y: 364, lines: ["m5"] },
         { id: "estjilinn", name: "EstjiLinn", x: 744, y: 364, lines: ["m5","m1","ma"] },
         { id: "monparnass", name: "MonParnass", x: 600, y: 228, lines: ["m4","rb","m5"] },
         { id: "suomenlapsi", name: "SuomenLapsi", x: 164, y: 292, lines: ["m8"] },
-        { id: "suomentaku", name: "SuomenTaku", x: 212, y: 324, lines: ["m6"] },
-        { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 351, y: 330, lines: ["m4"] },
+        { id: "suomentaku", name: "SuomenTaku", x: 212, y: 324, lines: ["m6","s6"] },
+        { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 351, y: 330, lines: ["m4","s6"] },
         { id: "prolet", name: "Prolet", x: 100, y: 406, lines: ["m8"] },
-        { id: "fsd", name: "FSD", x: 202, y: 413, lines: ["m8"] },
-        { id: "unionplz", name: "UnionPlz", x: 306, y: 451, lines: ["m3","m8"] },
-        { id: "alx_der", name: "Alx.der", x: 306, y: 484, lines: ["m3"] },
+        { id: "fsd", name: "FSD", x: 212, y: 413, lines: ["m8","s6"] },
+        { id: "unionplz", name: "UnionPlz", x: 306, y: 451, lines: ["m3","m8","s6"] },
+        { id: "alx_der", name: "Alx.der", x: 306, y: 498, lines: ["m3","s1","s6"] },
         { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, lines: ["m3","m4","m6"] },
         { id: "outlx", name: "Outlx", x: 306, y: 406, lines: ["m3"] },
         { id: "kompasse", name: "Kompasse", x: 406, y: 394, lines: ["m4","m6"] },
-        { id: "newpenn", name: "NewPenn", x: 597, y: 394, lines: ["m6","ra"] },
+        { id: "termini", name: "Termini", x: 386, y: 425, lines: ["m4","m6"] },
+        { id: "newpenn", name: "NewPenn", x: 597, y: 394, lines: ["m6","ra","m1"] },
         { id: "oberdan", name: "Oberdan", x: 632, y: 394, lines: ["m7","rc"] },
-        { id: "thalè", name: "Thalè", x: 675, y: 430, lines: ["ra","m7"] },
+        { id: "thalè", name: "Thalè", x: 675, y: 430, lines: ["ra","m7","m1"] },
         { id: "iketal", name: "IkeTal", x: 744, y: 430, lines: ["m1","rc"] },
         { id: "hotspot", name: "Hotspot", x: 781, y: 451, lines: ["ra"] },
         { id: "alexander_platz", name: "Alexander Platz", x: 712, y: 484, lines: ["m7"] },
-        { id: "goberdan", name: "Goberdan", x: 371, y: 498, lines: ["m8"] },
-        { id: "webariik", name: "WebaRiik", x: 508, y: 463, lines: ["m1"] },
-        { id: "anarkios", name: "Anarkios", x: 403, y: 463, lines: ["m1"] },
-        { id: "t_littoria", name: "T.Littoria", x: 316, y: 535, lines: ["m2","m3"] },
+        { id: "goberdan", name: "Goberdan", x: 371, y: 510, lines: ["m8","s1"] },
+        { id: "webariik", name: "WebaRiik", x: 508, y: 463, lines: ["m1","s1"] },
+        { id: "regio", name: "Regio", x: 508, y: 425, lines: ["s1"] },
+        { id: "anarkios", name: "Anarkios", x: 403, y: 463, lines: ["m1","s1"] },
+        { id: "t_littoria", name: "T.Littoria", x: 316, y: 535, lines: ["s6","m2","m3"] },
         { id: "p_littoria", name: "P.Littoria", x: 254, y: 535, lines: ["m2"] },
         { id: "royale", name: "Royale", x: 164, y: 551, lines: ["m2"] },
-        { id: "port", name: "Port", x: 403, y: 545, lines: ["m2","m1"] },
+        { id: "port", name: "LaFinance", x: 403, y: 545, lines: ["m2","m1","s1"] },
         { id: "n_t_c", name: "N.T.C.", x: 486, y: 545, lines: ["m2","rc"] },
         { id: "newshinguku", name: "NewShinguku", x: 550, y: 545, lines: ["m2","rc"] },
         { id: "nationes", name: "Nationes", x: 634, y: 545, lines: ["m2","rc","m6","m7"] },
         { id: "lufte", name: "Lufte", x: 710, y: 506, lines: ["ra","m7","rc"] },
         { id: "gallier", name: "Gallier", x: 710, y: 545, lines: ["m2","m7","ra"] },
-        { id: "colonia", name: "Colonia", x: 710, y: 800, lines: ["ra"] },
+        { id: "colonia", name: "Colonia", x: 710, y: 650, lines: ["ra"] },
         { id: "chatillon", name: "Chatillon", x: 727, y: 569, lines: ["m7"] },
-        { id: "bennon", name: "Bennon", x: 403, y: 580, lines: ["m1"] },
+        { id: "bennon", name: "Bennon", x: 403, y: 580, lines: ["m1","s1","s6"] },
         { id: "dakisula", name: "DakIsula", x: 403, y: 609, lines: ["m1"] },
         { id: "talindam", name: "TalinDam", x: 423, y: 651, lines: ["m1"] },
         { id: "baterina", name: "Baterina", x: 45, y: 637, lines: ["m2"] },
-        { id: "lampugnano", name: "Lampugnano", x: 269, y: 637, lines: ["m3"] }
+        { id: "lampugnano", name: "Lampugnano", x: 269, y: 637, lines: ["s1","m3"] }
   ];
 
   var svgNS = "http://www.w3.org/2000/svg";
@@ -1134,6 +1211,31 @@
       "<h3>" + st.name + "</h3>" +
       "<p>" + (st.lines.length > 1 ? "Stazione di interscambio." : "Servita da " + (LINES[st.lines[0]] ? LINES[st.lines[0]].name : st.lines[0]) + ".") + "</p>" +
       '<div class="pill-row">' + pills + "</div>";
+
+    // dettagli scritti facoltativi (campo "details" della stazione)
+    if (st.details) {
+      var details = document.createElement("p");
+      details.className = "station-details";
+      details.textContent = st.details; // textContent: nessun HTML interpretato, niente rischi
+      info.appendChild(details);
+    }
+
+    // link facoltativi (campo "links" della stazione)
+    if (st.links && st.links.length) {
+      var linksWrap = document.createElement("div");
+      linksWrap.className = "station-links";
+      st.links.forEach(function (lnk) {
+        if (!lnk || !lnk.url) return;
+        var a = document.createElement("a");
+        a.className = "map-info-link";
+        a.href = lnk.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = lnk.label || lnk.url;
+        linksWrap.appendChild(a);
+      });
+      info.appendChild(linksWrap);
+    }
   }
 
   // barra dei filtri in alto: accende/spegne un sistema alla volta (o tutti).
@@ -1210,6 +1312,50 @@
       lineLegend.appendChild(btn);
     });
   }
+
+  // ---- adatta la vista alla rete ----------------------------------------
+  // Il viewBox fisso "0 0 1000 700" tagliava tutto cio' che sta fuori da
+  // quel riquadro (stazioni con x da -100 a 1100 e y da -100 a 800, piu' le
+  // etichette). Qui il riquadro viene ricalcolato sul contenuto reale, con
+  // un margine, cosi' la mappa si vede sempre per intero.
+  function fitMapView() {
+    var pad = 30;
+    var box = null;
+    try {
+      var b = svg.getBBox();
+      if (b && b.width > 0 && b.height > 0) box = { x: b.x, y: b.y, w: b.width, h: b.height };
+    } catch (e) { /* ignorato: si usa il calcolo di riserva */ }
+
+    if (!box) {
+      // riserva: bordi calcolati dalle coordinate delle stazioni
+      var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      STATIONS.forEach(function (s) {
+        if (s.x < minX) minX = s.x;
+        if (s.x > maxX) maxX = s.x;
+        if (s.y < minY) minY = s.y;
+        if (s.y > maxY) maxY = s.y;
+      });
+      if (!isFinite(minX)) return;
+      minX -= 150; maxX += 170; minY -= 40; maxY += 30; // spazio per le etichette
+      box = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+    }
+
+    svg.setAttribute(
+      "viewBox",
+      (box.x - pad) + " " + (box.y - pad) + " " + (box.w + pad * 2) + " " + (box.h + pad * 2)
+    );
+  }
+
+  fitMapView();
+  // le etichette cambiano larghezza quando arriva il font e quando cambia
+  // la larghezza del pannello: si rimisura
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fitMapView); }
+  window.addEventListener("load", fitMapView);
+  var fitTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitMapView, 150);
+  });
 
   applyFilter();
 
