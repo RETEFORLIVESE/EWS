@@ -863,11 +863,11 @@
     m5: { name: "Linea 5", color: "#8ef19e", system: "metro" },
     m5a: { name: "Linea 5a", color: "#8ef19e", system: "metro" },
     m6: { name: "Linea 6", color: "#240a4a", system: "metro" },
-    ma: { name: "Bus 1",   color: "#e8590c", system: "bus"   },
+    Rb: { name: "RERb",   color: "#e8590c", system: "rer"   },
     t1: { name: "Tram 1",  color: "#8e44ad", system: "tram"  }
   };
 
-  var SYSTEM_LABELS = { metro: "Metropolitana", bus: "Bus", tram: "Tram" };
+  var SYSTEM_LABELS = { metro: "Metropolitana", rer: "RER", tram: "Tram" };
 
   // LINE_PATHS = come unire i puntini: per ogni linea, l'elenco ORDINATO
   // degli id delle stazioni che tocca, nell'ordine in cui il percorso le
@@ -880,16 +880,17 @@
    m3: ["lampugnano","t_littoria","alx_der","unionplz","outlx","tallin_akuna","natio","sarsovg","sars_f"],
    m4: ["s_fulcrea","kaßazion","estji_viter","tamperan_tassavalta","tallin_akuna","kompasse","toer","cotoplatz","alina","monparnass","mariotte","viktorplatz"],
    m5: ["pernety","mariotte","port_d_expo","estjilinn","bobigny"],
-   m6: ["samar","s_fulcrea","estji_kaßache","suomentaku","tallin_akuna","kompasse","newpenn","nationes"]
+   m6: ["samar","s_fulcrea","estji_kaßache","suomentaku","tallin_akuna","kompasse","newpenn","nationes"],
+   rb: ["s_fulcrea","sars_f","monparnass","portmailotte","port_d_expo","ostiense"]
   };
 
   var STATIONS = [
         { id: "ikebukuro", name: "Ikebukuro", x: 45, y: 218, lines: ["m1"] },
         { id: "samar", name: "Samar", x: 194, y: 145, lines: ["m6"] },
-        { id: "s_fulcrea", name: "S.Fulcrea", x: 194, y: 202, lines: ["m4","m6"] },
+        { id: "s_fulcrea", name: "S.Fulcrea", x: 194, y: 202, lines: ["rb","m4","m6"] },
         { id: "estji_kaßache", name: "Estji-Kaßache", x: 212, y: 234, lines: ["m6"] },
         { id: "kaßazion", name: "Kaßazion", x: 300, y: 202, lines: ["m4"] },
-        { id: "sars_f", name: "Sars F.", x: 453, y: 202, lines: ["m3",] },
+        { id: "sars_f", name: "Sars F.", x: 453, y: 202, lines: ["m3","rb"] },
         { id: "fluvia", name: "Fluvia", x: 463, y: 185, lines: ["m1"] },
         { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 528, y: 218, lines: ["m1"] },
         { id: "a_t_c", name: "A.T.C.", x: 565, y: 100, lines: ["m1"] },
@@ -905,13 +906,13 @@
         { id: "toer", name: "Toer", x: 460, y: 347, lines: ["m4"] },
         { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["m1"] },
         { id: "1_le", name: "1 Île", x: 518, y: 316, lines: ["m1"] },
-        { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["m1"] },
-        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["m5"] },
-        { id: "ostiense", name: "Ostiense", x: 815, y: 312, lines: ["m1"] },
+        { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["rb"] },
+        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["m5","rb"] },
+        { id: "ostiense", name: "Ostiense", x: 815, y: 312, lines: ["rb"] },
         { id: "ecles", name: "Ecles", x: 864, y: 290, lines: ["m1"] },
         { id: "bobigny", name: "Bobigny", x: 801, y: 364, lines: ["m5"] },
         { id: "estjilinn", name: "EstjiLinn", x: 744, y: 364, lines: ["m5"] },
-        { id: "monparnass", name: "MonParnass", x: 600, y: 228, lines: ["m4","m5"] },
+        { id: "monparnass", name: "MonParnass", x: 600, y: 228, lines: ["m4","rb","m5"] },
         { id: "suomenlapsi", name: "SuomenLapsi", x: 164, y: 292, lines: ["m1"] },
         { id: "suomentaku", name: "SuomenTaku", x: 212, y: 324, lines: ["m6"] },
         { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 351, y: 330, lines: ["m4"] },
