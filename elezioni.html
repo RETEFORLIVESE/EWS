@@ -1,145 +1,9 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Archivio Elezioni - RETEFORLIVESE</title>
-    <meta name="description" content="Consulta i risultati elettorali">
-    
-    <!-- CSS Bootstrap e FontAwesome -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-    <!-- Librerie per Mappa (Leaflet) e Grafici (Chart.js) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
-        .sottotitolo { background-color: #004d99; color: white; padding: 15px; margin-bottom: 20px; }
-        .sottotitolo p { margin: 0; font-size: 24px; font-weight: bold; }
-        .navbar { background-color: #e0e0e0; border-radius: 0; }
-        .election_bg { background: #fff; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 5px; }
-        .election_bg p { font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .nav-tabs { margin-bottom: 15px; }
-        .nav_bg, .search_bg { background: #fff; padding: 15px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px; }
-        .select-des { font-weight: bold; margin-top: 10px; }
-        .center-panel { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; min-height: 500px; }
-        .admonition { background-color: #e9f2fa; padding: 15px; border-left: 5px solid #004d99; margin: 20px 0; }
-        footer { background-color: #333; color: white; padding: 20px 0; margin-top: 40px; }
-        
-        #loading_screen { display: none; text-align: center; padding: 50px 20px; }
-        #loading_screen p { margin-top: 15px; font-weight: bold; color: #004d99; font-size: 16px; }
-        .table-risultati th { background-color: #004d99; color: white; }
-        
-        /* Stili barra SI/NO stile Eligendo */
-        .sino-container { display: flex; justify-content: space-between; align-items: center; font-size: 28px; font-weight: bold; margin-top: 20px; }
-        .sino-progress { flex-grow: 1; margin: 0 20px; height: 35px; border-radius: 20px; overflow: hidden; background-color: #e0e0e0; display: flex; }
-        .sino-si { background-color: #1976d2; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
-        .sino-no { background-color: #d9534f; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
-        .sino-labels { display: flex; justify-content: space-between; margin-top: 5px; color: #555; font-size: 14px; padding: 0 40px; }
-    </style>
-</head>
-
-<body>
-    <div class="container-fluid sottotitolo">
-        <div class="container">
-            <div id="descElez" class="box-title opopo">
-                <p>L'Archivio Elettorale</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <nav id="topmenu" class="navbar">
-            <div class="container-fluid">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a href="#">Consultazione</a></li>
-                    <li><a href="#">Info</a></li>
-                </ul>
-            </div>
-        </nav>
-    </div>
-
-    <div class="container paginaInterna">
-        <div class="row">
-            <!-- SIDEBAR SINISTRA -->
-            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3" id="sidebarLeft" role="navigation">
-                <div class="row election_bg">
-                    <p>Elezione</p>
-                    <div class="form-group col-xs-12">
-                        <input type="radio" name="tpel" value="G" id="comunali" checked="checked">
-                        <label for="comunali">Comunali / Regionali</label>
-                    </div>
-                    <div class="form-group col-xs-6">
-                        <input type="radio" name="tpel" value="C" id="camera">
-                        <label for="camera">Camera</label>
-                    </div>
-                    <div class="form-group col-xs-6">
-                        <input type="radio" name="tpel" value="F" id="referendum">
-                        <label for="referendum">Referendum</label>
-                    </div>
-                </div>
-
-                <div class="tab-content" id="tab_content">
-                    <div class="tab-pane fade in active" id="div_nav" role="tabpanel">
-                        <div class="row nav_bg">
-                            <div class="col-xs-12">
-                                <label class="select-des">Data</label>
-                                <select name="sel_date" class="form-control" id="sel_date">
-                                    <option value="0">Scegli Data</option>
-                                    <option value="2026">Elezioni 2026</option>
-                                </select>
-                            </div>
-                            <div class="col-xs-12">
-                                <label class="select-des">Comune</label>
-                                <select name="sel_comune" class="form-control" id="sel_comune" disabled>
-                                    <option value="0">Scegli Comune</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PANNELLO CENTRALE -->
-            <div class="col-xs-12 col-sm-12 col-md-8 col-lg-9">
-                <div id="loading_screen">
-                    <i class="fa fa-spinner fa-spin fa-4x" style="color: #004d99;"></i>
-                    <p>Collegamento al database in corso...</p>
-                </div>
-
-                <div class="center-panel" id="main-content">
-                    <h2>L'Archivio</h2>
-                    <p class="subtitle">Banca dati interrogabile on line contenente i risultati di tutte le elezioni.</p>
-                    
-                    <div class="admonition" id="messaggio-iniziale">
-                        <p>Seleziona l'anno "Elezioni 2026" dal menu a sinistra per caricare i risultati, il grafico e la mappa.</p>
-                    </div>
-
-                    <!-- Div dove verranno stampati i risultati -->
-                    <div id="dati-elettorali"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <footer>
-        <div class="container text-center">
-            <p>Progetto Elettorale - RETEFORLIVESE / RTF</p>
-        </div>
-    </footer>
-
-    <!-- Scripts CDN -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
-    <script>
-        // SOSTITUISCI CON IL TUO NUOVO BIN ID E LA TUA ACCESS KEY DELLA COLLECTION
+<script>
+        // Il tuo nuovo BIN ID
         const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183'; 
-        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS';
+        
+        // La tua API Key con la "O" maiuscola corretta
+        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/FogO4CbqjwcRQLXqUS'; 
         const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
         document.getElementById('sel_date').addEventListener('change', async function() {
@@ -151,10 +15,10 @@
             document.getElementById('loading_screen').style.display = 'block';
 
             try {
-                // Se hai creato la Collection, usa X-Access-Key. Altrimenti usa X-Master-Key.
+                // IL FIX: Abbiamo rimesso X-Access-Key
                 const response = await fetch(API_URL, {
                     method: 'GET',
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY } 
+                    headers: { 'X-Access-Key': JSONBIN_API_KEY } 
                 });
 
                 if (!response.ok) throw new Error(`Errore Server (${response.status})`);
@@ -175,12 +39,10 @@
                     `;
                 });
 
-                // Creazione della struttura HTML dinamica
                 const htmlRisultati = `
                     <hr>
                     <h3 style="color: #004d99; margin-top: 20px;">Risultati ${elezione.tipo} ${elezione.anno} - ${elezione.comune}</h3>
                     
-                    <!-- BLOCCO MAPPA E REFERENDUM (Stile Eligendo) -->
                     <div class="row" style="margin-top: 30px;">
                         <div class="col-md-6">
                             <div class="panel panel-default">
@@ -211,7 +73,6 @@
                         </div>
                     </div>
 
-                    <!-- BLOCCO GRAFICO PARLAMENTO E TABELLA -->
                     <div class="row" style="margin-top: 20px;">
                         <div class="col-md-5">
                             <div class="panel panel-default">
@@ -240,7 +101,6 @@
                         </div>
                     </div>
 
-                    <!-- RIEPILOGO DATI STATICI A FONDO PAGINA -->
                     <div class="panel panel-info" style="margin-top: 20px;">
                         <div class="panel-heading"><strong>Riepilogo Dati</strong></div>
                         <div class="panel-body">
@@ -265,13 +125,11 @@
                 selComune.innerHTML = `<option value="1">${elezione.comune}</option>`;
                 selComune.disabled = false;
 
-                // INIZIALIZZAZIONE MAPPA (LEAFLET)
-                var map = L.map('mappaElettorale').setView([44.2227, 12.0407], 10); // Coordinate impostate su Forlì
+                var map = L.map('mappaElettorale').setView([44.2227, 12.0407], 10);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap'
                 }).addTo(map);
 
-                // INIZIALIZZAZIONE GRAFICO A SEMICERCHIO (CHART.JS)
                 var ctx = document.getElementById('graficoParlamento').getContext('2d');
                 new Chart(ctx, {
                     type: 'doughnut',
@@ -304,5 +162,3 @@
             }
         });
     </script>
-</body>
-</html>
