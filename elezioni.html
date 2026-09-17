@@ -1,58 +1,181 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Elezioni — CEPU</title>
-  <meta name="description" content="Portale delle elezioni della fazione: consulta affluenza e risultati delle consultazioni." />
-  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/style.css" />
-  <link rel="apple-touch-icon" href="CEPU.png">
-  <link rel="icon" type="image/png" href="CEPU.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Archivio Elezioni - RETEFORLIVESE</title>
+    <meta name="description" content="Consulta i risultati elettorali">
+    
+    <!-- CSS Bootstrap e FontAwesome tramite CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+        .sottotitolo { background-color: #004d99; color: white; padding: 15px; margin-bottom: 20px; }
+        .sottotitolo p { margin: 0; font-size: 24px; font-weight: bold; }
+        .navbar { background-color: #e0e0e0; border-radius: 0; }
+        .election_bg { background: #fff; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 5px; }
+        .election_bg p { font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .nav-tabs { margin-bottom: 15px; }
+        .nav_bg, .search_bg { background: #fff; padding: 15px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px; }
+        .select-des { font-weight: bold; margin-top: 10px; }
+        .center-panel { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .admonition { background-color: #e9f2fa; padding: 15px; border-left: 5px solid #004d99; margin: 20px 0; }
+        .election_list ul { padding-left: 20px; }
+        footer { background-color: #333; color: white; padding: 20px 0; margin-top: 40px; }
+        
+        /* Loader stile Eligendo */
+        #loading_screen { display: none; text-align: center; padding: 20px; }
+    </style>
 </head>
+
 <body>
-  <div id="testata-root"></div>
-
-  <main class="container">
-    <section class="hero" style="margin:-1px -24px 0; padding-left:24px; padding-right:24px;">
-      <div class="container hero__inner" style="padding:0;">
-        <div>
-          <span class="hero__kicker">Portale elettorale</span>
-          <h1 class="hero__titolo">Il portale delle elezioni</h1>
-          <p class="hero__sottotitolo">
-            Segui affluenza e risultati delle consultazioni elettorali della fazione,
-            in tempo reale e nell'archivio delle elezioni passate.
-          </p>
+    <!-- TITOLO PRINCIPALE -->
+    <div class="container-fluid sottotitolo">
+        <div class="container">
+            <div id="descElez" class="box-title opopo">
+                <p>L'Archivio Elettorale</p>
+            </div>
         </div>
-        <div class="hero__pannello">
-          <h2>Area di redazione</h2>
-          <ul>
-            <li><a href="redazione-elezioni.html">Redazione elettorale<span>Crea una consultazione e inserisci i risultati</span></a></li>
-            <li><a href="redazione.html">Redazione atti<span>Gestisci lo Statuto e gli altri atti normativi</span></a></li>
-          </ul>
+    </div>
+
+    <div class="container paginaInterna">
+        <div class="row">
+            <!-- SIDEBAR SINISTRA -->
+            <div class="col-xs-12 col-md-4 col-lg-3" id="sidebarLeft" role="navigation">
+                
+                <!-- SEZIONE TIPO ELEZIONE -->
+                <div class="row election_bg">
+                    <p>Elezione</p>
+                    <div class="form-group col-xs-12">
+                        <input type="radio" name="tpel" checked="checked" value="A" id="assemblea">
+                        <label for="assemblea">Assemblea Costituente</label>
+                    </div>
+                    <div class="form-group col-xs-6">
+                        <input type="radio" name="tpel" value="C" id="camera">
+                        <label for="camera">Camera</label>
+                    </div>
+                    <div class="form-group col-xs-6">
+                        <input type="radio" name="tpel" value="S" id="senato">
+                        <label for="senato">Senato</label>
+                    </div>
+                    <div class="form-group col-xs-12">
+                        <input type="radio" name="tpel" value="G" id="comunali">
+                        <label for="comunali">Comunali</label>
+                    </div>
+                </div>
+
+                <!-- PANNELLO NAVIGAZIONE -->
+                <div class="row nav_bg">
+                    <div class="col-xs-12">
+                        <label class="select-des">Data Elezione</label>
+                        <select name="sel_date" class="form-control" id="sel_date">
+                            <option value="0">Scegli Data</option>
+                            <option value="2024">Elezioni 2024</option>
+                            <option value="2023">Elezioni 2023</option>
+                        </select>
+                    </div>
+                    <div class="col-xs-12">
+                        <label class="select-des">Area</label>
+                        <select name="sel_aree" class="form-control" id="sel_aree" disabled>
+                            <option value="0">Scegli Area</option>
+                        </select>
+                    </div>
+                    <div class="col-xs-12">
+                        <label class="select-des">Comune</label>
+                        <select name="sel_comune" class="form-control" id="sel_comune" disabled>
+                            <option value="0">Scegli Comune</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANNELLO CENTRALE (RISULTATI) -->
+            <div class="col-xs-12 col-md-8 col-lg-9">
+                <div id="loading_screen">
+                    <i class="fa fa-spinner fa-spin fa-3x fa-fw" style="color: #004d99;"></i>
+                    <span class="sr-only">Caricamento in corso...</span>
+                    <p>Recupero dati dal database...</p>
+                </div>
+
+                <div class="center-panel" id="main-content">
+                    <h2>L'Archivio</h2>
+                    <p class="subtitle">Banca dati interrogabile on line contenente i risultati elettorali.</p>
+                    
+                    <div class="admonition" id="dati-elettorali">
+                        <p>Seleziona una data dal menu a sinistra per caricare i dati in tempo reale.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </section>
+    </div>
 
-    <section class="stats-band" style="margin:0 -24px; padding:0;">
-      <div class="container">
-        <div class="stat-item"><b id="stat-totale">0</b><span>Consultazioni pubblicate</span></div>
-        <div class="stat-item"><b id="stat-corso">0</b><span>Scrutini in corso</span></div>
-        <div class="stat-item"><b id="stat-definitive">0</b><span>Risultati definitivi</span></div>
-      </div>
-    </section>
+    <footer>
+        <div class="container text-center">
+            <p>Progetto Elettorale - RETEFORLIVESE / RTF</p>
+        </div>
+    </footer>
 
-    <h2 class="sezione-titolo" style="margin-top:40px;">Consultazioni</h2>
-    <div id="filtri-root" class="filtri"></div>
-    <p id="conteggio-risultati" style="font-family:var(--font-chrome); font-size:0.85rem; color:var(--inchiostro-tenue); margin:0 0 16px;"></p>
-    <div id="elenco-root" class="elenco-atti"></div>
-  </main>
+    <!-- Scripts CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-  <div id="footer-root"></div>
+    <!-- Script integrazione con JSONBin.io / Vercel -->
+    <script>
+        // SOSTITUISCI CON I TUOI DATI DI JSONBIN.IO
+        const JSONBIN_BIN_ID = '6aac1a96ac6210605ad92bf8'; 
+        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS'; // Opzionale se il bin è pubblico
+        
+        // Se usi una Serverless Function di Vercel come proxy, l'URL sarà tipo '/api/get-elezioni'
+        const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/api-elezioni.js"></script>
-  <script src="assets/js/layout.js"></script>
-  <script src="assets/js/elezioni.js"></script>
+        document.getElementById('sel_date').addEventListener('change', async function() {
+            const dataSelezionata = this.value;
+            if(dataSelezionata === "0") return;
+
+            // Mostra animazione di caricamento
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('loading_screen').style.display = 'block';
+
+            try {
+                // Esegue la chiamata al database JSONBin
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': JSONBIN_API_KEY // Da omettere se usi l'API Vercel come proxy
+                    }
+                });
+
+                if (!response.ok) throw new Error("Errore nel recupero dati");
+
+                const result = await response.json();
+                const datiElettorali = result.record; // JSONBin inserisce i dati dentro l'oggetto 'record'
+
+                // Nascondi caricamento
+                document.getElementById('loading_screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+
+                // --- ESEMPIO DI GESTIONE DATI ---
+                // Popola la UI con i dati ricevuti
+                document.getElementById('dati-elettorali').innerHTML = `
+                    <h3>Risultati Elettorali Caricati</h3>
+                    <p>Dati estratti con successo per: <strong>${dataSelezionata}</strong></p>
+                    <pre style="background: #fff; border: 1px solid #ccc; padding: 10px;">${JSON.stringify(datiElettorali, null, 2)}</pre>
+                `;
+
+                // Sblocca i menu successivi (es. Area, Comune)
+                document.getElementById('sel_aree').disabled = false;
+                document.getElementById('sel_comune').disabled = false;
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loading_screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('dati-elettorali').innerHTML = `<p style="color:red;">Errore di connessione al database JSONBin/Vercel. Verifica ID e API Key.</p>`;
+            }
+        });
+    </script>
 </body>
 </html>
