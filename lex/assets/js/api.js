@@ -27,8 +27,10 @@ const API = {
   // LETTURA — passa dal server (nessuna chiave nel browser)
   async loadAtti() {
     const res = await fetch('/api/atti');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message ? `HTTP ${res.status}: ${data.message}` : `HTTP ${res.status}`);
+    }
     return Array.isArray(data.atti) ? data.atti : [];
   },
 
