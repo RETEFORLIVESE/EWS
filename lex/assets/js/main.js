@@ -79,8 +79,9 @@
       atti = await API.loadAtti();
     } catch (e) {
       console.error(e);
+      const dettaglio = e && e.message ? e.message : "errore sconosciuto";
       document.getElementById("elenco-root").innerHTML =
-        `<div class="nessun-risultato">Errore nel caricamento degli atti. Verifica la configurazione in config.js.</div>`;
+        `<div class="nessun-risultato">Errore nel caricamento degli atti (${dettaglio}). Controlla la console del browser e la configurazione delle variabili d'ambiente su Vercel (BIN_ID, API_KEY).</div>`;
       return;
     }
 
