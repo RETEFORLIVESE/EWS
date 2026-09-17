@@ -533,6 +533,10 @@
                         <input type="radio" name="tpel" value="S" id="congresso_unitario">
                         Congresso Unitario
                     </label>
+                    <label for="referendum">
+                        <input type="radio" name="tpel" value="R" id="referendum">
+                        Referendum
+                    </label>
                 </div>
             </div>
 
@@ -672,7 +676,7 @@
         let elezioniCache = null;
 
         // Mappa codice radio -> etichetta testuale, usata come fallback se manca "tipo_codice" nel dato
-        const MAPPA_TIPO = { G: 'comunali', C: 'congresso statale', S: 'congresso unitario' };
+        const MAPPA_TIPO = { G: 'comunali', C: 'congresso statale', S: 'congresso unitario', R: 'referendum' };
 
         // Il Congresso Unitario è su circoscrizione unica: non richiede la scelta della Sezione.
         // Comunali e Congresso Statale invece sí.
@@ -892,6 +896,11 @@
                 const elezione = dataset[indice];
                 const partiti = elezione.risultati_partiti;
 
+                const codiceTipo = elezione.tipo_codice ? elezione.tipo_codice.toUpperCase() : codiceTipoSelezionato();
+
+                // Il Referendum non assegna seggi: la colonna e il grafico parlamento non hanno senso
+                const mostraSeggi = codiceTipo !== 'R';
+
                 // Creiamo le righe della tabella in base ai dati, includendo la foto/logo se presente
                 let righeTabella = '';
                 partiti.forEach((partito, idx) => {
@@ -903,25 +912,37 @@
                             <td><div class="partito-cell">${iconaPartito}<strong>${partito.nome}</strong></div></td>
                             <td>${partito.voti.toLocaleString('it-IT')}</td>
                             <td>${partito.percentuale}</td>
-                            <td>${partito.seggi}</td>
+                            ${mostraSeggi ? `<td>${partito.seggi}</td>` : ''}
                         </tr>
                     `;
                 });
 
                 // Grafico parlamento, mostrato solo se ci sono più partiti con seggi assegnati
                 const partitiConSeggi = partiti.filter(p => (parseInt(p.seggi, 10) || 0) > 0);
-                const graficoParlamento = partitiConSeggi.length > 1 ? costruisciGraficoParlamento(partitiConSeggi) : '';
+                const graficoParlamento = (mostraSeggi && partitiConSeggi.length > 1) ? costruisciGraficoParlamento(partitiConSeggi) : '';
 
                 const valoreData = estraiValoreData(elezione);
 
-                // Il box "vincitore" mostra il Sindaco eletto per le comunali, oppure la prima
-                // forza politica (in automatico dai seggi) per le elezioni parlamentari
-                const codiceTipo = elezione.tipo_codice ? elezione.tipo_codice.toUpperCase() : codiceTipoSelezionato();
+                // Il box "vincitore/esito" mostra il Sindaco eletto per le comunali, l'esito Sì/No
+                // per i referendum, oppure la prima forza politica (in automatico dai seggi) per
+                // le elezioni parlamentari
                 const etichettaTerritorio = richiedeSezione(codiceTipo) ? 'Sezione' : 'Circoscrizione';
                 let etichettaVincitore, valoreVincitore;
                 if (codiceTipo === 'G') {
                     etichettaVincitore = 'Eletto Sindaco';
                     valoreVincitore = elezione.candidato_vincente || '—';
+                } else if (codiceTipo === 'R') {
+                    etichettaVincitore = 'Esito';
+                    if (elezione.candidato_vincente) {
+                        valoreVincitore = elezione.candidato_vincente;
+                    } else {
+                        const opzionePrevalente = [...partiti].sort((a, b) => {
+                            const pa = parseFloat(String(a.percentuale).replace('%', '').replace(',', '.')) || 0;
+                            const pb = parseFloat(String(b.percentuale).replace('%', '').replace(',', '.')) || 0;
+                            return pb - pa;
+                        })[0];
+                        valoreVincitore = opzionePrevalente ? `${opzionePrevalente.nome} (${opzionePrevalente.percentuale})` : '—';
+                    }
                 } else {
                     const primaForza = [...partiti].sort((a, b) => (parseInt(b.seggi, 10) || 0) - (parseInt(a.seggi, 10) || 0))[0];
                     etichettaVincitore = 'Prima forza politica';
@@ -944,10 +965,10 @@
                         <table class="table-risultati">
                             <thead>
                                 <tr>
-                                    <th>Lista / Partito</th>
+                                    <th>${codiceTipo === 'R' ? 'Opzione' : 'Lista / Partito'}</th>
                                     <th>Voti</th>
                                     <th>%</th>
-                                    <th>Seggi</th>
+                                    ${mostraSeggi ? '<th>Seggi</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
