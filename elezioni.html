@@ -7,9 +7,14 @@
     <title>Archivio Elezioni - RETEFORLIVESE</title>
     <meta name="description" content="Consulta i risultati elettorali">
     
-    <!-- CSS Bootstrap e FontAwesome tramite CDN -->
+    <!-- CSS Bootstrap e FontAwesome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <!-- Librerie per Mappa (Leaflet) e Grafici (Chart.js) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
@@ -23,20 +28,22 @@
         .select-des { font-weight: bold; margin-top: 10px; }
         .center-panel { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; min-height: 500px; }
         .admonition { background-color: #e9f2fa; padding: 15px; border-left: 5px solid #004d99; margin: 20px 0; }
-        .election_list ul { padding-left: 20px; }
         footer { background-color: #333; color: white; padding: 20px 0; margin-top: 40px; }
         
-        /* Stili per il caricamento e risultati */
         #loading_screen { display: none; text-align: center; padding: 50px 20px; }
         #loading_screen p { margin-top: 15px; font-weight: bold; color: #004d99; font-size: 16px; }
-        .table-risultati { margin-top: 20px; background: white; }
         .table-risultati th { background-color: #004d99; color: white; }
-        .vincitore { font-weight: bold; color: #d9534f; font-size: 18px; margin-bottom: 15px; }
+        
+        /* Stili barra SI/NO stile Eligendo */
+        .sino-container { display: flex; justify-content: space-between; align-items: center; font-size: 28px; font-weight: bold; margin-top: 20px; }
+        .sino-progress { flex-grow: 1; margin: 0 20px; height: 35px; border-radius: 20px; overflow: hidden; background-color: #e0e0e0; display: flex; }
+        .sino-si { background-color: #1976d2; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+        .sino-no { background-color: #d9534f; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+        .sino-labels { display: flex; justify-content: space-between; margin-top: 5px; color: #555; font-size: 14px; padding: 0 40px; }
     </style>
 </head>
 
 <body>
-    <!-- TITOLO PRINCIPALE -->
     <div class="container-fluid sottotitolo">
         <div class="container">
             <div id="descElez" class="box-title opopo">
@@ -45,7 +52,6 @@
         </div>
     </div>
 
-    <!-- MENU ALTO -->
     <div class="container">
         <nav id="topmenu" class="navbar">
             <div class="container-fluid">
@@ -61,37 +67,27 @@
         <div class="row">
             <!-- SIDEBAR SINISTRA -->
             <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3" id="sidebarLeft" role="navigation">
-                
                 <div class="row election_bg">
                     <p>Elezione</p>
                     <div class="form-group col-xs-12">
                         <input type="radio" name="tpel" value="G" id="comunali" checked="checked">
-                        <label for="comunali">Comunali</label>
+                        <label for="comunali">Comunali / Regionali</label>
                     </div>
                     <div class="form-group col-xs-6">
                         <input type="radio" name="tpel" value="C" id="camera">
                         <label for="camera">Camera</label>
                     </div>
                     <div class="form-group col-xs-6">
-                        <input type="radio" name="tpel" value="S" id="senato">
-                        <label for="senato">Senato</label>
+                        <input type="radio" name="tpel" value="F" id="referendum">
+                        <label for="referendum">Referendum</label>
                     </div>
                 </div>
-
-                <ul class="nav nav-tabs nav_nav_search" id="myTab" role="tablist">
-                    <li class="active">
-                        <a id="tab_nav" data-toggle="tab" href="#div_nav" role="tab">
-                            <span class="fa fa-list-ul" aria-hidden="true"></span> Navigazione
-                        </a>
-                    </li>
-                </ul>
 
                 <div class="tab-content" id="tab_content">
                     <div class="tab-pane fade in active" id="div_nav" role="tabpanel">
                         <div class="row nav_bg">
                             <div class="col-xs-12">
                                 <label class="select-des">Data</label>
-                                <!-- Quando l'utente seleziona 2026, parte lo script -->
                                 <select name="sel_date" class="form-control" id="sel_date">
                                     <option value="0">Scegli Data</option>
                                     <option value="2026">Elezioni 2026</option>
@@ -110,25 +106,20 @@
 
             <!-- PANNELLO CENTRALE -->
             <div class="col-xs-12 col-sm-12 col-md-8 col-lg-9">
-                
-                <!-- Schermata di caricamento -->
                 <div id="loading_screen">
                     <i class="fa fa-spinner fa-spin fa-4x" style="color: #004d99;"></i>
                     <p>Collegamento al database in corso...</p>
                 </div>
 
-                <!-- Contenuto principale -->
                 <div class="center-panel" id="main-content">
                     <h2>L'Archivio</h2>
                     <p class="subtitle">Banca dati interrogabile on line contenente i risultati di tutte le elezioni.</p>
                     
                     <div class="admonition" id="messaggio-iniziale">
-                        <div class="election_list">
-                            <p>Seleziona l'anno "Elezioni 2026" dal menu a sinistra per caricare i risultati in tempo reale.</p>
-                        </div>
+                        <p>Seleziona l'anno "Elezioni 2026" dal menu a sinistra per caricare i risultati, il grafico e la mappa.</p>
                     </div>
 
-                    <!-- Div dove verranno stampati i risultati della tabella -->
+                    <!-- Div dove verranno stampati i risultati -->
                     <div id="dati-elettorali"></div>
                 </div>
             </div>
@@ -145,45 +136,33 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-    <!-- Script connessione API JSONBin.io -->
     <script>
-        // Le tue credenziali esatte
+        // SOSTITUISCI CON IL TUO NUOVO BIN ID E LA TUA ACCESS KEY DELLA COLLECTION
         const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183'; 
-        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS'; 
+        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS';
         const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
         document.getElementById('sel_date').addEventListener('change', async function() {
             const dataSelezionata = this.value;
             if(dataSelezionata === "0") return;
 
-            // Mostra loader
             document.getElementById('messaggio-iniziale').style.display = 'none';
             document.getElementById('dati-elettorali').style.display = 'none';
             document.getElementById('loading_screen').style.display = 'block';
 
             try {
-                // Chiamata FETCH con X-Access-Key
+                // Se hai creato la Collection, usa X-Access-Key. Altrimenti usa X-Master-Key.
                 const response = await fetch(API_URL, {
                     method: 'GET',
-                    headers: {
-                        'X-Access-Key': JSONBIN_API_KEY
-                    }
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY } 
                 });
 
-                // Se c'è un errore del server, lo catturiamo
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Errore Server (${response.status}): ${errorText}`);
-                }
+                if (!response.ok) throw new Error(`Errore Server (${response.status})`);
 
-                // Estraiamo i dati JSON
                 const result = await response.json();
-                
-                // Entriamo nell'array "elezioni" che hai creato
                 const elezione = result.record.elezioni[0]; 
                 const partiti = elezione.risultati_partiti;
 
-                // Creiamo le righe della tabella in base ai dati
                 let righeTabella = '';
                 partiti.forEach(partito => {
                     righeTabella += `
@@ -196,54 +175,131 @@
                     `;
                 });
 
-                // Costruiamo l'interfaccia con i risultati
+                // Creazione della struttura HTML dinamica
                 const htmlRisultati = `
                     <hr>
-                    <h3 style="color: #004d99; margin-top: 20px;">Risultati ${elezione.tipo} ${elezione.anno}</h3>
-                    <p><strong>Comune:</strong> ${elezione.comune} (${elezione.area}) | <strong>Affluenza:</strong> ${elezione.affluenza}</p>
+                    <h3 style="color: #004d99; margin-top: 20px;">Risultati ${elezione.tipo} ${elezione.anno} - ${elezione.comune}</h3>
                     
-                    <div class="vincitore">
-                        <i class="fa fa-trophy"></i> Eletto Sindaco: ${elezione.candidato_vincente}
+                    <!-- BLOCCO MAPPA E REFERENDUM (Stile Eligendo) -->
+                    <div class="row" style="margin-top: 30px;">
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading"><strong>Distribuzione Geografica</strong></div>
+                                <div class="panel-body" style="padding: 0;">
+                                    <div id="mappaElettorale" style="height: 220px; width: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading"><strong>Scrutini / Esito (Simulazione SI e NO)</strong></div>
+                                <div class="panel-body" style="height: 220px; display: flex; flex-direction: column; justify-content: center;">
+                                    <div class="sino-container">
+                                        <div style="color: #1976d2;">SI</div>
+                                        <div class="sino-progress">
+                                            <div class="sino-si" style="width: 46.25%;">46,25%</div>
+                                            <div class="sino-no" style="width: 53.75%;">53,75%</div>
+                                        </div>
+                                        <div style="color: #d9534f;">NO</div>
+                                    </div>
+                                    <div class="sino-labels">
+                                        <span>Voti: 12.447.077</span>
+                                        <span>Voti: 14.462.758</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered table-risultati">
-                            <thead>
-                                <tr>
-                                    <th>Lista / Partito</th>
-                                    <th>Voti</th>
-                                    <th>%</th>
-                                    <th>Seggi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${righeTabella}
-                            </tbody>
-                        </table>
+                    <!-- BLOCCO GRAFICO PARLAMENTO E TABELLA -->
+                    <div class="row" style="margin-top: 20px;">
+                        <div class="col-md-5">
+                            <div class="panel panel-default">
+                                <div class="panel-heading"><strong>Formazione Parlamentare / Consiglio</strong></div>
+                                <div class="panel-body" style="display: flex; justify-content: center; align-items: center;">
+                                    <canvas id="graficoParlamento"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered table-risultati" style="margin-bottom: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Lista / Partito</th>
+                                            <th>Voti</th>
+                                            <th>%</th>
+                                            <th>Seggi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${righeTabella}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIEPILOGO DATI STATICI A FONDO PAGINA -->
+                    <div class="panel panel-info" style="margin-top: 20px;">
+                        <div class="panel-heading"><strong>Riepilogo Dati</strong></div>
+                        <div class="panel-body">
+                            <ul style="list-style-type: none; padding-left: 0; margin-bottom: 0; line-height: 1.8;">
+                                <li><strong>Totale voti candidati presidente:</strong> 1.255.258</li>
+                                <li><strong>Totale voti liste:</strong> 1.201.785</li>
+                                <li><strong>Schede bianche:</strong> 15.327 (1,17 %)</li>
+                                <li><strong>Schede nulle:</strong> 34.145 (2,61 %)</li>
+                                <li><strong>Schede contestate e non assegnate:</strong> 111 (0,00 %)</li>
+                                <li><strong>Seggio al candidato presidente eletto consigliere:</strong> 1</li>
+                                <li><strong>Totale seggi attribuiti alle liste:</strong> 48</li>
+                            </ul>
+                        </div>
                     </div>
                 `;
 
-                // Nascondi loader e mostra tabella
                 document.getElementById('loading_screen').style.display = 'none';
                 document.getElementById('dati-elettorali').innerHTML = htmlRisultati;
                 document.getElementById('dati-elettorali').style.display = 'block';
 
-                // Popola la tendina del comune con quello trovato nel database
                 const selComune = document.getElementById('sel_comune');
                 selComune.innerHTML = `<option value="1">${elezione.comune}</option>`;
                 selComune.disabled = false;
 
+                // INIZIALIZZAZIONE MAPPA (LEAFLET)
+                var map = L.map('mappaElettorale').setView([44.2227, 12.0407], 10); // Coordinate impostate su Forlì
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                // INIZIALIZZAZIONE GRAFICO A SEMICERCHIO (CHART.JS)
+                var ctx = document.getElementById('graficoParlamento').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: partiti.map(p => p.nome),
+                        datasets: [{
+                            data: partiti.map(p => p.seggi),
+                            backgroundColor: ['#1976d2', '#d9534f', '#f0ad4e', '#5cb85c', '#5bc0de'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        rotation: -90,
+                        circumference: 180,
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+
             } catch (error) {
                 console.error(error);
-                
-                // Mostra il dettaglio tecnico dell'errore a schermo
                 document.getElementById('loading_screen').style.display = 'none';
                 document.getElementById('dati-elettorali').innerHTML = `
                     <div class="alert alert-danger" style="margin-top: 20px;">
-                        <strong><i class="fa fa-exclamation-triangle"></i> Dettaglio Errore di Connessione:</strong>
-                        <p style="margin-top: 10px; font-family: monospace;">${error.message}</p>
-                    </div>
-                `;
+                        <strong>Errore di Connessione:</strong> <br>${error.message}
+                    </div>`;
                 document.getElementById('dati-elettorali').style.display = 'block';
             }
         });
