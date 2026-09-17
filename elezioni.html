@@ -601,21 +601,53 @@
             return partito.colore || PALETTE[idx % PALETTE.length];
         }
 
-        // Costruisce un emiciclo "parlamento" a partire dai seggi di ciascun partito
-        function costruisciGraficoParlamento(partiti) {
-            const totaleSeggi = partiti.reduce((acc, p) => acc + (parseInt(p.seggi, 10) || 0), 0);
-            if (totaleSeggi <= 0) return '';
-
-            // Genera N punti distribuiti su un semicerchio, ordinati da sinistra a destra
+        // Genera esattamente n punti su un semicerchio (usato per il grafico
+        // "parlamento"), distribuiti su righe concentriche in proporzione alla
+        // loro lunghezza, cosí il totale dei pallini combacia sempre con n.
+        function generaPuntiSemicircolo(n) {
             const raggioEsterno = 220;
             const raggioInterno = 90;
             const cx = 250, cy = 230;
-            const punti = [];
-            const righe = 5; // numero di "anelli" del semicerchio
+
+            // Il numero di righe cresce con la radice del numero di seggi:
+            // pochi seggi -> poche righe (niente righe vuote), tanti seggi ->
+            // piú righe, cosí il semicerchio resta leggibile.
+            const righe = Math.max(1, Math.min(14, Math.round(Math.sqrt(n / 2))));
+
+            const raggiRighe = [];
             for (let r = 0; r < righe; r++) {
-                const raggio = raggioInterno + (raggioEsterno - raggioInterno) * (r / (righe - 1));
-                const circonferenza = Math.PI * raggio;
-                const nSeggiRiga = Math.max(6, Math.round(circonferenza / 16));
+                raggiRighe.push(righe === 1
+                    ? (raggioInterno + raggioEsterno) / 2
+                    : raggioInterno + (raggioEsterno - raggioInterno) * (r / (righe - 1)));
+            }
+
+            // Seggi per riga in proporzione al raggio (le righe piú esterne,
+            // piú lunghe, ospitano piú seggi), con i resti dell'arrotondamento
+            // assegnati alle righe con la parte decimale piú alta cosí la
+            // somma finale torna sempre esattamente n
+            const pesoTotale = raggiRighe.reduce((a, b) => a + b, 0);
+            const grezzi = raggiRighe.map(r => (r / pesoTotale) * n);
+            const seggiPerRiga = grezzi.map(Math.floor);
+            let assegnati = seggiPerRiga.reduce((a, b) => a + b, 0);
+            const ordineResti = grezzi
+                .map((g, i) => ({ i, resto: g - seggiPerRiga[i] }))
+                .sort((a, b) => b.resto - a.resto);
+            for (let k = 0; k < ordineResti.length && assegnati < n; k++, assegnati++) {
+                seggiPerRiga[ordineResti[k].i]++;
+            }
+            // Evita righe rimaste a 0 seggi (spostando un seggio da quella con piú seggi)
+            for (let i = 0; i < righe && n >= righe; i++) {
+                if (seggiPerRiga[i] === 0) {
+                    const idxMax = seggiPerRiga.indexOf(Math.max(...seggiPerRiga));
+                    seggiPerRiga[idxMax]--;
+                    seggiPerRiga[i]++;
+                }
+            }
+
+            const punti = [];
+            for (let r = 0; r < righe; r++) {
+                const raggio = raggiRighe[r];
+                const nSeggiRiga = seggiPerRiga[r];
                 for (let s = 0; s < nSeggiRiga; s++) {
                     const t = nSeggiRiga === 1 ? 0.5 : s / (nSeggiRiga - 1);
                     const angolo = Math.PI - t * Math.PI; // da 180° a 0°
@@ -624,27 +656,39 @@
                     punti.push({ x, y, angolo });
                 }
             }
-            // Ordina i punti da sinistra (angolo maggiore) a destra, così i seggi si assegnano in ordine
+            // Ordina da sinistra (angolo maggiore) a destra
             punti.sort((a, b) => b.angolo - a.angolo);
+            return { punti, righe, raggioInterno, raggioEsterno };
+        }
 
-            // Assegna i punti ai partiti in proporzione ai seggi (scala se i punti disponibili != totale seggi)
-            const scala = punti.length / totaleSeggi;
+        // Costruisce un emiciclo "parlamento" a partire dai seggi di ciascun partito
+        function costruisciGraficoParlamento(partiti) {
+            const totaleSeggi = partiti.reduce((acc, p) => acc + (parseInt(p.seggi, 10) || 0), 0);
+            if (totaleSeggi <= 0) return '';
+
+            // Un punto per ogni seggio, sempre: 250 seggi -> 250 pallini, 25 -> 25
+            const { punti, righe, raggioInterno, raggioEsterno } = generaPuntiSemicircolo(totaleSeggi);
+
+            // Raggio dei pallini adattato alla densità: piú seggi -> pallini più
+            // piccoli, cosí restano leggibili senza sovrapporsi
+            const spazioRighe = righe > 1 ? (raggioEsterno - raggioInterno) / (righe - 1) : (raggioEsterno - raggioInterno);
+            const raggioPallino = Math.max(2.5, Math.min(7, spazioRighe / 2.4));
+
             let indicePunto = 0;
             let cerchi = '';
             partiti.forEach((partito, idx) => {
                 const seggi = parseInt(partito.seggi, 10) || 0;
-                const nPunti = Math.round(seggi * scala);
                 const colore = coloreDiPartito(partito, idx);
-                for (let i = 0; i < nPunti && indicePunto < punti.length; i++, indicePunto++) {
+                for (let i = 0; i < seggi && indicePunto < punti.length; i++, indicePunto++) {
                     const p = punti[indicePunto];
-                    cerchi += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${colore}"><title>${partito.nome} (${seggi} seggi)</title></circle>`;
+                    cerchi += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${raggioPallino.toFixed(1)}" fill="${colore}"><title>${partito.nome} (${seggi} seggi)</title></circle>`;
                 }
             });
-            // Eventuali punti rimanenti (arrotondamenti) assegnati all'ultimo partito
+            // Eventuali punti rimanenti (per scostamenti nei dati) assegnati all'ultimo partito
             while (indicePunto < punti.length && partiti.length > 0) {
                 const ultimo = partiti[partiti.length - 1];
                 const p = punti[indicePunto];
-                cerchi += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${coloreDiPartito(ultimo, partiti.length - 1)}"></circle>`;
+                cerchi += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${raggioPallino.toFixed(1)}" fill="${coloreDiPartito(ultimo, partiti.length - 1)}"></circle>`;
                 indicePunto++;
             }
 
@@ -672,6 +716,7 @@
                 </div>
             `;
         }
+
 
         // Cache dell'intero dataset scaricato da JSONBin, per evitare chiamate ripetute
         let elezioniCache = null;
