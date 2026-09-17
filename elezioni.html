@@ -353,6 +353,20 @@
             margin-right: 0.5rem;
             vertical-align: middle;
         }
+        .partito-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+        .partito-logo {
+            width: 26px;
+            height: 26px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 1px solid var(--ist-line);
+            background: var(--ist-white);
+            flex-shrink: 0;
+        }
 
         .table-wrap { overflow-x: auto; }
 
@@ -404,6 +418,14 @@
             height: 12px;
             border-radius: 2px;
             display: inline-block;
+        }
+        .parlamento-legend .legend-logo {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            object-fit: cover;
+            border: 1px solid var(--ist-line);
+            background: var(--ist-white);
         }
         .parlamento-total {
             text-align: center;
@@ -517,10 +539,9 @@
             <div class="side-panel">
                 <h2>Navigazione</h2>
                 <label class="select-des" for="sel_date">Data</label>
-                <!-- Quando l'utente seleziona 2026, parte lo script -->
-                <select name="sel_date" class="form-control" id="sel_date">
-                    <option value="0">Scegli Data</option>
-                    <option value="2026">Elezioni 2026</option>
+                <!-- Le date vengono caricate dinamicamente dal database in base al tipo di elezione selezionato -->
+                <select name="sel_date" class="form-control" id="sel_date" disabled>
+                    <option value="0">Caricamento date...</option>
                 </select>
 
                 <label class="select-des" for="sel_comune">Comune</label>
@@ -543,7 +564,7 @@
                 <h2>Consulta i risultati</h2>
                 <p class="subtitle">Seleziona un tipo di elezione e una data per iniziare.</p>
                 <div class="notice">
-                    <p>Seleziona l'anno "Elezioni 2026" dal menu a sinistra per caricare i risultati in tempo reale.</p>
+                    <p>Scegli il tipo di elezione e una data dal menu a sinistra per caricare i risultati in tempo reale.</p>
                 </div>
             </div>
 
@@ -627,7 +648,9 @@
 
             const legenda = partiti.map((partito, idx) => `
                 <div class="legend-item">
-                    <span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span>
+                    ${partito.logo
+                        ? `<img class="legend-logo" src="${partito.logo}" alt="${partito.nome}">`
+                        : `<span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span>`}
                     <span>${partito.nome} &mdash; ${partito.seggi} seggi</span>
                 </div>
             `).join('');
@@ -642,9 +665,108 @@
             `;
         }
 
+        // Cache dell'intero dataset scaricato da JSONBin, per evitare chiamate ripetute
+        let elezioniCache = null;
+
+        // Mappa codice radio -> etichetta testuale, usata come fallback se manca "tipo_codice" nel dato
+        const MAPPA_TIPO = { G: 'comunali', C: 'camera', S: 'senato' };
+
+        function codiceTipoSelezionato() {
+            const radio = document.querySelector('input[name="tpel"]:checked');
+            return radio ? radio.value : 'G';
+        }
+
+        // Un'elezione "appartiene" al tipo selezionato se ha tipo_codice combaciante,
+        // oppure se il suo campo testuale "tipo" contiene l'etichetta corrispondente
+        function elezioneCorrispondeAlTipo(elezione, codice) {
+            if (elezione.tipo_codice) {
+                return elezione.tipo_codice.toUpperCase() === codice;
+            }
+            const etichetta = MAPPA_TIPO[codice];
+            return (elezione.tipo || '').toLowerCase().includes(etichetta);
+        }
+
+        // Formatta una data ISO (2026-05-17) in formato leggibile italiano; se il dato
+        // non è una data valida (es. solo un anno "2026"), lo mostra così com'è
+        function formattaData(valore) {
+            const d = new Date(valore);
+            if (isNaN(d.getTime()) || !/\d{4}-\d{2}-\d{2}/.test(String(valore))) {
+                return String(valore);
+            }
+            return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        // Scarica (una sola volta) l'intero dataset da JSONBin
+        async function caricaDataset() {
+            if (elezioniCache) return elezioniCache;
+            const response = await fetch(API_URL, {
+                method: 'GET',
+                headers: { 'X-Access-Key': JSONBIN_API_KEY }
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Errore Server (${response.status}): ${errorText}`);
+            }
+            const result = await response.json();
+            elezioniCache = result.record.elezioni || [];
+            return elezioniCache;
+        }
+
+        // Ripopola la select "Data" con le date effettive presenti nel dataset,
+        // filtrate in base al tipo di elezione selezionato (Comunali/Camera/Senato)
+        async function aggiornaSelettoreDate() {
+            const selDate = document.getElementById('sel_date');
+            const selComune = document.getElementById('sel_comune');
+            selDate.disabled = true;
+            selDate.innerHTML = '<option value="0">Caricamento date...</option>';
+            selComune.disabled = true;
+            selComune.innerHTML = '<option value="0">Scegli Comune</option>';
+            document.getElementById('dati-elettorali').style.display = 'none';
+            document.getElementById('dati-elettorali').innerHTML = '';
+            document.getElementById('messaggio-iniziale').style.display = 'block';
+
+            try {
+                const dataset = await caricaDataset();
+                const codice = codiceTipoSelezionato();
+                const corrispondenti = dataset
+                    .map((elezione, indice) => ({ elezione, indice }))
+                    .filter(({ elezione }) => elezioneCorrispondeAlTipo(elezione, codice));
+
+                if (corrispondenti.length === 0) {
+                    selDate.innerHTML = '<option value="0">Nessuna data disponibile</option>';
+                    selDate.disabled = true;
+                    return;
+                }
+
+                let opzioni = '<option value="0">Scegli Data</option>';
+                corrispondenti.forEach(({ elezione, indice }) => {
+                    const valoreData = elezione.data || elezione.anno;
+                    opzioni += `<option value="${indice}">${formattaData(valoreData)}</option>`;
+                });
+                selDate.innerHTML = opzioni;
+                selDate.disabled = false;
+            } catch (error) {
+                console.error(error);
+                selDate.innerHTML = '<option value="0">Errore di caricamento</option>';
+                document.getElementById('messaggio-iniziale').style.display = 'none';
+                document.getElementById('dati-elettorali').innerHTML = `
+                    <div class="alert-danger">
+                        <strong>&#9888; Dettaglio Errore di Connessione:</strong>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('dati-elettorali').style.display = 'block';
+            }
+        }
+
+        // Al cambio del tipo di elezione (Comunali/Camera/Senato), ricarica le date disponibili
+        document.querySelectorAll('input[name="tpel"]').forEach(radio => {
+            radio.addEventListener('change', aggiornaSelettoreDate);
+        });
+
         document.getElementById('sel_date').addEventListener('change', async function() {
-            const dataSelezionata = this.value;
-            if (dataSelezionata === "0") return;
+            const indiceSelezionato = this.value;
+            if (indiceSelezionato === "0") return;
 
             // Mostra loader
             document.getElementById('messaggio-iniziale').style.display = 'none';
@@ -652,33 +774,19 @@
             document.getElementById('loading_screen').style.display = 'block';
 
             try {
-                // Chiamata FETCH con X-Access-Key
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    headers: {
-                        'X-Access-Key': JSONBIN_API_KEY
-                    }
-                });
-
-                // Se c'è un errore del server, lo catturiamo
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Errore Server (${response.status}): ${errorText}`);
-                }
-
-                // Estraiamo i dati JSON
-                const result = await response.json();
-
-                // Entriamo nell'array "elezioni" che hai creato
-                const elezione = result.record.elezioni[0];
+                const dataset = await caricaDataset();
+                const elezione = dataset[parseInt(indiceSelezionato, 10)];
                 const partiti = elezione.risultati_partiti;
 
-                // Creiamo le righe della tabella in base ai dati
+                // Creiamo le righe della tabella in base ai dati, includendo la foto/logo se presente
                 let righeTabella = '';
                 partiti.forEach((partito, idx) => {
+                    const iconaPartito = partito.logo
+                        ? `<img class="partito-logo" src="${partito.logo}" alt="${partito.nome}">`
+                        : `<span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span>`;
                     righeTabella += `
                         <tr>
-                            <td><span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span><strong>${partito.nome}</strong></td>
+                            <td><div class="partito-cell">${iconaPartito}<strong>${partito.nome}</strong></div></td>
                             <td>${partito.voti.toLocaleString('it-IT')}</td>
                             <td>${partito.percentuale}</td>
                             <td>${partito.seggi}</td>
@@ -690,10 +798,12 @@
                 const partitiConSeggi = partiti.filter(p => (parseInt(p.seggi, 10) || 0) > 0);
                 const graficoParlamento = partitiConSeggi.length > 1 ? costruisciGraficoParlamento(partitiConSeggi) : '';
 
+                const valoreData = elezione.data || elezione.anno;
+
                 // Costruiamo l'interfaccia con i risultati
                 const htmlRisultati = `
                     <hr class="section-divider">
-                    <p class="risultati-title">Risultati ${elezione.tipo} ${elezione.anno}</p>
+                    <p class="risultati-title">Risultati ${elezione.tipo} &mdash; ${formattaData(valoreData)}</p>
                     <p class="meta-row"><strong>Comune:</strong> ${elezione.comune} (${elezione.area}) &nbsp;|&nbsp; <strong>Affluenza:</strong> ${elezione.affluenza}</p>
 
                     <div class="vincitore">
@@ -743,6 +853,9 @@
                 document.getElementById('dati-elettorali').style.display = 'block';
             }
         });
+
+        // Al caricamento della pagina, popola subito le date per il tipo selezionato di default (Comunali)
+        aggiornaSelettoreDate();
     </script>
 </body>
 </html>
