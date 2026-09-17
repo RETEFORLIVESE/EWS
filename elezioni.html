@@ -2,161 +2,649 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Archivio Elezioni - RETEFORLIVESE</title>
+    <title>Archivio Elezioni - CEPU</title>
     <link rel="apple-touch-icon" href="CEPU.png">
     <link rel="icon" type="image/png" href="CEPU.png">
     <meta name="description" content="Consulta i risultati elettorali">
-    
-    <!-- CSS Bootstrap e FontAwesome tramite CDN -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
+
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
-        .sottotitolo { background-color: #004d99; color: white; padding: 15px; margin-bottom: 20px; }
-        .sottotitolo p { margin: 0; font-size: 24px; font-weight: bold; }
-        .navbar { background-color: #e0e0e0; border-radius: 0; }
-        .election_bg { background: #fff; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 5px; }
-        .election_bg p { font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .nav-tabs { margin-bottom: 15px; }
-        .nav_bg, .search_bg { background: #fff; padding: 15px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px; }
-        .select-des { font-weight: bold; margin-top: 10px; }
-        .center-panel { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; min-height: 500px; }
-        .admonition { background-color: #e9f2fa; padding: 15px; border-left: 5px solid #004d99; margin: 20px 0; }
-        .election_list ul { padding-left: 20px; }
-        footer { background-color: #333; color: white; padding: 20px 0; margin-top: 40px; }
-        
-        /* Stili per il caricamento e risultati */
-        #loading_screen { display: none; text-align: center; padding: 50px 20px; }
-        #loading_screen p { margin-top: 15px; font-weight: bold; color: #004d99; font-size: 16px; }
-        .table-risultati { margin-top: 20px; background: white; }
-        .table-risultati th { background-color: #004d99; color: white; }
-        .vincitore { font-weight: bold; color: #d9534f; font-size: 18px; margin-bottom: 15px; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ist-blue-deep: #0B3D6E;
+            --ist-blue: #1B5FA8;
+            --ist-blue-mid: #2E77C9;
+            --ist-azure: #E7F1FA;
+            --ist-azure-mid: #CFE3F5;
+            --ist-ink: #1F2A33;
+            --ist-text: #3C4750;
+            --ist-line: #D6E2ED;
+            --ist-gold: #C9A227;
+            --ist-white: #FFFFFF;
+            --ist-red: #C0392B;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--ist-white);
+            color: var(--ist-text);
+            font-family: "Titillium Web", "Segoe UI", Arial, sans-serif;
+            line-height: 1.5;
+        }
+
+        a { color: inherit; }
+        img { max-width: 100%; display: block; }
+
+        /* ---------- Top institutional strip ---------- */
+        .top-strip {
+            background: var(--ist-blue-deep);
+            color: rgba(255,255,255,0.85);
+            font-size: 0.8rem;
+            padding: 0.4rem clamp(1rem, 4vw, 3rem);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.01em;
+        }
+        .top-strip a {
+            text-decoration: none;
+            color: rgba(255,255,255,0.85);
+            margin-left: 1.25rem;
+        }
+        .top-strip a:hover { text-decoration: underline; }
+
+        /* ---------- Main header band ---------- */
+        header.main-band {
+            background: linear-gradient(180deg, var(--ist-blue-mid) 0%, var(--ist-blue) 100%);
+            color: #fff;
+            padding: 1.1rem clamp(1rem, 4vw, 3rem);
+        }
+
+        .band-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .brand-seal {
+            width: 76px;
+            height: 76px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+        }
+        .brand-seal img {
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.75)) drop-shadow(0 0 28px rgba(255,255,255,0.5));
+        }
+
+        .brand-text-group { display: flex; flex-direction: column; line-height: 1.15; }
+
+        .brand-eyebrow {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.72);
+            font-weight: 400;
+        }
+
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        /* ---------- Flag stripe (bande tricolore) ---------- */
+        .flag-stripe {
+            display: flex;
+            height: 8px;
+        }
+        .flag-stripe span { flex: 1 1 0; }
+        .flag-stripe .stripe-1 { background: #0072CE; }
+        .flag-stripe .stripe-2 { background: #000000; }
+        .flag-stripe .stripe-3 { background: #FFFFFF; }
+
+        /* ---------- Nav bar ---------- */
+        nav.main-nav {
+            background: var(--ist-white);
+            border-bottom: 3px solid var(--ist-blue);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(11,61,110,0.08);
+        }
+
+        .nav-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.25rem;
+            padding: 0 clamp(1rem, 4vw, 3rem);
+            flex-wrap: wrap;
+        }
+
+        .nav-inner a {
+            display: inline-block;
+            padding: 0.95rem 1.1rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--ist-blue-deep);
+            border-bottom: 3px solid transparent;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .nav-inner a:hover,
+        .nav-inner a.active {
+            background: var(--ist-azure);
+            border-bottom-color: var(--ist-blue-mid);
+        }
+
+        /* ---------- Page kicker band ---------- */
+        .page-kicker-band {
+            background: var(--ist-azure);
+            border-bottom: 1px solid var(--ist-line);
+            padding: clamp(1.6rem, 4vw, 2.4rem) clamp(1rem, 4vw, 3rem);
+        }
+        .page-kicker-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+        .hero-kicker {
+            display: inline-block;
+            background: var(--ist-blue);
+            color: #fff;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2px;
+            margin-bottom: 0.9rem;
+        }
+        .page-kicker-band h1 {
+            font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+            font-weight: 900;
+            color: var(--ist-blue-deep);
+            line-height: 1.15;
+        }
+        .page-kicker-band p.subtitle {
+            font-size: 1rem;
+            color: var(--ist-text);
+            margin-top: 0.6rem;
+            max-width: 62ch;
+        }
+
+        /* ---------- Layout ---------- */
+        .page-wrap {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 4vw, 3rem);
+            display: grid;
+            grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* ---------- Sidebar ---------- */
+        .side-panel {
+            background: var(--ist-white);
+            border: 1px solid var(--ist-line);
+            border-top: 4px solid var(--ist-blue);
+            border-radius: 4px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(11,61,110,0.06);
+            margin-bottom: 1.5rem;
+        }
+        .side-panel h2 {
+            font-size: 0.95rem;
+            color: var(--ist-blue-deep);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .radio-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 0.3rem;
+        }
+        .radio-row label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--ist-text);
+            cursor: pointer;
+        }
+        .radio-row input[type="radio"] { accent-color: var(--ist-blue); width: 16px; height: 16px; }
+
+        .select-des {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--ist-blue-deep);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.4rem;
+            margin-top: 1.1rem;
+        }
+        .side-panel select {
+            width: 100%;
+            border: 1px solid var(--ist-line);
+            border-radius: 3px;
+            padding: 0.6rem 0.7rem;
+            font-family: inherit;
+            font-size: 0.92rem;
+            color: var(--ist-text);
+            background: var(--ist-white);
+        }
+        .side-panel select:focus {
+            outline: 2px solid var(--ist-blue-mid);
+            outline-offset: 1px;
+        }
+        .side-panel select:disabled { background: var(--ist-azure); color: #93a2ae; }
+
+        /* ---------- Center panel ---------- */
+        .center-panel {
+            background: var(--ist-white);
+            border: 1px solid var(--ist-line);
+            border-radius: 4px;
+            padding: clamp(1.5rem, 4vw, 2.2rem);
+            min-height: 460px;
+            box-shadow: 0 10px 30px rgba(11,61,110,0.06);
+        }
+        .center-panel h2 {
+            font-size: 1.3rem;
+            color: var(--ist-blue-deep);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .center-panel .subtitle { color: var(--ist-text); font-size: 0.95rem; margin-bottom: 1.2rem; }
+
+        .notice {
+            background: var(--ist-azure);
+            border-left: 4px solid var(--ist-blue);
+            border-radius: 0 4px 4px 0;
+            padding: 1.4rem clamp(1.2rem, 3vw, 2rem);
+        }
+        .notice p { color: var(--ist-blue-deep); font-size: 0.98rem; }
+
+        /* ---------- Loading ---------- */
+        #loading_screen { display: none; text-align: center; padding: 60px 20px; }
+        #loading_screen p { margin-top: 1.1rem; font-weight: 700; color: var(--ist-blue-deep); font-size: 1rem; }
+
+        .spinner {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 5px solid var(--ist-azure-mid);
+            border-top-color: var(--ist-blue);
+            margin: 0 auto;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ---------- Results ---------- */
+        .vincitore {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--ist-azure);
+            border-top: 4px solid var(--ist-gold);
+            border-radius: 4px;
+            padding: 1rem 1.3rem;
+            font-weight: 700;
+            color: var(--ist-blue-deep);
+            font-size: 1.1rem;
+            margin: 1.2rem 0;
+        }
+        .vincitore .trophy { color: var(--ist-gold); font-size: 1.3rem; }
+
+        .meta-row {
+            font-size: 0.92rem;
+            color: var(--ist-text);
+            margin-bottom: 0.4rem;
+        }
+        .meta-row strong { color: var(--ist-blue-deep); }
+
+        .table-risultati {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.2rem;
+            font-size: 0.92rem;
+        }
+        .table-risultati th {
+            background: var(--ist-blue-deep);
+            color: #fff;
+            text-align: left;
+            padding: 0.7rem 0.8rem;
+            font-weight: 600;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .table-risultati td {
+            padding: 0.65rem 0.8rem;
+            border-bottom: 1px solid var(--ist-line);
+        }
+        .table-risultati tr:nth-child(even) td { background: var(--ist-azure); }
+        .table-risultati .swatch {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--ist-line);
+            margin: 1.8rem 0 1.4rem;
+        }
+
+        .risultati-title {
+            font-size: 1.15rem;
+            color: var(--ist-blue-deep);
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        /* ---------- Parliament chart ---------- */
+        .parlamento-box {
+            margin-top: 1.6rem;
+            background: var(--ist-azure);
+            border-radius: 4px;
+            padding: 1.4rem clamp(1rem, 3vw, 1.8rem);
+        }
+        .parlamento-box h4 {
+            color: var(--ist-blue-deep);
+            font-size: 1rem;
+            margin-bottom: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .parlamento-svg-wrap { display: flex; justify-content: center; }
+        .parlamento-svg-wrap svg { max-width: 560px; width: 100%; height: auto; }
+        .parlamento-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem 1.2rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .parlamento-legend .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--ist-text);
+        }
+        .parlamento-legend .swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+        .parlamento-total {
+            text-align: center;
+            font-weight: 700;
+            color: var(--ist-blue-deep);
+            font-size: 0.95rem;
+            margin-top: -0.6rem;
+            margin-bottom: 0.2rem;
+        }
+
+        /* ---------- Error ---------- */
+        .alert-danger {
+            background: #FBEAEA;
+            border-left: 4px solid var(--ist-red);
+            border-radius: 0 4px 4px 0;
+            padding: 1.2rem 1.4rem;
+            margin-top: 1.2rem;
+        }
+        .alert-danger strong { color: var(--ist-red); display: block; margin-bottom: 0.4rem; }
+        .alert-danger p { font-family: monospace; font-size: 0.85rem; color: var(--ist-ink); }
+
+        /* ---------- Footer ---------- */
+        footer {
+            background: var(--ist-blue-deep);
+            color: rgba(255,255,255,0.78);
+            padding: 2rem clamp(1rem, 4vw, 3rem) 1.5rem;
+            margin-top: 2rem;
+        }
+        .footer-bottom {
+            max-width: 1240px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        @media (max-width: 860px) {
+            .page-wrap { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 
 <body>
-    <!-- TITOLO PRINCIPALE -->
-    <div class="container-fluid sottotitolo">
-        <div class="container">
-            <div id="descElez" class="box-title opopo">
-                <p>L'Archivio Elettorale</p>
-            </div>
+
+    <div class="top-strip">
+        <span>Commissione Elettorale Permanente dell'Unione [CEPU]</span>
+        <div>
+            <a href="index.html">Home</a>
+            <a href="#">English</a>
         </div>
     </div>
 
-    <!-- MENU ALTO -->
-    <div class="container">
-        <nav id="topmenu" class="navbar">
-            <div class="container-fluid">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a href="#">Consultazione</a></li>
-                    <li><a href="#">Info</a></li>
-                </ul>
-            </div>
-        </nav>
+    <header class="main-band">
+        <div class="band-inner">
+            <a href="index.html" class="brand">
+                <span class="brand-seal">
+                    <img src="CEPU.png" alt="Logo CEPU">
+                </span>
+                <span class="brand-text-group">
+                    <span class="brand-eyebrow">Portale Elettorale dell'Unione</span>
+                    <span class="brand-title">Archivio Elezioni</span>
+                </span>
+            </a>
+        </div>
+    </header>
+
+    <div class="flag-stripe" aria-hidden="true">
+        <span class="stripe-1"></span>
+        <span class="stripe-2"></span>
+        <span class="stripe-3"></span>
     </div>
 
-    <div class="container paginaInterna">
-        <div class="row">
-            <!-- SIDEBAR SINISTRA -->
-            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3" id="sidebarLeft" role="navigation">
-                
-                <div class="row election_bg">
-                    <p>Elezione</p>
-                    <div class="form-group col-xs-12">
+    <nav class="main-nav" aria-label="Navigazione principale">
+        <div class="nav-inner">
+            <a class="active" href="#">Consultazione</a>
+            <a href="#">Info</a>
+            <a href="index.html">Torna alla Home</a>
+        </div>
+    </nav>
+
+    <div class="page-kicker-band">
+        <div class="page-kicker-inner">
+            <span class="hero-kicker">Banca Dati Elettorale</span>
+            <h1>L'Archivio Elettorale</h1>
+            <p class="subtitle">Banca dati interrogabile on line contenente i risultati di tutte le elezioni dell'Unione.</p>
+        </div>
+    </div>
+
+    <div class="page-wrap">
+        <!-- SIDEBAR SINISTRA -->
+        <div id="sidebarLeft" role="navigation">
+
+            <div class="side-panel">
+                <h2>Tipo di elezione</h2>
+                <div class="radio-row">
+                    <label for="comunali">
                         <input type="radio" name="tpel" value="G" id="comunali" checked="checked">
-                        <label for="comunali">Comunali</label>
-                    </div>
-                    <div class="form-group col-xs-6">
+                        Comunali
+                    </label>
+                    <label for="camera">
                         <input type="radio" name="tpel" value="C" id="camera">
-                        <label for="camera">Camera</label>
-                    </div>
-                    <div class="form-group col-xs-6">
+                        Camera
+                    </label>
+                    <label for="senato">
                         <input type="radio" name="tpel" value="S" id="senato">
-                        <label for="senato">Senato</label>
-                    </div>
-                </div>
-
-                <ul class="nav nav-tabs nav_nav_search" id="myTab" role="tablist">
-                    <li class="active">
-                        <a id="tab_nav" data-toggle="tab" href="#div_nav" role="tab">
-                            <span class="fa fa-list-ul" aria-hidden="true"></span> Navigazione
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="tab-content" id="tab_content">
-                    <div class="tab-pane fade in active" id="div_nav" role="tabpanel">
-                        <div class="row nav_bg">
-                            <div class="col-xs-12">
-                                <label class="select-des">Data</label>
-                                <!-- Quando l'utente seleziona 2026, parte lo script -->
-                                <select name="sel_date" class="form-control" id="sel_date">
-                                    <option value="0">Scegli Data</option>
-                                    <option value="2026">Elezioni 2026</option>
-                                </select>
-                            </div>
-                            <div class="col-xs-12">
-                                <label class="select-des">Comune</label>
-                                <select name="sel_comune" class="form-control" id="sel_comune" disabled>
-                                    <option value="0">Scegli Comune</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                        Senato
+                    </label>
                 </div>
             </div>
 
-            <!-- PANNELLO CENTRALE -->
-            <div class="col-xs-12 col-sm-12 col-md-8 col-lg-9">
-                
-                <!-- Schermata di caricamento -->
-                <div id="loading_screen">
-                    <i class="fa fa-spinner fa-spin fa-4x" style="color: #004d99;"></i>
-                    <p>Collegamento al database in corso...</p>
-                </div>
+            <div class="side-panel">
+                <h2>Navigazione</h2>
+                <label class="select-des" for="sel_date">Data</label>
+                <!-- Quando l'utente seleziona 2026, parte lo script -->
+                <select name="sel_date" class="form-control" id="sel_date">
+                    <option value="0">Scegli Data</option>
+                    <option value="2026">Elezioni 2026</option>
+                </select>
 
-                <!-- Contenuto principale -->
-                <div class="center-panel" id="main-content">
-                    <h2>L'Archivio</h2>
-                    <p class="subtitle">Banca dati interrogabile on line contenente i risultati di tutte le elezioni.</p>
-                    
-                    <div class="admonition" id="messaggio-iniziale">
-                        <div class="election_list">
-                            <p>Seleziona l'anno "Elezioni 2026" dal menu a sinistra per caricare i risultati in tempo reale.</p>
-                        </div>
-                    </div>
+                <label class="select-des" for="sel_comune">Comune</label>
+                <select name="sel_comune" class="form-control" id="sel_comune" disabled>
+                    <option value="0">Scegli Comune</option>
+                </select>
+            </div>
+        </div>
 
-                    <!-- Div dove verranno stampati i risultati della tabella -->
-                    <div id="dati-elettorali"></div>
+        <!-- PANNELLO CENTRALE -->
+        <div class="center-panel" id="main-content">
+
+            <!-- Schermata di caricamento -->
+            <div id="loading_screen">
+                <div class="spinner"></div>
+                <p>Collegamento al database in corso...</p>
+            </div>
+
+            <div id="messaggio-iniziale">
+                <h2>Consulta i risultati</h2>
+                <p class="subtitle">Seleziona un tipo di elezione e una data per iniziare.</p>
+                <div class="notice">
+                    <p>Seleziona l'anno "Elezioni 2026" dal menu a sinistra per caricare i risultati in tempo reale.</p>
                 </div>
             </div>
+
+            <!-- Div dove verranno stampati i risultati della tabella -->
+            <div id="dati-elettorali"></div>
         </div>
     </div>
 
     <footer>
-        <div class="container text-center">
-            <p>Progetto Elettorale - RETEFORLIVESE / RTF</p>
+        <div class="footer-bottom">
+            <p>Progetto Elettorale - CEPU &mdash; Commissione Elettorale Permanente dell'Unione</p>
         </div>
     </footer>
-
-    <!-- Scripts CDN -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <!-- Script connessione API JSONBin.io -->
     <script>
         // Le tue credenziali esatte
-        const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183'; 
-        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS'; 
+        const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183';
+        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS';
         const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+        // Palette di colori per i partiti (usata a rotazione se non specificato un colore nel dato)
+        const PALETTE = ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'];
+
+        function coloreDiPartito(partito, idx) {
+            return partito.colore || PALETTE[idx % PALETTE.length];
+        }
+
+        // Costruisce un emiciclo "parlamento" a partire dai seggi di ciascun partito
+        function costruisciGraficoParlamento(partiti) {
+            const totaleSeggi = partiti.reduce((acc, p) => acc + (parseInt(p.seggi, 10) || 0), 0);
+            if (totaleSeggi <= 0) return '';
+
+            // Genera N punti distribuiti su un semicerchio, ordinati da sinistra a destra
+            const raggioEsterno = 220;
+            const raggioInterno = 90;
+            const cx = 250, cy = 230;
+            const punti = [];
+            const righe = 5; // numero di "anelli" del semicerchio
+            for (let r = 0; r < righe; r++) {
+                const raggio = raggioInterno + (raggioEsterno - raggioInterno) * (r / (righe - 1));
+                const circonferenza = Math.PI * raggio;
+                const nSeggiRiga = Math.max(6, Math.round(circonferenza / 16));
+                for (let s = 0; s < nSeggiRiga; s++) {
+                    const t = nSeggiRiga === 1 ? 0.5 : s / (nSeggiRiga - 1);
+                    const angolo = Math.PI - t * Math.PI; // da 180° a 0°
+                    const x = cx + raggio * Math.cos(angolo);
+                    const y = cy - raggio * Math.sin(angolo);
+                    punti.push({ x, y, angolo });
+                }
+            }
+            // Ordina i punti da sinistra (angolo maggiore) a destra, così i seggi si assegnano in ordine
+            punti.sort((a, b) => b.angolo - a.angolo);
+
+            // Assegna i punti ai partiti in proporzione ai seggi (scala se i punti disponibili != totale seggi)
+            const scala = punti.length / totaleSeggi;
+            let indicePunto = 0;
+            let cerchi = '';
+            partiti.forEach((partito, idx) => {
+                const seggi = parseInt(partito.seggi, 10) || 0;
+                const nPunti = Math.round(seggi * scala);
+                const colore = coloreDiPartito(partito, idx);
+                for (let i = 0; i < nPunti && indicePunto < punti.length; i++, indicePunto++) {
+                    const p = punti[indicePunto];
+                    cerchi += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${colore}"><title>${partito.nome} (${seggi} seggi)</title></circle>`;
+                }
+            });
+            // Eventuali punti rimanenti (arrotondamenti) assegnati all'ultimo partito
+            while (indicePunto < punti.length && partiti.length > 0) {
+                const ultimo = partiti[partiti.length - 1];
+                const p = punti[indicePunto];
+                cerchi += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${coloreDiPartito(ultimo, partiti.length - 1)}"></circle>`;
+                indicePunto++;
+            }
+
+            const svg = `
+                <svg viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grafico a emiciclo del parlamento">
+                    ${cerchi}
+                </svg>
+            `;
+
+            const legenda = partiti.map((partito, idx) => `
+                <div class="legend-item">
+                    <span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span>
+                    <span>${partito.nome} &mdash; ${partito.seggi} seggi</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="parlamento-box">
+                    <h4><i>Composizione dell'Assemblea</i></h4>
+                    <div class="parlamento-total">${totaleSeggi} seggi totali</div>
+                    <div class="parlamento-svg-wrap">${svg}</div>
+                    <div class="parlamento-legend">${legenda}</div>
+                </div>
+            `;
+        }
 
         document.getElementById('sel_date').addEventListener('change', async function() {
             const dataSelezionata = this.value;
-            if(dataSelezionata === "0") return;
+            if (dataSelezionata === "0") return;
 
             // Mostra loader
             document.getElementById('messaggio-iniziale').style.display = 'none';
@@ -180,17 +668,17 @@
 
                 // Estraiamo i dati JSON
                 const result = await response.json();
-                
+
                 // Entriamo nell'array "elezioni" che hai creato
-                const elezione = result.record.elezioni[0]; 
+                const elezione = result.record.elezioni[0];
                 const partiti = elezione.risultati_partiti;
 
                 // Creiamo le righe della tabella in base ai dati
                 let righeTabella = '';
-                partiti.forEach(partito => {
+                partiti.forEach((partito, idx) => {
                     righeTabella += `
                         <tr>
-                            <td><strong>${partito.nome}</strong></td>
+                            <td><span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span><strong>${partito.nome}</strong></td>
                             <td>${partito.voti.toLocaleString('it-IT')}</td>
                             <td>${partito.percentuale}</td>
                             <td>${partito.seggi}</td>
@@ -198,18 +686,22 @@
                     `;
                 });
 
+                // Grafico parlamento, mostrato solo se ci sono più partiti con seggi assegnati
+                const partitiConSeggi = partiti.filter(p => (parseInt(p.seggi, 10) || 0) > 0);
+                const graficoParlamento = partitiConSeggi.length > 1 ? costruisciGraficoParlamento(partitiConSeggi) : '';
+
                 // Costruiamo l'interfaccia con i risultati
                 const htmlRisultati = `
-                    <hr>
-                    <h3 style="color: #004d99; margin-top: 20px;">Risultati ${elezione.tipo} ${elezione.anno}</h3>
-                    <p><strong>Comune:</strong> ${elezione.comune} (${elezione.area}) | <strong>Affluenza:</strong> ${elezione.affluenza}</p>
-                    
+                    <hr class="section-divider">
+                    <p class="risultati-title">Risultati ${elezione.tipo} ${elezione.anno}</p>
+                    <p class="meta-row"><strong>Comune:</strong> ${elezione.comune} (${elezione.area}) &nbsp;|&nbsp; <strong>Affluenza:</strong> ${elezione.affluenza}</p>
+
                     <div class="vincitore">
-                        <i class="fa fa-trophy"></i> Eletto Sindaco: ${elezione.candidato_vincente}
+                        <span class="trophy">&#127942;</span> Eletto Sindaco: ${elezione.candidato_vincente}
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered table-risultati">
+                    <div class="table-wrap">
+                        <table class="table-risultati">
                             <thead>
                                 <tr>
                                     <th>Lista / Partito</th>
@@ -223,6 +715,8 @@
                             </tbody>
                         </table>
                     </div>
+
+                    ${graficoParlamento}
                 `;
 
                 // Nascondi loader e mostra tabella
@@ -237,13 +731,13 @@
 
             } catch (error) {
                 console.error(error);
-                
+
                 // Mostra il dettaglio tecnico dell'errore a schermo
                 document.getElementById('loading_screen').style.display = 'none';
                 document.getElementById('dati-elettorali').innerHTML = `
-                    <div class="alert alert-danger" style="margin-top: 20px;">
-                        <strong><i class="fa fa-exclamation-triangle"></i> Dettaglio Errore di Connessione:</strong>
-                        <p style="margin-top: 10px; font-family: monospace;">${error.message}</p>
+                    <div class="alert-danger">
+                        <strong>&#9888; Dettaglio Errore di Connessione:</strong>
+                        <p>${error.message}</p>
                     </div>
                 `;
                 document.getElementById('dati-elettorali').style.display = 'block';
