@@ -604,7 +604,7 @@
 
     async function caricaDatasetDalDatabase() {
         impostaStatoDatabase('Connessione al database…', 'caricamento');
-        const risposta = await fetch(API_URL, { method: 'GET', headers: { 'X-Access-Key': JSONBIN_API_KEY } });
+        const risposta = await fetch(API_URL, { method: 'GET', headers: { 'X-Master-Key': JSONBIN_API_KEY } });
         if (!risposta.ok) {
             const testoErrore = await risposta.text();
             throw new Error(`Errore Server (${risposta.status}): ${testoErrore}`);
@@ -617,7 +617,7 @@
         impostaStatoDatabase('Salvataggio nel database…', 'caricamento');
         const risposta = await fetch(API_URL, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY, 'X-Access-Key': JSONBIN_API_KEY },
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
             body: JSON.stringify({ elezioni: listaElezioni })
         });
         if (!risposta.ok) {
