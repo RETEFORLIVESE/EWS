@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Redazione — Archivio Elezioni CEPU</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --ist-blue-deep: #0B3D6E;
+        --ist-blue: #1B5FA8;
+        --ist-blue-mid: #2E77C9;
+        --ist-azure: #E7F1FA;
+        --ist-azure-mid: #CFE3F5;
+        --ist-ink: #1F2A33;
+        --ist-text: #3C4750;
+        --ist-line: #D6E2ED;
+        --ist-gold: #C9A227;
+        --ist-white: #FFFFFF;
+        --ist-red: #C0392B;
+        --ist-green: #2E9E5B;
+    }
+
+    body {
+        background: var(--ist-azure);
+        color: var(--ist-text);
+        font-family: "Titillium Web", "Segoe UI", Arial, sans-serif;
+        line-height: 1.5;
+    }
+
+    a { color: inherit; }
+
+    /* ---------- Top strip ---------- */
+    .top-strip {
+        background: var(--ist-blue-deep);
+        color: rgba(255,255,255,0.85);
+        font-size: 0.8rem;
+        padding: 0.4rem clamp(1rem, 4vw, 3rem);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .top-strip a { text-decoration: none; color: rgba(255,255,255,0.85); margin-left: 1.25rem; }
+    .top-strip a:hover { text-decoration: underline; }
+
+    header.main-band {
+        background: linear-gradient(180deg, var(--ist-blue-mid) 0%, var(--ist-blue) 100%);
+        color: #fff;
+        padding: 1.1rem clamp(1rem, 4vw, 3rem);
+    }
+    .band-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; justify-content: space-between; flex-wrap: wrap; }
+    .brand-text-group { display: flex; flex-direction: column; line-height: 1.15; }
+    .brand-eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.72); }
+    .brand-title { font-size: 1.35rem; font-weight: 700; }
+
+    .modalita-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 20px;
+        padding: 0.45rem 0.9rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .modalita-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ist-gold); flex-shrink: 0; }
+
+    .flag-stripe { display: flex; height: 8px; }
+    .flag-stripe span { flex: 1 1 0; }
+    .flag-stripe .stripe-1 { background: #0072CE; }
+    .flag-stripe .stripe-2 { background: #000000; }
+    .flag-stripe .stripe-3 { background: #FFFFFF; }
+
+    .avviso-locale {
+        background: #FBF6E4;
+        border-bottom: 1px solid #E7D9A0;
+        padding: 0.7rem clamp(1rem, 4vw, 3rem);
+        font-size: 0.86rem;
+        color: #6B5A10;
+        text-align: center;
+    }
+    .avviso-locale strong { color: #4d4008; }
+    .avviso-locale.avviso-live { background: #FBEAEA; border-left-color: var(--ist-red); color: #8a231b; }
+    .avviso-locale.avviso-live strong { color: #8a231b; }
+
+    .stato-database {
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        background: var(--ist-azure-mid);
+        color: var(--ist-blue-deep);
+    }
+    .stato-database.caricamento { background: var(--ist-azure-mid); color: var(--ist-blue-deep); }
+    .stato-database.ok { background: #E9F7EF; color: var(--ist-green); }
+    .stato-database.errore { background: #FBEAEA; color: var(--ist-red); }
+
+    .page-wrap {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: clamp(1.5rem, 4vw, 2.2rem) clamp(1rem, 4vw, 3rem) 4rem;
+        display: grid;
+        grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+        gap: 1.6rem;
+        align-items: start;
+    }
+
+    .panel {
+        background: var(--ist-white);
+        border: 1px solid var(--ist-line);
+        border-top: 4px solid var(--ist-blue);
+        border-radius: 4px;
+        padding: 1.4rem clamp(1.1rem, 3vw, 1.6rem);
+        box-shadow: 0 10px 30px rgba(11,61,110,0.06);
+        margin-bottom: 1.5rem;
+    }
+    .panel h2 {
+        font-size: 1rem;
+        color: var(--ist-blue-deep);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .panel h3 {
+        font-size: 0.88rem;
+        color: var(--ist-blue-deep);
+        margin: 1.1rem 0 0.6rem;
+    }
+    .col-sinistra { position: sticky; top: 1rem; }
+
+    .campo { margin-bottom: 0.9rem; }
+    .campo label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--ist-blue-deep);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.35rem;
+    }
+    .campo .hint { font-weight: 400; text-transform: none; letter-spacing: normal; color: #7c8a96; display: block; font-size: 0.78rem; margin-top: 0.25rem; }
+    .campo input[type="text"],
+    .campo input[type="number"],
+    .campo input[type="date"],
+    .campo input[type="url"],
+    .campo textarea {
+        width: 100%;
+        border: 1px solid var(--ist-line);
+        border-radius: 3px;
+        padding: 0.55rem 0.65rem;
+        font-family: inherit;
+        font-size: 0.92rem;
+        color: var(--ist-text);
+        background: var(--ist-white);
+    }
+    .campo input:focus, .campo textarea:focus {
+        outline: 2px solid var(--ist-blue-mid);
+        outline-offset: 1px;
+    }
+    .due-colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+    .radio-row { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; margin-bottom: 0.3rem; }
+    .radio-row label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 600; color: var(--ist-text); text-transform: none; letter-spacing: normal; cursor: pointer; }
+    .radio-row input[type="radio"] { accent-color: var(--ist-blue); width: 15px; height: 15px; }
+
+    /* ---------- Righe opzioni/partiti ---------- */
+    .riga-partito {
+        border: 1px solid var(--ist-line);
+        border-radius: 4px;
+        padding: 0.8rem;
+        margin-bottom: 0.7rem;
+        background: var(--ist-azure);
+        position: relative;
+    }
+    .riga-partito .griglia {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+    }
+    .riga-partito .griglia-tre { grid-template-columns: 1fr 1fr 1fr; }
+    .riga-partito .campo-mini { margin-bottom: 0.5rem; }
+    .riga-partito .campo-mini label { font-size: 0.7rem; margin-bottom: 0.2rem; }
+    .riga-partito .campo-mini input { padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+    .riga-partito .rimuovi {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        color: var(--ist-red);
+        font-size: 1rem;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0.2rem 0.4rem;
+    }
+    .riga-partito .colore-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.3rem; }
+    .riga-partito .colore-toggle input[type="color"] { width: 34px; height: 26px; border: 1px solid var(--ist-line); border-radius: 3px; padding: 1px; }
+
+    .riepilogo-percentuali {
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.5rem 0.7rem;
+        border-radius: 3px;
+        margin-top: 0.3rem;
+        margin-bottom: 0.9rem;
+    }
+    .riepilogo-percentuali.ok { background: #E9F7EF; color: var(--ist-green); }
+    .riepilogo-percentuali.warn { background: #FBEAEA; color: var(--ist-red); }
+
+    /* ---------- Bottoni ---------- */
+    button {
+        font-family: inherit;
+        cursor: pointer;
+        border: none;
+        border-radius: 3px;
+        font-weight: 600;
+        font-size: 0.86rem;
+        padding: 0.6rem 1rem;
+    }
+    .btn-primario { background: var(--ist-blue); color: #fff; }
+    .btn-primario:hover { background: var(--ist-blue-deep); }
+    .btn-secondario { background: var(--ist-azure-mid); color: var(--ist-blue-deep); }
+    .btn-secondario:hover { background: var(--ist-line); }
+    .btn-testuale { background: none; color: var(--ist-blue); text-decoration: underline; padding: 0.3rem 0; font-size: 0.82rem; }
+    .btn-pericolo { background: #FBEAEA; color: var(--ist-red); }
+    .btn-pericolo:hover { background: #f5d5d3; }
+    .btn-blocco { width: 100%; }
+    .azioni-form { display: flex; gap: 0.6rem; margin-top: 1.1rem; flex-wrap: wrap; }
+    .azioni-form button { flex: 1; }
+
+    /* ---------- Errori/avvisi form ---------- */
+    .lista-errori { background: #FBEAEA; border-left: 4px solid var(--ist-red); border-radius: 0 4px 4px 0; padding: 0.8rem 1rem; margin-bottom: 0.9rem; font-size: 0.85rem; }
+    .lista-errori strong { color: var(--ist-red); display: block; margin-bottom: 0.3rem; }
+    .lista-errori ul { padding-left: 1.1rem; }
+    .lista-avvisi { background: #FBF6E4; border-left: 4px solid var(--ist-gold); border-radius: 0 4px 4px 0; padding: 0.8rem 1rem; margin-bottom: 0.9rem; font-size: 0.85rem; color: #6B5A10; }
+    .lista-avvisi strong { color: #4d4008; display: block; margin-bottom: 0.3rem; }
+    .lista-avvisi ul { padding-left: 1.1rem; }
+
+    /* ---------- Elenco record ---------- */
+    .elenco-vuoto { text-align: center; color: #93a2ae; padding: 2.5rem 1rem; font-size: 0.92rem; }
+
+    .gruppo-tipo { margin-bottom: 1.3rem; }
+    .gruppo-tipo h3 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--ist-blue-deep);
+        border-bottom: 1px solid var(--ist-line);
+        padding-bottom: 0.4rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .scheda-record {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        border: 1px solid var(--ist-line);
+        border-radius: 4px;
+        padding: 0.7rem 0.9rem;
+        margin-bottom: 0.5rem;
+        background: var(--ist-white);
+    }
+    .scheda-record.in-modifica { border-color: var(--ist-blue); background: var(--ist-azure); }
+    .scheda-record .info-record { font-size: 0.88rem; }
+    .scheda-record .info-record .comune { font-weight: 700; color: var(--ist-blue-deep); }
+    .scheda-record .info-record .meta { color: #7c8a96; font-size: 0.8rem; }
+    .scheda-record .azioni-record { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .scheda-record .azioni-record button { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+
+    .badge-duplicato { color: var(--ist-red); font-weight: 700; }
+
+    /* ---------- JSON output ---------- */
+    #json-output {
+        width: 100%;
+        min-height: 220px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.8rem;
+        border: 1px solid var(--ist-line);
+        border-radius: 3px;
+        padding: 0.8rem;
+        background: var(--ist-ink);
+        color: #d6e6f5;
+        resize: vertical;
+    }
+    .contatore-record { font-size: 0.82rem; color: #7c8a96; margin-bottom: 0.7rem; }
+    .messaggio-copiato { color: var(--ist-green); font-size: 0.82rem; font-weight: 700; margin-left: 0.6rem; opacity: 0; transition: opacity 0.2s; }
+    .messaggio-copiato.visibile { opacity: 1; }
+
+    .import-zona { border: 1px dashed var(--ist-line); border-radius: 4px; padding: 0.9rem; margin-top: 0.6rem; }
+    .import-zona textarea { width: 100%; min-height: 90px; font-family: monospace; font-size: 0.78rem; border: 1px solid var(--ist-line); border-radius: 3px; padding: 0.6rem; }
+
+    footer { text-align: center; font-size: 0.78rem; color: #93a2ae; padding: 1.5rem; }
+
+    /* ---- UI di login (stesso schema del portale NormAktiv) ---- */
+    .login-wrap {
+        max-width: 440px;
+        margin: 48px auto 80px;
+        padding: 2rem 2rem 1.6rem;
+        background: #ffffff;
+        border: 1px solid var(--ist-line);
+        border-top: 5px solid var(--ist-blue);
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(11,61,110,0.12);
+        color: var(--ist-ink);
+    }
+    .login-wrap h2 {
+        margin: 0 0 0.3rem;
+        letter-spacing: 0.03em;
+        font-size: 1.35rem;
+        color: var(--ist-blue-deep);
+        text-transform: none;
+    }
+    .login-wrap p.sottotitolo {
+        margin: 0 0 1.2rem;
+        color: var(--ist-text);
+        font-size: 0.88rem;
+    }
+    .login-wrap label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ist-blue-deep);
+        margin-bottom: 0.25rem;
+    }
+    .login-wrap input {
+        width: 100%;
+        padding: 0.7rem 0.85rem;
+        margin-bottom: 0.9rem;
+        background: var(--ist-azure);
+        border: 1px solid var(--ist-line);
+        color: var(--ist-ink);
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .login-wrap input:focus {
+        outline: none;
+        border-color: var(--ist-blue-mid);
+        box-shadow: 0 0 0 3px rgba(46,119,201,0.18);
+    }
+    .login-wrap button {
+        width: 100%;
+        padding: 0.8rem;
+        background: var(--ist-blue);
+        border: none;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.04em;
+        transition: background 0.15s ease;
+    }
+    .login-wrap button:hover:not(:disabled) { background: var(--ist-blue-deep); }
+    .login-wrap button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .login-error {
+        color: #a72e23;
+        background: #fdeceb;
+        border: 1px solid rgba(205,33,42,0.25);
+        border-radius: 4px;
+        font-size: 0.85rem;
+        min-height: 1.2em;
+        margin: 0.6rem 0 0;
+        padding: 0.4rem 0.6rem;
+        text-align: center;
+        display: none;
+    }
+    .login-error.show { display: block; }
+
+    /* ---- Barra di stato quando la redazione è collegata ---- */
+    .admin-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.2rem clamp(1rem, 4vw, 3rem) 0;
+        padding: 0.7rem 1rem;
+        background: var(--ist-azure);
+        border-left: 4px solid var(--ist-blue);
+        border-radius: 4px;
+        font-size: 0.88rem;
+        color: var(--ist-ink);
+    }
+    .admin-topbar strong { color: var(--ist-blue-deep); }
+    .admin-topbar button {
+        background: transparent;
+        border: 1px solid var(--ist-blue);
+        color: var(--ist-blue);
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: all 0.15s ease;
+    }
+    .admin-topbar button:hover { background: var(--ist-blue); color: #fff; }
+
+    @media (max-width: 900px) {
+        .page-wrap { grid-template-columns: 1fr; }
+        .col-sinistra { position: static; }
+        .due-colonne, .riga-partito .griglia, .riga-partito .griglia-tre { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<div class="top-strip">
+    <span>Commissione Elettorale Permanente dell'Unione [CEPU]</span>
+    <div><a href="elezioni.html">Consultazione pubblica</a></div>
+</div>
+
+<header class="main-band">
+    <div class="band-inner">
+        <span class="brand-text-group">
+            <span class="brand-eyebrow">Portale Elettorale dell'Unione</span>
+            <span class="brand-title">Redazione — Archivio Elezioni</span>
+        </span>
+        <span class="modalita-badge"><span class="dot"></span> Collegato al database live dell'Unione</span>
+    </div>
+</header>
+
+<div class="flag-stripe" aria-hidden="true"><span class="stripe-1"></span><span class="stripe-2"></span><span class="stripe-3"></span></div>
+
+<!-- ============================================================
+     AREA DI LOGIN (visibile solo se non autenticati)
+     ============================================================ -->
+<div id="login-area">
+    <div class="login-wrap">
+        <h2>🔐 Accesso redazione</h2>
+        <p class="sottotitolo">Inserisci le credenziali per modificare il file di redazione.</p>
+
+        <label for="adminUsername">Nome utente</label>
+        <input type="text" id="adminUsername" placeholder="es. redazione"
+               autocomplete="username" autocapitalize="off" spellcheck="false">
+
+        <label for="adminPassword">Password</label>
+        <input type="password" id="adminPassword" placeholder="••••••••"
+               autocomplete="current-password">
+
+        <button id="loginBtn" type="button">Accedi</button>
+
+        <p class="login-error" id="loginError"></p>
+    </div>
+</div>
+
+<!-- ============================================================
+     AREA REDAZIONE (visibile solo dopo l'accesso)
+     ============================================================ -->
+<div id="admin-content" style="display:none;">
+
+    <div class="admin-topbar">
+        <span>👤 Connesso come <strong id="adminUsernameLabel">—</strong></span>
+        <span id="stato-database" class="stato-database">—</span>
+        <button id="logoutBtn" type="button">Esci</button>
+    </div>
+
+    <div class="avviso-locale avviso-live">
+        <strong>Collegato al database live.</strong> Ogni aggiunta, modifica o rimozione viene scritta subito su JSONBin ed è visibile immediatamente a chi consulta il sito — controlla bene prima di salvare.
+    </div>
+
+    <div class="page-wrap">
+
+    <!-- ===================== COLONNA SINISTRA: FORM ===================== -->
+    <div class="col-sinistra">
+
+        <div class="panel">
+            <h2 id="titolo-form">Nuovo record</h2>
+            <div id="contenitore-errori"></div>
+
+            <h3 style="margin-top:0">Tipo di elezione</h3>
+            <div class="radio-row" id="radio-tipo">
+                <label><input type="radio" name="tipo" value="G" checked> Comunali</label>
+                <label><input type="radio" name="tipo" value="C"> Congresso Statale</label>
+                <label><input type="radio" name="tipo" value="S"> Congresso Unitario</label>
+                <label><input type="radio" name="tipo" value="R"> Referendum</label>
+            </div>
+
+            <div class="due-colonne">
+                <div class="campo">
+                    <label for="in-data">Data</label>
+                    <input type="date" id="in-data">
+                </div>
+                <div class="campo">
+                    <label for="in-affluenza">Affluenza (%)</label>
+                    <input type="number" id="in-affluenza" min="0" max="100" step="0.1" placeholder="Es. 61">
+                </div>
+            </div>
+
+            <div class="campo">
+                <label id="lbl-comune" for="in-comune">Comune / Sezione</label>
+                <input type="text" id="in-comune" placeholder="Es. Nuovavilla">
+                <span class="hint" id="hint-comune">Deve essere diverso da tutti gli altri comuni con la stessa data e lo stesso tipo.</span>
+            </div>
+
+            <div class="campo">
+                <label id="lbl-area" for="in-area">Area</label>
+                <input type="text" id="in-area" placeholder="Es. Regione Settentrionale">
+            </div>
+
+            <div class="campo">
+                <label id="lbl-vincitore" for="in-vincitore">Vincitore (opzionale)</label>
+                <input type="text" id="in-vincitore" placeholder="Se vuoto, calcolato in automatico">
+            </div>
+
+            <h3 id="titolo-opzioni">Liste / Partiti</h3>
+            <div id="contenitore-righe"></div>
+            <div id="riepilogo-percentuali" class="riepilogo-percentuali"></div>
+
+            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                <button type="button" class="btn-secondario" id="btn-aggiungi-riga">+ Aggiungi lista/partito</button>
+                <button type="button" class="btn-secondario" id="btn-si-no" style="display:none;">+ Aggiungi Sì / No</button>
+            </div>
+
+            <div class="azioni-form">
+                <button type="button" class="btn-primario" id="btn-salva-record">Aggiungi alla lista</button>
+                <button type="button" class="btn-testuale" id="btn-annulla-modifica" style="display:none;">Annulla modifica</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================== COLONNA DESTRA: ELENCO + JSON ===================== -->
+    <div class="col-destra">
+
+        <div class="panel">
+            <h2>Elezioni nel file di redazione</h2>
+            <div class="contatore-record" id="contatore-record">Nessun record ancora aggiunto.</div>
+            <div id="elenco-record"><div class="elenco-vuoto">I record che aggiungi dal modulo a sinistra compariranno qui.</div></div>
+        </div>
+
+        <div class="panel">
+            <h2>Importa e scrivi nel database</h2>
+            <p style="font-size:0.86rem; color:var(--ist-text);">Carica un file JSON con altri record (es. un vecchio archivio) per aggiungerli in blocco al database live, oppure incollalo qui sotto. Ti verrà chiesta conferma prima di scrivere.</p>
+            <div class="import-zona">
+                <input type="file" id="in-file-import" accept=".json,application/json" style="margin-bottom:0.7rem;">
+                <textarea id="in-testo-import" placeholder='Incolla qui { "elezioni": [ ... ] }'></textarea>
+                <div style="margin-top:0.6rem; display:flex; gap:0.6rem;">
+                    <button type="button" class="btn-secondario" id="btn-importa">Importa e salva nel database</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Backup e stato attuale</h2>
+            <p style="font-size:0.86rem; color:var(--ist-text); margin-bottom:0.8rem;">Il database è già aggiornato ad ogni azione: questi pulsanti servono solo per tenerti una copia di backup, come consiglia la guida di redazione.</p>
+            <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.9rem;">
+                <button type="button" class="btn-primario" id="btn-copia-json">Copia JSON</button>
+                <span class="messaggio-copiato" id="msg-copiato">Copiato!</span>
+                <button type="button" class="btn-secondario" id="btn-scarica-json">Scarica backup .json</button>
+                <button type="button" class="btn-secondario" id="btn-svuota" style="margin-left:auto;">Ricarica dal database</button>
+            </div>
+            <textarea id="json-output" readonly spellcheck="false"></textarea>
+        </div>
+
+    </div>
+    </div>
+</div>
+
+<footer>Strumento di redazione locale — Archivio Elezioni CEPU. Nessun dato lascia questo browser.</footer>
+
+<script>
+    // ============================================================
+    // Configurazione per tipo di elezione
+    // ============================================================
+    const TIPI = {
+        G: { nomeCompleto: 'Comunali', comuneLabel: 'Comune', comunePlaceholder: 'Es. Nuovavilla', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Sindaco eletto (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente la prima forza per seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
+        C: { nomeCompleto: 'Congresso Statale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
+        S: { nomeCompleto: 'Congresso Unitario', comuneLabel: 'Circoscrizione', comunePlaceholder: "Circoscrizione Unica dell'Unione", areaLabel: 'Area', areaPlaceholder: 'Es. Intera Unione', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: false, mostraSeggi: true, sinoRapido: false },
+        R: { nomeCompleto: 'Referendum', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Quesito referendario', areaPlaceholder: 'Es. Approvazione della riforma X', vincitoreLabel: 'Esito (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente l\'opzione con più percentuale.', opzioniLabel: 'Opzioni di voto', richiedeSezione: true, mostraSeggi: false, sinoRapido: true }
+    };
+
+    const PALETTE = ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'];
+
+    // ============================================================
+    // Collegamento al database live (stesso bin usato da elezioni.html)
+    // ============================================================
+    // NB: per la lettura basta una chiave con permesso di lettura (X-Access-Key).
+    // Per la SCRITTURA, JSONBin richiede una chiave con permesso di scrittura
+    // inviata come X-Master-Key: se il salvataggio fallisce con un errore
+    // 401/403, sostituisci JSONBIN_API_KEY con la Master Key del bin (dal
+    // pannello di JSONBin, non l'Access Key usata solo per la consultazione).
+    const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183';
+    const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS';
+    const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+    function impostaStatoDatabase(testo, tipo) {
+        const el = document.getElementById('stato-database');
+        el.textContent = testo;
+        el.className = 'stato-database' + (tipo ? ' ' + tipo : '');
+    }
+
+    async function caricaDatasetDalDatabase() {
+        impostaStatoDatabase('Connessione al database…', 'caricamento');
+        const risposta = await fetch(API_URL, { method: 'GET', headers: { 'X-Access-Key': JSONBIN_API_KEY } });
+        if (!risposta.ok) {
+            const testoErrore = await risposta.text();
+            throw new Error(`Errore Server (${risposta.status}): ${testoErrore}`);
+        }
+        const risultato = await risposta.json();
+        return risultato.record.elezioni || [];
+    }
+
+    async function salvaDatasetNelDatabase(listaElezioni) {
+        impostaStatoDatabase('Salvataggio nel database…', 'caricamento');
+        const risposta = await fetch(API_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY, 'X-Access-Key': JSONBIN_API_KEY },
+            body: JSON.stringify({ elezioni: listaElezioni })
+        });
+        if (!risposta.ok) {
+            const testoErrore = await risposta.text();
+            throw new Error(`Errore Server (${risposta.status}): ${testoErrore}`);
+        }
+        impostaStatoDatabase('✓ Salvato nel database', 'ok');
+    }
+
+    // ============================================================
+    // Accesso redazione (credenziali fisse, nessun backend reale)
+    // ============================================================
+    // Cambia questi due valori prima di condividere il file con la redazione.
+    // Attenzione: essendo un file locale, chiunque apra il codice sorgente
+    // può leggere queste credenziali — funziona solo come deterrente per i
+    // visitatori occasionali, non come vera sicurezza.
+    const CREDENZIALI_REDAZIONE = { utente: 'redazione', password: 'cepu2027' };
+    const CHIAVE_SESSIONE = 'cepu_redazione_sessione_v1';
+
+    function mostraAreaRedazione(nomeUtente) {
+        document.getElementById('login-area').style.display = 'none';
+        document.getElementById('admin-content').style.display = 'block';
+        document.getElementById('adminUsernameLabel').textContent = nomeUtente;
+        ricaricaDalDatabase();
+    }
+
+    async function ricaricaDalDatabase() {
+        impostaBloccoForm(true);
+        try {
+            elezioni = await caricaDatasetDalDatabase();
+            impostaStatoDatabase('✓ Connesso — dati aggiornati', 'ok');
+        } catch (errore) {
+            impostaStatoDatabase('⚠ Errore di connessione', 'errore');
+            alert('Non sono riuscito a leggere il database:\n' + errore.message);
+        }
+        svuotaForm();
+        renderElenco();
+        aggiornaOutputJSON();
+        impostaBloccoForm(false);
+    }
+
+    function impostaBloccoForm(bloccato) {
+        document.getElementById('btn-salva-record').disabled = bloccato;
+    }
+
+    function mostraAreaLogin() {
+        document.getElementById('admin-content').style.display = 'none';
+        document.getElementById('login-area').style.display = 'block';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('loginError').classList.remove('show');
+    }
+
+    function tentaAccesso() {
+        const utente = document.getElementById('adminUsername').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        const erroreBox = document.getElementById('loginError');
+
+        if (utente === CREDENZIALI_REDAZIONE.utente && password === CREDENZIALI_REDAZIONE.password) {
+            erroreBox.classList.remove('show');
+            try { sessionStorage.setItem(CHIAVE_SESSIONE, utente); } catch (err) { /* sessione non salvabile: si continua comunque */ }
+            mostraAreaRedazione(utente);
+        } else {
+            erroreBox.textContent = 'Nome utente o password errati.';
+            erroreBox.classList.add('show');
+        }
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', tentaAccesso);
+    document.getElementById('adminPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') tentaAccesso(); });
+    document.getElementById('adminUsername').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('adminPassword').focus(); });
+
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        try { sessionStorage.removeItem(CHIAVE_SESSIONE); } catch (err) { /* niente da fare */ }
+        mostraAreaLogin();
+    });
+
+    function verificaSessioneEsistente() {
+        try {
+            const utenteSalvato = sessionStorage.getItem(CHIAVE_SESSIONE);
+            if (utenteSalvato === CREDENZIALI_REDAZIONE.utente) {
+                mostraAreaRedazione(utenteSalvato);
+            }
+        } catch (err) { /* sessione non disponibile: resta la schermata di login */ }
+    }
+
+    // ============================================================
+    // Stato
+    // ============================================================
+    let elezioni = [];          // record completi caricati dal database live
+    let righeDraft = [];        // righe (liste/partiti) del record in costruzione
+    let indiceInModifica = null; // se stiamo modificando un record esistente della lista
+    let contatoreIdRiga = 0;
+
+    // ============================================================
+    // Utility di formato
+    // ============================================================
+    function numeroAPercentuale(v) {
+        const n = parseFloat(v);
+        if (isNaN(n)) return '';
+        return n.toFixed(1).replace('.', ',') + '%';
+    }
+    function percentualeANumero(s) {
+        if (s === undefined || s === null || s === '') return '';
+        const n = parseFloat(String(s).replace('%', '').trim().replace(',', '.'));
+        return isNaN(n) ? '' : n;
+    }
+    function dataInputAItaliano(v) {
+        if (!v) return '';
+        const [aaaa, mm, gg] = v.split('-');
+        return `${gg}/${mm}/${aaaa}`;
+    }
+    function dataItalianaAInput(v) {
+        if (!v) return '';
+        const m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!m) return '';
+        const [, gg, mm, aaaa] = m;
+        return `${aaaa}-${mm.padStart(2,'0')}-${gg.padStart(2,'0')}`;
+    }
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+
+    // ============================================================
+    // Costruzione righe liste/partiti nel form
+    // ============================================================
+    function nuovaRigaVuota(nomePreimpostato) {
+        contatoreIdRiga++;
+        return { id: contatoreIdRiga, nome: nomePreimpostato || '', voti: '', percentuale: '', seggi: 0, usaColore: false, colore: '#1B5FA8', logo: '' };
+    }
+
+    function aggiungiRiga(nomePreimpostato) {
+        righeDraft.push(nuovaRigaVuota(nomePreimpostato));
+        renderRighe();
+    }
+
+    function rimuoviRiga(id) {
+        righeDraft = righeDraft.filter(r => r.id !== id);
+        renderRighe();
+    }
+
+    function renderRighe() {
+        const tipo = tipoSelezionato();
+        const cfg = TIPI[tipo];
+        const contenitore = document.getElementById('contenitore-righe');
+        contenitore.innerHTML = righeDraft.map(riga => `
+            <div class="riga-partito" data-id="${riga.id}">
+                <button type="button" class="rimuovi" data-azione="rimuovi-riga" data-id="${riga.id}" title="Rimuovi">&times;</button>
+                <div class="griglia">
+                    <div class="campo-mini">
+                        <label>Nome</label>
+                        <input type="text" data-campo="nome" data-id="${riga.id}" value="${escapeHtml(riga.nome)}" placeholder="Es. ${tipo === 'R' ? 'Sì' : 'Lista Unione'}">
+                    </div>
+                    <div class="campo-mini">
+                        <label>Voti</label>
+                        <input type="number" min="0" step="1" data-campo="voti" data-id="${riga.id}" value="${riga.voti}">
+                    </div>
+                </div>
+                <div class="griglia ${cfg.mostraSeggi ? 'griglia-tre' : ''}">
+                    <div class="campo-mini">
+                        <label>Percentuale (%)</label>
+                        <input type="number" min="0" max="100" step="0.1" data-campo="percentuale" data-id="${riga.id}" value="${riga.percentuale}">
+                    </div>
+                    ${cfg.mostraSeggi ? `
+                    <div class="campo-mini">
+                        <label>Seggi</label>
+                        <input type="number" min="0" step="1" data-campo="seggi" data-id="${riga.id}" value="${riga.seggi}">
+                    </div>` : ''}
+                    <div class="campo-mini">
+                        <label>Logo (URL, opzionale)</label>
+                        <input type="url" data-campo="logo" data-id="${riga.id}" value="${escapeHtml(riga.logo)}" placeholder="https://...">
+                    </div>
+                </div>
+                <div class="colore-toggle">
+                    <input type="checkbox" data-campo="usaColore" data-id="${riga.id}" ${riga.usaColore ? 'checked' : ''}>
+                    <label style="text-transform:none; font-weight:400;">Colore personalizzato</label>
+                    <input type="color" data-campo="colore" data-id="${riga.id}" value="${riga.colore}" ${riga.usaColore ? '' : 'disabled'}>
+                </div>
+            </div>
+        `).join('');
+        aggiornaRiepilogoPercentuali();
+    }
+
+    document.getElementById('contenitore-righe').addEventListener('input', function(e) {
+        const id = parseInt(e.target.dataset.id, 10);
+        const campo = e.target.dataset.campo;
+        if (!campo) return;
+        const riga = righeDraft.find(r => r.id === id);
+        if (!riga) return;
+        if (campo === 'usaColore') {
+            riga.usaColore = e.target.checked;
+            const inputColore = document.querySelector(`input[type="color"][data-id="${id}"]`);
+            if (inputColore) inputColore.disabled = !riga.usaColore;
+            return;
+        }
+        riga[campo] = e.target.value;
+        if (campo === 'percentuale' || campo === 'voti') aggiornaRiepilogoPercentuali();
+    });
+    document.getElementById('contenitore-righe').addEventListener('click', function(e) {
+        if (e.target.dataset.azione === 'rimuovi-riga') {
+            rimuoviRiga(parseInt(e.target.dataset.id, 10));
+        }
+    });
+
+    function aggiornaRiepilogoPercentuali() {
+        const box = document.getElementById('riepilogo-percentuali');
+        if (righeDraft.length === 0) { box.textContent = ''; box.className = 'riepilogo-percentuali'; return; }
+        const somma = righeDraft.reduce((acc, r) => acc + (percentualeANumero(r.percentuale) || 0), 0);
+        const vicinoA100 = Math.abs(somma - 100) <= 2;
+        box.textContent = `Somma percentuali: ${somma.toFixed(1).replace('.', ',')}% ${vicinoA100 ? '✓' : '⚠ dovrebbe avvicinarsi al 100%'}`;
+        box.className = 'riepilogo-percentuali ' + (vicinoA100 ? 'ok' : 'warn');
+    }
+
+    // ============================================================
+    // Cambio tipo elezione: aggiorna etichette e placeholder
+    // ============================================================
+    function tipoSelezionato() {
+        return document.querySelector('input[name="tipo"]:checked').value;
+    }
+
+    function aggiornaCampiPerTipo() {
+        const cfg = TIPI[tipoSelezionato()];
+        document.getElementById('lbl-comune').textContent = cfg.comuneLabel;
+        document.getElementById('in-comune').placeholder = cfg.comunePlaceholder;
+        document.getElementById('hint-comune').textContent = cfg.richiedeSezione
+            ? 'Deve essere diverso da tutti gli altri comuni con la stessa data e lo stesso tipo.'
+            : 'Per il Congresso Unitario può restare generico, ma il campo va comunque compilato.';
+        document.getElementById('lbl-area').textContent = cfg.areaLabel;
+        document.getElementById('in-area').placeholder = cfg.areaPlaceholder;
+        document.getElementById('lbl-vincitore').textContent = cfg.vincitoreLabel;
+        document.getElementById('in-vincitore').placeholder = cfg.vincitoreHint;
+        document.getElementById('titolo-opzioni').textContent = cfg.opzioniLabel;
+        document.getElementById('btn-si-no').style.display = cfg.sinoRapido ? 'inline-block' : 'none';
+        renderRighe();
+    }
+
+    document.querySelectorAll('input[name="tipo"]').forEach(r => r.addEventListener('change', aggiornaCampiPerTipo));
+    document.getElementById('btn-aggiungi-riga').addEventListener('click', () => aggiungiRiga());
+    document.getElementById('btn-si-no').addEventListener('click', () => {
+        aggiungiRiga('Sì');
+        aggiungiRiga('No');
+    });
+
+    // ============================================================
+    // Validazione + costruzione del record
+    // ============================================================
+    function costruisciRecordDaForm() {
+        const codice = tipoSelezionato();
+        const cfg = TIPI[codice];
+        const data = dataInputAItaliano(document.getElementById('in-data').value);
+        const comune = document.getElementById('in-comune').value.trim();
+        const area = document.getElementById('in-area').value.trim();
+        const affluenza = numeroAPercentuale(document.getElementById('in-affluenza').value);
+        const vincitore = document.getElementById('in-vincitore').value.trim();
+
+        const risultati_partiti = righeDraft.map(r => {
+            const obj = {
+                nome: r.nome.trim(),
+                voti: parseInt(r.voti, 10) || 0,
+                percentuale: numeroAPercentuale(r.percentuale),
+                seggi: cfg.mostraSeggi ? (parseInt(r.seggi, 10) || 0) : 0
+            };
+            if (r.usaColore && r.colore) obj.colore = r.colore;
+            if (r.logo && r.logo.trim()) obj.logo = r.logo.trim();
+            return obj;
+        });
+
+        return {
+            tipo: cfg.nomeCompleto,
+            tipo_codice: codice,
+            data,
+            comune,
+            area,
+            affluenza,
+            candidato_vincente: vincitore,
+            risultati_partiti
+        };
+    }
+
+    function validaRecord(record, escludiIndice) {
+        const errori = [];
+        const avvisi = [];
+
+        if (!record.data) errori.push('Inserisci una data valida.');
+        if (!record.comune) errori.push(`Il campo "${TIPI[record.tipo_codice].comuneLabel}" è obbligatorio.`);
+        if (!record.area) errori.push(`Il campo "${TIPI[record.tipo_codice].areaLabel}" è obbligatorio.`);
+        if (!record.affluenza) errori.push('Inserisci l\'affluenza.');
+        if (record.risultati_partiti.length === 0) errori.push('Aggiungi almeno una lista/partito/opzione.');
+        record.risultati_partiti.forEach((p, i) => {
+            if (!p.nome) errori.push(`La riga ${i + 1} non ha un nome.`);
+            if (!p.percentuale) errori.push(`La riga ${i + 1} ("${p.nome || '—'}") non ha una percentuale.`);
+        });
+
+        const somma = record.risultati_partiti.reduce((acc, p) => acc + (percentualeANumero(p.percentuale) || 0), 0);
+        if (record.risultati_partiti.length > 0 && Math.abs(somma - 100) > 2) {
+            avvisi.push(`La somma delle percentuali è ${somma.toFixed(1).replace('.', ',')}%, lontana dal 100%.`);
+        }
+
+        const duplicato = elezioni.some((e, i) =>
+            i !== escludiIndice &&
+            e.tipo_codice === record.tipo_codice &&
+            e.data === record.data &&
+            e.comune.trim().toLowerCase() === record.comune.trim().toLowerCase()
+        );
+        if (duplicato) errori.push(`Esiste già un record "${record.comune}" per lo stesso tipo e la stessa data: le due Sezioni non sarebbero distinguibili nella tendina del sito.`);
+
+        return { ok: errori.length === 0, errori, avvisi };
+    }
+
+    function mostraErroriForm(errori, avvisi) {
+        const box = document.getElementById('contenitore-errori');
+        let html = '';
+        if (errori.length > 0) {
+            html += `<div class="lista-errori"><strong>Correggi prima di continuare:</strong><ul>${errori.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
+        }
+        if (avvisi.length > 0) {
+            html += `<div class="lista-avvisi"><strong>Attenzione:</strong><ul>${avvisi.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div>`;
+        }
+        box.innerHTML = html;
+    }
+
+    function svuotaForm() {
+        document.getElementById('in-data').value = '';
+        document.getElementById('in-comune').value = '';
+        document.getElementById('in-area').value = '';
+        document.getElementById('in-affluenza').value = '';
+        document.getElementById('in-vincitore').value = '';
+        righeDraft = [];
+        indiceInModifica = null;
+        document.getElementById('titolo-form').textContent = 'Nuovo record';
+        document.getElementById('btn-salva-record').textContent = 'Aggiungi alla lista';
+        document.getElementById('btn-annulla-modifica').style.display = 'none';
+        document.getElementById('contenitore-errori').innerHTML = '';
+        renderRighe();
+    }
+
+    document.getElementById('btn-salva-record').addEventListener('click', async function() {
+        const record = costruisciRecordDaForm();
+        const { ok, errori, avvisi } = validaRecord(record, indiceInModifica);
+        mostraErroriForm(errori, avvisi);
+        if (!ok) return;
+
+        // Copia di sicurezza per poter tornare indietro se il salvataggio fallisce
+        const elezioniPrecedenti = elezioni.slice();
+        const eraInModifica = indiceInModifica;
+
+        if (indiceInModifica !== null) {
+            elezioni[indiceInModifica] = record;
+        } else {
+            elezioni.push(record);
+        }
+
+        impostaBloccoForm(true);
+        try {
+            await salvaDatasetNelDatabase(elezioni);
+            svuotaForm();
+            renderElenco();
+            aggiornaOutputJSON();
+        } catch (errore) {
+            elezioni = elezioniPrecedenti;
+            indiceInModifica = eraInModifica;
+            impostaStatoDatabase('⚠ Salvataggio fallito', 'errore');
+            alert('Il salvataggio nel database non è riuscito, nessuna modifica è stata scritta:\n' + errore.message);
+            renderElenco();
+        }
+        impostaBloccoForm(false);
+    });
+
+    document.getElementById('btn-annulla-modifica').addEventListener('click', svuotaForm);
+
+    // ============================================================
+    // Elenco record aggiunti (a destra)
+    // ============================================================
+    function caricaRecordNelForm(indice) {
+        const record = elezioni[indice];
+        indiceInModifica = indice;
+
+        document.querySelector(`input[name="tipo"][value="${record.tipo_codice}"]`).checked = true;
+        aggiornaCampiPerTipo();
+
+        document.getElementById('in-data').value = dataItalianaAInput(record.data);
+        document.getElementById('in-comune').value = record.comune;
+        document.getElementById('in-area').value = record.area;
+        document.getElementById('in-affluenza').value = percentualeANumero(record.affluenza);
+        document.getElementById('in-vincitore').value = record.candidato_vincente || '';
+
+        righeDraft = record.risultati_partiti.map(p => {
+            contatoreIdRiga++;
+            return {
+                id: contatoreIdRiga,
+                nome: p.nome,
+                voti: p.voti,
+                percentuale: percentualeANumero(p.percentuale),
+                seggi: p.seggi || 0,
+                usaColore: !!p.colore,
+                colore: p.colore || '#1B5FA8',
+                logo: p.logo || ''
+            };
+        });
+        renderRighe();
+
+        document.getElementById('titolo-form').textContent = `Modifica: ${record.comune}`;
+        document.getElementById('btn-salva-record').textContent = 'Salva modifiche';
+        document.getElementById('btn-annulla-modifica').style.display = 'inline-block';
+        document.getElementById('contenitore-errori').innerHTML = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        renderElenco();
+    }
+
+    async function rimuoviRecord(indice) {
+        const record = elezioni[indice];
+        if (!confirm(`Rimuovere definitivamente dal database il record "${record.comune}"?`)) return;
+
+        const elezioniPrecedenti = elezioni.slice();
+        elezioni.splice(indice, 1);
+        if (indiceInModifica === indice) svuotaForm();
+
+        impostaBloccoForm(true);
+        try {
+            await salvaDatasetNelDatabase(elezioni);
+            renderElenco();
+            aggiornaOutputJSON();
+        } catch (errore) {
+            elezioni = elezioniPrecedenti;
+            impostaStatoDatabase('⚠ Rimozione fallita', 'errore');
+            alert('La rimozione non è riuscita, il record è ancora nel database:\n' + errore.message);
+            renderElenco();
+        }
+        impostaBloccoForm(false);
+    }
+
+    function renderElenco() {
+        const contenitore = document.getElementById('elenco-record');
+        const contatore = document.getElementById('contatore-record');
+
+        if (elezioni.length === 0) {
+            contatore.textContent = 'Nessun record ancora aggiunto.';
+            contenitore.innerHTML = '<div class="elenco-vuoto">I record che aggiungi dal modulo a sinistra compariranno qui.</div>';
+            return;
+        }
+
+        contatore.textContent = `${elezioni.length} record nel database.`;
+
+        const gruppi = {};
+        elezioni.forEach((r, i) => {
+            const chiave = TIPI[r.tipo_codice] ? TIPI[r.tipo_codice].nomeCompleto : r.tipo;
+            if (!gruppi[chiave]) gruppi[chiave] = [];
+            gruppi[chiave].push(i);
+        });
+
+        contenitore.innerHTML = Object.entries(gruppi).map(([nomeTipo, indici]) => `
+            <div class="gruppo-tipo">
+                <h3>${escapeHtml(nomeTipo)} (${indici.length})</h3>
+                ${indici.map(i => {
+                    const r = elezioni[i];
+                    return `
+                    <div class="scheda-record ${i === indiceInModifica ? 'in-modifica' : ''}">
+                        <div class="info-record">
+                            <div class="comune">${escapeHtml(r.comune)}</div>
+                            <div class="meta">${escapeHtml(r.data)} &middot; ${escapeHtml(r.area)} &middot; ${r.risultati_partiti.length} liste/opzioni</div>
+                        </div>
+                        <div class="azioni-record">
+                            <button type="button" class="btn-secondario" data-azione="modifica" data-indice="${i}">Modifica</button>
+                            <button type="button" class="btn-pericolo" data-azione="rimuovi" data-indice="${i}">Rimuovi</button>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('elenco-record').addEventListener('click', function(e) {
+        const azione = e.target.dataset.azione;
+        if (!azione) return;
+        const indice = parseInt(e.target.dataset.indice, 10);
+        if (azione === 'modifica') caricaRecordNelForm(indice);
+        if (azione === 'rimuovi') rimuoviRecord(indice);
+    });
+
+    // ============================================================
+    // Import / Export JSON
+    // ============================================================
+    function aggiornaOutputJSON() {
+        document.getElementById('json-output').value = JSON.stringify({ elezioni }, null, 2);
+    }
+
+    document.getElementById('btn-copia-json').addEventListener('click', async function() {
+        aggiornaOutputJSON();
+        const testo = document.getElementById('json-output').value;
+        try {
+            await navigator.clipboard.writeText(testo);
+        } catch (err) {
+            document.getElementById('json-output').select();
+            document.execCommand('copy');
+        }
+        const msg = document.getElementById('msg-copiato');
+        msg.classList.add('visibile');
+        setTimeout(() => msg.classList.remove('visibile'), 1600);
+    });
+
+    document.getElementById('btn-scarica-json').addEventListener('click', function() {
+        aggiornaOutputJSON();
+        const blob = new Blob([document.getElementById('json-output').value], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'backup-elezioni-' + new Date().toISOString().slice(0,10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-svuota').addEventListener('click', function() {
+        if (indiceInModifica !== null && !confirm('Hai una modifica in corso non salvata: ricaricando dal database la perderai. Continuare?')) return;
+        ricaricaDalDatabase();
+    });
+
+    async function importaTesto(testo) {
+        let dati;
+        try {
+            dati = JSON.parse(testo);
+        } catch (err) {
+            alert('Il testo incollato non è un JSON valido: ' + err.message);
+            return;
+        }
+        const nuovi = Array.isArray(dati.elezioni) ? dati.elezioni : (Array.isArray(dati) ? dati : null);
+        if (!nuovi) {
+            alert('Il JSON non contiene un array "elezioni".');
+            return;
+        }
+
+        const elezioniPrecedenti = elezioni.slice();
+        let aggiunti = 0, saltati = 0;
+        nuovi.forEach(record => {
+            const esisteGia = elezioni.some(e =>
+                e.tipo_codice === record.tipo_codice &&
+                e.data === record.data &&
+                (e.comune || '').trim().toLowerCase() === (record.comune || '').trim().toLowerCase()
+            );
+            if (esisteGia) { saltati++; return; }
+            elezioni.push(record);
+            aggiunti++;
+        });
+
+        if (aggiunti === 0) {
+            alert(`Nessun record importato: tutti i ${saltati} record erano già presenti (stesso tipo, data e comune).`);
+            return;
+        }
+        if (!confirm(`Stai per scrivere subito nel database ${aggiunti} nuovi record (${saltati} scartati perché duplicati). Confermi?`)) {
+            elezioni = elezioniPrecedenti;
+            return;
+        }
+
+        impostaBloccoForm(true);
+        try {
+            await salvaDatasetNelDatabase(elezioni);
+            renderElenco();
+            aggiornaOutputJSON();
+            alert(`Importazione completata: ${aggiunti} record salvati nel database, ${saltati} scartati perché duplicati.`);
+        } catch (errore) {
+            elezioni = elezioniPrecedenti;
+            impostaStatoDatabase('⚠ Importazione fallita', 'errore');
+            alert('Il salvataggio dei record importati non è riuscito, nessuna modifica è stata scritta:\n' + errore.message);
+            renderElenco();
+        }
+        impostaBloccoForm(false);
+    }
+
+    document.getElementById('btn-importa').addEventListener('click', function() {
+        const testo = document.getElementById('in-testo-import').value.trim();
+        if (!testo) { alert('Incolla del testo JSON oppure carica un file.'); return; }
+        importaTesto(testo);
+        document.getElementById('in-testo-import').value = '';
+    });
+
+    document.getElementById('in-file-import').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) { importaTesto(ev.target.result); };
+        reader.readAsText(file);
+        e.target.value = '';
+    });
+
+    // ============================================================
+    // Avvio
+    // ============================================================
+    verificaSessioneEsistente();
+    aggiornaCampiPerTipo();
+    renderElenco();
+    aggiornaOutputJSON();
+</script>
+
+</body>
+</html>
