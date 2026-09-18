@@ -315,7 +315,87 @@
             font-size: 1.1rem;
             margin: 1.2rem 0;
         }
-        .vincitore .trophy { color: var(--ist-gold); font-size: 1.3rem; }
+
+        /* ---------- Referendum chart (stile Eligendo) ---------- */
+        .referendum-box {
+            margin-top: 1.6rem;
+            border: 1px solid var(--ist-line);
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--ist-white);
+        }
+        .referendum-quesito {
+            background: var(--ist-blue-deep);
+            color: #fff;
+            padding: 0.8rem 1.1rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .referendum-body { padding: 1.3rem clamp(0.9rem, 3vw, 1.6rem); }
+        .referendum-sezioni {
+            font-size: 0.88rem;
+            color: var(--ist-text);
+            margin-bottom: 0.9rem;
+        }
+        .referendum-sezioni strong { color: var(--ist-blue-deep); }
+
+        .referendum-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 0 1rem;
+        }
+        .referendum-opt-label {
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-align: center;
+            min-width: 3.2rem;
+        }
+        .referendum-opt-label.opt-si { color: var(--ist-blue); }
+        .referendum-opt-label.opt-no { color: var(--ist-red); }
+
+        .referendum-bar {
+            position: relative;
+            height: 40px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--ist-red);
+        }
+        .referendum-bar .fill {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            background: var(--ist-blue);
+            transition: width 0.8s ease;
+        }
+        .referendum-voti {
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--ist-ink);
+            padding-top: 0.6rem;
+        }
+        .referendum-perc {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--ist-blue-deep);
+        }
+
+        .referendum-riepilogo {
+            background: var(--ist-azure);
+            border-top: 1px solid var(--ist-line);
+            padding: 0.8rem 1.1rem;
+            font-size: 0.85rem;
+            color: var(--ist-text);
+        }
+        .referendum-riepilogo strong { color: var(--ist-blue-deep); }
+
+        @media (max-width: 560px) {
+            .referendum-opt-label { font-size: 1.25rem; min-width: 2.4rem; }
+            .referendum-voti { font-size: 0.95rem; }
+            .referendum-perc { font-size: 1.05rem; }
+        }
 
         .meta-row {
             font-size: 0.92rem;
@@ -534,6 +614,18 @@
                         <input type="radio" name="tpel" value="S" id="congresso_unitario">
                         Congresso Unitario
                     </label>
+                    <label for="congresso_distretto">
+                        <input type="radio" name="tpel" value="D" id="congresso_distretto">
+                        Congresso Distretto
+                    </label>
+                    <label for="congresso_citta_metropolitana">
+                        <input type="radio" name="tpel" value="M" id="congresso_citta_metropolitana">
+                        Congresso Citt&agrave; Metropolitana
+                    </label>
+                    <label for="congresso_regionale">
+                        <input type="radio" name="tpel" value="T" id="congresso_regionale">
+                        Congresso Regionale
+                    </label>
                     <label for="referendum">
                         <input type="radio" name="tpel" value="R" id="referendum">
                         Referendum
@@ -718,11 +810,109 @@
         }
 
 
+        // Converte "46,25%" / "46.25" / 46.25 in numero
+        function percentualeNumerica(valore) {
+            return parseFloat(String(valore).replace('%', '').replace(',', '.').trim()) || 0;
+        }
+
+        // Costruisce il grafico del referendum in stile Eligendo: una barra unica
+        // divisa fra SI (a sinistra) e NO (a destra), con voti e percentuali sotto
+        // le rispettive etichette e la fascia di riepilogo in fondo.
+        function costruisciGraficoReferendum(elezione, partiti) {
+            if (!partiti || partiti.length < 2) return '';
+
+            // Riconosce le opzioni SI/NO per nome; in mancanza usa l'ordine dei dati
+            const trovaOpzione = (chiavi) => partiti.find(p => {
+                const nome = normalizzaTesto(p.nome);
+                return chiavi.some(k => nome === k || nome.startsWith(k + ' '));
+            });
+            const optSi = trovaOpzione(['si', 'sì', 'yes']) || partiti[0];
+            const optNo = trovaOpzione(['no']) || partiti.find(p => p !== optSi);
+            if (!optNo) return '';
+
+            const votiSi = parseInt(String(optSi.voti).replace(/\D/g, ''), 10) || 0;
+            const votiNo = parseInt(String(optNo.voti).replace(/\D/g, ''), 10) || 0;
+
+            // Se le percentuali non sono indicate, le calcoliamo dai voti
+            let percSi = percentualeNumerica(optSi.percentuale);
+            let percNo = percentualeNumerica(optNo.percentuale);
+            if (percSi === 0 && percNo === 0 && (votiSi + votiNo) > 0) {
+                percSi = (votiSi / (votiSi + votiNo)) * 100;
+                percNo = 100 - percSi;
+            }
+            const totalePerc = percSi + percNo;
+            const quotaSi = totalePerc > 0 ? (percSi / totalePerc) * 100 : 50;
+
+            const formattaPerc = (p) => `${p.toFixed(2).replace('.', ',')}%`;
+            const formattaVoti = (v) => v.toLocaleString('it-IT');
+
+            const quesito = elezione.quesito || elezione.descrizione || elezione.comune || 'Quesito referendario';
+
+            // Righe di riepilogo: mostriamo solo i campi effettivamente presenti nel dato
+            const pezziRiepilogo = [];
+            if (elezione.elettori) pezziRiepilogo.push(`<strong>Elettori:</strong> ${elezione.elettori}`);
+            if (elezione.votanti) pezziRiepilogo.push(`<strong>Votanti:</strong> ${elezione.votanti}`);
+            if (elezione.affluenza) pezziRiepilogo.push(`<strong>Affluenza:</strong> ${elezione.affluenza}`);
+            if (elezione.schede_nulle) pezziRiepilogo.push(`<strong>Schede nulle:</strong> ${elezione.schede_nulle}`);
+            if (elezione.schede_bianche) pezziRiepilogo.push(`<strong>Schede bianche:</strong> ${elezione.schede_bianche}`);
+            const riepilogo = pezziRiepilogo.length
+                ? `<div class="referendum-riepilogo"><p>${pezziRiepilogo.join(' &nbsp;|&nbsp; ')}</p></div>`
+                : '';
+
+            const sezioni = elezione.sezioni_scrutinate
+                ? `<div class="referendum-sezioni"><strong>Sezioni:</strong> ${elezione.sezioni_scrutinate}${elezione.sezioni_totali ? ' su ' + elezione.sezioni_totali : ''}</div>`
+                : '';
+
+            return `
+                <div class="referendum-box">
+                    <div class="referendum-quesito">${quesito}</div>
+                    <div class="referendum-body">
+                        ${sezioni}
+                        <div class="referendum-grid">
+                            <div class="referendum-opt-label opt-si">${optSi.nome}</div>
+                            <div class="referendum-bar" role="img" aria-label="${optSi.nome} ${formattaPerc(percSi)}, ${optNo.nome} ${formattaPerc(percNo)}">
+                                <div class="fill" style="width:${quotaSi.toFixed(2)}%"></div>
+                            </div>
+                            <div class="referendum-opt-label opt-no">${optNo.nome}</div>
+
+                            <div class="referendum-voti">${formattaVoti(votiSi)}</div>
+                            <div></div>
+                            <div class="referendum-voti">${formattaVoti(votiNo)}</div>
+
+                            <div class="referendum-perc">${formattaPerc(percSi)}</div>
+                            <div></div>
+                            <div class="referendum-perc">${formattaPerc(percNo)}</div>
+                        </div>
+                    </div>
+                    ${riepilogo}
+                </div>
+            `;
+        }
+
+
         // Cache dell'intero dataset scaricato da JSONBin, per evitare chiamate ripetute
         let elezioniCache = null;
 
         // Mappa codice radio -> etichetta testuale, usata come fallback se manca "tipo_codice" nel dato
-        const MAPPA_TIPO = { G: 'comunali', C: 'congresso statale', S: 'congresso unitario', R: 'referendum' };
+        const MAPPA_TIPO = {
+            G: 'comunali',
+            C: 'congresso statale',
+            S: 'congresso unitario',
+            D: 'congresso distretto',
+            M: 'congresso città metropolitana',
+            T: 'congresso regionale',
+            R: 'referendum'
+        };
+
+        // Minuscole senza accenti, per confrontare le etichette testuali in modo tollerante
+        // ("Congresso Città Metropolitana" === "congresso citta metropolitana")
+        function normalizzaTesto(valore) {
+            return String(valore)
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
 
         // Il Congresso Unitario è su circoscrizione unica: non richiede la scelta della Sezione.
         // Comunali e Congresso Statale invece sí.
@@ -741,8 +931,8 @@
             if (elezione.tipo_codice) {
                 return elezione.tipo_codice.toUpperCase() === codice;
             }
-            const etichetta = MAPPA_TIPO[codice];
-            return (elezione.tipo || '').toLowerCase().includes(etichetta);
+            const etichetta = normalizzaTesto(MAPPA_TIPO[codice]);
+            return normalizzaTesto(elezione.tipo || '').includes(etichetta);
         }
 
         // Estrae la data "grezza" da un'elezione, accettando diversi possibili nomi di campo
@@ -971,6 +1161,9 @@
                 const partitiConSeggi = partiti.filter(p => (parseInt(p.seggi, 10) || 0) > 0);
                 const graficoParlamento = (mostraSeggi && partitiConSeggi.length > 1) ? costruisciGraficoParlamento(partitiConSeggi) : '';
 
+                // Per il referendum, al posto dell'emiciclo si usa la barra SI/NO in stile Eligendo
+                const graficoReferendum = codiceTipo === 'R' ? costruisciGraficoReferendum(elezione, partiti) : '';
+
                 const valoreData = estraiValoreData(elezione);
 
                 // Il box "vincitore/esito" mostra il Sindaco eletto per le comunali, l'esito Sì/No
@@ -1008,8 +1201,10 @@
                     <p class="meta-row"><strong>${etichettaTerritorio}:</strong> ${elezione.comune} (${elezione.area}) &nbsp;|&nbsp; <strong>Affluenza:</strong> ${elezione.affluenza}</p>
 
                     <div class="vincitore">
-                        <span class="trophy">&#127942;</span> ${etichettaVincitore}: ${valoreVincitore}
+                        ${etichettaVincitore}: ${valoreVincitore}
                     </div>
+
+                    ${graficoReferendum}
 
                     <div class="table-wrap">
                         <table class="table-risultati">
