@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redazione Organi - EWS</title>
+    <script src="js/api-organi.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; margin: 0; padding: 20px; }
+        .hidden { display: none !important; }
+        header { border-bottom: 2px solid #0055a4; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        #login-panel { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #login-panel input { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
+        #login-panel button { width: 100%; padding: 10px; background: #0055a4; color: white; border: none; cursor: pointer; }
+
+        .layout { display: flex; gap: 30px; }
+        .tree-panel { flex: 1.5; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-panel { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 20px; height: fit-content; }
+        
+        .node-list { list-style-type: none; padding-left: 20px; margin: 0; }
+        .node-item { margin-top: 10px; }
+        .node-header { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
+        
+        .actions button { padding: 4px 8px; margin-left: 5px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-edit { background: #ffc107; color: black; }
+        .btn-del { background: #dc3545; color: white; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-save { background: #0055a4; color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <!-- SCHERMATA LOGIN -->
+    <div id="login-panel">
+        <h2>Accesso Redazione</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="eseguiLogin()">Accedi</button>
+        <p id="login-error" style="color: red;"></p>
+    </div>
+
+    <!-- PANNELLO REDAZIONE -->
+    <div id="editor-panel" class="hidden">
+        <header>
+            <div>
+                <h1 style="margin: 0;">Redazione Congressi e Assemblee</h1>
+                <p style="margin: 5px 0 0 0; color: #555;">Gestione della struttura ad albero e dei luoghi.</p>
+            </div>
+            <div>
+                <button onclick="salvaOnline()" style="background: #28a745; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">💾 Salva online su JSONBin</button>
+                <button onclick="eseguiLogout()" style="background: #dc3545; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; margin-left: 10px;">Esci</button>
+            </div>
+        </header>
+
+        <div class="layout">
+            <div class="tree-panel">
+                <h3>Struttura Attuale</h3>
+                <div id="tree-container">In caricamento...</div>
+            </div>
+
+            <div class="form-panel">
+                <h3 id="form-title">Seleziona un'azione</h3>
+                <p id="form-context" style="color: gray; font-size: 14px; margin-top: -15px;">Clicca su + o Modifica nell'albero per iniziare.</p>
+                
+                <input type="hidden" id="azione_tipo">
+                <input type="hidden" id="target_id">
+
+                <div class="form-group">
+                    <label>Nome Display</label>
+                    <input type="text" id="input_nome" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>ID Organo (Senza spazi)</label>
+                    <input type="text" id="input_id" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Luogo Associato (Codice es. CIT_FORLI)</label>
+                    <input type="text" id="input_luogo" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Link Sito Web (Opzionale)</label>
+                    <input type="url" id="input_link" disabled>
+                </div>
+
+                <button class="btn-save" id="btn_salva_form" onclick="applicaModifiche()" disabled>Applica Modifiche (Bozza)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let datiInMemoria = { luoghi: {}, alberoOrgani: [] };
+
+        if (ApiOrgani.loadCredentials()) { mostraEditor(); }
+
+        async function eseguiLogin() {
+            try {
+                await ApiOrgani.login(document.getElementById('username').value, document.getElementById('password').value);
+                mostraEditor();
+            } catch (e) { document.getElementById('login-error').innerText = "Credenziali errate."; }
+        }
+
+        async function mostraEditor() {
+            document.getElementById('login-panel').classList.add('hidden');
+            document.getElementById('editor-panel').classList.remove('hidden');
+            try {
+                datiInMemoria = await ApiOrgani.loadDati();
+                if(!datiInMemoria.alberoOrgani) datiInMemoria.alberoOrgani = [];
+                renderizzaAlbero();
+            } catch (e) { document.getElementById('tree-container').innerText = "Errore caricamento: " + e.message; }
+        }
+
+        async function salvaOnline() {
+            try {
+                await ApiOrgani.saveDati(datiInMemoria); //[cite: 1]
+                alert("Salvataggio completato con successo su JSONBin!");
+            } catch (e) { alert("Errore durante il salvataggio."); }
+        }
+
+        function eseguiLogout() { ApiOrgani.logout(); location.reload(); }
+
+        // --- MOTORE DI RENDERING ALBERO ---
+        function renderizzaAlbero() {
+            const container = document.getElementById('tree-container');
+            container.innerHTML = '';
+            container.appendChild(creaListaNodi(datiInMemoria.alberoOrgani, null));
+            
+            // Bottone aggiunta Radice
+            const btnRoot = document.createElement('button');
+            btnRoot.innerText = "+ Aggiungi Organo Principale";
+            btnRoot.className = "btn-add";
+            btnRoot.style.marginTop = "15px";
+            btnRoot.onclick = () => abilitaForm('add', null, 'Radice');
+            container.appendChild(btnRoot);
+        }
+
+        function creaListaNodi(nodi, parentId) {
+            const ul = document.createElement('ul');
+            ul.className = 'node-list';
+            if(!nodi) return ul;
+
+            nodi.forEach(nodo => {
+                const li = document.createElement('li');
+                li.className = 'node-item';
+                
+                const header = document.createElement('div');
+                header.className = 'node-header';
+                header.innerHTML = `<span><strong>${nodo.nome_display}</strong> (${nodo.id_organo})</span>`;
+                
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                
+                const btnAdd = document.createElement('button'); btnAdd.className = 'btn-add'; btnAdd.innerText = '+';
+                btnAdd.onclick = () => abilitaForm('add', nodo.id_organo, nodo.nome_display);
+                
+                const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
+                btnEdit.onclick = () => abilitaForm('edit', nodo.id_organo, nodo);
+                
+                const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
+                btnDel.onclick = () => eliminaNodo(nodo.id_organo);
+
+                actions.append(btnAdd, btnEdit, btnDel);
+                header.appendChild(actions);
+                li.appendChild(header);
+
+                if (nodo.figli && nodo.figli.length > 0) {
+                    li.appendChild(creaListaNodi(nodo.figli, nodo.id_organo));
+                }
+                ul.appendChild(li);
+            });
+            return ul;
+        }
+
+        // --- GESTIONE FORM E DATI ---
+        function abilitaForm(tipo, targetId, data) {
+            document.querySelectorAll('.form-panel input').forEach(el => el.disabled = false);
+            document.getElementById('btn_salva_form').disabled = false;
+            document.getElementById('azione_tipo').value = tipo;
+            document.getElementById('target_id').value = targetId || 'root';
+
+            if (tipo === 'add') {
+                document.getElementById('form-title').innerText = "Aggiungi nuova Sezione";
+                document.getElementById('form-context').innerText = "Verrà inserita sotto: " + (typeof data === 'string' ? data : 'Radice');
+                document.getElementById('input_nome').value = "";
+                document.getElementById('input_id').value = "";
+                document.getElementById('input_luogo').value = "";
+                document.getElementById('input_link').value = "";
+            } else if (tipo === 'edit') {
+                document.getElementById('form-title').innerText = "Modifica Sezione";
+                document.getElementById('form-context').innerText = "Stai modificando: " + data.nome_display;
+                document.getElementById('input_nome').value = data.nome_display || "";
+                document.getElementById('input_id').value = data.id_organo || "";
+                document.getElementById('input_luogo').value = data.luogo || "";
+                document.getElementById('input_link').value = data.link_sito || "";
+            }
+        }
+
+        function applicaModifiche() {
+            const tipo = document.getElementById('azione_tipo').value;
+            const targetId = document.getElementById('target_id').value;
+            
+            const nuovoNodo = {
+                id_organo: document.getElementById('input_id').value,
+                nome_display: document.getElementById('input_nome').value,
+                luogo: document.getElementById('input_luogo').value,
+                link_sito: document.getElementById('input_link').value,
+                figli: []
+            };
+
+            if (tipo === 'add') {
+                if(targetId === 'root') {
+                    datiInMemoria.alberoOrgani.push(nuovoNodo);
+                } else {
+                    const parent = trovaNodo(datiInMemoria.alberoOrgani, targetId);
+                    if(parent) {
+                        if(!parent.figli) parent.figli = [];
+                        parent.figli.push(nuovoNodo);
+                    }
+                }
+            } else if (tipo === 'edit') {
+                const nodo = trovaNodo(datiInMemoria.alberoOrgani, targetId);
+                if(nodo) {
+                    nodo.id_organo = nuovoNodo.id_organo;
+                    nodo.nome_display = nuovoNodo.nome_display;
+                    nodo.luogo = nuovoNodo.luogo;
+                    nodo.link_sito = nuovoNodo.link_sito;
+                }
+            }
+
+            // Svuota e disabilita form
+            document.querySelectorAll('.form-panel input').forEach(el => { el.value = ''; el.disabled = true; });
+            document.getElementById('btn_salva_form').disabled = true;
+            document.getElementById('form-title').innerText = "Seleziona un'azione";
+            document.getElementById('form-context').innerText = "Modifica applicata in bozza. Ricorda di salvare online.";
+            
+            renderizzaAlbero();
+        }
+
+        function eliminaNodo(id) {
+            if(confirm("Sei sicuro di voler eliminare questo organo e tutti i suoi figli?")) {
+                rimuoviDaArray(datiInMemoria.alberoOrgani, id);
+                renderizzaAlbero();
+            }
+        }
+
+        // Funzioni Ricorsive Helper
+        function trovaNodo(array, id) {
+            for (let nodo of array) {
+                if (nodo.id_organo === id) return nodo;
+                if (nodo.figli) {
+                    const trovato = trovaNodo(nodo.figli, id);
+                    if (trovato) return trovato;
+                }
+            }
+            return null;
+        }
+
+        function rimuoviDaArray(array, id) {
+            for (let i = 0; i < array.length; i++) {
+                if (array[i].id_organo === id) {
+                    array.splice(i, 1);
+                    return true;
+                }
+                if (array[i].figli && rimuoviDaArray(array[i].figli, id)) return true;
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>
