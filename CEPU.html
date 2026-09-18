@@ -602,33 +602,37 @@
             <div class="side-panel">
                 <h2>Tipo di elezione</h2>
                 <div class="radio-row">
-                    <label for="comunali">
-                        <input type="radio" name="tpel" value="G" id="comunali" checked="checked">
-                        Comunali
+                    <label for="costituzionale">
+                        <input type="radio" name="tpel" value="K" id="costituzionale">
+                        Costituzionale
                     </label>
-                    <label for="congresso_statale">
-                        <input type="radio" name="tpel" value="C" id="congresso_statale">
-                        Congresso Statale
+                    <label for="referendum">
+                        <input type="radio" name="tpel" value="R" id="referendum">
+                        Referendum
                     </label>
                     <label for="congresso_unitario">
                         <input type="radio" name="tpel" value="S" id="congresso_unitario">
                         Congresso Unitario
                     </label>
-                    <label for="congresso_distretto">
-                        <input type="radio" name="tpel" value="D" id="congresso_distretto">
-                        Congresso Distretto
-                    </label>
-                    <label for="congresso_citta_metropolitana">
-                        <input type="radio" name="tpel" value="M" id="congresso_citta_metropolitana">
-                        Congresso Citt&agrave; Metropolitana
+                    <label for="congresso_statale">
+                        <input type="radio" name="tpel" value="C" id="congresso_statale">
+                        Congresso Statale
                     </label>
                     <label for="congresso_regionale">
                         <input type="radio" name="tpel" value="T" id="congresso_regionale">
                         Congresso Regionale
                     </label>
-                    <label for="referendum">
-                        <input type="radio" name="tpel" value="R" id="referendum">
-                        Referendum
+                    <label for="congresso_metropolitano">
+                        <input type="radio" name="tpel" value="M" id="congresso_metropolitano">
+                        Congresso Metropolitano
+                    </label>
+                    <label for="congresso_distretto">
+                        <input type="radio" name="tpel" value="D" id="congresso_distretto">
+                        Congresso Distrettuale
+                    </label>
+                    <label for="comunali">
+                        <input type="radio" name="tpel" value="G" id="comunali" checked="checked">
+                        Assemblea di Sezione
                     </label>
                 </div>
             </div>
@@ -906,11 +910,12 @@
 
         // Mappa codice radio -> etichetta testuale, usata come fallback se manca "tipo_codice" nel dato
         const MAPPA_TIPO = {
-            G: 'comunali',
+            K: 'costituzionale',
+            G: 'assemblea di sezione',
             C: 'congresso statale',
             S: 'congresso unitario',
-            D: 'congresso distretto',
-            M: 'congresso città metropolitana',
+            D: 'congresso distrettuale',
+            M: 'congresso metropolitano',
             T: 'congresso regionale',
             R: 'referendum'
         };
@@ -1073,10 +1078,15 @@
         // Al cambio della Data: popola la tendina Comune con le sole località
         // disponibili per quella data. Se c'è un solo comune lo seleziona in automatico
         // e mostra subito i risultati; altrimenti aspetta la scelta dell'utente.
-        document.getElementById('sel_date').addEventListener('change', async function() {
+        document.getElementById('sel_date').addEventListener('change', function() {
+            onCambiaData(this.value);
+        });
+
+        // Logica del cambio Data, isolata in una funzione così da poter essere
+        // invocata anche programmaticamente (vedi applicaLinkDiretto)
+        async function onCambiaData(valoreSelezionato) {
             const selComune = document.getElementById('sel_comune');
             const gruppoSezione = document.getElementById('gruppo-sezione');
-            const valoreSelezionato = this.value;
             const codice = codiceTipoSelezionato();
 
             document.getElementById('dati-elettorali').style.display = 'none';
@@ -1134,14 +1144,19 @@
                 `;
                 document.getElementById('dati-elettorali').style.display = 'block';
             }
-        });
+        }
 
         // Al cambio del Comune: mostra i risultati del record scelto
-        document.getElementById('sel_comune').addEventListener('change', async function() {
-            const indiceSelezionato = this.value;
+        document.getElementById('sel_comune').addEventListener('change', function() {
+            onCambiaComune(this.value);
+        });
+
+        // Logica del cambio Comune/Sezione, isolata in una funzione così da poter
+        // essere invocata anche programmaticamente (vedi applicaLinkDiretto)
+        async function onCambiaComune(indiceSelezionato) {
             if (indiceSelezionato === "") return;
             await mostraRisultati(parseInt(indiceSelezionato, 10));
-        });
+        }
 
         // Recupera il record scelto (tipo + data + comune) e disegna i risultati a schermo
         async function mostraRisultati(indice) {
@@ -1264,8 +1279,62 @@
             }
         }
 
-        // Al caricamento della pagina, popola subito le date per il tipo selezionato di default (Comunali)
-        aggiornaSelettoreDate();
+        // ============================================================
+        // Link diretto a una singola elezione
+        // ============================================================
+        // Permette a un bottone su un altro sito di aprire questa pagina già
+        // sui risultati di un'elezione precisa, invece di atterrare sulla
+        // schermata "vuota" e dover completare a mano i tre passaggi.
+        // Parametri accettati nell'URL:
+        //   ?tipo=G          (obbligatorio: uno dei codici del radiobox, es. G, C, S, D, M, T, R, K)
+        //   &data=2026-05-17 (opzionale: la data così come inserita in redazione)
+        //   &comune=Nuovavilla (opzionale: necessario solo se quella data ha più Sezioni)
+        // Esempio completo:
+        //   CEPU.html?tipo=G&data=2026-05-17&comune=Nuovavilla
+        async function applicaLinkDiretto() {
+            const parametri = new URLSearchParams(window.location.search);
+            const tipoParam = (parametri.get('tipo') || '').toUpperCase();
+            const dataParam = parametri.get('data');
+            const comuneParam = parametri.get('comune');
+
+            if (tipoParam) {
+                const radio = document.querySelector(`input[name="tpel"][value="${tipoParam}"]`);
+                if (radio) radio.checked = true;
+                // Codice non riconosciuto: si ignora silenziosamente e resta il tipo di default
+            }
+
+            await aggiornaSelettoreDate();
+
+            if (!dataParam) return; // Solo il tipo passato dal link: l'utente sceglie la data a mano
+
+            const selDate = document.getElementById('sel_date');
+            // Confronta sia la data formattata che il valore grezzo, così il link
+            // funziona indipendentemente dal formato usato nel parametro
+            const opzioneTrovata = Array.from(selDate.options).find(opzione =>
+                opzione.value !== '' && (opzione.textContent === formattaData(dataParam) || opzione.textContent === dataParam)
+            );
+            if (!opzioneTrovata) return; // Data non trovata per quel tipo: si resta sulla selezione del tipo
+
+            selDate.value = opzioneTrovata.value;
+            await onCambiaData(opzioneTrovata.value);
+
+            if (!comuneParam) return;
+
+            const selComune = document.getElementById('sel_comune');
+            if (selComune.disabled) return; // Un solo comune per quella data: i risultati sono già visibili
+
+            const opzioneComune = Array.from(selComune.options).find(opzione =>
+                opzione.value !== '' && normalizzaTesto(opzione.textContent) === normalizzaTesto(comuneParam)
+            );
+            if (!opzioneComune) return; // Comune/Sezione non trovato: resta la lista da scegliere a mano
+
+            selComune.value = opzioneComune.value;
+            await onCambiaComune(opzioneComune.value);
+        }
+
+        // Al caricamento della pagina, applica un eventuale link diretto oppure
+        // popola semplicemente le date per il tipo selezionato di default
+        applicaLinkDiretto();
     </script>
 </body>
 </html>
