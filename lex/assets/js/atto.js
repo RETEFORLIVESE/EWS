@@ -34,6 +34,9 @@
     // Indice: per ogni articolo mostriamo il link principale e, quando
     // l'articolo ha più di un comma, un sotto-elenco con i link ai singoli commi.
     const indice = atto.articoli.map(art => {
+      if (eTitoloGruppo(art)) {
+        return `<li class="indice-titolo-gruppo">${art.testo}</li>`;
+      }
       const commi = commiDiArticolo(art);
 
       // Elenco delle lettere dei sottocommi di un comma, per l'indice
@@ -64,6 +67,9 @@
     // ce n'è più d'uno, per non appesantire gli articoli semplici a comma unico);
     // i sottocommi, se presenti, sono resi come elenco lettera a), b), c)...
     const articoli = atto.articoli.map(art => {
+      if (eTitoloGruppo(art)) {
+        return `<div class="titolo-gruppo"><h2>${art.testo}</h2></div>`;
+      }
       const commi = commiDiArticolo(art);
       const corpoCommi = commi.map((comma, ic) => {
         const sottocommi = (comma.sottocommi || []).filter(s => s && s.trim() !== "");
@@ -104,7 +110,7 @@
           <div><dt>Numero</dt><dd>${atto.numero}/${atto.anno}</dd></div>
           <div><dt>Data di emanazione</dt><dd>${atto.dataEmanazione}</dd></div>
           <div><dt>Promulgato da</dt><dd>${atto.promulgatoDa}</dd></div>
-          <div><dt>Articoli</dt><dd>${atto.articoli.length}</dd></div>
+          <div><dt>Articoli</dt><dd>${atto.articoli.filter(a => !eTitoloGruppo(a)).length}</dd></div>
         </dl>
       </section>
       <div class="corpo-atto">
