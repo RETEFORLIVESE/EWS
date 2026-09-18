@@ -482,13 +482,14 @@
 
             <h3 style="margin-top:0">Tipo di elezione</h3>
             <div class="radio-row" id="radio-tipo">
-                <label><input type="radio" name="tipo" value="G" checked> Comunali</label>
-                <label><input type="radio" name="tipo" value="C"> Congresso Statale</label>
-                <label><input type="radio" name="tipo" value="S"> Congresso Unitario</label>
-                <label><input type="radio" name="tipo" value="D"> Congresso Distretto</label>
-                <label><input type="radio" name="tipo" value="M"> Congresso Citt&agrave; Metropolitana</label>
-                <label><input type="radio" name="tipo" value="T"> Congresso Regionale</label>
+                <label><input type="radio" name="tipo" value="K"> Costituzionale</label>
                 <label><input type="radio" name="tipo" value="R"> Referendum</label>
+                <label><input type="radio" name="tipo" value="S"> Congresso Unitario</label>
+                <label><input type="radio" name="tipo" value="C"> Congresso Statale</label>
+                <label><input type="radio" name="tipo" value="T"> Congresso Regionale</label>
+                <label><input type="radio" name="tipo" value="M"> Congresso Metropolitano</label>
+                <label><input type="radio" name="tipo" value="D"> Congresso Distrettuale</label>
+                <label><input type="radio" name="tipo" value="G" checked> Assemblea di Sezione</label>
             </div>
 
             <div class="due-colonne">
@@ -622,13 +623,14 @@
     // Configurazione per tipo di elezione
     // ============================================================
     const TIPI = {
-        G: { nomeCompleto: 'Comunali', comuneLabel: 'Comune', comunePlaceholder: 'Es. Nuovavilla', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Sindaco eletto (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente la prima forza per seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
-        C: { nomeCompleto: 'Congresso Statale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
+        K: { nomeCompleto: 'Costituzionale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        R: { nomeCompleto: 'Referendum', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Quesito referendario', areaPlaceholder: 'Es. Approvazione della riforma X', vincitoreLabel: 'Esito (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente l\'opzione con più percentuale.', opzioniLabel: 'Opzioni di voto', richiedeSezione: true, mostraSeggi: false, sinoRapido: true, campiReferendum: true },
         S: { nomeCompleto: 'Congresso Unitario', comuneLabel: 'Circoscrizione', comunePlaceholder: "Circoscrizione Unica dell'Unione", areaLabel: 'Area', areaPlaceholder: 'Es. Intera Unione', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: false, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
-        D: { nomeCompleto: 'Congresso Distretto', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Distretto 1', areaLabel: 'Distretto', areaPlaceholder: 'Es. Distretto Nord-Ovest', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
-        M: { nomeCompleto: 'Congresso Città Metropolitana', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Centro', areaLabel: 'Città Metropolitana', areaPlaceholder: 'Es. Città Metropolitana di Nuovavilla', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        C: { nomeCompleto: 'Congresso Statale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
         T: { nomeCompleto: 'Congresso Regionale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Regione', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
-        R: { nomeCompleto: 'Referendum', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Quesito referendario', areaPlaceholder: 'Es. Approvazione della riforma X', vincitoreLabel: 'Esito (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente l\'opzione con più percentuale.', opzioniLabel: 'Opzioni di voto', richiedeSezione: true, mostraSeggi: false, sinoRapido: true, campiReferendum: true }
+        M: { nomeCompleto: 'Congresso Metropolitano', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Centro', areaLabel: 'Città Metropolitana', areaPlaceholder: 'Es. Città Metropolitana di Nuovavilla', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        D: { nomeCompleto: 'Congresso Distrettuale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Distretto 1', areaLabel: 'Distretto', areaPlaceholder: 'Es. Distretto Nord-Ovest', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        G: { nomeCompleto: 'Assemblea di Sezione', comuneLabel: 'Comune', comunePlaceholder: 'Es. Nuovavilla', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Sindaco eletto (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente la prima forza per seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false }
     };
 
     const PALETTE = ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'];
@@ -954,6 +956,20 @@
 
     document.getElementById('in-consultazione-unitaria').addEventListener('change', aggiornaVisibilitaComune);
 
+    // La checkbox "Consultazione Unitaria" è disponibile per tutti i tipi di
+    // elezione. Per i tipi che sono già a circoscrizione unica per definizione
+    // (es. il Congresso Unitario) non ha senso lasciarla deselezionabile: la
+    // forziamo spuntata e la disabilitiamo, così il campo Comune/Sezione resta
+    // coerentemente nascosto e il record non fallisce la validazione.
+    function aggiornaStatoCheckboxUnitaria() {
+        const cfg = TIPI[tipoSelezionato()];
+        const checkboxUnitaria = document.getElementById('in-consultazione-unitaria');
+        const sempreUnitario = !cfg.richiedeSezione;
+        checkboxUnitaria.disabled = sempreUnitario;
+        if (sempreUnitario) checkboxUnitaria.checked = true;
+        aggiornaVisibilitaComune();
+    }
+
     function aggiornaCampiPerTipo() {
         const cfg = TIPI[tipoSelezionato()];
         document.getElementById('lbl-comune').textContent = cfg.comuneLabel;
@@ -969,11 +985,7 @@
         document.getElementById('btn-si-no').style.display = cfg.sinoRapido ? 'inline-block' : 'none';
         document.getElementById('blocco-referendum').style.display = cfg.campiReferendum ? 'block' : 'none';
 
-        // La checkbox non serve per un tipo già di per sé a circoscrizione unica
-        const campoUnitaria = document.getElementById('campo-unitaria');
-        campoUnitaria.style.display = cfg.richiedeSezione ? '' : 'none';
-        if (!cfg.richiedeSezione) document.getElementById('in-consultazione-unitaria').checked = false;
-        aggiornaVisibilitaComune();
+        aggiornaStatoCheckboxUnitaria();
 
         renderRighe();
     }
@@ -992,7 +1004,7 @@
         const codice = tipoSelezionato();
         const cfg = TIPI[codice];
         const data = dataInputAItaliano(document.getElementById('in-data').value);
-        const consultazioneUnitaria = cfg.richiedeSezione && document.getElementById('in-consultazione-unitaria').checked;
+        const consultazioneUnitaria = document.getElementById('in-consultazione-unitaria').checked;
         // Con la checkbox spuntata il campo Comune/Sezione è nascosto: usiamo un
         // valore fisso, come già avviene per il Congresso Unitario
         const comune = consultazioneUnitaria ? 'Circoscrizione Unica' : document.getElementById('in-comune').value.trim();
@@ -1130,6 +1142,7 @@
         document.getElementById('btn-salva-record').textContent = 'Aggiungi alla lista';
         document.getElementById('btn-annulla-modifica').style.display = 'none';
         document.getElementById('contenitore-errori').innerHTML = '';
+        aggiornaStatoCheckboxUnitaria();
         renderRighe();
     }
 
@@ -1270,6 +1283,7 @@
                             <div class="meta">${escapeHtml(r.data)} &middot; ${escapeHtml(r.area)} &middot; ${r.risultati_partiti.length} liste/opzioni</div>
                         </div>
                         <div class="azioni-record">
+                            <button type="button" class="btn-secondario" data-azione="link" data-indice="${i}" title="Copia il link che apre direttamente questa elezione sul sito pubblico">🔗 Link diretto</button>
                             <button type="button" class="btn-secondario" data-azione="modifica" data-indice="${i}">Modifica</button>
                             <button type="button" class="btn-pericolo" data-azione="rimuovi" data-indice="${i}">Rimuovi</button>
                         </div>
@@ -1285,7 +1299,44 @@
         const indice = parseInt(e.target.dataset.indice, 10);
         if (azione === 'modifica') caricaRecordNelForm(indice);
         if (azione === 'rimuovi') rimuoviRecord(indice);
+        if (azione === 'link') copiaLinkDiretto(indice, e.target);
     });
+
+    // ============================================================
+    // Link diretto a una singola elezione (per bottoni su altri siti)
+    // ============================================================
+    // Nome del file della pagina pubblica di consultazione: se il sito viene
+    // pubblicato con un nome diverso da "CEPU.html", basta aggiornare questa
+    // costante e tutti i link generati si aggiornano di conseguenza.
+    const PAGINA_PUBBLICA = 'CEPU.html';
+
+    // Costruisce l'URL assoluto che apre direttamente i risultati di un
+    // record specifico, saltando la schermata "vuota" iniziale: basta che un
+    // altro sito punti un bottone/link a questo indirizzo.
+    function generaLinkDiretto(record) {
+        const parametri = new URLSearchParams();
+        parametri.set('tipo', record.tipo_codice);
+        parametri.set('data', record.data);
+        parametri.set('comune', record.comune);
+        const url = new URL(PAGINA_PUBBLICA, window.location.href);
+        url.search = parametri.toString();
+        return url.href;
+    }
+
+    async function copiaLinkDiretto(indice, bottone) {
+        const record = elezioni[indice];
+        const link = generaLinkDiretto(record);
+        const testoOriginale = bottone.textContent;
+        try {
+            await navigator.clipboard.writeText(link);
+            bottone.textContent = '✔ Copiato!';
+        } catch (err) {
+            // Clipboard non disponibile (es. contesto non sicuro): mostriamo
+            // il link in un prompt così può essere copiato manualmente
+            window.prompt('Copia questo link diretto:', link);
+        }
+        setTimeout(() => { bottone.textContent = testoOriginale; }, 1600);
+    }
 
     // ============================================================
     // Import / Export JSON
