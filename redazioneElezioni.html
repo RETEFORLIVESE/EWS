@@ -587,14 +587,40 @@
     // ============================================================
     // Collegamento al database live (stesso bin usato da elezioni.html)
     // ============================================================
-    // NB: per la lettura basta una chiave con permesso di lettura (X-Access-Key).
-    // Per la SCRITTURA, JSONBin richiede una chiave con permesso di scrittura
-    // inviata come X-Master-Key: se il salvataggio fallisce con un errore
-    // 401/403, sostituisci JSONBIN_API_KEY con la Master Key del bin (dal
-    // pannello di JSONBin, non l'Access Key usata solo per la consultazione).
-    const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183';
-    const JSONBIN_API_KEY = '$2a$10$r.cnPTgRvp9jdnqQHdSCIeP9QAXFjFSZKIpa9ZwZlGRoSVLBxl/uq';
-    const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+    // Nessuna chiave nel codice sorgente:
+    //  - la LETTURA passa da /api/elezioni (funzione serverless, chiavi lato server);
+    //  - la SCRITTURA usa le credenziali (binId + Master Key) che /api/login-elezioni
+    //    restituisce solo dopo un login riuscito, tenute in sessionStorage.
+    const API_LETTURA = '/api/elezioni';
+    const API_LOGIN = '/api/login-elezioni';
+    const CHIAVE_CREDENZIALI = 'cepu_redazione_credenziali_v1';
+
+    let credenziali = { binId: null, apiKey: null };
+
+    function salvaCredenziali(token) {
+        credenziali = { binId: token.binId, apiKey: token.apiKey };
+        try {
+            sessionStorage.setItem(CHIAVE_CREDENZIALI, JSON.stringify(credenziali));
+        } catch (err) { /* sessione non salvabile: si continua comunque */ }
+    }
+
+    function caricaCredenziali() {
+        try {
+            const salvate = sessionStorage.getItem(CHIAVE_CREDENZIALI);
+            if (!salvate) return false;
+            const dati = JSON.parse(salvate);
+            if (dati && dati.binId && dati.apiKey) {
+                credenziali = { binId: dati.binId, apiKey: dati.apiKey };
+                return true;
+            }
+        } catch (err) { /* credenziali non recuperabili: serve un nuovo login */ }
+        return false;
+    }
+
+    function dimenticaCredenziali() {
+        credenziali = { binId: null, apiKey: null };
+        try { sessionStorage.removeItem(CHIAVE_CREDENZIALI); } catch (err) { /* niente da fare */ }
+    }
 
     function impostaStatoDatabase(testo, tipo) {
         const el = document.getElementById('stato-database');
@@ -604,20 +630,27 @@
 
     async function caricaDatasetDalDatabase() {
         impostaStatoDatabase('Connessione al database…', 'caricamento');
-        const risposta = await fetch(API_URL, { method: 'GET', headers: { 'X-Master-Key': JSONBIN_API_KEY } });
+        const risposta = await fetch(API_LETTURA, { method: 'GET', cache: 'no-store' });
         if (!risposta.ok) {
-            const testoErrore = await risposta.text();
-            throw new Error(`Errore Server (${risposta.status}): ${testoErrore}`);
+            let messaggio = `Errore Server (${risposta.status})`;
+            try {
+                const dettaglio = await risposta.json();
+                if (dettaglio && dettaglio.error) messaggio += `: ${dettaglio.error}`;
+            } catch (e) { /* risposta non JSON: resta il messaggio generico */ }
+            throw new Error(messaggio);
         }
         const risultato = await risposta.json();
-        return risultato.record.elezioni || [];
+        return risultato.elezioni || [];
     }
 
     async function salvaDatasetNelDatabase(listaElezioni) {
+        if (!credenziali.binId || !credenziali.apiKey) {
+            throw new Error('Sessione scaduta: esegui di nuovo l\'accesso per salvare.');
+        }
         impostaStatoDatabase('Salvataggio nel database…', 'caricamento');
-        const risposta = await fetch(API_URL, {
+        const risposta = await fetch(`https://api.jsonbin.io/v3/b/${credenziali.binId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': credenziali.apiKey },
             body: JSON.stringify({ elezioni: listaElezioni })
         });
         if (!risposta.ok) {
@@ -630,11 +663,8 @@
     // ============================================================
     // Accesso redazione (credenziali fisse, nessun backend reale)
     // ============================================================
-    // Cambia questi due valori prima di condividere il file con la redazione.
-    // Attenzione: essendo un file locale, chiunque apra il codice sorgente
-    // può leggere queste credenziali — funziona solo come deterrente per i
-    // visitatori occasionali, non come vera sicurezza.
-    const CREDENZIALI_REDAZIONE = { utente: 'TandeePetrenka', password: 'TandeePetrenka' };
+    // Le credenziali NON stanno più nel codice: la verifica avviene lato server
+    // in /api/login-elezioni (elenco VALID_USERS / variabili d'ambiente Vercel).
     const CHIAVE_SESSIONE = 'cepu_redazione_sessione_v1';
 
     function mostraAreaRedazione(nomeUtente) {
@@ -670,18 +700,40 @@
         document.getElementById('loginError').classList.remove('show');
     }
 
-    function tentaAccesso() {
+    async function tentaAccesso() {
         const utente = document.getElementById('adminUsername').value.trim();
         const password = document.getElementById('adminPassword').value;
         const erroreBox = document.getElementById('loginError');
+        const bottone = document.getElementById('loginBtn');
 
-        if (utente === CREDENZIALI_REDAZIONE.utente && password === CREDENZIALI_REDAZIONE.password) {
-            erroreBox.classList.remove('show');
-            try { sessionStorage.setItem(CHIAVE_SESSIONE, utente); } catch (err) { /* sessione non salvabile: si continua comunque */ }
-            mostraAreaRedazione(utente);
-        } else {
-            erroreBox.textContent = 'Nome utente o password errati.';
+        erroreBox.classList.remove('show');
+        bottone.disabled = true;
+        bottone.textContent = 'Accesso in corso…';
+
+        try {
+            const risposta = await fetch(API_LOGIN, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: utente, password: password })
+            });
+            const dati = await risposta.json().catch(() => ({}));
+
+            if (!risposta.ok || !dati.token) {
+                erroreBox.textContent = dati.error || 'Nome utente o password errati.';
+                erroreBox.classList.add('show');
+                return;
+            }
+
+            salvaCredenziali(dati.token);
+            const nomeUtente = dati.username || utente;
+            try { sessionStorage.setItem(CHIAVE_SESSIONE, nomeUtente); } catch (err) { /* sessione non salvabile: si continua comunque */ }
+            mostraAreaRedazione(nomeUtente);
+        } catch (errore) {
+            erroreBox.textContent = 'Impossibile contattare il server di autenticazione.';
             erroreBox.classList.add('show');
+        } finally {
+            bottone.disabled = false;
+            bottone.textContent = 'Accedi';
         }
     }
 
@@ -691,14 +743,19 @@
 
     document.getElementById('logoutBtn').addEventListener('click', function() {
         try { sessionStorage.removeItem(CHIAVE_SESSIONE); } catch (err) { /* niente da fare */ }
+        dimenticaCredenziali();
         mostraAreaLogin();
     });
 
     function verificaSessioneEsistente() {
         try {
             const utenteSalvato = sessionStorage.getItem(CHIAVE_SESSIONE);
-            if (utenteSalvato === CREDENZIALI_REDAZIONE.utente) {
+            // La sessione vale solo se sono ancora presenti le credenziali
+            // ricevute dal server: altrimenti si torna alla schermata di login.
+            if (utenteSalvato && caricaCredenziali()) {
                 mostraAreaRedazione(utenteSalvato);
+            } else {
+                dimenticaCredenziali();
             }
         } catch (err) { /* sessione non disponibile: resta la schermata di login */ }
     }
