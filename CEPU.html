@@ -1175,9 +1175,17 @@
                 // Il Referendum non assegna seggi: la colonna e il grafico parlamento non hanno senso
                 const mostraSeggi = codiceTipo !== 'R';
 
-                // Creiamo le righe della tabella in base ai dati, includendo la foto/logo se presente
+                // Creiamo le righe della tabella in base ai dati, includendo la foto/logo se presente.
+                // L'ordine della TABELLA segue la percentuale più alta (non l'ordine di inserimento
+                // in redazione, che invece resta quello usato per il grafico): il colore/swatch di
+                // ciascun partito continua però a usare l'indice originale, così resta coerente con
+                // il grafico e la legenda anche dopo il riordinamento.
+                const partitiOrdinatiPerTabella = partiti
+                    .map((partito, idx) => ({ partito, idx }))
+                    .sort((a, b) => percentualeNumerica(b.partito.percentuale) - percentualeNumerica(a.partito.percentuale));
+
                 let righeTabella = '';
-                partiti.forEach((partito, idx) => {
+                partitiOrdinatiPerTabella.forEach(({ partito, idx }) => {
                     const iconaPartito = partito.logo
                         ? `<img class="partito-logo" src="${partito.logo}" alt="${partito.nome}">`
                         : `<span class="swatch" style="background:${coloreDiPartito(partito, idx)}"></span>`;
