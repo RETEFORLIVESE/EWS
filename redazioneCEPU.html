@@ -201,6 +201,38 @@
         line-height: 1;
         padding: 0.2rem 0.4rem;
     }
+    /* Intestazione della riga: numero d'ordine + frecce per spostare su/giù.
+       Questo è l'ordine con cui lista/partito compaiono nella tabella e nel
+       grafico della pagina pubblica. */
+    .riga-partito .riga-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+        padding-right: 1.8rem; /* spazio per il bottone "rimuovi" in alto a destra */
+    }
+    .riga-partito .numero-riga {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--ist-blue-deep);
+        background: var(--ist-azure-mid);
+        border-radius: 10px;
+        padding: 0.1rem 0.55rem;
+        white-space: nowrap;
+    }
+    .riga-partito .ordine-controlli { display: flex; gap: 0.25rem; }
+    .riga-partito .btn-ordine {
+        background: var(--ist-white);
+        border: 1px solid var(--ist-line);
+        color: var(--ist-blue-deep);
+        font-size: 0.8rem;
+        line-height: 1;
+        border-radius: 3px;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+    }
+    .riga-partito .btn-ordine:hover:not(:disabled) { background: var(--ist-azure-mid); }
+    .riga-partito .btn-ordine:disabled { opacity: 0.35; cursor: not-allowed; }
     .riga-partito .colore-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.3rem; }
     .riga-partito .colore-toggle input[type="color"] { width: 34px; height: 26px; border: 1px solid var(--ist-line); border-radius: 3px; padding: 1px; }
 
@@ -866,13 +898,32 @@
         renderRighe();
     }
 
+    // Sposta una riga di una posizione su o giù nell'elenco (direzione: -1 = su, +1 = giù).
+    // Questo è l'ordine con cui liste/partiti verranno salvati e mostrati sia
+    // nella tabella che nel grafico della pagina pubblica.
+    function spostaRiga(id, direzione) {
+        const indice = righeDraft.findIndex(r => r.id === id);
+        const nuovoIndice = indice + direzione;
+        if (indice === -1 || nuovoIndice < 0 || nuovoIndice >= righeDraft.length) return;
+        const [riga] = righeDraft.splice(indice, 1);
+        righeDraft.splice(nuovoIndice, 0, riga);
+        renderRighe();
+    }
+
     function renderRighe() {
         const tipo = tipoSelezionato();
         const cfg = TIPI[tipo];
         const contenitore = document.getElementById('contenitore-righe');
-        contenitore.innerHTML = righeDraft.map(riga => `
+        contenitore.innerHTML = righeDraft.map((riga, indice) => `
             <div class="riga-partito" data-id="${riga.id}">
                 <button type="button" class="rimuovi" data-azione="rimuovi-riga" data-id="${riga.id}" title="Rimuovi">&times;</button>
+                <div class="riga-header">
+                    <span class="numero-riga">#${indice + 1}</span>
+                    <div class="ordine-controlli">
+                        <button type="button" class="btn-ordine" data-azione="sposta-su" data-id="${riga.id}" title="Sposta su" ${indice === 0 ? 'disabled' : ''}>&#9650;</button>
+                        <button type="button" class="btn-ordine" data-azione="sposta-giu" data-id="${riga.id}" title="Sposta giù" ${indice === righeDraft.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                    </div>
+                </div>
                 <div class="griglia">
                     <div class="campo-mini">
                         <label>Nome</label>
@@ -924,9 +975,12 @@
         if (campo === 'percentuale' || campo === 'voti') aggiornaRiepilogoPercentuali();
     });
     document.getElementById('contenitore-righe').addEventListener('click', function(e) {
-        if (e.target.dataset.azione === 'rimuovi-riga') {
-            rimuoviRiga(parseInt(e.target.dataset.id, 10));
-        }
+        const azione = e.target.dataset.azione;
+        if (!azione) return;
+        const id = parseInt(e.target.dataset.id, 10);
+        if (azione === 'rimuovi-riga') rimuoviRiga(id);
+        if (azione === 'sposta-su') spostaRiga(id, -1);
+        if (azione === 'sposta-giu') spostaRiga(id, 1);
     });
 
     function aggiornaRiepilogoPercentuali() {
