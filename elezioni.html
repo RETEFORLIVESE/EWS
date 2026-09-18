@@ -589,10 +589,10 @@
 
     <!-- Script connessione API JSONBin.io -->
     <script>
-        // Le tue credenziali esatte
-        const JSONBIN_BIN_ID = '6aac4927ac6210605ad9e183';
-        const JSONBIN_API_KEY = '$2a$10$InOPQfdwzq5HcxsmtZlLHupGKdaNYPfZ63/Fog04CbqjwcRQLXqUS';
-        const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+        // Nessuna chiave nel browser: la lettura passa dalla funzione serverless
+        // /api/elezioni, che tiene BIN_ID_ELEZIONI e la Master Key lato server
+        // (variabili d'ambiente di Vercel).
+        const API_URL = '/api/elezioni';
 
         // Palette di colori per i partiti (usata a rotazione se non specificato un colore nel dato)
         const PALETTE = ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'];
@@ -788,14 +788,18 @@
             if (elezioniCache) return elezioniCache;
             const response = await fetch(API_URL, {
                 method: 'GET',
-                headers: { 'X-Access-Key': JSONBIN_API_KEY }
+                cache: 'no-store'
             });
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Errore Server (${response.status}): ${errorText}`);
+                let messaggio = `Errore Server (${response.status})`;
+                try {
+                    const dettaglio = await response.json();
+                    if (dettaglio && dettaglio.error) messaggio += `: ${dettaglio.error}`;
+                } catch (e) { /* risposta non JSON: resta il messaggio generico */ }
+                throw new Error(messaggio);
             }
             const result = await response.json();
-            elezioniCache = result.record.elezioni || [];
+            elezioniCache = result.elezioni || [];
             return elezioniCache;
         }
 
