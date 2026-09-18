@@ -1,5 +1,5 @@
 const VALID_USERS = {
-    "admin": "passwordRedazione2026" // Modifica questa password prima del commit
+    "a1": "p1" // Modifica questa password prima del commit
 };
 
 export default function handler(req, res) {
