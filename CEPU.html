@@ -764,7 +764,12 @@
             // Raggio dei pallini adattato alla densità: piú seggi -> pallini più
             // piccoli, cosí restano leggibili senza sovrapporsi
             const spazioRighe = righe > 1 ? (raggioEsterno - raggioInterno) / (righe - 1) : (raggioEsterno - raggioInterno);
-            const raggioPallino = Math.max(2.5, Math.min(7, spazioRighe / 2.4));
+            // Il raggio scende gradualmente con la densità (righe più fitte -> pallini
+            // più piccoli); il tetto più alto (9 anziché il precedente 7) fa sì che
+            // pochi seggi (es. 25, poche righe molto larghe) risultino un po' più
+            // grandi, mentre gruppi numerosi (es. 250, molte righe strette) restano
+            // come prima perché il loro valore calcolato è già ben sotto il tetto
+            const raggioPallino = Math.max(2.5, Math.min(9, spazioRighe / 2.4));
 
             let indicePunto = 0;
             let cerchi = '';
@@ -846,21 +851,27 @@
             const formattaPerc = (p) => `${p.toFixed(2).replace('.', ',')}%`;
             const formattaVoti = (v) => v.toLocaleString('it-IT');
 
-            const quesito = elezione.quesito || elezione.descrizione || elezione.comune || 'Quesito referendario';
+            // Nella redazione il quesito viene scritto nel campo "area" per i referendum;
+            // restano supportati anche eventuali campi dedicati dei record più recenti
+            const quesito = elezione.quesito || elezione.descrizione || elezione.area || elezione.comune || 'Quesito referendario';
+
+            // I campi numerici vengono scritti come numeri dalla redazione: li formattiamo
+            // in stile italiano, lasciando invariato quanto già scritto come testo
+            const formattaNumero = (v) => (typeof v === 'number' && !isNaN(v)) ? v.toLocaleString('it-IT') : v;
 
             // Righe di riepilogo: mostriamo solo i campi effettivamente presenti nel dato
             const pezziRiepilogo = [];
-            if (elezione.elettori) pezziRiepilogo.push(`<strong>Elettori:</strong> ${elezione.elettori}`);
-            if (elezione.votanti) pezziRiepilogo.push(`<strong>Votanti:</strong> ${elezione.votanti}`);
+            if (elezione.elettori) pezziRiepilogo.push(`<strong>Elettori:</strong> ${formattaNumero(elezione.elettori)}`);
+            if (elezione.votanti) pezziRiepilogo.push(`<strong>Votanti:</strong> ${formattaNumero(elezione.votanti)}`);
             if (elezione.affluenza) pezziRiepilogo.push(`<strong>Affluenza:</strong> ${elezione.affluenza}`);
-            if (elezione.schede_nulle) pezziRiepilogo.push(`<strong>Schede nulle:</strong> ${elezione.schede_nulle}`);
-            if (elezione.schede_bianche) pezziRiepilogo.push(`<strong>Schede bianche:</strong> ${elezione.schede_bianche}`);
+            if (elezione.schede_nulle) pezziRiepilogo.push(`<strong>Schede nulle:</strong> ${formattaNumero(elezione.schede_nulle)}`);
+            if (elezione.schede_bianche) pezziRiepilogo.push(`<strong>Schede bianche:</strong> ${formattaNumero(elezione.schede_bianche)}`);
             const riepilogo = pezziRiepilogo.length
                 ? `<div class="referendum-riepilogo"><p>${pezziRiepilogo.join(' &nbsp;|&nbsp; ')}</p></div>`
                 : '';
 
             const sezioni = elezione.sezioni_scrutinate
-                ? `<div class="referendum-sezioni"><strong>Sezioni:</strong> ${elezione.sezioni_scrutinate}${elezione.sezioni_totali ? ' su ' + elezione.sezioni_totali : ''}</div>`
+                ? `<div class="referendum-sezioni"><strong>Sezioni:</strong> ${formattaNumero(elezione.sezioni_scrutinate)}${elezione.sezioni_totali ? ' su ' + formattaNumero(elezione.sezioni_totali) : ''}</div>`
                 : '';
 
             return `
@@ -1064,6 +1075,7 @@
         // e mostra subito i risultati; altrimenti aspetta la scelta dell'utente.
         document.getElementById('sel_date').addEventListener('change', async function() {
             const selComune = document.getElementById('sel_comune');
+            const gruppoSezione = document.getElementById('gruppo-sezione');
             const valoreSelezionato = this.value;
             const codice = codiceTipoSelezionato();
 
@@ -1073,23 +1085,30 @@
             if (valoreSelezionato === "") {
                 selComune.innerHTML = '<option value="">Scegli Sezione</option>';
                 selComune.disabled = true;
+                gruppoSezione.style.display = richiedeSezione(codice) ? '' : 'none';
                 document.getElementById('messaggio-iniziale').style.display = 'block';
                 return;
             }
 
             const indici = valoreSelezionato.split(',').map(v => parseInt(v, 10));
 
-            // Il Congresso Unitario è su circoscrizione unica: nessuna Sezione da scegliere,
-            // si mostra subito il risultato del record trovato per quella data
-            if (!richiedeSezione(codice)) {
-                selComune.innerHTML = '<option value="">Non richiesta</option>';
-                selComune.disabled = true;
-                await mostraRisultati(indici[0]);
-                return;
-            }
-
             try {
                 const dataset = await caricaDataset();
+
+                // Circoscrizione unica: o perché il tipo lo è sempre (es. Congresso
+                // Unitario), o perché il singolo record è stato marcato in redazione
+                // con "Consultazione Unitaria" (checkbox "consultazione_unitaria")
+                const recordUnitario = indici.length === 1 && dataset[indici[0]].consultazione_unitaria === true;
+
+                if (!richiedeSezione(codice) || recordUnitario) {
+                    gruppoSezione.style.display = 'none';
+                    selComune.innerHTML = '<option value="">Non richiesta</option>';
+                    selComune.disabled = true;
+                    await mostraRisultati(indici[0]);
+                    return;
+                }
+
+                gruppoSezione.style.display = '';
                 let opzioni = '<option value="">Scegli Sezione</option>';
                 indici.forEach(indice => {
                     opzioni += `<option value="${indice}">${dataset[indice].comune}</option>`;
@@ -1169,7 +1188,7 @@
                 // Il box "vincitore/esito" mostra il Sindaco eletto per le comunali, l'esito Sì/No
                 // per i referendum, oppure la prima forza politica (in automatico dai seggi) per
                 // le elezioni parlamentari
-                const etichettaTerritorio = richiedeSezione(codiceTipo) ? 'Sezione' : 'Circoscrizione';
+                const etichettaTerritorio = (richiedeSezione(codiceTipo) && !elezione.consultazione_unitaria) ? 'Sezione' : 'Circoscrizione';
                 let etichettaVincitore, valoreVincitore;
                 if (codiceTipo === 'G') {
                     etichettaVincitore = 'Eletto Sindaco';
