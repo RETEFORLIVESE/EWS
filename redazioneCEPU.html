@@ -485,6 +485,9 @@
                 <label><input type="radio" name="tipo" value="G" checked> Comunali</label>
                 <label><input type="radio" name="tipo" value="C"> Congresso Statale</label>
                 <label><input type="radio" name="tipo" value="S"> Congresso Unitario</label>
+                <label><input type="radio" name="tipo" value="D"> Congresso Distretto</label>
+                <label><input type="radio" name="tipo" value="M"> Congresso Citt&agrave; Metropolitana</label>
+                <label><input type="radio" name="tipo" value="T"> Congresso Regionale</label>
                 <label><input type="radio" name="tipo" value="R"> Referendum</label>
             </div>
 
@@ -499,7 +502,12 @@
                 </div>
             </div>
 
-            <div class="campo">
+            <div class="campo" id="campo-unitaria" style="display:flex; align-items:center; gap:0.5rem;">
+                <input type="checkbox" id="in-consultazione-unitaria" style="width:auto;">
+                <label for="in-consultazione-unitaria" style="margin:0; text-transform:none; font-weight:400; font-size:0.9rem;">Consultazione Unitaria (circoscrizione unica, senza Sezione)</label>
+            </div>
+
+            <div class="campo" id="campo-comune">
                 <label id="lbl-comune" for="in-comune">Comune / Sezione</label>
                 <input type="text" id="in-comune" placeholder="Es. Nuovavilla">
                 <span class="hint" id="hint-comune">Deve essere diverso da tutti gli altri comuni con la stessa data e lo stesso tipo.</span>
@@ -513,6 +521,44 @@
             <div class="campo">
                 <label id="lbl-vincitore" for="in-vincitore">Vincitore (opzionale)</label>
                 <input type="text" id="in-vincitore" placeholder="Se vuoto, calcolato in automatico">
+            </div>
+
+            <div id="blocco-referendum" style="display:none;">
+                <h3>Dati di scrutinio (referendum)</h3>
+                <p class="hint" style="display:block; margin-bottom:0.7rem;">Campi facoltativi: alimentano la barra S&igrave;/No e la fascia di riepilogo nella pagina pubblica. Quelli lasciati vuoti non vengono mostrati.</p>
+
+                <div class="due-colonne">
+                    <div class="campo">
+                        <label for="in-sezioni-scrutinate">Sezioni scrutinate</label>
+                        <input type="number" id="in-sezioni-scrutinate" min="0" step="1" placeholder="Es. 240">
+                    </div>
+                    <div class="campo">
+                        <label for="in-sezioni-totali">Sezioni totali</label>
+                        <input type="number" id="in-sezioni-totali" min="0" step="1" placeholder="Es. 240">
+                    </div>
+                </div>
+
+                <div class="due-colonne">
+                    <div class="campo">
+                        <label for="in-elettori">Elettori</label>
+                        <input type="number" id="in-elettori" min="0" step="1" placeholder="Es. 45000">
+                    </div>
+                    <div class="campo">
+                        <label for="in-votanti">Votanti</label>
+                        <input type="number" id="in-votanti" min="0" step="1" placeholder="Es. 27000">
+                    </div>
+                </div>
+
+                <div class="due-colonne">
+                    <div class="campo">
+                        <label for="in-schede-nulle">Schede nulle</label>
+                        <input type="number" id="in-schede-nulle" min="0" step="1" placeholder="Es. 320">
+                    </div>
+                    <div class="campo">
+                        <label for="in-schede-bianche">Schede bianche</label>
+                        <input type="number" id="in-schede-bianche" min="0" step="1" placeholder="Es. 180">
+                    </div>
+                </div>
             </div>
 
             <h3 id="titolo-opzioni">Liste / Partiti</h3>
@@ -578,8 +624,11 @@
     const TIPI = {
         G: { nomeCompleto: 'Comunali', comuneLabel: 'Comune', comunePlaceholder: 'Es. Nuovavilla', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Sindaco eletto (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente la prima forza per seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
         C: { nomeCompleto: 'Congresso Statale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Area', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false },
-        S: { nomeCompleto: 'Congresso Unitario', comuneLabel: 'Circoscrizione', comunePlaceholder: "Circoscrizione Unica dell'Unione", areaLabel: 'Area', areaPlaceholder: 'Es. Intera Unione', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: false, mostraSeggi: true, sinoRapido: false },
-        R: { nomeCompleto: 'Referendum', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Quesito referendario', areaPlaceholder: 'Es. Approvazione della riforma X', vincitoreLabel: 'Esito (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente l\'opzione con più percentuale.', opzioniLabel: 'Opzioni di voto', richiedeSezione: true, mostraSeggi: false, sinoRapido: true }
+        S: { nomeCompleto: 'Congresso Unitario', comuneLabel: 'Circoscrizione', comunePlaceholder: "Circoscrizione Unica dell'Unione", areaLabel: 'Area', areaPlaceholder: 'Es. Intera Unione', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: false, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        D: { nomeCompleto: 'Congresso Distretto', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Distretto 1', areaLabel: 'Distretto', areaPlaceholder: 'Es. Distretto Nord-Ovest', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        M: { nomeCompleto: 'Congresso Città Metropolitana', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Centro', areaLabel: 'Città Metropolitana', areaPlaceholder: 'Es. Città Metropolitana di Nuovavilla', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        T: { nomeCompleto: 'Congresso Regionale', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Regione', areaPlaceholder: 'Es. Regione Settentrionale', vincitoreLabel: 'Prima forza politica (opzionale)', vincitoreHint: 'Se vuoto, l\'app la calcola in automatico dai seggi.', opzioniLabel: 'Liste / Partiti', richiedeSezione: true, mostraSeggi: true, sinoRapido: false, campiReferendum: false },
+        R: { nomeCompleto: 'Referendum', comuneLabel: 'Sezione', comunePlaceholder: 'Es. Sezione Nord', areaLabel: 'Quesito referendario', areaPlaceholder: 'Es. Approvazione della riforma X', vincitoreLabel: 'Esito (opzionale)', vincitoreHint: 'Se vuoto, l\'app mostra automaticamente l\'opzione con più percentuale.', opzioniLabel: 'Opzioni di voto', richiedeSezione: true, mostraSeggi: false, sinoRapido: true, campiReferendum: true }
     };
 
     const PALETTE = ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'];
@@ -894,6 +943,17 @@
         return document.querySelector('input[name="tipo"]:checked').value;
     }
 
+    // Il campo Comune/Sezione va nascosto quando la consultazione è unitaria
+    // (checkbox spuntata) oppure quando il tipo stesso è già a circoscrizione
+    // unica di suo (Congresso Unitario), caso in cui la checkbox è superflua
+    function aggiornaVisibilitaComune() {
+        const cfg = TIPI[tipoSelezionato()];
+        const unitaria = document.getElementById('in-consultazione-unitaria').checked;
+        document.getElementById('campo-comune').style.display = (unitaria || !cfg.richiedeSezione) ? 'none' : '';
+    }
+
+    document.getElementById('in-consultazione-unitaria').addEventListener('change', aggiornaVisibilitaComune);
+
     function aggiornaCampiPerTipo() {
         const cfg = TIPI[tipoSelezionato()];
         document.getElementById('lbl-comune').textContent = cfg.comuneLabel;
@@ -907,6 +967,14 @@
         document.getElementById('in-vincitore').placeholder = cfg.vincitoreHint;
         document.getElementById('titolo-opzioni').textContent = cfg.opzioniLabel;
         document.getElementById('btn-si-no').style.display = cfg.sinoRapido ? 'inline-block' : 'none';
+        document.getElementById('blocco-referendum').style.display = cfg.campiReferendum ? 'block' : 'none';
+
+        // La checkbox non serve per un tipo già di per sé a circoscrizione unica
+        const campoUnitaria = document.getElementById('campo-unitaria');
+        campoUnitaria.style.display = cfg.richiedeSezione ? '' : 'none';
+        if (!cfg.richiedeSezione) document.getElementById('in-consultazione-unitaria').checked = false;
+        aggiornaVisibilitaComune();
+
         renderRighe();
     }
 
@@ -924,7 +992,10 @@
         const codice = tipoSelezionato();
         const cfg = TIPI[codice];
         const data = dataInputAItaliano(document.getElementById('in-data').value);
-        const comune = document.getElementById('in-comune').value.trim();
+        const consultazioneUnitaria = cfg.richiedeSezione && document.getElementById('in-consultazione-unitaria').checked;
+        // Con la checkbox spuntata il campo Comune/Sezione è nascosto: usiamo un
+        // valore fisso, come già avviene per il Congresso Unitario
+        const comune = consultazioneUnitaria ? 'Circoscrizione Unica' : document.getElementById('in-comune').value.trim();
         const area = document.getElementById('in-area').value.trim();
         const affluenza = numeroAPercentuale(document.getElementById('in-affluenza').value);
         const vincitore = document.getElementById('in-vincitore').value.trim();
@@ -941,7 +1012,7 @@
             return obj;
         });
 
-        return {
+        const record = {
             tipo: cfg.nomeCompleto,
             tipo_codice: codice,
             data,
@@ -951,6 +1022,33 @@
             candidato_vincente: vincitore,
             risultati_partiti
         };
+
+        if (consultazioneUnitaria) record.consultazione_unitaria = true;
+
+        // Campi di scrutinio del referendum: scritti solo se compilati, così i
+        // record senza questi dati restano puliti e la pagina pubblica omette
+        // le righe corrispondenti
+        if (cfg.campiReferendum) {
+            const interoOpzionale = (id) => {
+                const grezzo = document.getElementById(id).value.trim();
+                if (grezzo === '') return null;
+                const n = parseInt(grezzo, 10);
+                return isNaN(n) ? null : n;
+            };
+            const campi = {
+                sezioni_scrutinate: interoOpzionale('in-sezioni-scrutinate'),
+                sezioni_totali: interoOpzionale('in-sezioni-totali'),
+                elettori: interoOpzionale('in-elettori'),
+                votanti: interoOpzionale('in-votanti'),
+                schede_nulle: interoOpzionale('in-schede-nulle'),
+                schede_bianche: interoOpzionale('in-schede-bianche')
+            };
+            Object.entries(campi).forEach(([chiave, valore]) => {
+                if (valore !== null) record[chiave] = valore;
+            });
+        }
+
+        return record;
     }
 
     function validaRecord(record, escludiIndice) {
@@ -970,6 +1068,28 @@
         const somma = record.risultati_partiti.reduce((acc, p) => acc + (percentualeANumero(p.percentuale) || 0), 0);
         if (record.risultati_partiti.length > 0 && Math.abs(somma - 100) > 2) {
             avvisi.push(`La somma delle percentuali è ${somma.toFixed(1).replace('.', ',')}%, lontana dal 100%.`);
+        }
+
+        // Coerenza dei dati di scrutinio del referendum (solo avvisi: sono campi facoltativi)
+        if (record.tipo_codice === 'R') {
+            if (record.sezioni_scrutinate != null && record.sezioni_totali != null && record.sezioni_scrutinate > record.sezioni_totali) {
+                errori.push('Le sezioni scrutinate non possono superare le sezioni totali.');
+            }
+            if (record.votanti != null && record.elettori != null && record.votanti > record.elettori) {
+                errori.push('I votanti non possono superare gli elettori.');
+            }
+            if (record.votanti != null && record.elettori != null && record.elettori > 0) {
+                const affluenzaCalcolata = (record.votanti / record.elettori) * 100;
+                const affluenzaIndicata = percentualeANumero(record.affluenza) || 0;
+                if (Math.abs(affluenzaCalcolata - affluenzaIndicata) > 1) {
+                    avvisi.push(`Da elettori e votanti l'affluenza risulterebbe ${affluenzaCalcolata.toFixed(1).replace('.', ',')}%, ma nel modulo hai indicato ${record.affluenza}.`);
+                }
+            }
+            const schede = (record.schede_nulle || 0) + (record.schede_bianche || 0);
+            const votiValidi = record.risultati_partiti.reduce((acc, p) => acc + (parseInt(p.voti, 10) || 0), 0);
+            if (record.votanti != null && (votiValidi + schede) > record.votanti) {
+                avvisi.push('La somma di voti validi, schede nulle e schede bianche supera i votanti indicati.');
+            }
         }
 
         const duplicato = elezioni.some((e, i) =>
@@ -998,9 +1118,12 @@
     function svuotaForm() {
         document.getElementById('in-data').value = '';
         document.getElementById('in-comune').value = '';
+        document.getElementById('in-consultazione-unitaria').checked = false;
         document.getElementById('in-area').value = '';
         document.getElementById('in-affluenza').value = '';
         document.getElementById('in-vincitore').value = '';
+        ['in-sezioni-scrutinate', 'in-sezioni-totali', 'in-elettori', 'in-votanti', 'in-schede-nulle', 'in-schede-bianche']
+            .forEach(id => { document.getElementById(id).value = ''; });
         righeDraft = [];
         indiceInModifica = null;
         document.getElementById('titolo-form').textContent = 'Nuovo record';
@@ -1056,9 +1179,20 @@
 
         document.getElementById('in-data').value = dataItalianaAInput(record.data);
         document.getElementById('in-comune').value = record.comune;
+        document.getElementById('in-consultazione-unitaria').checked = !!record.consultazione_unitaria;
+        aggiornaVisibilitaComune();
         document.getElementById('in-area').value = record.area;
         document.getElementById('in-affluenza').value = percentualeANumero(record.affluenza);
         document.getElementById('in-vincitore').value = record.candidato_vincente || '';
+
+        // Campi di scrutinio del referendum (vuoti se il record non li contiene)
+        const valoreOpzionale = (v) => (v === undefined || v === null || v === '') ? '' : v;
+        document.getElementById('in-sezioni-scrutinate').value = valoreOpzionale(record.sezioni_scrutinate);
+        document.getElementById('in-sezioni-totali').value = valoreOpzionale(record.sezioni_totali);
+        document.getElementById('in-elettori').value = valoreOpzionale(record.elettori);
+        document.getElementById('in-votanti').value = valoreOpzionale(record.votanti);
+        document.getElementById('in-schede-nulle').value = valoreOpzionale(record.schede_nulle);
+        document.getElementById('in-schede-bianche').value = valoreOpzionale(record.schede_bianche);
 
         righeDraft = record.risultati_partiti.map(p => {
             contatoreIdRiga++;
