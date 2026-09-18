@@ -73,3 +73,12 @@ function commiDiArticolo(art) {
   if (art.testo) return analizzaTesto(art.testo);
   return [{ testo: "", sottocommi: [] }];
 }
+
+// Un atto.articoli può contenere, oltre ai veri articoli, dei blocchi di
+// intestazione ("TITOLO I — Disposizioni generali") che servono solo a
+// raggruppare visivamente gli articoli successivi. Questi blocchi hanno
+// la forma { tipo: "titolo", testo: "..." } e non vanno trattati come
+// articoli veri e propri (né numerati, né linkati, né conteggiati).
+function eTitoloGruppo(item) {
+  return !!(item && item.tipo === "titolo");
+}
