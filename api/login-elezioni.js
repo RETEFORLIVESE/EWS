@@ -1,35 +1,54 @@
-// api/login-elezioni.js
+// Funzione serverless Vercel — login della redazione elezioni.
+// Se le credenziali sono corrette restituisce BIN_ID_ELEZIONI e la Master Key:
+// è l'UNICO momento in cui le chiavi arrivano al browser.
+//
+// Variabili d'ambiente richieste su Vercel:
+//   BIN_ID_ELEZIONI     -> id del bin JSONBin delle elezioni
+//   API_KEY_ELEZIONI    -> Master Key di JSONBin (fallback: API_KEY)
+// Opzionali (consigliate, per non tenere le credenziali nel codice):
+//   REDAZIONE_USER      -> nome utente della redazione
+//   REDAZIONE_PASSWORD  -> password della redazione
+
+const VALID_USERS = [
+    {
+        username: process.env.REDAZIONE_USER || 'TandeePetrenka',
+        password: process.env.REDAZIONE_PASSWORD || 'TandeePetrenka'
+    }
+];
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Metodo non consentito' });
-  }
+    if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        return res.status(405).json({ error: 'Metodo non consentito.' });
+    }
 
-  const { username, password } = req.body;
+    const BIN_ID = process.env.BIN_ID_ELEZIONI;
+    const API_KEY = process.env.API_KEY_ELEZIONI || process.env.API_KEY;
 
-  // ⚠️ Cambia queste credenziali con quelle della tua redazione elettorale.
-  // Possono essere uguali o diverse da quelle di api/login.js: sono indipendenti.
-  const VALID_USERS = {
-    "TandeePetrenka": "TandeePetrenka",
-    "admin": "CambiamiAnche",
-  };
+    if (!BIN_ID || !API_KEY) {
+        return res.status(500).json({ error: 'Configurazione del server mancante.' });
+    }
 
-  // Usa un BIN separato per le elezioni (il "secondo bin" su JSONBin.io).
-  // Se le due chiavi API sono le stesse del tuo account, puoi lasciare
-  // API_KEY_ELEZIONI non impostata: verrà usata API_KEY come fallback.
-  const BIN_ID = process.env.BIN_ID_ELEZIONI;
-  const API_KEY = process.env.API_KEY_ELEZIONI || process.env.API_KEY;
+    let corpo = req.body;
+    if (typeof corpo === 'string') {
+        try { corpo = JSON.parse(corpo); } catch (e) { corpo = {}; }
+    }
 
-  if (!BIN_ID || !API_KEY) {
-    return res.status(500).json({ message: "Configurazione del server mancante." });
-  }
+    const username = (corpo && corpo.username ? String(corpo.username) : '').trim();
+    const password = corpo && corpo.password ? String(corpo.password) : '';
 
-  if (VALID_USERS[username] && VALID_USERS[username] === password) {
+    const utente = VALID_USERS.find(u => u.username === username && u.password === password);
+
+    if (!utente) {
+        return res.status(401).json({ error: 'Nome utente o password errati.' });
+    }
+
+    res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
-      success: true,
-      message: "Login effettuato",
-      token: { binId: BIN_ID, apiKey: API_KEY }
+        username: utente.username,
+        token: {
+            binId: BIN_ID,
+            apiKey: API_KEY
+        }
     });
-  }
-
-  return res.status(401).json({ success: false, message: "Credenziali errate" });
 }
