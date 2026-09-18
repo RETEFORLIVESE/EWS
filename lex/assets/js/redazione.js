@@ -125,7 +125,7 @@
         <div>
           <span class="badge-categoria">${escapeHtml(a.categoria)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(a.titolo)}</p>
-          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${a.articoli.length} articoli</p>
+          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${a.articoli.filter(x => !eTitoloGruppo(x)).length} articoli</p>
         </div>
         <div class="redazione-riga__azioni">
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-modifica="${escapeHtml(a.id)}">Modifica</button>
@@ -172,6 +172,20 @@
       testo: commaEl.querySelector(".redazione-comma-testo").value,
       sottocommi: [...commaEl.querySelectorAll(".redazione-sottocomma-testo")].map(t => t.value)
     }));
+  }
+
+  // Riga dell'editor per un blocco "TITOLO" — un'intestazione centrata e in
+  // grassetto che apre un gruppo di articoli (es. "TITOLO I — Disposizioni
+  // generali"). Non è un articolo: non ha numero, rubrica né commi.
+  function renderRigaTitolo(testo, i) {
+    return `
+      <div class="redazione-titolo-gruppo" data-indice="${i}">
+        <div class="redazione-titolo-gruppo__intestazione">
+          <span>Titolo di gruppo</span>
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-titolo style="margin-left:auto;">Rimuovi</button>
+        </div>
+        <input type="text" class="redazione-titolo-testo" placeholder="Es. TITOLO I — Disposizioni generali" value="${escapeHtml(testo)}" />
+      </div>`;
   }
 
   function renderRigaArticolo(art, i) {
@@ -249,8 +263,11 @@
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
         <h3>Articoli</h3>
-        <div id="redazione-articoli">${articoli.map((a, i) => renderRigaArticolo(a, i)).join("")}</div>
-        <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-articolo">+ Aggiungi articolo</button>
+        <div id="redazione-articoli">${articoli.map((a, i) => eTitoloGruppo(a) ? renderRigaTitolo(a.testo, i) : renderRigaArticolo(a, i)).join("")}</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-articolo">+ Aggiungi articolo</button>
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-titolo">+ Aggiungi titolo di gruppo</button>
+        </div>
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva sul database</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">Annulla</button>
@@ -262,14 +279,19 @@
   /* ---------- RACCOLTA E SALVATAGGIO ---------- */
 
   function leggiArticoli() {
-    return [...document.querySelectorAll("#redazione-articoli .redazione-articolo")].map(el => ({
-      numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
-      rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
-      commi: raccogliCommiDalDOM(el).map(c => ({
-        testo: c.testo.trim(),
-        sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
-      })),
-    }));
+    return [...document.querySelectorAll("#redazione-articoli > *")].map(el => {
+      if (el.classList.contains("redazione-titolo-gruppo")) {
+        return { tipo: "titolo", testo: el.querySelector(".redazione-titolo-testo").value.trim() };
+      }
+      return {
+        numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
+        rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
+        commi: raccogliCommiDalDOM(el).map(c => ({
+          testo: c.testo.trim(),
+          sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
+        })),
+      };
+    }).filter(item => item.tipo !== "titolo" || item.testo !== ""); // scarta i blocchi titolo lasciati vuoti
   }
 
   function raccogliAtto() {
@@ -369,10 +391,24 @@
         return;
       }
 
+      // ---- Rimuovi un blocco "titolo di gruppo" ----
+      const rimTitolo = e.target.closest("[data-rimuovi-titolo]");
+      if (rimTitolo) {
+        rimTitolo.closest(".redazione-titolo-gruppo").remove();
+        return;
+      }
+
       if (e.target.id === "redazione-aggiungi-articolo") {
         const c = document.getElementById("redazione-articoli");
         const n = c.querySelectorAll(".redazione-articolo").length + 1;
         c.insertAdjacentHTML("beforeend", renderRigaArticolo({ numero: n, rubrica: "", commi: [{ testo: "", sottocommi: [] }] }, n));
+        return;
+      }
+
+      // ---- Aggiungi un blocco "titolo di gruppo" ----
+      if (e.target.id === "redazione-aggiungi-titolo") {
+        const c = document.getElementById("redazione-articoli");
+        c.insertAdjacentHTML("beforeend", renderRigaTitolo("", c.children.length));
         return;
       }
 
