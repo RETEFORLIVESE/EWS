@@ -112,14 +112,13 @@
         <!-- SCHEDA LUOGHI -->
         <div id="scheda-luoghi" class="hidden">
             <p class="nota-luoghi">
-                Qui costruisci la gerarchia geografica: crea prima il livello superiore (es. una Regione o un Distretto),
-                poi usa "+" su quella voce per aggiungerci sotto le città. Es: crea <strong>EstjiKuro</strong>, poi clicca "+" su
-                EstjiKuro per aggiungere <strong>Tagel</strong> come sua città. Ogni voce creata qui diventa automaticamente
-                selezionabile nel campo "Luogo Associato" della scheda Organi.
+                Qui modifichi <strong>tutto</strong> il database <strong>luoghi</strong>: vedi ogni gruppo (es. livello_statale, citta_principali)
+                e ogni voce, e puoi aggiungere, rinominare, spostare o eliminare. Nei moduli degli atti e degli organi si sceglie sempre l'<strong>ID della voce</strong>
+                (es. Taleen), mai il nome del gruppo. Ricorda di premere "Salva online" per rendere le modifiche visibili agli altri programmi.
             </p>
             <div class="layout">
                 <div class="tree-panel">
-                    <h3>Struttura Luoghi</h3>
+                    <h3>Database Luoghi</h3>
                     <div id="luoghi-tree-container">In caricamento...</div>
                 </div>
 
@@ -128,12 +127,18 @@
                     <p id="luoghi-form-context" style="color: gray; font-size: 14px; margin-top: -15px;">Clicca su + o Modifica nell'albero per iniziare.</p>
 
                     <input type="hidden" id="luoghi_azione_tipo">
+                    <input type="hidden" id="luoghi_natura">
                     <input type="hidden" id="luoghi_target_id">
 
                     <div class="form-group">
-                        <label>Tipo di Luogo</label>
+                        <label>Contenuto in</label>
+                        <select id="luoghi_input_gruppo" disabled></select>
+                    </div>
+
+                    <div class="form-group" id="luoghi_campo_tipo">
+                        <label>Tipo di Luogo (facoltativo)</label>
                         <select id="luoghi_input_tipo" disabled>
-                            <option value="">-- Seleziona --</option>
+                            <option value="">-- Nessun tipo --</option>
                             <option value="regione">Regione</option>
                             <option value="citta_metropolitana">Città Metropolitana</option>
                             <option value="distretto">Distretto</option>
@@ -141,13 +146,13 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" id="luoghi_campo_nome">
                         <label>Nome</label>
                         <input type="text" id="luoghi_input_nome" disabled>
                     </div>
 
                     <div class="form-group">
-                        <label>ID Luogo (codice univoco, senza spazi)</label>
+                        <label id="luoghi_label_id">ID Luogo (codice univoco, senza spazi)</label>
                         <input type="text" id="luoghi_input_id" disabled>
                     </div>
 
@@ -199,6 +204,7 @@
                 if (!datiInMemoria.alberoOrgani) datiInMemoria.alberoOrgani = [];
                 if (!datiInMemoria.alberoLuoghi) datiInMemoria.alberoLuoghi = [];
                 if (!datiInMemoria.luoghi) datiInMemoria.luoghi = {};
+                migraAlberoLuoghi();
                 renderizzaAlbero();
                 renderizzaAlberoLuoghi();
             } catch (e) { mostraErrore("Errore caricamento: " + e.message); }
@@ -324,9 +330,6 @@
 
             if (!datiInMemoria.luoghi || typeof datiInMemoria.luoghi !== 'object') datiInMemoria.luoghi = {};
             const luoghi = datiInMemoria.luoghi;
-
-            // Se l'ID coincide con un luogo creato nella scheda Luoghi, quel luogo non va toccato.
-            if (trovaNodoGenerico(datiInMemoria.alberoLuoghi, nuovoId, 'id_luogo')) return false;
 
             // Se l'ID dell'organo è cambiato, togli la vecchia voce (solo se l'avevamo creata noi nel gruppo "organi").
             if (vecchioId && vecchioId !== nuovoId) rimuoviOrganoDaLuoghi(vecchioId);
@@ -536,125 +539,298 @@
         }
 
         /* =========================================================
-           SEZIONE LUOGHI (Città / Distretti / Città Metropolitane / Regioni)
+           SEZIONE LUOGHI: editor dell'INTERO database "luoghi"
+           Il database è un albero di gruppi (es. livello_statale) e voci (es. Taleen).
+           Una voce è "ID": "Nome"  oppure  "ID": { nome, tipo, ... }.
+           Un gruppo è un oggetto che contiene altre voci/gruppi.
         ========================================================= */
+
+        function eGruppoLuogo(v) {
+            return v !== null && typeof v === 'object' && !Array.isArray(v) && !eVoceLuogo(v);
+        }
+
+        function contenitoreAlPercorso(percorso) {
+            let c = datiInMemoria.luoghi;
+            for (const chiave of percorso) {
+                if (!c || !eGruppoLuogo(c[chiave])) return null;
+                c = c[chiave];
+            }
+            return c;
+        }
+
+        function nomePercorso(percorso) {
+            return percorso.length ? percorso.map(etichettaGruppo).join(' › ') : 'Livello principale';
+        }
+
+        function contaVoci(gruppo) {
+            let n = 0;
+            Object.keys(gruppo).forEach(k => {
+                if (eVoceLuogo(gruppo[k])) n++;
+                else if (eGruppoLuogo(gruppo[k])) n += contaVoci(gruppo[k]);
+            });
+            return n;
+        }
+
+        // Elenco di tutti i gruppi (per il menu "Contenuto in"), come percorsi di chiavi.
+        function elencoGruppi(contenitore, percorso, out) {
+            Object.keys(contenitore).forEach(k => {
+                if (eGruppoLuogo(contenitore[k])) {
+                    const p = [...percorso, k];
+                    out.push(p);
+                    elencoGruppi(contenitore[k], p, out);
+                }
+            });
+            return out;
+        }
+
+        // Cambia la chiave di una voce mantenendo la sua posizione nell'elenco.
+        function sostituisciChiave(contenitore, vecchiaChiave, nuovaChiave, nuovoValore) {
+            const voci = Object.entries(contenitore);
+            voci.forEach(([k]) => delete contenitore[k]);
+            voci.forEach(([k, v]) => {
+                if (k === vecchiaChiave) contenitore[nuovaChiave] = nuovoValore;
+                else contenitore[k] = v;
+            });
+        }
+
+        // Se cambia l'ID di un luogo, aggiorna gli organi e i "genitore" che lo referenziavano.
+        function aggiornaRiferimentiLuogo(vecchio, nuovo) {
+            (function scorriOrgani(nodi) {
+                (nodi || []).forEach(n => {
+                    if (n.luogo === vecchio) n.luogo = nuovo;
+                    scorriOrgani(n.figli);
+                });
+            })(datiInMemoria.alberoOrgani);
+            (function scorriLuoghi(c) {
+                Object.keys(c || {}).forEach(k => {
+                    const v = c[k];
+                    if (eGruppoLuogo(v)) scorriLuoghi(v);
+                    else if (v !== null && typeof v === 'object' && v.genitore === vecchio) v.genitore = nuovo;
+                });
+            })(datiInMemoria.luoghi);
+        }
+
+        // Versioni precedenti tenevano i luoghi in "alberoLuoghi". Le voci non ancora presenti in "luoghi"
+        // vengono spostate lì; da ora l'unica fonte è "luoghi".
+        function migraAlberoLuoghi() {
+            if (!Array.isArray(datiInMemoria.alberoLuoghi) || datiInMemoria.alberoLuoghi.length === 0) return;
+            (function scorri(nodi, genitoreId) {
+                nodi.forEach(nodo => {
+                    if (nodo && nodo.id_luogo && !trovaContenitoreLuogo(datiInMemoria.luoghi, nodo.id_luogo)) {
+                        datiInMemoria.luoghi[nodo.id_luogo] = { nome: nodo.nome, tipo: nodo.tipo, genitore: genitoreId || null };
+                    }
+                    if (nodo && nodo.figli) scorri(nodo.figli, nodo.id_luogo);
+                });
+            })(datiInMemoria.alberoLuoghi, null);
+            datiInMemoria.alberoLuoghi = [];
+        }
 
         function renderizzaAlberoLuoghi() {
             const container = document.getElementById('luoghi-tree-container');
             container.innerHTML = '';
-            container.appendChild(creaListaNodiLuoghi(datiInMemoria.alberoLuoghi));
+            container.appendChild(creaListaLuoghi(datiInMemoria.luoghi, []));
 
-            const btnRoot = document.createElement('button');
-            btnRoot.innerText = "+ Aggiungi Luogo Principale";
-            btnRoot.className = "btn-add";
-            btnRoot.style.marginTop = "15px";
-            btnRoot.onclick = () => abilitaFormLuogo('add', null, 'Radice');
-            container.appendChild(btnRoot);
+            const barra = document.createElement('div');
+            barra.className = 'actions';
+            barra.style.marginTop = '15px';
+            const btnVoce = document.createElement('button');
+            btnVoce.className = 'btn-add'; btnVoce.style.marginLeft = '0';
+            btnVoce.innerText = '+ Aggiungi Voce';
+            btnVoce.onclick = () => abilitaFormLuogo('add', 'voce', [], null);
+            const btnGruppo = document.createElement('button');
+            btnGruppo.className = 'btn-add';
+            btnGruppo.innerText = '+ Aggiungi Gruppo';
+            btnGruppo.onclick = () => abilitaFormLuogo('add', 'gruppo', [], null);
+            barra.append(btnVoce, btnGruppo);
+            container.appendChild(barra);
         }
 
-        function creaListaNodiLuoghi(nodi) {
+        function creaListaLuoghi(contenitore, percorso) {
             const ul = document.createElement('ul');
             ul.className = 'node-list';
-            if (!nodi) return ul;
 
-            nodi.forEach(nodo => {
+            Object.keys(contenitore || {}).forEach(chiave => {
+                const valore = contenitore[chiave];
+                const voce = eVoceLuogo(valore);
+                const gruppo = eGruppoLuogo(valore);
+                if (!voce && !gruppo) return;
+
                 const li = document.createElement('li');
                 li.className = 'node-item';
-
                 const header = document.createElement('div');
                 header.className = 'node-header';
-                const etichettaTipo = ETICHETTE_TIPO_LUOGO[nodo.tipo] || 'Non specificato';
-                header.innerHTML = `<span>📍 <strong>${escapeHtml(nodo.nome)}</strong> (${escapeHtml(nodo.id_luogo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}</em></span>`;
-
                 const actions = document.createElement('div');
                 actions.className = 'actions';
 
-                const btnAdd = document.createElement('button'); btnAdd.className = 'btn-add'; btnAdd.innerText = '+';
-                btnAdd.onclick = () => abilitaFormLuogo('add', nodo.id_luogo, nodo.nome);
+                if (voce) {
+                    const nome = typeof valore === 'string' ? valore : valore.nome;
+                    const dettagli = [];
+                    if (typeof valore === 'object') {
+                        if (valore.tipo) dettagli.push(ETICHETTE_TIPO_LUOGO[valore.tipo] || valore.tipo);
+                        if (valore.genitore) {
+                            const g = trovaVoceLuogo(valore.genitore);
+                            dettagli.push('in ' + (g ? g.nome : valore.genitore));
+                        }
+                    }
+                    const extra = dettagli.length ? `<em style="color:#888; font-weight:normal;">— ${escapeHtml(dettagli.join(' · '))}</em>` : '';
+                    header.innerHTML = `<span>📍 <strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
 
-                const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
-                btnEdit.onclick = () => abilitaFormLuogo('edit', nodo.id_luogo, nodo);
+                    const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
+                    btnEdit.onclick = () => abilitaFormLuogo('edit', 'voce', percorso, chiave);
+                    const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
+                    btnDel.onclick = () => eliminaElementoLuogo(percorso, chiave);
+                    actions.append(btnEdit, btnDel);
+                } else {
+                    const n = contaVoci(valore);
+                    header.innerHTML = `<span>📂 <strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
 
-                const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
-                btnDel.onclick = () => eliminaNodoLuogo(nodo.id_luogo);
+                    const percorsoGruppo = [...percorso, chiave];
+                    const btnAddVoce = document.createElement('button'); btnAddVoce.className = 'btn-add'; btnAddVoce.innerText = '+ Voce';
+                    btnAddVoce.onclick = () => abilitaFormLuogo('add', 'voce', percorsoGruppo, null);
+                    const btnAddGruppo = document.createElement('button'); btnAddGruppo.className = 'btn-add'; btnAddGruppo.innerText = '+ Gruppo';
+                    btnAddGruppo.onclick = () => abilitaFormLuogo('add', 'gruppo', percorsoGruppo, null);
+                    const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
+                    btnEdit.onclick = () => abilitaFormLuogo('edit', 'gruppo', percorso, chiave);
+                    const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
+                    btnDel.onclick = () => eliminaElementoLuogo(percorso, chiave);
+                    actions.append(btnAddVoce, btnAddGruppo, btnEdit, btnDel);
+                }
 
-                actions.append(btnAdd, btnEdit, btnDel);
                 header.appendChild(actions);
                 li.appendChild(header);
-
-                if (nodo.figli && nodo.figli.length > 0) {
-                    li.appendChild(creaListaNodiLuoghi(nodo.figli));
-                }
+                if (gruppo) li.appendChild(creaListaLuoghi(valore, [...percorso, chiave]));
                 ul.appendChild(li);
             });
             return ul;
         }
 
-        function abilitaFormLuogo(tipo, targetId, data) {
+        // azione: 'add' | 'edit' - natura: 'voce' | 'gruppo'
+        // add:  "percorso" = gruppo in cui inserire (chiave = null)
+        // edit: "percorso" = gruppo che contiene l'elemento, "chiave" = la sua chiave
+        function abilitaFormLuogo(azione, natura, percorso, chiave) {
             document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => el.disabled = false);
             document.getElementById('luoghi_btn_salva_form').disabled = false;
-            document.getElementById('luoghi_azione_tipo').value = tipo;
-            document.getElementById('luoghi_target_id').value = targetId || 'root';
+            document.getElementById('luoghi_azione_tipo').value = azione;
+            document.getElementById('luoghi_natura').value = natura;
+            document.getElementById('luoghi_target_id').value = JSON.stringify({ percorso, chiave });
 
-            if (tipo === 'add') {
-                document.getElementById('luoghi-form-title').innerText = "Aggiungi nuovo Luogo";
-                document.getElementById('luoghi-form-context').innerText = "Verrà inserito sotto: " + (typeof data === 'string' ? data : 'Radice');
+            const eVoce = natura === 'voce';
+            document.getElementById('luoghi_campo_tipo').classList.toggle('hidden', !eVoce);
+            document.getElementById('luoghi_campo_nome').classList.toggle('hidden', !eVoce);
+            document.getElementById('luoghi_label_id').innerText = eVoce
+                ? 'ID Luogo (codice univoco, senza spazi)'
+                : 'Nome del gruppo (chiave, senza spazi)';
+
+            // Menu "Contenuto in": livello principale + tutti i gruppi (un gruppo non può stare dentro se stesso).
+            const propria = (azione === 'edit' && natura === 'gruppo') ? [...percorso, chiave] : null;
+            const inSe = p => propria && p.length >= propria.length && propria.every((k, i) => p[i] === k);
+            const opzioni = [[]].concat(elencoGruppi(datiInMemoria.luoghi, [], []).filter(p => !inSe(p)));
+            document.getElementById('luoghi_input_gruppo').innerHTML = opzioni.map(p => {
+                const valore = JSON.stringify(p);
+                const selezionato = valore === JSON.stringify(percorso) ? 'selected' : '';
+                return `<option value='${escapeHtml(valore)}' ${selezionato}>${escapeHtml(nomePercorso(p))}</option>`;
+            }).join('');
+
+            if (azione === 'add') {
+                document.getElementById('luoghi-form-title').innerText = eVoce ? "Aggiungi nuova Voce" : "Aggiungi nuovo Gruppo";
+                document.getElementById('luoghi-form-context').innerText = "Verrà inserito in: " + nomePercorso(percorso);
                 document.getElementById('luoghi_input_tipo').value = "";
                 document.getElementById('luoghi_input_nome').value = "";
                 document.getElementById('luoghi_input_id').value = "";
-            } else if (tipo === 'edit') {
-                document.getElementById('luoghi-form-title').innerText = "Modifica Luogo";
-                document.getElementById('luoghi-form-context').innerText = "Stai modificando: " + data.nome;
-                document.getElementById('luoghi_input_tipo').value = data.tipo || "";
-                document.getElementById('luoghi_input_nome').value = data.nome || "";
-                document.getElementById('luoghi_input_id').value = data.id_luogo || "";
+            } else {
+                const contenitore = contenitoreAlPercorso(percorso);
+                const valore = contenitore ? contenitore[chiave] : null;
+                document.getElementById('luoghi-form-title').innerText = eVoce ? "Modifica Voce" : "Modifica Gruppo";
+                document.getElementById('luoghi-form-context').innerText = "Stai modificando: " + chiave;
+                document.getElementById('luoghi_input_id').value = chiave;
+                if (eVoce) {
+                    document.getElementById('luoghi_input_tipo').value = (valore && typeof valore === 'object' && valore.tipo) || "";
+                    document.getElementById('luoghi_input_nome').value = typeof valore === 'string' ? valore : ((valore && valore.nome) || "");
+                }
             }
         }
 
         function applicaModificheLuogo() {
-            const tipo = document.getElementById('luoghi_azione_tipo').value;
-            const targetId = document.getElementById('luoghi_target_id').value;
-            const tipoLuogo = document.getElementById('luoghi_input_tipo').value;
-            const idLuogo = document.getElementById('luoghi_input_id').value.trim();
-            const nomeLuogo = document.getElementById('luoghi_input_nome').value.trim();
+            const azione = document.getElementById('luoghi_azione_tipo').value;
+            const natura = document.getElementById('luoghi_natura').value;
+            const bersaglio = JSON.parse(document.getElementById('luoghi_target_id').value || '{}');
+            const idNuovo = document.getElementById('luoghi_input_id').value.trim();
+            const nome = document.getElementById('luoghi_input_nome').value.trim();
+            const tipo = document.getElementById('luoghi_input_tipo').value;
+            const percorsoDest = JSON.parse(document.getElementById('luoghi_input_gruppo').value || '[]');
+            const eVoce = natura === 'voce';
+            const modifica = azione === 'edit';
 
-            if (!tipoLuogo) {
-                alert("Seleziona il Tipo di Luogo prima di continuare.");
+            if (!idNuovo) {
+                alert(eVoce ? "Inserisci l'ID del luogo." : "Inserisci il nome del gruppo.");
                 return;
             }
-            if (!idLuogo || !nomeLuogo) {
-                alert("Inserisci sia il Nome che l'ID del luogo.");
+            if (eVoce && !nome) {
+                alert("Inserisci il Nome del luogo.");
+                return;
+            }
+            const idCambiato = !modifica || idNuovo !== bersaglio.chiave;
+            if (idCambiato && /\s/.test(idNuovo)) {
+                alert("L'ID non può contenere spazi (usa ad esempio underscore).");
                 return;
             }
 
-            const nuovoNodo = {
-                id_luogo: idLuogo,
-                nome: nomeLuogo,
-                tipo: tipoLuogo,
-                figli: []
-            };
+            const destinazione = contenitoreAlPercorso(percorsoDest);
+            const origine = modifica ? contenitoreAlPercorso(bersaglio.percorso) : null;
+            if (!destinazione || (modifica && (!origine || !(bersaglio.chiave in origine)))) {
+                alert("Elemento non trovato: ricarica la pagina e riprova.");
+                return;
+            }
 
-            if (tipo === 'add') {
-                if (targetId === 'root') {
-                    datiInMemoria.alberoLuoghi.push(nuovoNodo);
-                } else {
-                    const parent = trovaNodoGenerico(datiInMemoria.alberoLuoghi, targetId, 'id_luogo');
-                    if (parent) {
-                        if (!parent.figli) parent.figli = [];
-                        parent.figli.push(nuovoNodo);
-                    }
-                }
-            } else if (tipo === 'edit') {
-                const nodo = trovaNodoGenerico(datiInMemoria.alberoLuoghi, targetId, 'id_luogo');
-                if (nodo) {
-                    nodo.id_luogo = nuovoNodo.id_luogo;
-                    nodo.nome = nuovoNodo.nome;
-                    nodo.tipo = nuovoNodo.tipo;
+            // Un gruppo non può essere spostato dentro se stesso.
+            if (modifica && !eVoce) {
+                const propria = [...bersaglio.percorso, bersaglio.chiave];
+                if (percorsoDest.length >= propria.length && propria.every((k, i) => percorsoDest[i] === k)) {
+                    alert("Un gruppo non può essere spostato dentro se stesso.");
+                    return;
                 }
             }
 
-            // Se l'ID è cambiato in modifica, la vecchia voce va tolta da "luoghi".
-            sincronizzaLuoghiConAlbero(tipo === 'edit' && targetId !== idLuogo ? [targetId] : []);
+            // Unicità: nel gruppo di destinazione, e per le voci in tutto il database.
+            const stessoElemento = modifica && destinazione === origine && idNuovo === bersaglio.chiave;
+            if (!stessoElemento && Object.prototype.hasOwnProperty.call(destinazione, idNuovo)) {
+                alert(`In "${nomePercorso(percorsoDest)}" esiste già un elemento con ID "${idNuovo}".`);
+                return;
+            }
+            if (eVoce && !(modifica && idNuovo === bersaglio.chiave) && trovaContenitoreLuogo(datiInMemoria.luoghi, idNuovo)) {
+                alert(`Esiste già un luogo con ID "${idNuovo}": gli ID delle voci devono essere unici in tutto il database.`);
+                return;
+            }
+
+            if (modifica && eVoce && idNuovo !== bersaglio.chiave &&
+                !confirm(`Cambiare l'ID da "${bersaglio.chiave}" a "${idNuovo}"?\nGli organi che lo usano vengono aggiornati qui, ma gli atti già salvati con il vecchio ID vanno riaperti e risalvati dalla redazione atti.`)) {
+                return;
+            }
+
+            // Valore da salvare.
+            let nuovoValore;
+            if (!eVoce) {
+                nuovoValore = modifica ? origine[bersaglio.chiave] : {};
+            } else {
+                const vecchio = modifica ? origine[bersaglio.chiave] : null;
+                const base = (vecchio && typeof vecchio === 'object') ? { ...vecchio } : {};
+                base.nome = nome;
+                if (tipo) base.tipo = tipo; else delete base.tipo;
+                // Se c'è solo il nome, resta nel formato semplice "ID": "Nome".
+                nuovoValore = Object.keys(base).length === 1 ? base.nome : base;
+            }
+
+            if (!modifica) {
+                destinazione[idNuovo] = nuovoValore;
+            } else if (destinazione === origine) {
+                sostituisciChiave(origine, bersaglio.chiave, idNuovo, nuovoValore);
+            } else {
+                delete origine[bersaglio.chiave];
+                destinazione[idNuovo] = nuovoValore;
+            }
+            if (modifica && eVoce && idNuovo !== bersaglio.chiave) {
+                aggiornaRiferimentiLuogo(bersaglio.chiave, idNuovo);
+            }
 
             document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('luoghi_btn_salva_form').disabled = true;
@@ -665,37 +841,18 @@
             renderizzaAlbero(); // aggiorna i riferimenti al luogo mostrati sui nodi Organi
         }
 
-        function eliminaNodoLuogo(id) {
-            if (confirm("Sei sicuro di voler eliminare questo luogo e tutti i suoi figli? Gli Organi che lo referenziano perderanno il collegamento.")) {
-                const nodo = trovaNodoGenerico(datiInMemoria.alberoLuoghi, id, 'id_luogo');
-                const idRimossi = nodo ? raccogliIdNodi(nodo, 'id_luogo') : [id];
-                rimuoviDaArrayGenerico(datiInMemoria.alberoLuoghi, id, 'id_luogo');
-                sincronizzaLuoghiConAlbero(idRimossi);
+        function eliminaElementoLuogo(percorso, chiave) {
+            const contenitore = contenitoreAlPercorso(percorso);
+            if (!contenitore || !(chiave in contenitore)) return;
+            const valore = contenitore[chiave];
+            const testo = eGruppoLuogo(valore)
+                ? `Eliminare il gruppo "${chiave}" con le sue ${contaVoci(valore)} voci? Gli organi e gli atti che le usano perderanno il collegamento.`
+                : `Eliminare il luogo "${chiave}"? Gli organi e gli atti che lo usano perderanno il collegamento.`;
+            if (confirm(testo)) {
+                delete contenitore[chiave];
                 renderizzaAlberoLuoghi();
                 renderizzaAlbero();
             }
-        }
-
-        // Aggiorna "luoghi" (usato da CA.html, redazione.js e dal menu "Luogo Associato" degli Organi)
-        // a partire dall'albero dei Luoghi. UNISCE le voci invece di sostituire tutto, così restano
-        // intatti i gruppi già presenti (es. citta_principali) e gli organi registrati in "luoghi".
-        // Ogni voce dell'albero viene salvata con nome, tipo e riferimento al genitore.
-        function sincronizzaLuoghiConAlbero(idRimossi) {
-            if (!datiInMemoria.luoghi || typeof datiInMemoria.luoghi !== 'object') datiInMemoria.luoghi = {};
-            const luoghi = datiInMemoria.luoghi;
-
-            (idRimossi || []).forEach(rimuoviVoceLuogo);
-
-            function scorri(nodi, genitoreId) {
-                (nodi || []).forEach(nodo => {
-                    const voce = { nome: nodo.nome, tipo: nodo.tipo, genitore: genitoreId || null };
-                    const contenitore = trovaContenitoreLuogo(luoghi, nodo.id_luogo);
-                    if (contenitore) contenitore[nodo.id_luogo] = voce;
-                    else luoghi[nodo.id_luogo] = voce;
-                    if (nodo.figli && nodo.figli.length) scorri(nodo.figli, nodo.id_luogo);
-                });
-            }
-            scorri(datiInMemoria.alberoLuoghi, null);
         }
     </script>
 </body>
