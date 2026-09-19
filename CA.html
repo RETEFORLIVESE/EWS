@@ -26,8 +26,6 @@
         .dettagli-organo { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; display: none; }
         .luogo-badge { display: inline-block; background: #eef5ff; color: #0055a4; padding: 5px 10px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
         .btn-sito { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 12px; }
-        .sito-web { margin: 0 0 4px 0; word-break: break-all; }
-        .sito-web a { color: #0055a4; }
 
         .norme-msg { color: #777; margin: 0; }
         .norma { border: 1px solid #e3e3ea; border-radius: 6px; margin-bottom: 10px; background: #fafbfd; }
@@ -38,10 +36,10 @@
         .norma-stato.abrogato { background: #f3e8e8; color: #8a2b2b; }
         .norma-corpo { padding: 4px 14px 14px 14px; border-top: 1px solid #eee; }
         .norma-corpo p { margin: 8px 0; }
-        .articolo { margin-top: 14px; }
-        .articolo h4 { margin: 0 0 6px 0; font-size: 15px; }
-        .comma { margin: 4px 0; white-space: pre-line; }
-        .sottocomma { margin: 2px 0 2px 22px; white-space: pre-line; }
+        .norma-etichetta { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #888; margin: 12px 0 2px 0; }
+        .norma-sunto { margin: 0 0 12px 0; line-height: 1.5; }
+        .btn-normaktiv { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
+        .btn-normaktiv:hover { background: #004283; }
     </style>
 </head>
 <body>
@@ -66,7 +64,6 @@
                 <p style="color: gray;">ID Riferimento: <code id="view-id"></code></p>
                 
                 <div id="view-sito-box" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p class="sito-web">🌐 Sito web: <a href="#" id="view-sito-url" target="_blank" rel="noopener noreferrer"></a></p>
                     <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
                 </div>
 
@@ -206,17 +203,13 @@
             return el;
         }
 
-        function letteraSottocomma(i) {
-            return (i < 26 ? String.fromCharCode(97 + i) : String(i + 1)) + ')';
-        }
+        // Indirizzo della scheda completa dell'atto su NormAktiv (l'ID è quello dell'atto).
+        const NORMAKTIV_ATTO_URL = 'https://rtf-rose.vercel.app/lex/atto.html?id=';
+        const NORMAKTIV_HOME_URL = 'https://ews-rose.vercel.app/lex/normaktiv.html';
 
-        // Commi di un articolo: accetta il formato con "commi" e quello vecchio con un solo "testo".
-        function commiDiArticolo(art) {
-            if (Array.isArray(art.commi)) {
-                return art.commi.map(c => typeof c === 'string' ? { testo: c, sottocommi: [] } : { testo: c.testo || '', sottocommi: c.sottocommi || [] });
-            }
-            if (typeof art.testo === 'string' && art.testo.trim()) return [{ testo: art.testo, sottocommi: [] }];
-            return [];
+        function urlNormaktiv(atto) {
+            const id = atto.id || atto.idAtto || atto.id_atto || atto.slug;
+            return id ? NORMAKTIV_ATTO_URL + encodeURIComponent(id) : NORMAKTIV_HOME_URL;
         }
 
         function creaNorma(atto) {
@@ -235,19 +228,19 @@
             const corpo = creaElemento('div', 'norma-corpo');
             const emanazione = [atto.dataEmanazione, atto.promulgatoDa ? 'promulgato da ' + atto.promulgatoDa : ''].filter(Boolean).join(' — ');
             if (emanazione) corpo.appendChild(creaElemento('p', 'norma-meta', emanazione));
-            if (atto.sommario) corpo.appendChild(creaElemento('p', '', atto.sommario));
 
-            (Array.isArray(atto.articoli) ? atto.articoli : []).forEach(art => {
-                const boxArt = creaElemento('div', 'articolo');
-                boxArt.appendChild(creaElemento('h4', '', `Art. ${art.numero || ''}${art.rubrica ? ' — ' + art.rubrica : ''}`));
-                commiDiArticolo(art).forEach((c, ic) => {
-                    boxArt.appendChild(creaElemento('div', 'comma', `${ic + 1}. ${c.testo}`));
-                    (c.sottocommi || []).forEach((sc, is) => {
-                        boxArt.appendChild(creaElemento('div', 'sottocomma', `${letteraSottocomma(is)} ${sc}`));
-                    });
-                });
-                corpo.appendChild(boxArt);
-            });
+            // Sunto: mostriamo il sommario dell'atto, non il testo integrale.
+            const nArt = Array.isArray(atto.articoli) ? atto.articoli.length : 0;
+            const sunto = (atto.sommario || '').toString().trim()
+                || (nArt ? `Atto composto da ${nArt} ${nArt === 1 ? 'articolo' : 'articoli'}.` : 'Sunto non disponibile.');
+            corpo.appendChild(creaElemento('div', 'norma-etichetta', 'Sunto'));
+            corpo.appendChild(creaElemento('p', 'norma-sunto', sunto));
+
+            const link = creaElemento('a', 'btn-normaktiv', 'Leggi il testo completo su NormAktiv →');
+            link.href = urlNormaktiv(atto);
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            corpo.appendChild(link);
             d.appendChild(corpo);
             return d;
         }
@@ -298,14 +291,10 @@
             const nomeLuogo = descrizioneLuogo(valoreLuogo) || "Nessun luogo associato";
             document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + "📍 " + nomeLuogo;
 
-            // Sito web facoltativo: se presente mostra l'indirizzo e il pulsante, altrimenti nasconde tutto.
+            // Sito web facoltativo: se presente mostra il pulsante, altrimenti nasconde tutto.
             const boxSito = document.getElementById('view-sito-box');
             const urlSito = normalizzaUrl(nodo.link_sito);
             if (urlSito) {
-                const testoSito = urlSito.replace(/^https?:\/\//, '').replace(/\/$/, '');
-                const linkTesto = document.getElementById('view-sito-url');
-                linkTesto.href = urlSito;
-                linkTesto.innerText = testoSito;
                 document.getElementById('view-link').href = urlSito;
                 boxSito.style.display = 'block';
             } else {
