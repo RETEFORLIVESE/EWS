@@ -1,5 +1,6 @@
 (function () {
-  // Immagine facoltativa dell'atto, mostrata tra il pannello delle informazioni e l'indice.
+  // Immagine facoltativa dell'atto: un quadrato largo quanto l'indice, posizionato
+  // sopra l'indice (colonna di sinistra) e sotto il pannello dei dati generali.
   // Nell'atto si salvano i campi "immagine" (nome del file o indirizzo) e "didascalia".
   // Sono accettati indirizzi http(s) e percorsi relativi al sito; qualunque altro schema
   // (javascript:, data:, ...) viene scartato.
@@ -140,12 +141,14 @@
           <div><dt>Articoli</dt><dd>${atto.articoli.filter(a => !eTitoloGruppo(a)).length}</dd></div>
         </dl>
       </section>
-      ${htmlImmagineAtto(atto)}
       <div class="corpo-atto">
-        <nav class="indice-articoli" aria-label="Indice degli articoli">
-          <h2>Indice</h2>
-          <ol>${indice}</ol>
-        </nav>
+        <div class="colonna-indice">
+          ${htmlImmagineAtto(atto)}
+          <nav class="indice-articoli" aria-label="Indice degli articoli">
+            <h2>Indice</h2>
+            <ol>${indice}</ol>
+          </nav>
+        </div>
         <div class="articoli">${articoli}</div>
       </div>`;
   }
