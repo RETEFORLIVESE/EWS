@@ -1,61 +1,102 @@
-const ApiOrgani = {
-    binId: null,
-    apiKey: null,
+// js/api-organi.js
+// Libreria client per CA.html / redazioneCA.html.
+// Gestisce login, lettura pubblica e salvataggio (dopo login) dell'albero Organi.
 
-    loadCredentials: function() {
-        this.binId = sessionStorage.getItem('organi_binId'); //[cite: 1]
-        this.apiKey = sessionStorage.getItem('organi_apiKey'); //[cite: 1]
-        return this.isLoggedIn();
-    },
+const ApiOrgani = (function () {
+    const STORAGE_KEY = 'organi_credenziali';
 
-    isLoggedIn: function() {
-        return !!(this.binId && this.apiKey);
-    },
+    // --- Credenziali (memorizzate solo per la sessione del browser) ---
 
-    loadDati: async function() {
-        const response = await fetch('/api/organi');
-        if (!response.ok) throw new Error("Impossibile caricare i dati.");
-        return await response.json();
-    },
+    function loadCredentials() {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        try {
+            const cred = JSON.parse(raw);
+            if (cred && cred.binId && cred.apiKey) return cred;
+            return null;
+        } catch (e) {
+            return null;
+        }
+    }
 
-    login: async function(username, password) {
-        const response = await fetch('/api/login-organi', {
+    function saveCredentials(cred) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cred));
+    }
+
+    function logout() {
+        sessionStorage.removeItem(STORAGE_KEY);
+    }
+
+    // --- Login ---
+
+    async function login(username, password) {
+        const risposta = await fetch('/api/login-organi', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-        const data = await response.json();
-        
-        if (data.success) {
-            this.binId = data.binId;
-            this.apiKey = data.apiKey;
-            sessionStorage.setItem('organi_binId', data.binId); //[cite: 1]
-            sessionStorage.setItem('organi_apiKey', data.apiKey); //[cite: 1]
-            return true;
+
+        let dati = {};
+        try { dati = await risposta.json(); } catch (e) { /* ignora */ }
+
+        if (!risposta.ok || !dati.success) {
+            throw new Error(dati.error || 'Credenziali non valide.');
         }
-        throw new Error(data.error);
-    },
 
-    saveDati: async function(nuoviDati) {
-        if (!this.isLoggedIn()) throw new Error("Non autenticato");
+        saveCredentials({ binId: dati.binId, apiKey: dati.apiKey, username: dati.username || username });
+        return dati;
+    }
 
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${this.binId}`, {
+    // --- Lettura pubblica (usata sia da CA.html che da redazioneCA.html) ---
+
+    async function loadDati() {
+        const risposta = await fetch('/api/organi', { cache: 'no-store' });
+        if (!risposta.ok) {
+            throw new Error('Errore lettura: HTTP ' + risposta.status);
+        }
+        const dati = await risposta.json();
+        if (!dati || dati.error) {
+            throw new Error((dati && dati.error) || 'Dati non disponibili.');
+        }
+        if (!dati.luoghi) dati.luoghi = {};
+        if (!dati.alberoOrgani) dati.alberoOrgani = [];
+        return dati;
+    }
+
+    // --- Lettura pubblica degli atti (norme), letti dal server con BIN_ID ---
+
+    async function loadAtti() {
+        const risposta = await fetch('/api/atti-organi', { cache: 'no-store' });
+        let dati = {};
+        try { dati = await risposta.json(); } catch (e) { /* ignora */ }
+        if (!risposta.ok || !dati || dati.error) {
+            throw new Error((dati && dati.error) || ('HTTP ' + risposta.status));
+        }
+        return Array.isArray(dati.atti) ? dati.atti : [];
+    }
+
+    // --- Scrittura (solo dopo login, direttamente su JSONBin) ---
+
+    async function saveDati(datiCompleti) {
+        const cred = loadCredentials();
+        if (!cred) {
+            throw new Error('Sessione scaduta: effettua di nuovo il login.');
+        }
+
+        const risposta = await fetch(`https://api.jsonbin.io/v3/b/${cred.binId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Master-Key': this.apiKey //[cite: 1]
+                'X-Master-Key': cred.apiKey
             },
-            body: JSON.stringify(nuoviDati)
+            body: JSON.stringify(datiCompleti)
         });
-        
-        if (!response.ok) throw new Error("Errore durante il salvataggio su JSONBin");
-        return await response.json();
-    },
 
-    logout: function() {
-        this.binId = null;
-        this.apiKey = null;
-        sessionStorage.removeItem('organi_binId'); //[cite: 1]
-        sessionStorage.removeItem('organi_apiKey'); //[cite: 1]
+        if (!risposta.ok) {
+            throw new Error('Errore salvataggio: HTTP ' + risposta.status);
+        }
+        return risposta.json();
     }
-};
+
+    return { loadCredentials, login, logout, loadDati, loadAtti, saveDati };
+})();
