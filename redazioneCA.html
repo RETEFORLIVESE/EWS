@@ -422,7 +422,8 @@
             container.appendChild(btnRoot);
         }
 
-        function creaListaNodi(nodi, parentId) {
+        function creaListaNodi(nodi, parentId, livello) {
+            livello = livello || 1;
             const ul = document.createElement('ul');
             ul.className = 'node-list';
             if (!nodi) return ul;
@@ -445,13 +446,13 @@
                 if (haFigli) {
                     const details = document.createElement('details');
                     details.className = 'node-item';
-                    details.open = true;
+                    details.open = false;
                     const summary = document.createElement('summary');
                     summary.className = 'node-header';
                     summary.innerHTML = htmlTesto;
                     summary.appendChild(actions);
                     details.appendChild(summary);
-                    details.appendChild(creaListaNodi(nodo.figli, nodo.id_organo));
+                    details.appendChild(creaListaNodi(nodo.figli, nodo.id_organo, livello + 1));
                     ul.appendChild(details);
                 } else {
                     const li = document.createElement('li');
@@ -694,7 +695,8 @@
             container.appendChild(barra);
         }
 
-        function creaListaLuoghi(contenitore, percorso) {
+        function creaListaLuoghi(contenitore, percorso, livello) {
+            livello = livello || 1;
             const ul = document.createElement('ul');
             ul.className = 'node-list';
 
@@ -743,13 +745,13 @@
 
                     const details = document.createElement('details');
                     details.className = 'node-item';
-                    details.open = true;
+                    details.open = false;
                     const summary = document.createElement('summary');
                     summary.className = 'node-header';
                     summary.innerHTML = htmlTesto;
                     summary.appendChild(actions);
                     details.appendChild(summary);
-                    details.appendChild(creaListaLuoghi(valore, percorsoGruppo));
+                    details.appendChild(creaListaLuoghi(valore, percorsoGruppo, livello + 1));
                     ul.appendChild(details);
                 }
             });
