@@ -46,8 +46,27 @@
         details.node-item { margin-top: 10px; }
         summary.node-header { cursor: pointer; list-style: none; }
         summary.node-header::-webkit-details-marker { display: none; }
-        summary.node-header::before { content: '▸'; margin-right: 8px; color: #888; font-size: 12px; display: inline-block; width: 10px; }
-        details.node-item[open] > summary.node-header::before { content: '▾'; }
+
+        /* Icone cartella (aperta/chiusa) e documento, come nell'Indice di CA.html */
+        .node-header > span::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            flex-shrink: 0;
+            vertical-align: middle;
+            background-image: url('Icons/DocumentW95.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        summary.node-header > span::before {
+            background-image: url('Icons/FolderclosedW95.png');
+        }
+        details.node-item[open] > summary.node-header > span::before {
+            background-image: url('Icons/FolderOpenedW95.png');
+        }
 
         /* --- Adattamento per schermi stretti (telefoni/tablet in verticale) --- */
         @media (max-width: 720px) {
