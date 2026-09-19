@@ -41,6 +41,9 @@
 
         a { color: inherit; text-decoration: none; }
         
+        /* FIX: Prevents large images (like the logo) from overflowing and bleeding over the layout */
+        img { max-width: 100%; display: block; }
+        
         .top-strip {
             background: var(--ist-blue-deep);
             color: rgba(255,255,255,0.85);
@@ -86,14 +89,17 @@
         }
 
         .brand-seal {
-            width: 60px;
-            height: 60px;
+            width: 76px;
+            height: 76px;
             display: grid;
             place-items: center;
             flex-shrink: 0;
         }
 
         .brand-seal img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
             filter: drop-shadow(0 0 6px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.75));
         }
 
@@ -146,7 +152,7 @@
             cursor: pointer; 
             padding: 0.7rem 0.8rem; 
             background: var(--ist-white); 
-            border: 1px solid transparent; 
+            border: 1px solid var(--ist-line); 
             border-radius: 4px; 
             font-weight: 600; 
             font-size: 0.95rem;
@@ -159,18 +165,21 @@
         .sidebar summary:hover { background: var(--ist-azure); color: var(--ist-blue-deep); }
         .sidebar summary::-webkit-details-marker { display: none; }
         
-        /* Custom Folder Icon */
+        /* Custom Folder Icon - RESTORED W95 */
         .sidebar summary::before {
             content: '';
             display: inline-block;
-            width: 18px; height: 18px;
-            margin-right: 10px;
+            width: 16px; 
+            height: 16px;
+            margin-right: 8px;
             flex-shrink: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%231B5FA8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
+            background-image: url('Icons/FolderclosedW95.png');
+            background-size: contain; 
+            background-repeat: no-repeat; 
+            background-position: center;
         }
         .sidebar details[open] > summary::before {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%231B5FA8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19 13H5" /></svg>');
+            background-image: url('Icons/FolderOpenedW95.png');
         }
         .sidebar details[open] > summary {
             background: var(--ist-azure);
@@ -178,7 +187,7 @@
             color: var(--ist-blue-deep);
         }
         
-        /* Custom File Icon */
+        /* Custom File Icon - RESTORED W95 */
         .nodo-foglia { 
             padding: 0.6rem 0.8rem; 
             margin-bottom: 2px;
@@ -192,12 +201,12 @@
         }
         .nodo-foglia:hover { background: var(--ist-azure); color: var(--ist-blue-deep); }
         .nodo-foglia::before {
-            content: ''; display: inline-block; width: 16px; height: 16px; margin-right: 12px; margin-left: 2px; flex-shrink: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%237A8894" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>');
+            content: ''; display: inline-block; width: 16px; height: 16px; margin-right: 8px; flex-shrink: 0;
+            background-image: url('Icons/DocumentW95.png');
             background-size: contain; background-repeat: no-repeat; background-position: center;
         }
         
-        .figli-container { padding-left: 14px; margin-top: 4px; margin-bottom: 8px; border-left: 1px solid var(--ist-line); margin-left: 18px; }
+        .figli-container { padding-left: 14px; margin-top: 4px; margin-bottom: 8px; border-left: 1px dashed var(--ist-line); margin-left: 18px; }
         
         .content { flex: 1; padding: clamp(1.5rem, 4vw, 3rem); overflow-y: auto; position: relative; }
         
@@ -229,7 +238,6 @@
         .dettagli-organo h2 { color: var(--ist-blue-deep); font-size: 2.2rem; font-weight: 900; line-height: 1.1; margin-bottom: 0.5rem; }
         .dettagli-organo p > code { background: var(--ist-azure); padding: 0.1rem 0.4rem; border-radius: 3px; color: var(--ist-blue-deep); font-family: monospace; font-size: 0.9em; }
         
-        /* Buttons based on index.html btn-primary */
         .btn-sito, .btn-normaktiv { 
             display: inline-flex; 
             align-items: center; 
@@ -359,25 +367,8 @@
         <div class="content">
             <div id="messaggio-iniziale" style="text-align: center; color: var(--ist-text); margin-top: 50px; padding: 2rem; background: var(--ist-white); border-radius: 4px; border: 1px dashed var(--ist-line);">
                 <p style="font-size: 1.1rem; font-weight: 600; color: var(--ist-blue-deep); margin-bottom: 0.5rem;">Benvenuto nel Portale</p>
-                Seleziona un organo dall'indice a sinistra per visualizzarne i dettagli.
-            </div>
-
-            <div class="dettagli-organo" id="dettagli-panel">
-                <div class="luogo-badge" id="view-luogo">Luogo</div>
-                <h2 id="view-nome">Nome Organo</h2>
-                <p style="color: var(--ist-text); font-size: 0.9rem;">ID Riferimento: <code id="view-id"></code></p>
-                
-                <div id="view-sito-box" style="display: none;">
-                    <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
-                </div>
-
-                <div class="sezione-container">
-                    <h3 class="sezione-titolo">Norme</h3>
-                    <div id="view-norme"></div>
-                </div>
-
-                <div class="sezione-container">
-                    <h3 class="sezione-titolo">Ultima elezione</h3>
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <h3 style="margin: 0 0 12px 0;">Ultima elezione</h3>
                     <div id="view-elezione"></div>
                 </div>
             </div>
@@ -385,6 +376,24 @@
     </div>
 
     <script>
+        // Fallback per l'ambiente di anteprima se api-organi.js non viene caricato
+        if (typeof window.ApiOrgani === 'undefined') {
+            console.warn("ApiOrgani non trovato (probabile ambiente di anteprima). Utilizzo di un mock temporaneo.");
+            window.ApiOrgani = {
+                loadAtti: async () => [{
+                    id: "atto-1", titolo: "Costituzione di Test", stato: "in vigore", categoria: "Costituzione", anno: "2026", luogo: "TestLinn", sommario: "Questo è un atto fittizio generato per l'ambiente di anteprima per evitare errori di caricamento."
+                }],
+                loadDati: async () => ({
+                    alberoOrgani: [
+                        { id_organo: "org-1", nome_display: "Unione (Test Anteprima)", categoria: "congresso", luogo: "TestLinn", figli: [
+                            { id_organo: "org-2", nome_display: "EstjiLinn", categoria: "assemblea", luogo: "TestLinn", figli: [] }
+                        ]}
+                    ], 
+                    luoghi: { "TestLinn": { nome: "EstjiLinn", tipo: "cittametropolitana" } }
+                })
+            };
+        }
+
         let datiPubblici = null;
         let attiPubblici = [];
         let erroreAtti = null;
