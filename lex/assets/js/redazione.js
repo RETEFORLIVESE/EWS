@@ -225,7 +225,7 @@
         <div>
           <span class="badge-categoria">${escapeHtml(a.categoria)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(a.titolo)}</p>
-          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${a.articoli.length} articoli</p>
+          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${a.articoli.filter(x => !eTitoloGruppo(x)).length} articoli</p>
         </div>
         <div class="redazione-riga__azioni">
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-modifica="${escapeHtml(a.id)}">Modifica</button>
@@ -274,6 +274,32 @@
     }));
   }
 
+  // Pulsanti ▲ ▼ per spostare una voce (articolo o titolo) in alto o in basso.
+  function pulsantiSposta() {
+    return `
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--secondario" data-sposta="su" title="Sposta in alto" aria-label="Sposta in alto">▲</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--secondario" data-sposta="giu" title="Sposta in basso" aria-label="Sposta in basso">▼</button>`;
+  }
+
+  // Un titolo è un'intestazione di gruppo { tipo: "titolo", testo }: non è un articolo,
+  // non ha numero né commi e nell'atto viene mostrato come semplice testo centrato in grassetto.
+  function renderRigaTitolo(voce) {
+    return `
+      <div class="redazione-titolo-gruppo" data-tipo="titolo">
+        <div class="redazione-titolo-gruppo__intestazione">
+          <span>Titolo</span>
+          ${pulsantiSposta()}
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-converti-in-articolo title="Trasforma questo titolo in un articolo">→ Articolo</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-titolo style="margin-left:auto;">Rimuovi titolo</button>
+        </div>
+        <input type="text" class="redazione-titolo-testo" placeholder="es. TITOLO I - FORMA DELLO STATO" value="${escapeHtml(voce.testo)}" />
+      </div>`;
+  }
+
+  function renderRigaVoce(voce, i) {
+    return eTitoloGruppo(voce) ? renderRigaTitolo(voce) : renderRigaArticolo(voce, i);
+  }
+
   function renderRigaArticolo(art, i) {
     const commi = commiDiArticolo(art);
     const commiHtml = commi.map((c, ic) => renderComma(c, ic)).join("");
@@ -282,6 +308,8 @@
         <div class="redazione-articolo__intestazione">
           <span>Articolo</span>
           <input type="text" class="redazione-art-numero" value="${escapeHtml(art.numero)}" style="width:70px;" />
+          ${pulsantiSposta()}
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-converti-in-titolo title="Trasforma questo articolo in un titolo (il testo del titolo sarà la rubrica)">→ Titolo</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-articolo="${i}" style="margin-left:auto;">Rimuovi articolo</button>
         </div>
         <input type="text" class="redazione-art-rubrica" placeholder="Rubrica dell'articolo" value="${escapeHtml(art.rubrica)}" />
@@ -348,13 +376,24 @@
           <label for="f-sommario">Sommario (mostrato nell'elenco)</label>
           <textarea id="f-sommario" rows="2">${atto ? escapeHtml(atto.sommario) : ""}</textarea>
         </div>
+        <div class="redazione-riga-campi">
+          <div class="redazione-campo">
+            <label for="f-immagine">Immagine (opzionale)</label>
+            <input type="text" id="f-immagine" value="${atto ? escapeHtml(atto.immagine) : ""}" placeholder="es. Stato.png oppure https://…/immagine.png" />
+          </div>
+          <div class="redazione-campo">
+            <label for="f-didascalia">Didascalia dell'immagine</label>
+            <input type="text" id="f-didascalia" value="${atto ? escapeHtml(atto.didascalia) : ""}" />
+          </div>
+        </div>
         <div class="redazione-campo">
           <label for="f-id">Identificativo URL (id)</label>
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
         <h3>Articoli</h3>
-        <div id="redazione-articoli">${articoli.map((a, i) => renderRigaArticolo(a, i)).join("")}</div>
+        <div id="redazione-articoli">${articoli.map((a, i) => renderRigaVoce(a, i)).join("")}</div>
         <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-articolo">+ Aggiungi articolo</button>
+        <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-titolo">+ Aggiungi titolo</button>
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva sul database</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">Annulla</button>
@@ -365,15 +404,24 @@
 
   /* ---------- RACCOLTA E SALVATAGGIO ---------- */
 
+  // Legge articoli e titoli nell'ordine esatto in cui compaiono nell'editor
+  // (quindi rispetta gli spostamenti fatti con ▲ ▼).
   function leggiArticoli() {
-    return [...document.querySelectorAll("#redazione-articoli .redazione-articolo")].map(el => ({
-      numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
-      rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
-      commi: raccogliCommiDalDOM(el).map(c => ({
-        testo: c.testo.trim(),
-        sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
-      })),
-    }));
+    return [...document.querySelectorAll("#redazione-articoli > .redazione-articolo, #redazione-articoli > .redazione-titolo-gruppo")]
+      .map(el => {
+        if (el.classList.contains("redazione-titolo-gruppo")) {
+          return { tipo: "titolo", testo: el.querySelector(".redazione-titolo-testo").value.trim() };
+        }
+        return {
+          numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
+          rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
+          commi: raccogliCommiDalDOM(el).map(c => ({
+            testo: c.testo.trim(),
+            sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
+          })),
+        };
+      })
+      .filter(v => !eTitoloGruppo(v) || v.testo !== ""); // i titoli vuoti non vengono salvati
   }
 
   function raccogliAtto() {
@@ -381,6 +429,8 @@
     const catNuova = document.getElementById("f-categoria-nuova").value.trim();
     const categoria = catNuova || document.getElementById("f-categoria").value;
     const idBase = slugify(document.getElementById("f-id").value.trim() || titolo);
+    const immagine = document.getElementById("f-immagine").value.trim();
+    const didascalia = document.getElementById("f-didascalia").value.trim();
     return {
       id: idUnivoco(idBase, idInModifica),
       categoria,
@@ -392,6 +442,7 @@
       luogo: document.getElementById("f-luogo").value,
       stato: document.getElementById("f-stato").value,
       sommario: document.getElementById("f-sommario").value.trim(),
+      ...(immagine ? { immagine, didascalia } : {}),
       articoli: leggiArticoli(),
     };
   }
@@ -478,6 +529,61 @@
         const c = document.getElementById("redazione-articoli");
         const n = c.querySelectorAll(".redazione-articolo").length + 1;
         c.insertAdjacentHTML("beforeend", renderRigaArticolo({ numero: n, rubrica: "", commi: [{ testo: "", sottocommi: [] }] }, n));
+        return;
+      }
+
+      // ---- Sposta un articolo o un titolo in alto / in basso ----
+      const sposta = e.target.closest("[data-sposta]");
+      if (sposta) {
+        const riga = sposta.closest(".redazione-articolo, .redazione-titolo-gruppo");
+        const su = sposta.getAttribute("data-sposta") === "su";
+        const altra = su ? riga.previousElementSibling : riga.nextElementSibling;
+        if (altra) {
+          if (su) riga.parentNode.insertBefore(riga, altra);
+          else riga.parentNode.insertBefore(altra, riga);
+          riga.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          sposta.focus();
+        }
+        return;
+      }
+
+      // ---- Aggiungi un titolo in fondo all'elenco ----
+      if (e.target.id === "redazione-aggiungi-titolo") {
+        const c = document.getElementById("redazione-articoli");
+        c.insertAdjacentHTML("beforeend", renderRigaTitolo({ testo: "" }));
+        c.lastElementChild.querySelector(".redazione-titolo-testo").focus();
+        return;
+      }
+
+      // ---- Rimuovi un titolo ----
+      const rimTitolo = e.target.closest("[data-rimuovi-titolo]");
+      if (rimTitolo) {
+        rimTitolo.closest(".redazione-titolo-gruppo").remove();
+        return;
+      }
+
+      // ---- Trasforma un articolo in titolo (per correggere i titoli salvati come articoli) ----
+      const inTitolo = e.target.closest("[data-converti-in-titolo]");
+      if (inTitolo) {
+        const riga = inTitolo.closest(".redazione-articolo");
+        const rubrica = riga.querySelector(".redazione-art-rubrica").value.trim();
+        const commi = raccogliCommiDalDOM(riga);
+        const haTesto = commi.some(c => c.testo.trim() !== "" || c.sottocommi.some(s => s.trim() !== ""));
+        if (haTesto && !confirm("Questo articolo contiene dei commi: trasformandolo in titolo andranno persi. Continuare?")) return;
+        const testo = rubrica || (commi[0] ? commi[0].testo.trim() : "");
+        riga.insertAdjacentHTML("afterend", renderRigaTitolo({ testo }));
+        riga.remove();
+        return;
+      }
+
+      // ---- Trasforma un titolo in articolo ----
+      const inArticolo = e.target.closest("[data-converti-in-articolo]");
+      if (inArticolo) {
+        const riga = inArticolo.closest(".redazione-titolo-gruppo");
+        const testo = riga.querySelector(".redazione-titolo-testo").value.trim();
+        const n = document.querySelectorAll("#redazione-articoli .redazione-articolo").length + 1;
+        riga.insertAdjacentHTML("afterend", renderRigaArticolo({ numero: n, rubrica: testo, commi: [{ testo: "", sottocommi: [] }] }, n));
+        riga.remove();
         return;
       }
 
