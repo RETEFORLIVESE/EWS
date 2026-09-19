@@ -367,8 +367,25 @@
         <div class="content">
             <div id="messaggio-iniziale" style="text-align: center; color: var(--ist-text); margin-top: 50px; padding: 2rem; background: var(--ist-white); border-radius: 4px; border: 1px dashed var(--ist-line);">
                 <p style="font-size: 1.1rem; font-weight: 600; color: var(--ist-blue-deep); margin-bottom: 0.5rem;">Benvenuto nel Portale</p>
-                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <h3 style="margin: 0 0 12px 0;">Ultima elezione</h3>
+                <p>Seleziona un organo dall'indice a sinistra per visualizzarne i dettagli.</p>
+            </div>
+
+            <div class="dettagli-organo" id="dettagli-panel">
+                <div class="luogo-badge" id="view-luogo">Luogo</div>
+                <h2 id="view-nome">Nome Organo</h2>
+                <p style="color: var(--ist-text); margin-bottom: 1.5rem;">ID Riferimento: <code id="view-id"></code></p>
+                
+                <div id="view-sito-box" style="display: none; margin-bottom: 2rem;">
+                    <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
+                </div>
+
+                <div class="sezione-container">
+                    <h3 class="sezione-titolo">Norme collegate</h3>
+                    <div id="view-norme"></div>
+                </div>
+
+                <div class="sezione-container">
+                    <h3 class="sezione-titolo">Ultima elezione</h3>
                     <div id="view-elezione"></div>
                 </div>
             </div>
