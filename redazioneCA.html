@@ -48,7 +48,7 @@
         summary.node-header { cursor: pointer; list-style: none; }
         summary.node-header::-webkit-details-marker { display: none; }
 
-        /* Icone cartella (aperta/chiusa) e documento, come nell'Indice di CA.html */
+        /* Icone cartella (aperta/chiusa) e documento, con supporto per icone personalizzate */
         .node-header > span::before {
             content: '';
             display: inline-block;
@@ -57,16 +57,16 @@
             margin-right: 8px;
             flex-shrink: 0;
             vertical-align: middle;
-            background-image: url('Icons/DocumentW95.png');
+            background-image: var(--icona-custom, url('Icons/DocumentW95.png'));
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
         }
         summary.node-header > span::before {
-            background-image: url('Icons/FolderclosedW95.png');
+            background-image: var(--icona-custom, url('Icons/FolderclosedW95.png'));
         }
         details.node-item[open] > summary.node-header > span::before {
-            background-image: url('Icons/FolderOpenedW95.png');
+            background-image: var(--icona-custom, url('Icons/FolderOpenedW95.png'));
         }
 
         /* --- Adattamento per schermi stretti (telefoni/tablet in verticale) --- */
@@ -157,6 +157,17 @@
                     <div class="form-group">
                         <label>Link Sito Web (Opzionale)</label>
                         <input type="url" id="input_link" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Icona (Opzionale)</label>
+                        <select id="input_icona" disabled>
+                            <option value="">-- Predefinita --</option>
+                            <option value="Stato.png">Stato (Stato.png)</option>
+                            <option value="DocumentW95.png">Documento (DocumentW95.png)</option>
+                            <option value="FolderclosedW95.png">Cartella (FolderclosedW95.png)</option>
+                            <!-- Aggiungi qui le altre icone di GitHub -->
+                        </select>
                     </div>
 
                     <button class="btn-save" id="btn_salva_form" onclick="applicaModifiche()" disabled>Applica Modifiche (Bozza)</button>
@@ -322,15 +333,12 @@
            Un gruppo è un oggetto che contiene altre voci (es. "citta_principali").
         ========================================================= */
 
-        // Gli organi (congressi/assemblee) vengono registrati anche in "luoghi", dentro questo gruppo,
-        // così altri programmi possono usarli come qualunque altro luogo.
         const GRUPPO_ORGANI_IN_LUOGHI = 'organi';
 
         function eVoceLuogo(v) {
             return typeof v === 'string' || (v !== null && typeof v === 'object' && typeof v.nome === 'string');
         }
 
-        // Restituisce l'oggetto (radice o gruppo) che contiene la chiave "id", cercando in tutti i gruppi.
         function trovaContenitoreLuogo(contenitore, id) {
             if (!contenitore || typeof contenitore !== 'object') return null;
             if (Object.prototype.hasOwnProperty.call(contenitore, id) && eVoceLuogo(contenitore[id])) return contenitore;
@@ -344,7 +352,6 @@
             return null;
         }
 
-        // Elenco piatto [{ id, nome, tipo, gruppo }] di tutte le voci, gruppi compresi (senza doppioni).
         function elencoLuoghi() {
             const risultato = [];
             const visti = new Set();
@@ -387,7 +394,6 @@
             return ids;
         }
 
-        // Registra (o aggiorna) un organo dentro "luoghi". Ritorna true se ha scritto qualcosa.
         function registraOrganoInLuoghi(vecchioId, nuovoId, nome) {
             nuovoId = (nuovoId || '').trim();
             nome = (nome || '').trim();
@@ -396,10 +402,8 @@
             if (!datiInMemoria.luoghi || typeof datiInMemoria.luoghi !== 'object') datiInMemoria.luoghi = {};
             const luoghi = datiInMemoria.luoghi;
 
-            // Se l'ID dell'organo è cambiato, togli la vecchia voce (solo se l'avevamo creata noi nel gruppo "organi").
             if (vecchioId && vecchioId !== nuovoId) rimuoviOrganoDaLuoghi(vecchioId);
 
-            // Voce già presente (anche in un altro gruppo): aggiorna il nome dove si trova.
             const contenitore = trovaContenitoreLuogo(luoghi, nuovoId);
             if (contenitore) {
                 if (typeof contenitore[nuovoId] === 'string') contenitore[nuovoId] = nome;
@@ -407,15 +411,12 @@
                 return true;
             }
 
-            // Voce nuova: va nel gruppo degli organi.
             if (luoghi[GRUPPO_ORGANI_IN_LUOGHI] === undefined) luoghi[GRUPPO_ORGANI_IN_LUOGHI] = {};
-            if (eVoceLuogo(luoghi[GRUPPO_ORGANI_IN_LUOGHI])) return false; // nome del gruppo già usato da una voce normale
+            if (eVoceLuogo(luoghi[GRUPPO_ORGANI_IN_LUOGHI])) return false;
             luoghi[GRUPPO_ORGANI_IN_LUOGHI][nuovoId] = nome;
             return true;
         }
 
-        // Toglie da "luoghi" un organo, ma solo se sta nel gruppo creato da questa pagina.
-        // Le voci inserite a mano in altri gruppi non vengono mai cancellate da qui.
         function rimuoviOrganoDaLuoghi(id) {
             const luoghi = datiInMemoria.luoghi;
             const gruppo = luoghi && luoghi[GRUPPO_ORGANI_IN_LUOGHI];
@@ -452,7 +453,9 @@
                 const etichettaTipo = nodo.categoria === 'assemblea' ? 'Assemblea' : (nodo.categoria === 'congresso' ? 'Congresso' : 'Non specificato');
                 const infoLuogo = trovaVoceLuogo(nodo.luogo);
                 const testoLuogo = infoLuogo ? ` · ${escapeHtml(infoLuogo.nome)}` : '';
-                const htmlTesto = `<span><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
+                
+                const customStyle = nodo.icona ? ` style="--icona-custom: url('Icons/${escapeHtml(nodo.icona)}');"` : '';
+                const htmlTesto = `<span${customStyle}><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
 
                 const actions = document.createElement('div');
                 actions.className = 'actions';
@@ -498,7 +501,6 @@
                 return `<option value="${escapeHtml(l.id)}" ${l.id === selezionato ? 'selected' : ''}>${escapeHtml(testo)}</option>`;
             }
 
-            // Prima le voci senza gruppo, poi un <optgroup> per ogni gruppo (nell'ordine in cui compaiono).
             voci.filter(l => !l.gruppo).forEach(l => html.push(opzione(l)));
             const gruppi = [...new Set(voci.filter(l => l.gruppo).map(l => l.gruppo))];
             gruppi.forEach(g => {
@@ -507,7 +509,6 @@
                 html.push('</optgroup>');
             });
 
-            // Se l'organo punta a un luogo che non esiste più, lo mostriamo comunque per non perdere il dato.
             if (selezionato && !voci.some(l => l.id === selezionato)) {
                 html.push(`<option value="${escapeHtml(selezionato)}" selected>${escapeHtml(selezionato)} (non più nell'elenco)</option>`);
             }
@@ -528,6 +529,7 @@
                 document.getElementById('input_id').value = "";
                 popolaSelectLuoghi("");
                 document.getElementById('input_link').value = "";
+                document.getElementById('input_icona').value = "";
             } else if (tipo === 'edit') {
                 document.getElementById('form-title').innerText = "Modifica Sezione";
                 document.getElementById('form-context').innerText = "Stai modificando: " + data.nome_display;
@@ -536,6 +538,7 @@
                 document.getElementById('input_id').value = data.id_organo || "";
                 popolaSelectLuoghi(data.luogo || "");
                 document.getElementById('input_link').value = data.link_sito || "";
+                document.getElementById('input_icona').value = data.icona || "";
             }
         }
 
@@ -555,6 +558,7 @@
                 categoria: categoria,
                 luogo: document.getElementById('input_luogo').value,
                 link_sito: document.getElementById('input_link').value,
+                icona: document.getElementById('input_icona').value,
                 figli: []
             };
 
@@ -582,11 +586,11 @@
                     nodo.categoria = nuovoNodo.categoria;
                     nodo.luogo = nuovoNodo.luogo;
                     nodo.link_sito = nuovoNodo.link_sito;
+                    nodo.icona = nuovoNodo.icona;
                     applicato = true;
                 }
             }
 
-            // Registra l'organo anche in "luoghi", così è utilizzabile da altri programmi.
             const inLuoghi = applicato && registraOrganoInLuoghi(vecchioId, nuovoNodo.id_organo, nuovoNodo.nome_display);
 
             document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => { el.value = ''; el.disabled = true; });
@@ -609,9 +613,6 @@
 
         /* =========================================================
            SEZIONE LUOGHI: editor dell'INTERO database "luoghi"
-           Il database è un albero di gruppi (es. livello_statale) e voci (es. Taleen).
-           Una voce è "ID": "Nome"  oppure  "ID": { nome, tipo, ... }.
-           Un gruppo è un oggetto che contiene altre voci/gruppi.
         ========================================================= */
 
         function eGruppoLuogo(v) {
@@ -640,7 +641,6 @@
             return n;
         }
 
-        // Elenco di tutti i gruppi (per il menu "Contenuto in"), come percorsi di chiavi.
         function elencoGruppi(contenitore, percorso, out) {
             Object.keys(contenitore).forEach(k => {
                 if (eGruppoLuogo(contenitore[k])) {
@@ -652,7 +652,6 @@
             return out;
         }
 
-        // Cambia la chiave di una voce mantenendo la sua posizione nell'elenco.
         function sostituisciChiave(contenitore, vecchiaChiave, nuovaChiave, nuovoValore) {
             const voci = Object.entries(contenitore);
             voci.forEach(([k]) => delete contenitore[k]);
@@ -662,7 +661,6 @@
             });
         }
 
-        // Se cambia l'ID di un luogo, aggiorna gli organi e i "genitore" che lo referenziavano.
         function aggiornaRiferimentiLuogo(vecchio, nuovo) {
             (function scorriOrgani(nodi) {
                 (nodi || []).forEach(n => {
@@ -679,8 +677,6 @@
             })(datiInMemoria.luoghi);
         }
 
-        // Versioni precedenti tenevano i luoghi in "alberoLuoghi". Le voci non ancora presenti in "luoghi"
-        // vengono spostate lì; da ora l'unica fonte è "luoghi".
         function migraAlberoLuoghi() {
             if (!Array.isArray(datiInMemoria.alberoLuoghi) || datiInMemoria.alberoLuoghi.length === 0) return;
             (function scorri(nodi, genitoreId) {
@@ -777,9 +773,6 @@
             return ul;
         }
 
-        // azione: 'add' | 'edit' - natura: 'voce' | 'gruppo'
-        // add:  "percorso" = gruppo in cui inserire (chiave = null)
-        // edit: "percorso" = gruppo che contiene l'elemento, "chiave" = la sua chiave
         function abilitaFormLuogo(azione, natura, percorso, chiave) {
             document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => el.disabled = false);
             document.getElementById('luoghi_btn_salva_form').disabled = false;
@@ -794,7 +787,6 @@
                 ? 'ID Luogo (codice univoco, senza spazi)'
                 : 'Nome del gruppo (chiave, senza spazi)';
 
-            // Menu "Contenuto in": livello principale + tutti i gruppi (un gruppo non può stare dentro se stesso).
             const propria = (azione === 'edit' && natura === 'gruppo') ? [...percorso, chiave] : null;
             const inSe = p => propria && p.length >= propria.length && propria.every((k, i) => p[i] === k);
             const opzioni = [[]].concat(elencoGruppi(datiInMemoria.luoghi, [], []).filter(p => !inSe(p)));
@@ -855,7 +847,6 @@
                 return;
             }
 
-            // Un gruppo non può essere spostato dentro se stesso.
             if (modifica && !eVoce) {
                 const propria = [...bersaglio.percorso, bersaglio.chiave];
                 if (percorsoDest.length >= propria.length && propria.every((k, i) => percorsoDest[i] === k)) {
@@ -864,7 +855,6 @@
                 }
             }
 
-            // Unicità: nel gruppo di destinazione, e per le voci in tutto il database.
             const stessoElemento = modifica && destinazione === origine && idNuovo === bersaglio.chiave;
             if (!stessoElemento && Object.prototype.hasOwnProperty.call(destinazione, idNuovo)) {
                 alert(`In "${nomePercorso(percorsoDest)}" esiste già un elemento con ID "${idNuovo}".`);
@@ -880,7 +870,6 @@
                 return;
             }
 
-            // Valore da salvare.
             let nuovoValore;
             if (!eVoce) {
                 nuovoValore = modifica ? origine[bersaglio.chiave] : {};
@@ -889,7 +878,6 @@
                 const base = (vecchio && typeof vecchio === 'object') ? { ...vecchio } : {};
                 base.nome = nome;
                 if (tipo) base.tipo = tipo; else delete base.tipo;
-                // Se c'è solo il nome, resta nel formato semplice "ID": "Nome".
                 nuovoValore = Object.keys(base).length === 1 ? base.nome : base;
             }
 
@@ -911,7 +899,7 @@
             document.getElementById('luoghi-form-context').innerText = "Modifica applicata in bozza. Ricorda di salvare online.";
 
             renderizzaAlberoLuoghi();
-            renderizzaAlbero(); // aggiorna i riferimenti al luogo mostrati sui nodi Organi
+            renderizzaAlbero(); 
         }
 
         function eliminaElementoLuogo(percorso, chiave) {
