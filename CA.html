@@ -12,10 +12,10 @@
         .sidebar { width: 350px; background: white; border-right: 1px solid #ddd; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .sidebar h2 { font-size: 18px; margin-top: 0; border-bottom: 2px solid #0055a4; padding-bottom: 10px; }
         details { margin-bottom: 5px; }
-        summary { cursor: pointer; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-weight: bold; list-style: none; display: flex; align-items: center; }
-        summary::-webkit-details-marker { display: none; }
-        summary::before { content: '📁 '; margin-right: 8px; }
-        details[open] > summary::before { content: '📂 '; }
+        .sidebar summary { cursor: pointer; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-weight: bold; list-style: none; display: flex; align-items: center; }
+        .sidebar summary::-webkit-details-marker { display: none; }
+        .sidebar summary::before { content: '📁 '; margin-right: 8px; }
+        .sidebar details[open] > summary::before { content: '📂 '; }
         .nodo-foglia { padding: 8px 8px 8px 24px; cursor: pointer; display: block; text-decoration: none; color: #0055a4; border-bottom: 1px solid #f0f0f0; }
         .nodo-foglia:hover { background: #eef5ff; }
         .nodo-foglia::before { content: '📄 '; margin-right: 8px; }
@@ -26,6 +26,20 @@
         .btn-sito { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 12px; }
         .sito-web { margin: 0 0 4px 0; word-break: break-all; }
         .sito-web a { color: #0055a4; }
+
+        .norme-msg { color: #777; margin: 0; }
+        .norma { border: 1px solid #e3e3ea; border-radius: 6px; margin-bottom: 10px; background: #fafbfd; }
+        .norma > summary { cursor: pointer; padding: 10px 14px; }
+        .norma-titolo { font-weight: bold; color: #0055a4; }
+        .norma-meta { display: block; font-size: 13px; color: #666; margin-top: 2px; }
+        .norma-stato { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; margin-left: 8px; background: #e6f4ea; color: #1e6b34; }
+        .norma-stato.abrogato { background: #f3e8e8; color: #8a2b2b; }
+        .norma-corpo { padding: 4px 14px 14px 14px; border-top: 1px solid #eee; }
+        .norma-corpo p { margin: 8px 0; }
+        .articolo { margin-top: 14px; }
+        .articolo h4 { margin: 0 0 6px 0; font-size: 15px; }
+        .comma { margin: 4px 0; white-space: pre-line; }
+        .sottocomma { margin: 2px 0 2px 22px; white-space: pre-line; }
     </style>
 </head>
 <body>
@@ -49,12 +63,14 @@
                 <h2 id="view-nome" style="margin-top: 0; font-size: 28px;">Nome Organo</h2>
                 <p style="color: gray;">ID Riferimento: <code id="view-id"></code></p>
                 
+                <div id="view-sito-box" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <p class="sito-web">🌐 Sito web: <a href="#" id="view-sito-url" target="_blank" rel="noopener noreferrer"></a></p>
+                    <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
+                </div>
+
                 <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>Atti e deliberazioni di questo organo verranno elencati qui.</p>
-                    <div id="view-sito-box" style="display: none;">
-                        <p class="sito-web">🌐 Sito web: <a href="#" id="view-sito-url" target="_blank" rel="noopener noreferrer"></a></p>
-                        <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
-                    </div>
+                    <h3 style="margin: 0 0 12px 0;">Norme</h3>
+                    <div id="view-norme"></div>
                 </div>
             </div>
         </div>
@@ -62,8 +78,17 @@
 
     <script>
         let datiPubblici = null;
+        let attiPubblici = [];
+        let erroreAtti = null;
+        let attiPronti = Promise.resolve();
+        let organoCorrente = null;
 
         window.onload = async function() {
+            // Le norme (atti) vengono lette dal server con BIN_ID, in parallelo all'indice.
+            attiPronti = ApiOrgani.loadAtti()
+                .then(atti => { attiPubblici = atti; })
+                .catch(e => { erroreAtti = e; attiPubblici = []; });
+
             try {
                 datiPubblici = await ApiOrgani.loadDati();
                 costruisciIndice(datiPubblici.alberoOrgani);
@@ -145,8 +170,7 @@
         function creaElementiMenu(nodi) {
             const frammento = document.createDocumentFragment();
             nodi.forEach(nodo => {
-                const etichetta = etichettaCategoria(nodo);
-                const testoVoce = etichetta ? `${nodo.nome_display} (${etichetta})` : nodo.nome_display;
+                const testoVoce = nodo.nome_display;
                 if (nodo.figli && nodo.figli.length > 0) {
                     const details = document.createElement('details');
                     const summary = document.createElement('summary');
@@ -173,12 +197,99 @@
             return frammento;
         }
 
+        function creaElemento(tag, classe, testo) {
+            const el = document.createElement(tag);
+            if (classe) el.className = classe;
+            if (testo !== undefined) el.textContent = testo;
+            return el;
+        }
+
+        function letteraSottocomma(i) {
+            return (i < 26 ? String.fromCharCode(97 + i) : String(i + 1)) + ')';
+        }
+
+        // Commi di un articolo: accetta il formato con "commi" e quello vecchio con un solo "testo".
+        function commiDiArticolo(art) {
+            if (Array.isArray(art.commi)) {
+                return art.commi.map(c => typeof c === 'string' ? { testo: c, sottocommi: [] } : { testo: c.testo || '', sottocommi: c.sottocommi || [] });
+            }
+            if (typeof art.testo === 'string' && art.testo.trim()) return [{ testo: art.testo, sottocommi: [] }];
+            return [];
+        }
+
+        function creaNorma(atto) {
+            const d = creaElemento('details', 'norma');
+            const s = document.createElement('summary');
+            const titolo = creaElemento('span', 'norma-titolo', atto.titolo || '(senza titolo)');
+            s.appendChild(titolo);
+            if (atto.stato) {
+                s.appendChild(creaElemento('span', 'norma-stato' + (String(atto.stato).toLowerCase() === 'abrogato' ? ' abrogato' : ''), atto.stato));
+            }
+            const sigla = (atto.numero || atto.anno) ? `n. ${atto.numero || '?'}/${atto.anno || '?'}` : '';
+            const meta = [atto.categoria, sigla].filter(Boolean).join(' · ');
+            if (meta) s.appendChild(creaElemento('span', 'norma-meta', meta));
+            d.appendChild(s);
+
+            const corpo = creaElemento('div', 'norma-corpo');
+            const emanazione = [atto.dataEmanazione, atto.promulgatoDa ? 'promulgato da ' + atto.promulgatoDa : ''].filter(Boolean).join(' — ');
+            if (emanazione) corpo.appendChild(creaElemento('p', 'norma-meta', emanazione));
+            if (atto.sommario) corpo.appendChild(creaElemento('p', '', atto.sommario));
+
+            (Array.isArray(atto.articoli) ? atto.articoli : []).forEach(art => {
+                const boxArt = creaElemento('div', 'articolo');
+                boxArt.appendChild(creaElemento('h4', '', `Art. ${art.numero || ''}${art.rubrica ? ' — ' + art.rubrica : ''}`));
+                commiDiArticolo(art).forEach((c, ic) => {
+                    boxArt.appendChild(creaElemento('div', 'comma', `${ic + 1}. ${c.testo}`));
+                    (c.sottocommi || []).forEach((sc, is) => {
+                        boxArt.appendChild(creaElemento('div', 'sottocomma', `${letteraSottocomma(is)} ${sc}`));
+                    });
+                });
+                corpo.appendChild(boxArt);
+            });
+            d.appendChild(corpo);
+            return d;
+        }
+
+        // Le norme di un organo sono gli atti il cui "luogo" è l'ID del luogo associato all'organo
+        // (oppure l'ID dell'organo stesso, se registrato tra i luoghi).
+        async function mostraNorme(nodo) {
+            const box = document.getElementById('view-norme');
+            box.innerHTML = '';
+            box.appendChild(creaElemento('p', 'norme-msg', 'Caricamento delle norme…'));
+
+            await attiPronti;
+            if (organoCorrente !== nodo) return; // nel frattempo è stato scelto un altro organo
+
+            box.innerHTML = '';
+            if (erroreAtti) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Impossibile leggere le norme (' + (erroreAtti.message || 'errore sconosciuto') + ').'));
+                return;
+            }
+
+            const chiavi = [nodo.luogo, nodo.id_organo].filter(Boolean);
+            const norme = attiPubblici
+                .filter(a => a && chiavi.includes(a.luogo))
+                .sort((a, b) => {
+                    const ab = String(a.stato).toLowerCase() === 'abrogato' ? 1 : 0;
+                    const bb = String(b.stato).toLowerCase() === 'abrogato' ? 1 : 0;
+                    return (ab - bb) || (Number(b.anno) || 0) - (Number(a.anno) || 0) || String(a.titolo || '').localeCompare(String(b.titolo || ''));
+                });
+
+            if (norme.length === 0) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Nessuna norma collegata a questo organo.'));
+                return;
+            }
+            norme.forEach(a => box.appendChild(creaNorma(a)));
+        }
+
         function mostraDettagli(nodo) {
             document.getElementById('messaggio-iniziale').style.display = 'none';
             const panel = document.getElementById('dettagli-panel');
             panel.style.display = 'block';
             document.getElementById('view-nome').innerText = nodo.nome_display;
             document.getElementById('view-id').innerText = nodo.id_organo;
+            organoCorrente = nodo;
+            mostraNorme(nodo);
 
             const etichetta = etichettaCategoria(nodo);
             const valoreLuogo = cercaLuogo(datiPubblici.luoghi, nodo.luogo) || nodo.luogo;
