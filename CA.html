@@ -65,6 +65,32 @@
         .el-ref .barra .riempi { position: absolute; top: 0; left: 0; bottom: 0; background: #1B5FA8; }
         .el-ref .voti { font-size: 14px; font-weight: bold; }
         .el-ref .pc { font-size: 17px; font-weight: 900; color: #0b3d6e; }
+
+        /* --- Adattamento per schermi stretti (telefoni/tablet in verticale) --- */
+        @media (max-width: 720px) {
+            * { box-sizing: border-box; }
+            header { padding: 14px; }
+            header h1 { font-size: 19px; }
+
+            .layout { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid #ddd; }
+            .content { padding: 16px; }
+
+            .dettagli-organo { padding: 18px; }
+            .luogo-badge { font-size: 13px; }
+
+            .btn-sito, .btn-normaktiv { display: block; text-align: center; width: 100%; }
+
+            .el-dettagli { grid-template-columns: 1fr; gap: 2px 0; }
+            .el-dettagli dt { margin-top: 8px; }
+            .el-barre { grid-template-columns: minmax(60px, 38%) 1fr auto; gap: 4px 6px; font-size: 13px; }
+            .el-ref .opz { font-size: 18px; }
+
+            .sidebar summary, .nodo-foglia { padding: 10px 8px; min-height: 20px; }
+            .norma > summary { padding: 12px 14px; }
+            .norma-corpo { padding: 4px 12px 12px 12px; }
+            .norma-titolo { font-size: 15px; }
+        }
     </style>
 </head>
 <body>
