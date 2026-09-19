@@ -109,8 +109,8 @@
         </header>
 
         <div class="tab-nav">
-            <button type="button" class="tab-btn active" id="tab-btn-organi" onclick="cambiaScheda('organi')">🏛️ Organi (Congressi/Assemblee)</button>
-            <button type="button" class="tab-btn" id="tab-btn-luoghi" onclick="cambiaScheda('luoghi')">📍 Luoghi (Città/Distretti)</button>
+            <button type="button" class="tab-btn active" id="tab-btn-organi" onclick="cambiaScheda('organi')">Organi (Congressi/Assemblee)</button>
+            <button type="button" class="tab-btn" id="tab-btn-luoghi" onclick="cambiaScheda('luoghi')">Luoghi (Città/Distretti)</button>
         </div>
 
         <!-- SCHEDA ORGANI -->
@@ -449,11 +449,10 @@
             if (!nodi) return ul;
 
             nodi.forEach(nodo => {
-                const iconaTipo = nodo.categoria === 'assemblea' ? '👥' : (nodo.categoria === 'congresso' ? '🏛️' : '📌');
                 const etichettaTipo = nodo.categoria === 'assemblea' ? 'Assemblea' : (nodo.categoria === 'congresso' ? 'Congresso' : 'Non specificato');
                 const infoLuogo = trovaVoceLuogo(nodo.luogo);
-                const testoLuogo = infoLuogo ? ` · 📍 ${escapeHtml(infoLuogo.nome)}` : '';
-                const htmlTesto = `<span>${iconaTipo} <strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
+                const testoLuogo = infoLuogo ? ` · ${escapeHtml(infoLuogo.nome)}` : '';
+                const htmlTesto = `<span><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
 
                 const actions = document.createElement('div');
                 actions.className = 'actions';
@@ -740,7 +739,7 @@
                         }
                     }
                     const extra = dettagli.length ? `<em style="color:#888; font-weight:normal;">— ${escapeHtml(dettagli.join(' · '))}</em>` : '';
-                    const htmlTesto = `<span>📍 <strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
+                    const htmlTesto = `<span><strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
 
                     actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaFormLuogo('edit', 'voce', percorso, chiave)));
                     actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaElementoLuogo(percorso, chiave)));
@@ -755,7 +754,7 @@
                     ul.appendChild(li);
                 } else {
                     const n = contaVoci(valore);
-                    const htmlTesto = `<span>📂 <strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
+                    const htmlTesto = `<span><strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
                     const percorsoGruppo = [...percorso, chiave];
 
                     actions.appendChild(creaBottoneAzione('+ Voce', 'btn-add', () => abilitaFormLuogo('add', 'voce', percorsoGruppo, null)));
