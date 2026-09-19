@@ -1,157 +1,238 @@
-(function () {
-  // Immagine facoltativa dell'atto: un quadrato largo quanto l'indice, posizionato
-  // sopra l'indice (colonna di sinistra) e sotto il pannello dei dati generali.
-  // Nell'atto si salvano i campi "immagine" (nome del file o indirizzo) e "didascalia".
-  // Sono accettati indirizzi http(s) e percorsi relativi al sito; qualunque altro schema
-  // (javascript:, data:, ...) viene scartato.
-  const escAttr = t => (t == null ? "" : t).toString().replace(/[&<>"']/g,
-    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+:root {
+  --blu-900:#0b1f38; --blu-800:#0b3d6e; --blu-700:#12508c; --blu-600:#1b5fa8; --blu-accento:#2e77c9;
+  --verde:#0072CE; --bianco:#000000; --rosso:#FFFFFF;
+  --carta:#f5f9fd; --carta-scura:#e7f1fa; --carta-scura-mid:#cfe3f5;
+  --inchiostro:#1f2a33; --inchiostro-tenue:#4b5866; --bordo:#d6e2ed; --oro:#c9a227;
+  --radius:4px;
+  --ombra:0 2px 10px rgba(11,61,110,.08);
+  --ombra-hover:0 10px 28px rgba(11,61,110,.12);
+  --font-chrome:"Titillium Web","Segoe UI",sans-serif;
+  --font-testo:"Source Serif 4","PT Serif",Georgia,serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--carta);color:var(--inchiostro);font-family:var(--font-testo);line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{color:var(--blu-700);text-decoration:none;}
+a:hover{text-decoration:underline;}
+:focus-visible{outline:3px solid var(--oro);outline-offset:2px;}
+img,svg{max-width:100%;}
+.container{width:100%;max-width:1180px;margin:0 auto;padding:0 24px;}
 
-  function urlImmagineSicuro(valore) {
-    const u = (valore || "").toString().trim();
-    if (!u) return "";
-    if (/^(https?:)?\/\//i.test(u)) return u;
-    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return "";
-    return u;
+.striscia-top{background:var(--blu-900);color:rgba(255,255,255,.82);font-family:var(--font-chrome);font-size:.78rem;padding:6px 0;}
+.striscia-top .container{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.striscia-top a{color:rgba(255,255,255,.82);margin-left:18px;}
+.striscia-top a:hover{color:#fff;}
+
+.testata{background:linear-gradient(180deg,var(--blu-700) 0%,var(--blu-800) 100%);color:#eef3f8;padding:24px 0 28px;}
+.testata__riga{display:flex;align-items:center;gap:20px;}
+.testata__emblema{
+  flex:none;
+  width:64px;
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  overflow:hidden;
+}
+.testata__emblema img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  display:block;
+}
+.testata__testi{min-width:0;}
+.testata__eyebrow{font-family:var(--font-chrome);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#a9c2db;margin:0 0 4px;}
+.testata__nome{font-family:var(--font-chrome);font-weight:700;font-size:1.55rem;margin:0;color:#fff;letter-spacing:.01em;}
+.testata__motto{font-family:var(--font-testo);font-style:italic;color:#c3d4e3;margin:4px 0 0;font-size:.95rem;}
+
+.fascia-tricolore{height:7px;display:flex;}
+.fascia-tricolore span{flex:1 1 0;}
+.fascia-tricolore .verde{background: #0072CE;}
+.fascia-tricolore .bianco{background: #000000;}
+.fascia-tricolore .rosso{background: #FFFFFF;}
+
+.nav-principale{background:#fff;border-bottom:3px solid var(--blu-700);position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(11,61,110,.08);}
+.nav-principale ul{list-style:none;display:flex;flex-wrap:wrap;gap:2px;margin:0;padding:0;}
+.nav-principale a{display:block;font-family:var(--font-chrome);font-size:.92rem;font-weight:600;color:var(--blu-800);text-decoration:none;padding:15px 18px;border-bottom:3px solid transparent;transition:background-color .15s,border-color .15s;}
+.nav-principale a:hover{background:var(--carta-scura);border-bottom-color:var(--blu-accento);}
+.nav-principale a.attiva{border-bottom-color:var(--oro);color:var(--blu-900);}
+
+.hero{background:var(--carta-scura);border-bottom:1px solid var(--bordo);padding:50px 0 0;position:relative;overflow:hidden;}
+.hero::before{content:"";position:absolute;top:50%;right:-140px;transform:translateY(-50%);width:480px;height:480px;max-width:60vw;max-height:60vw;border-radius:50%;background:radial-gradient(circle,rgba(46,119,201,.16) 0%,rgba(46,119,201,.06) 55%,rgba(46,119,201,0) 75%);pointer-events:none;z-index:0;}
+.hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,1fr);gap:40px;align-items:start;padding-bottom:40px;}
+.hero__kicker{display:inline-block;background:var(--blu-700);color:#fff;font-family:var(--font-chrome);font-size:.74rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-bottom:14px;}
+.hero__titolo{font-family:var(--font-chrome);font-weight:700;font-size:clamp(1.7rem,2.8vw,2.35rem);color:var(--blu-900);margin:0 0 10px;max-width:20ch;line-height:1.15;}
+.hero__sottotitolo{color:var(--inchiostro-tenue);max-width:60ch;margin:0 0 26px;font-size:1.02rem;}
+
+.ricerca{display:flex;max-width:560px;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);box-shadow:var(--ombra);overflow:hidden;}
+.ricerca input{flex:1;border:none;padding:14px 16px;font-family:var(--font-testo);font-size:1rem;color:var(--inchiostro);background:transparent;}
+.ricerca input:focus{outline:none;}
+.ricerca button{flex:none;border:none;background:var(--blu-700);color:#fff;font-family:var(--font-chrome);font-weight:600;font-size:.9rem;padding:0 24px;cursor:pointer;transition:background-color .15s;}
+.ricerca button:hover{background:var(--blu-800);}
+
+.hero__pannello{background:#fff;border:1px solid var(--bordo);border-top:4px solid var(--blu-700);border-radius:var(--radius);padding:22px;box-shadow:var(--ombra-hover);}
+.hero__pannello h2{font-family:var(--font-chrome);font-size:.9rem;font-weight:700;color:var(--blu-900);text-transform:uppercase;letter-spacing:.03em;margin:0 0 12px;}
+.hero__pannello ul{list-style:none;margin:0;padding:0;}
+.hero__pannello li{padding:10px 0;border-bottom:1px solid var(--bordo);}
+.hero__pannello li:last-child{border-bottom:none;}
+.hero__pannello li a{display:block;font-family:var(--font-chrome);font-weight:600;font-size:.92rem;color:var(--blu-700);}
+.hero__pannello li a:hover{text-decoration:none;color:var(--blu-900);}
+.hero__pannello li span{display:block;font-family:var(--font-testo);font-size:.8rem;color:var(--inchiostro-tenue);margin-top:2px;}
+
+.stats-band{background:var(--blu-900);position:relative;z-index:1;}
+.stats-band .container{display:grid;grid-template-columns:repeat(3,1fr);padding:0;}
+.stat-item{text-align:center;padding:22px 12px;border-left:1px solid rgba(255,255,255,.12);}
+.stat-item:first-child{border-left:none;}
+.stat-item b{display:block;font-family:var(--font-chrome);font-size:2rem;font-weight:900;color:var(--oro);line-height:1;}
+.stat-item span{display:block;font-family:var(--font-chrome);font-size:.76rem;letter-spacing:.04em;color:rgba(255,255,255,.78);margin-top:6px;text-transform:uppercase;}
+
+main{padding:40px 0 64px;}
+.sezione-titolo{font-family:var(--font-chrome);font-weight:700;font-size:1.05rem;color:var(--blu-900);text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px;padding-bottom:10px;border-bottom:2px solid var(--blu-800);}
+.filtri{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 22px;}
+.filtro{font-family:var(--font-chrome);font-size:.82rem;font-weight:600;color:var(--blu-800);background:#fff;border:1px solid var(--bordo);border-radius:999px;padding:7px 14px;cursor:pointer;transition:border-color .15s,background-color .15s;}
+.filtro:hover{border-color:var(--blu-600);}
+.filtro.attivo{background:var(--blu-700);border-color:var(--blu-700);color:#fff;}
+.elenco-atti{display:flex;flex-direction:column;gap:14px;}
+.scheda-atto{background:#fff;border:1px solid var(--bordo);border-left:4px solid var(--blu-700);border-radius:var(--radius);padding:18px 20px;display:block;transition:box-shadow .15s,border-left-color .15s,transform .15s;}
+.scheda-atto:hover{text-decoration:none;border-left-color:var(--oro);box-shadow:var(--ombra-hover);transform:translateY(-1px);}
+.scheda-atto__meta{font-family:var(--font-chrome);font-size:.74rem;font-weight:600;letter-spacing:.04em;color:var(--inchiostro-tenue);display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+.badge-categoria{display:inline-block;font-family:var(--font-chrome);font-size:.68rem;font-weight:700;letter-spacing:.03em;color:var(--blu-800);background:var(--carta-scura-mid);border-radius:999px;padding:3px 10px;}
+.badge-stato{display:inline-block;font-family:var(--font-chrome);font-size:.68rem;font-weight:700;color:#1c6b3c;background:#e3f3e8;border-radius:999px;padding:3px 10px;}
+.badge-stato.abrogato{color:#8a1f24;background:#fbe7e7;}
+.scheda-atto__titolo{font-family:var(--font-chrome);font-size:1.08rem;font-weight:600;color:var(--inchiostro);margin:0 0 6px;}
+.scheda-atto__sommario{color:var(--inchiostro-tenue);font-size:.95rem;margin:0;max-width:78ch;}
+.nessun-risultato{padding:30px 20px;text-align:center;color:var(--inchiostro-tenue);background:#fff;border:1px dashed var(--bordo);border-radius:var(--radius);}
+
+.breadcrumb{font-family:var(--font-chrome);font-size:.8rem;color:var(--inchiostro-tenue);margin:18px 0 22px;}
+.breadcrumb a{color:var(--blu-700);}
+.intestazione-atto{background:#fff;border:1px solid var(--bordo);border-top:5px solid var(--blu-700);border-radius:var(--radius);padding:26px 28px;margin-bottom:30px;box-shadow:var(--ombra);}
+.intestazione-atto__meta{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.intestazione-atto h1{font-family:var(--font-chrome);font-weight:700;font-size:clamp(1.4rem,2.2vw,1.85rem);color:var(--blu-900);margin:0 0 10px;}
+.intestazione-atto__dati{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:16px;padding-top:16px;border-top:1px solid var(--bordo);}
+.intestazione-atto__dati dt{font-family:var(--font-chrome);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--inchiostro-tenue);margin:0 0 2px;}
+.intestazione-atto__dati dd{margin:0;font-family:var(--font-chrome);font-weight:600;font-size:.92rem;color:var(--inchiostro);}
+/* Colonna di sinistra: immagine (quadrata, larga quanto l'indice) + indice.
+   Si estende per tutta l'altezza dell'atto, così l'indice resta "appiccicato" mentre si scorre. */
+.colonna-indice{align-self:stretch;min-width:0;}
+.immagine-atto{margin:0 0 16px;}
+/* Per ritagliare l'immagine e riempire tutto il quadrato, cambia "contain" in "cover". */
+.immagine-atto img{display:block;width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);box-shadow:var(--ombra);}
+.immagine-atto figcaption{font-family:var(--font-chrome);font-size:.78rem;font-style:italic;text-align:center;color:var(--inchiostro-tenue);margin-top:6px;}
+.corpo-atto{display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:start;}
+.indice-articoli{position:sticky;top:76px;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:16px;}
+.indice-articoli h2{font-family:var(--font-chrome);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--inchiostro-tenue);margin:0 0 10px;}
+.indice-articoli ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;}
+.indice-articoli li{margin-bottom:2px;}
+.indice-articoli a{display:block;font-family:var(--font-chrome);font-size:.85rem;color:var(--blu-800);padding:6px 8px;border-radius:var(--radius);}
+.indice-articoli a:hover{background:var(--carta-scura);text-decoration:none;}
+.indice-commi{list-style:none;margin:2px 0 4px 12px;padding:0 0 0 10px;display:flex;flex-direction:column;gap:1px;border-left:2px solid var(--bordo);}
+.indice-commi a{font-size:.76rem;color:var(--inchiostro-tenue);padding:3px 8px;}
+.indice-commi a:hover{background:var(--carta-scura);color:var(--blu-800);}
+.indice-sottocommi{list-style:none;margin:1px 0 3px 10px;padding:0 0 0 8px;display:flex;flex-direction:column;gap:1px;border-left:1px dashed var(--bordo);}
+.indice-sottocommi a{font-size:.72rem;color:var(--inchiostro-tenue);padding:2px 8px;}
+.indice-sottocommi a:hover{background:var(--carta-scura);color:var(--blu-800);}
+.articoli{display:flex;flex-direction:column;gap:22px;}
+.articolo{background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:22px 26px;scroll-margin-top:76px;}
+.articolo__numero{font-family:var(--font-chrome);font-weight:700;font-size:.8rem;color:#fff;background:var(--blu-700);display:inline-block;padding:3px 10px;border-radius:var(--radius);margin-bottom:10px;}
+.articolo h3{font-family:var(--font-chrome);font-weight:600;font-size:1.05rem;color:var(--inchiostro);margin:0 0 10px;}
+.articolo p{margin:0;font-size:1.02rem;color:#232a35;}
+.articolo .comma{margin:0 0 14px;scroll-margin-top:76px;}
+.articolo .comma:last-child{margin-bottom:0;}
+.comma__numero{font-weight:700;color:var(--blu-800);}
+.sottocommi{list-style:lower-alpha;margin:8px 0 0 1.5em;padding:0;display:flex;flex-direction:column;gap:4px;}
+.sottocommi li{font-size:.97rem;color:#232a35;padding-left:2px;scroll-margin-top:76px;}
+
+.titolo-gruppo{text-align:center;margin:6px 0 -4px;}
+.titolo-gruppo:first-child{margin-top:0;}
+.titolo-gruppo h2{font-family:var(--font-chrome);font-weight:700;font-size:1.2rem;line-height:1.3;text-align:center;color:var(--blu-900);margin:0;padding:0;border:0;background:none;}
+.indice-titolo-gruppo{list-style:none;text-align:center;font-family:var(--font-chrome);font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--blu-900);padding:10px 4px 6px;margin-top:8px;border-top:1px solid var(--bordo);}
+.indice-titolo-gruppo:first-child{border-top:none;margin-top:0;padding-top:0;}
+
+@media (min-width:761px){
+  .indice-articoli{
+    max-height:calc(100vh - 100px);
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:var(--blu-accento) var(--carta-scura);
   }
+  .indice-articoli::-webkit-scrollbar{width:8px;}
+  .indice-articoli::-webkit-scrollbar-track{background:var(--carta-scura);border-radius:8px;}
+  .indice-articoli::-webkit-scrollbar-thumb{background:var(--blu-accento);border-radius:8px;}
+  .indice-articoli::-webkit-scrollbar-thumb:hover{background:var(--blu-800);}
+}
+@media (max-width:860px){
+  .hero__inner{grid-template-columns:1fr;}
+  .stats-band .container{grid-template-columns:1fr 1fr;}
+  .stat-item:nth-child(2){border-left:1px solid rgba(255,255,255,.12);}
+}
+@media (max-width:760px){
+  .corpo-atto{grid-template-columns:1fr;}
+  .immagine-atto{max-width:220px;margin:0 auto 16px;}
+  .indice-articoli{position:static;}
+  .ricerca{flex-direction:column;}
+  .ricerca button{padding:12px;}
+  .stats-band .container{grid-template-columns:1fr;}
+  .stat-item{border-left:none !important;border-top:1px solid rgba(255,255,255,.12);}
+  .stat-item:first-child{border-top:none;}
+}
 
-  function htmlImmagineAtto(atto) {
-    const src = urlImmagineSicuro(atto.immagine);
-    if (!src) return "";
-    const didascalia = (atto.didascalia || "").toString().trim();
-    return `
-      <figure class="immagine-atto">
-        <img src="${escAttr(src)}" alt="${escAttr(didascalia || atto.titolo)}" loading="lazy"
-             onerror="this.closest('figure').style.display='none'">
-        ${didascalia ? `<figcaption>${escAttr(didascalia)}</figcaption>` : ""}
-      </figure>`;
-  }
+footer{background:var(--blu-900);color:#b9c8d6;padding:34px 0 22px;margin-top:40px;border-top:3px solid var(--oro);}
+.footer__contenuto{padding-top:22px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--font-chrome);font-size:.82rem;}
+.footer__contenuto a{color:#d7e3ee;}
 
-  async function init() {
-    renderTestata("home");
-    renderFooter();
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
 
-    const id = new URLSearchParams(window.location.search).get("id");
-    const root = document.getElementById("atto-root");
+.redazione-menu{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0 32px;}
+.redazione-card{display:flex;flex-direction:column;gap:6px;text-align:left;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);box-shadow:var(--ombra);padding:20px;cursor:pointer;font-family:var(--font-chrome);transition:border-color .15s,transform .15s,box-shadow .15s;}
+.redazione-card:hover{border-color:var(--blu-accento);box-shadow:var(--ombra-hover);transform:translateY(-2px);}
+.redazione-card__numero{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--blu-700);color:#fff;font-weight:700;font-size:.85rem;}
+.redazione-card__titolo{font-weight:700;color:var(--inchiostro);font-size:1.05rem;}
+.redazione-card__desc{color:var(--inchiostro-tenue);font-size:.85rem;font-family:var(--font-testo);}
+.redazione-riquadro{background:var(--carta-scura);border-left:4px solid var(--oro);border-radius:var(--radius);padding:16px 20px;margin:20px 0;font-size:.92rem;}
+.redazione-riquadro code{background:rgba(11,61,110,.08);padding:1px 5px;border-radius:3px;}
+.redazione-riga{display:flex;justify-content:space-between;align-items:center;gap:16px;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;}
+.redazione-riga__titolo{font-weight:600;margin:4px 0 2px;}
+.redazione-riga__meta{font-family:var(--font-chrome);font-size:.8rem;color:var(--inchiostro-tenue);margin:0;}
+.redazione-riga__azioni{display:flex;gap:8px;flex-shrink:0;}
+.redazione-badge{display:inline-block;font-family:var(--font-chrome);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:999px;margin-left:6px;}
+.redazione-badge--nuovo{background:#e3f3e6;color:#1c7a34;}
+.redazione-badge--modificato{background:#fdf0d8;color:#93650b;}
+.redazione-form{max-width:760px;}
+.redazione-campo{display:flex;flex-direction:column;gap:4px;margin-bottom:16px;}
+.redazione-campo label{font-family:var(--font-chrome);font-size:.8rem;font-weight:600;color:var(--inchiostro-tenue);text-transform:uppercase;letter-spacing:.02em;}
+.redazione-riga-campi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;}
+.redazione-form input[type="text"],.redazione-form select,.redazione-form textarea{font-family:var(--font-testo);font-size:.95rem;padding:9px 12px;border:1px solid var(--bordo);border-radius:var(--radius);background:#fff;color:var(--inchiostro);width:100%;}
+.redazione-form textarea{resize:vertical;}
+.redazione-form input:focus,.redazione-form select:focus,.redazione-form textarea:focus{outline:none;border-color:var(--blu-accento);box-shadow:0 0 0 3px rgba(46,119,201,.18);}
+.redazione-articolo{border:1px solid var(--bordo);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;background:var(--carta);display:flex;flex-direction:column;gap:8px;}
+.redazione-articolo__intestazione{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--font-chrome);font-size:.8rem;font-weight:700;text-transform:uppercase;color:var(--inchiostro-tenue);}
+.redazione-commi{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.redazione-comma{background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+.redazione-comma__intestazione{display:flex;align-items:center;gap:8px;font-family:var(--font-chrome);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--inchiostro-tenue);}
+.redazione-comma-testo{min-height:52px;}
+.redazione-sottocommi{display:flex;flex-direction:column;gap:6px;margin-left:18px;}
+.redazione-sottocomma{display:flex;align-items:flex-start;gap:6px;}
+.redazione-sottocomma__lettera{font-family:var(--font-chrome);font-weight:700;font-size:.85rem;color:var(--blu-800);padding-top:9px;flex:none;}
+.redazione-sottocomma-testo{min-height:38px;}
+.redazione-strumento-analisi{margin-top:10px;background:var(--carta-scura);border-radius:var(--radius);padding:10px 12px;}
+.redazione-strumento-analisi summary{cursor:pointer;font-family:var(--font-chrome);font-size:.8rem;font-weight:600;color:var(--blu-800);}
+.redazione-analisi-testo{width:100%;margin:8px 0;min-height:70px;}
+.redazione-messaggio{background:#e3f3e6;color:#1c7a34;border-radius:var(--radius);padding:10px 14px;font-family:var(--font-chrome);font-size:.85rem;}
+.redazione-azioni-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;padding-top:16px;border-top:1px solid var(--bordo);}
+.redazione-btn{font-family:var(--font-chrome);font-weight:600;font-size:.85rem;border:none;border-radius:var(--radius);padding:10px 18px;cursor:pointer;transition:opacity .15s;}
+.redazione-btn:hover{opacity:.88;}
+.redazione-btn--primario{background:var(--blu-700);color:#fff;}
+.redazione-btn--secondario{background:var(--carta-scura);color:var(--inchiostro);border:1px solid var(--bordo);}
+.redazione-btn--pericolo{background:#fdeceb;color:var(--rosso);border:1px solid rgba(205,33,42,.25);}
+.redazione-btn--piccolo{padding:6px 12px;font-size:.78rem;}
+.redazione-titolo-gruppo{border:1px dashed var(--blu-accento);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;background:var(--carta-scura);display:flex;flex-direction:column;gap:8px;}
+.redazione-titolo-gruppo__intestazione{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--font-chrome);font-size:.8rem;font-weight:700;text-transform:uppercase;color:var(--blu-800);}
+.redazione-titolo-testo{font-family:var(--font-chrome) !important;font-weight:700;text-align:center;}
 
-    let atti = [];
-    try {
-      atti = await API.loadAtti();
-    } catch (e) {
-      root.innerHTML = `<div class="nessun-risultato">Errore nel caricamento dell'atto.</div>`;
-      return;
-    }
-
-    const atto = atti.find(a => a.id === id);
-    if (!atto) {
-      root.innerHTML = `
-        <p class="breadcrumb"><a href="index.html">Home</a> &rsaquo; Atto non trovato</p>
-        <div class="nessun-risultato">
-          L'atto richiesto non è stato trovato. Torna alla <a href="index.html">home</a>.
-        </div>`;
-      document.title = "Atto non trovato — " + SITE_CONFIG.nomeFazione;
-      return;
-    }
-
-    document.title = atto.titolo + " — " + SITE_CONFIG.nomeFazione;
-
-    const badgeStato = atto.stato === "vigente"
-      ? `<span class="badge-stato">vigente</span>`
-      : `<span class="badge-stato abrogato">abrogato</span>`;
-
-    // Indice: per ogni articolo mostriamo il link principale e, quando
-    // l'articolo ha più di un comma, un sotto-elenco con i link ai singoli commi.
-    const indice = atto.articoli.map(art => {
-      if (eTitoloGruppo(art)) {
-        return `<li class="indice-titolo-gruppo">${art.testo}</li>`;
-      }
-      const commi = commiDiArticolo(art);
-
-      // Elenco delle lettere dei sottocommi di un comma, per l'indice
-      const indiceSottocommi = (comma, ic) => {
-        const sottocommi = (comma.sottocommi || []).filter(s => s && s.trim() !== "");
-        return sottocommi.length
-          ? `<ul class="indice-sottocommi">${sottocommi.map((s, is) =>
-              `<li><a href="#art-${art.numero}-c${ic + 1}-s${is + 1}">${letteraDa(is)})</a></li>`).join("")}</ul>`
-          : "";
-      };
-
-      let sottoIndice = "";
-      if (commi.length > 1) {
-        // Più commi: un livello "Comma N", ed eventuali sottocommi annidati sotto ciascuno
-        sottoIndice = `<ul class="indice-commi">${commi.map((c, ic) =>
-          `<li><a href="#art-${art.numero}-c${ic + 1}">Comma ${ic + 1}</a>${indiceSottocommi(c, ic)}</li>`
-        ).join("")}</ul>`;
-      } else {
-        // Comma unico: se ha sottocommi, li mostriamo direttamente sotto l'articolo
-        const soloSottocommi = indiceSottocommi(commi[0], 0);
-        if (soloSottocommi) sottoIndice = soloSottocommi;
-      }
-
-      return `<li><a href="#art-${art.numero}">Art. ${art.numero} &mdash; ${art.rubrica}</a>${sottoIndice}</li>`;
-    }).join("");
-
-    // Corpo degli articoli: ogni comma è un blocco separato e numerato (solo se
-    // ce n'è più d'uno, per non appesantire gli articoli semplici a comma unico);
-    // i sottocommi, se presenti, sono resi come elenco lettera a), b), c)...
-    const articoli = atto.articoli.map(art => {
-      if (eTitoloGruppo(art)) {
-        return `<div class="titolo-gruppo"><h2>${art.testo}</h2></div>`;
-      }
-      const commi = commiDiArticolo(art);
-      const corpoCommi = commi.map((comma, ic) => {
-        const sottocommi = (comma.sottocommi || []).filter(s => s && s.trim() !== "");
-        const listaSottocommi = sottocommi.length
-          ? `<ol class="sottocommi">${sottocommi.map((s, is) =>
-              `<li id="art-${art.numero}-c${ic + 1}-s${is + 1}">${s}</li>`).join("")}</ol>`
-          : "";
-        const numeroComma = commi.length > 1 ? `<span class="comma__numero">${ic + 1}.</span> ` : "";
-        return `
-          <div class="comma" id="art-${art.numero}-c${ic + 1}">
-            <p>${numeroComma}${comma.testo}</p>
-            ${listaSottocommi}
-          </div>`;
-      }).join("");
-
-      return `
-        <article class="articolo" id="art-${art.numero}">
-          <span class="articolo__numero">Articolo ${art.numero}</span>
-          <h3>${art.rubrica}</h3>
-          ${corpoCommi}
-        </article>`;
-    }).join("");
-
-    root.innerHTML = `
-      <p class="breadcrumb">
-        <a href="index.html">Home</a> &rsaquo;
-        <a href="index.html?categoria=${encodeURIComponent(atto.categoria)}">${atto.categoria}</a> &rsaquo;
-        ${atto.titolo}
-      </p>
-      <section class="intestazione-atto">
-        <div class="intestazione-atto__meta">
-          <span class="badge-categoria">${atto.categoria}</span>
-          ${badgeStato}
-        </div>
-        <h1>${atto.titolo}</h1>
-        <p>${atto.sommario}</p>
-        <dl class="intestazione-atto__dati">
-          <div><dt>Numero</dt><dd>${atto.numero}/${atto.anno}</dd></div>
-          <div><dt>Data di emanazione</dt><dd>${atto.dataEmanazione}</dd></div>
-          <div><dt>Promulgato da</dt><dd>${atto.promulgatoDa}</dd></div>
-          <div><dt>Articoli</dt><dd>${atto.articoli.filter(a => !eTitoloGruppo(a)).length}</dd></div>
-        </dl>
-      </section>
-      <div class="corpo-atto">
-        <div class="colonna-indice">
-          ${htmlImmagineAtto(atto)}
-          <nav class="indice-articoli" aria-label="Indice degli articoli">
-            <h2>Indice</h2>
-            <ol>${indice}</ol>
-          </nav>
-        </div>
-        <div class="articoli">${articoli}</div>
-      </div>`;
-  }
-
-  document.addEventListener("DOMContentLoaded", init);
-})();
+@media (max-width:720px){
+  .redazione-menu{grid-template-columns:1fr;}
+  .redazione-riga{flex-direction:column;align-items:flex-start;}
+}
