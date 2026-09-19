@@ -115,15 +115,16 @@ main{padding:40px 0 64px;}
 .intestazione-atto__dati dt{font-family:var(--font-chrome);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--inchiostro-tenue);margin:0 0 2px;}
 .intestazione-atto__dati dd{margin:0;font-family:var(--font-chrome);font-weight:600;font-size:.92rem;color:var(--inchiostro);}
 /* Colonna di sinistra: immagine (quadrata, larga quanto l'indice) + indice.
-   Si estende per tutta l'altezza dell'atto, così l'indice resta "appiccicato" mentre si scorre. */
-.colonna-indice{align-self:stretch;min-width:0;}
-.immagine-atto{margin:0 0 16px;}
+   Su schermi larghi l'intera colonna resta "appiccicata" mentre si scorre l'atto:
+   l'immagine rimane ferma in alto e l'indice scorre dentro il proprio riquadro. */
+.colonna-indice{align-self:start;min-width:0;}
+.immagine-atto{margin:0 0 16px;flex:none;}
 /* Per ritagliare l'immagine e riempire tutto il quadrato, cambia "contain" in "cover". */
 .immagine-atto img{display:block;width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);box-shadow:0 8px 20px rgba(11,31,56,.22),0 2px 5px rgba(11,31,56,.14);transition:box-shadow .2s,transform .2s;}
 .immagine-atto img:hover{box-shadow:0 12px 28px rgba(11,31,56,.28),0 3px 8px rgba(11,31,56,.16);transform:translateY(-2px);}
 .immagine-atto figcaption{font-family:var(--font-chrome);font-size:.78rem;font-style:italic;text-align:center;color:var(--inchiostro-tenue);margin-top:6px;}
 .corpo-atto{display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:start;}
-.indice-articoli{position:sticky;top:76px;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:16px;}
+.indice-articoli{background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:16px;}
 .indice-articoli h2{font-family:var(--font-chrome);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--inchiostro-tenue);margin:0 0 10px;}
 .indice-articoli ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;}
 .indice-articoli li{margin-bottom:2px;}
@@ -153,8 +154,16 @@ main{padding:40px 0 64px;}
 .indice-titolo-gruppo:first-child{border-top:none;margin-top:0;padding-top:0;}
 
 @media (min-width:761px){
-  .indice-articoli{
+  .colonna-indice{
+    position:sticky;
+    top:76px;
     max-height:calc(100vh - 100px);
+    display:flex;
+    flex-direction:column;
+  }
+  .indice-articoli{
+    flex:1 1 auto;
+    min-height:120px;
     overflow-y:auto;
     scrollbar-width:thin;
     scrollbar-color:var(--blu-accento) var(--carta-scura);
