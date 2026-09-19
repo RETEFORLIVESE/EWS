@@ -138,6 +138,9 @@
         }
         
         .sidebar h2 { 
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 1.1rem; 
             color: var(--ist-blue-deep); 
             margin-bottom: 1rem; 
@@ -257,7 +260,23 @@
         .btn-sito:hover, .btn-normaktiv:hover { background: var(--ist-blue-deep); }
         .btn-sito { margin-top: 1rem; }
 
-        .sezione-titolo { color: var(--ist-blue-deep); font-size: 1.4rem; font-weight: 700; margin: 0 0 1rem 0; }
+        .sezione-titolo { color: var(--ist-blue-deep); font-size: 1.4rem; font-weight: 700; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 10px; }
+
+        /* Icone W95 accanto ai titoli */
+        .sidebar h2::before,
+        .sezione-titolo::before {
+            content: '';
+            display: inline-block;
+            flex-shrink: 0;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: pixelated;
+        }
+        .sidebar h2::before { width: 24px; height: 24px; background-image: url('Icons/IdexW95.ico'); }
+        .sezione-titolo::before { width: 28px; height: 28px; }
+        .sezione-norme::before { background-image: url('Icons/NormAktivW95.ico'); }
+        .sezione-elezione::before { background-image: url('Icons/ElectionW95.ico'); }
         .sezione-container { margin-top: 2.5rem; border-top: 1px solid var(--ist-line); padding-top: 2rem; }
 
         .norme-msg { color: var(--ist-text); font-style: italic; margin: 0; }
@@ -380,12 +399,12 @@
                 </div>
 
                 <div class="sezione-container">
-                    <h3 class="sezione-titolo">Norme collegate</h3>
+                    <h3 class="sezione-titolo sezione-norme">Norme collegate</h3>
                     <div id="view-norme"></div>
                 </div>
 
                 <div class="sezione-container">
-                    <h3 class="sezione-titolo">Ultima elezione</h3>
+                    <h3 class="sezione-titolo sezione-elezione">Ultima elezione</h3>
                     <div id="view-elezione"></div>
                 </div>
             </div>
