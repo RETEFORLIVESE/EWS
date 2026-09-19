@@ -65,6 +65,15 @@
                 <input type="hidden" id="target_id">
 
                 <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="input_categoria" disabled>
+                        <option value="">-- Seleziona --</option>
+                        <option value="congresso">Congresso</option>
+                        <option value="assemblea">Assemblea</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label>Nome Display</label>
                     <input type="text" id="input_nome" disabled>
                 </div>
@@ -157,7 +166,9 @@
                 
                 const header = document.createElement('div');
                 header.className = 'node-header';
-                header.innerHTML = `<span><strong>${nodo.nome_display}</strong> (${nodo.id_organo})</span>`;
+                const iconaTipo = nodo.categoria === 'assemblea' ? '👥' : (nodo.categoria === 'congresso' ? '🏛️' : '📌');
+                const etichettaTipo = nodo.categoria === 'assemblea' ? 'Assemblea' : (nodo.categoria === 'congresso' ? 'Congresso' : 'Non specificato');
+                header.innerHTML = `<span>${iconaTipo} <strong>${nodo.nome_display}</strong> (${nodo.id_organo}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}</em></span>`;
                 
                 const actions = document.createElement('div');
                 actions.className = 'actions';
@@ -185,7 +196,7 @@
 
         // --- GESTIONE FORM E DATI ---
         function abilitaForm(tipo, targetId, data) {
-            document.querySelectorAll('.form-panel input').forEach(el => el.disabled = false);
+            document.querySelectorAll('.form-panel input, .form-panel select').forEach(el => el.disabled = false);
             document.getElementById('btn_salva_form').disabled = false;
             document.getElementById('azione_tipo').value = tipo;
             document.getElementById('target_id').value = targetId || 'root';
@@ -193,6 +204,7 @@
             if (tipo === 'add') {
                 document.getElementById('form-title').innerText = "Aggiungi nuova Sezione";
                 document.getElementById('form-context').innerText = "Verrà inserita sotto: " + (typeof data === 'string' ? data : 'Radice');
+                document.getElementById('input_categoria').value = "";
                 document.getElementById('input_nome').value = "";
                 document.getElementById('input_id').value = "";
                 document.getElementById('input_luogo').value = "";
@@ -200,6 +212,7 @@
             } else if (tipo === 'edit') {
                 document.getElementById('form-title').innerText = "Modifica Sezione";
                 document.getElementById('form-context').innerText = "Stai modificando: " + data.nome_display;
+                document.getElementById('input_categoria').value = data.categoria || "";
                 document.getElementById('input_nome').value = data.nome_display || "";
                 document.getElementById('input_id').value = data.id_organo || "";
                 document.getElementById('input_luogo').value = data.luogo || "";
@@ -210,10 +223,17 @@
         function applicaModifiche() {
             const tipo = document.getElementById('azione_tipo').value;
             const targetId = document.getElementById('target_id').value;
-            
+            const categoria = document.getElementById('input_categoria').value;
+
+            if (!categoria) {
+                alert("Seleziona il Tipo (Congresso o Assemblea) prima di continuare.");
+                return;
+            }
+
             const nuovoNodo = {
                 id_organo: document.getElementById('input_id').value,
                 nome_display: document.getElementById('input_nome').value,
+                categoria: categoria,
                 luogo: document.getElementById('input_luogo').value,
                 link_sito: document.getElementById('input_link').value,
                 figli: []
@@ -234,13 +254,14 @@
                 if(nodo) {
                     nodo.id_organo = nuovoNodo.id_organo;
                     nodo.nome_display = nuovoNodo.nome_display;
+                    nodo.categoria = nuovoNodo.categoria;
                     nodo.luogo = nuovoNodo.luogo;
                     nodo.link_sito = nuovoNodo.link_sito;
                 }
             }
 
             // Svuota e disabilita form
-            document.querySelectorAll('.form-panel input').forEach(el => { el.value = ''; el.disabled = true; });
+            document.querySelectorAll('.form-panel input, .form-panel select').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('btn_salva_form').disabled = true;
             document.getElementById('form-title').innerText = "Seleziona un'azione";
             document.getElementById('form-context').innerText = "Modifica applicata in bozza. Ricorda di salvare online.";
