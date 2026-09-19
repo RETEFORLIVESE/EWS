@@ -176,13 +176,13 @@
             height: 16px;
             margin-right: 8px;
             flex-shrink: 0;
-            background-image: url('Icons/FolderclosedW95.png');
+            background-image: var(--icona-custom, url('Icons/FolderclosedW95.png'));
             background-size: contain; 
             background-repeat: no-repeat; 
             background-position: center;
         }
         .sidebar details[open] > summary::before {
-            background-image: url('Icons/FolderOpenedW95.png');
+            background-image: var(--icona-custom, url('Icons/FolderOpenedW95.png'));
         }
         .sidebar details[open] > summary {
             background: var(--ist-azure);
@@ -205,7 +205,7 @@
         .nodo-foglia:hover { background: var(--ist-azure); color: var(--ist-blue-deep); }
         .nodo-foglia::before {
             content: ''; display: inline-block; width: 16px; height: 16px; margin-right: 8px; flex-shrink: 0;
-            background-image: url('Icons/DocumentW95.png');
+            background-image: var(--icona-custom, url('Icons/DocumentW95.png'));
             background-size: contain; background-repeat: no-repeat; background-position: center;
         }
         
@@ -273,10 +273,10 @@
             background-position: center;
             image-rendering: pixelated;
         }
-        .sidebar h2::before { width: 24px; height: 24px; background-image: url('Icons/IdexW95.png'); }
+        .sidebar h2::before { width: 24px; height: 24px; background-image: url('Icons/IdexW95.ico'); }
         .sezione-titolo::before { width: 28px; height: 28px; }
-        .sezione-norme::before { background-image: url('Icons/NormAktivW95.png'); }
-        .sezione-elezione::before { background-image: url('Icons/ElectionW95.png'); }
+        .sezione-norme::before { background-image: url('Icons/NormAktivW95.ico'); }
+        .sezione-elezione::before { background-image: url('Icons/ElectionW95.ico'); }
         .sezione-container { margin-top: 2.5rem; border-top: 1px solid var(--ist-line); padding-top: 2rem; }
 
         .norme-msg { color: var(--ist-text); font-style: italic; margin: 0; }
@@ -529,6 +529,15 @@
             }
         }
 
+        // Se l'organo ha un'icona scelta in redazione (campo "icona"), la applica alla voce
+        // tramite la variabile CSS --icona-custom; altrimenti restano le icone di base.
+        function applicaIconaPersonalizzata(elemento, nodo) {
+            const nomeFile = (nodo.icona || '').toString().trim();
+            if (!nomeFile) return;
+            const percorso = 'Icons/' + encodeURIComponent(nomeFile).replace(/'/g, '%27');
+            elemento.style.setProperty('--icona-custom', "url('" + percorso + "')");
+        }
+
         function creaElementiMenu(nodi) {
             const frammento = document.createDocumentFragment();
             nodi.forEach(nodo => {
@@ -537,6 +546,7 @@
                     const details = document.createElement('details');
                     const summary = document.createElement('summary');
                     summary.innerText = testoVoce;
+                    applicaIconaPersonalizzata(summary, nodo);
                     summary.onclick = (e) => { 
                         e.preventDefault(); 
                         details.open = !details.open; 
@@ -552,6 +562,7 @@
                     const div = document.createElement('div');
                     div.className = 'nodo-foglia';
                     div.innerText = testoVoce;
+                    applicaIconaPersonalizzata(div, nodo);
                     div.onclick = () => mostraDettagli(nodo);
                     frammento.appendChild(div);
                 }
