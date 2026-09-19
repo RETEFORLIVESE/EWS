@@ -40,6 +40,31 @@
         .norma-sunto { margin: 0 0 12px 0; line-height: 1.5; }
         .btn-normaktiv { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
         .btn-normaktiv:hover { background: #004283; }
+
+        /* Riquadro "Ultima elezione" (dati da CEPU) */
+        .el-card { border: 1px solid #e3e3ea; border-radius: 6px; background: #fafbfd; padding: 14px; }
+        .el-dettagli { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 14px 0; font-size: 14px; }
+        .el-dettagli dt { color: #777; }
+        .el-dettagli dd { margin: 0; font-weight: 600; color: #222; }
+        .el-tipo { display: inline-block; background: #eef5ff; color: #0055a4; padding: 2px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+        .el-grafico { border-top: 1px solid #eee; padding-top: 14px; margin-bottom: 14px; }
+        .el-grafico svg { display: block; max-width: 360px; width: 100%; height: auto; margin: 0 auto; }
+        .el-legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #444; }
+        .el-legenda .sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+        .el-seggi-tot { text-align: center; font-size: 13px; font-weight: bold; color: #0055a4; margin-top: -6px; }
+        .el-barre { display: grid; grid-template-columns: minmax(80px, 30%) 1fr auto; gap: 6px 10px; align-items: center; font-size: 14px; }
+        .el-barre .nome { font-weight: 600; overflow-wrap: anywhere; }
+        .el-barre .traccia { background: #e8ebf0; border-radius: 3px; height: 18px; overflow: hidden; }
+        .el-barre .riempi { height: 100%; }
+        .el-barre .perc { font-weight: bold; min-width: 52px; text-align: right; }
+        .el-ref { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; text-align: center; }
+        .el-ref .opz { font-size: 22px; font-weight: 900; letter-spacing: .04em; min-width: 40px; }
+        .el-ref .opz.si { color: #1B5FA8; }
+        .el-ref .opz.no { color: #C0392B; }
+        .el-ref .barra { position: relative; height: 32px; border-radius: 4px; overflow: hidden; background: #C0392B; }
+        .el-ref .barra .riempi { position: absolute; top: 0; left: 0; bottom: 0; background: #1B5FA8; }
+        .el-ref .voti { font-size: 14px; font-weight: bold; }
+        .el-ref .pc { font-size: 17px; font-weight: 900; color: #0b3d6e; }
     </style>
 </head>
 <body>
@@ -71,6 +96,11 @@
                     <h3 style="margin: 0 0 12px 0;">Norme</h3>
                     <div id="view-norme"></div>
                 </div>
+
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <h3 style="margin: 0 0 12px 0;">Ultima elezione</h3>
+                    <div id="view-elezione"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -81,12 +111,21 @@
         let erroreAtti = null;
         let attiPronti = Promise.resolve();
         let organoCorrente = null;
+        let elezioniPubbliche = [];
+        let erroreElezioni = null;
+        let elezioniPronte = Promise.resolve();
 
         window.onload = async function() {
             // Le norme (atti) vengono lette dal server con BIN_ID, in parallelo all'indice.
             attiPronti = ApiOrgani.loadAtti()
                 .then(atti => { attiPubblici = atti; })
                 .catch(e => { erroreAtti = e; attiPubblici = []; });
+
+            // Le elezioni vengono lette da CEPU (stessa API di CEPU.html), in parallelo.
+            elezioniPronte = fetch(API_ELEZIONI, { cache: 'no-store' })
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(j => { elezioniPubbliche = (j && Array.isArray(j.elezioni)) ? j.elezioni : []; })
+                .catch(e => { erroreElezioni = e; elezioniPubbliche = []; });
 
             try {
                 datiPubblici = await ApiOrgani.loadDati();
@@ -196,6 +235,10 @@
             return frammento;
         }
 
+        function escapeHtml(t) {
+            return (t == null ? "" : t).toString().replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
         function creaElemento(tag, classe, testo) {
             const el = document.createElement(tag);
             if (classe) el.className = classe;
@@ -277,6 +320,243 @@
             norme.forEach(a => box.appendChild(creaNorma(a)));
         }
 
+        /* =========================================================
+           ULTIMA ELEZIONE (dati CEPU)
+        ========================================================= */
+        const API_ELEZIONI = '/api/elezioni';
+        const CEPU_URL = 'CEPU.html';
+        const PALETTE_EL = ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'];
+
+        // Stessi codici del radiobox di CEPU.html
+        const MAPPA_TIPO_EL = {
+            K: 'costituzionale', G: 'assemblea di sezione', C: 'congresso statale', S: 'congresso unitario',
+            D: 'congresso distrettuale', M: 'congresso metropolitano', T: 'congresso regionale', R: 'referendum'
+        };
+        // Quali consultazioni "appartengono" a un organo, in base alla sua categoria.
+        const TIPI_PER_CATEGORIA = { congresso: ['C', 'T', 'M', 'D', 'S'], assemblea: ['G'] };
+
+        function normTesto(v) {
+            return String(v == null ? '' : v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        function valoreDataElezione(e) {
+            return e.data ?? e.Data ?? e.data_elezione ?? e.dataElezione ?? e.date ?? e.anno ?? '';
+        }
+
+        function parsaDataEl(valore) {
+            const s = String(valore).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const d = new Date(s); if (!isNaN(d.getTime())) return d; }
+            const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+            if (m) { const d = new Date(`${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`); if (!isNaN(d.getTime())) return d; }
+            return null;
+        }
+
+        function formattaDataEl(valore) {
+            const d = parsaDataEl(valore);
+            return d ? d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : String(valore);
+        }
+
+        // Valore ordinabile della data (una data completa, oppure il solo anno).
+        function tempoElezione(e) {
+            const v = valoreDataElezione(e);
+            const d = parsaDataEl(v);
+            if (d) return d.getTime();
+            const anno = parseInt(String(v), 10);
+            return anno ? Date.UTC(anno, 0, 1) : 0;
+        }
+
+        function codiceElezione(e) {
+            if (e.tipo_codice) return String(e.tipo_codice).toUpperCase();
+            const t = normTesto(e.tipo);
+            return Object.keys(MAPPA_TIPO_EL).find(k => t.includes(normTesto(MAPPA_TIPO_EL[k]))) || '';
+        }
+
+        function percNum(v) {
+            return parseFloat(String(v).replace('%', '').replace(',', '.').trim()) || 0;
+        }
+        function interoDa(v) {
+            return parseInt(String(v).replace(/\D/g, ''), 10) || 0;
+        }
+        function numIt(v) {
+            return (typeof v === 'number' && !isNaN(v)) ? v.toLocaleString('it-IT') : String(v);
+        }
+        function fmtPerc(p) { return p.toFixed(2).replace('.', ',') + '%'; }
+        function coloreParte(p, i) { return p.colore || PALETTE_EL[i % PALETTE_EL.length]; }
+
+        // L'elezione più recente dell'organo:
+        //  1) collegata in modo esplicito: il record CEPU ha "id_organo" uguale all'ID dell'organo
+        //     (scelto dal menu a tendina in redazioneCEPU.html);
+        //  2) per i record senza collegamento, si ricorre al confronto per nome: il campo "comune"
+        //     coincide con il nome del luogo, dell'organo o con il suo ID (con filtro sul tipo).
+        // Un record collegato a un altro organo non viene mai mostrato qui.
+        function ultimaElezioneOrgano(nodo) {
+            const v = cercaLuogo(datiPubblici && datiPubblici.luoghi, nodo.luogo);
+            const nomeLuogo = typeof v === 'string' ? v : ((v && v.nome) || '');
+            const chiavi = new Set([nomeLuogo, nodo.nome_display, nodo.id_organo, nodo.luogo].filter(Boolean).map(normTesto));
+            const ammessi = TIPI_PER_CATEGORIA[nodo.categoria];
+
+            const candidate = elezioniPubbliche
+                .map((e, i) => ({ e, i }))
+                .filter(({ e }) => {
+                    if (!e) return false;
+                    if (e.id_organo) return e.id_organo === nodo.id_organo;
+                    return chiavi.has(normTesto(e.comune)) && (!ammessi || ammessi.includes(codiceElezione(e)));
+                });
+            candidate.sort((a, b) => (tempoElezione(b.e) - tempoElezione(a.e)) || (b.i - a.i));
+            return candidate.length ? candidate[0].e : null;
+        }
+
+        // Emiciclo: un punto per ogni seggio (stessa logica di CEPU.html).
+        function generaPuntiSemicircolo(n) {
+            const rEst = 220, rInt = 90, cx = 250, cy = 230;
+            const righe = Math.max(1, Math.min(14, Math.round(Math.sqrt(n / 2))));
+            const raggi = [];
+            for (let r = 0; r < righe; r++) raggi.push(righe === 1 ? (rInt + rEst) / 2 : rInt + (rEst - rInt) * (r / (righe - 1)));
+            const peso = raggi.reduce((a, b) => a + b, 0);
+            const grezzi = raggi.map(r => (r / peso) * n);
+            const perRiga = grezzi.map(Math.floor);
+            let assegnati = perRiga.reduce((a, b) => a + b, 0);
+            grezzi.map((g, i) => ({ i, resto: g - perRiga[i] })).sort((a, b) => b.resto - a.resto)
+                .forEach(o => { if (assegnati < n) { perRiga[o.i]++; assegnati++; } });
+            for (let i = 0; i < righe && n >= righe; i++) {
+                if (perRiga[i] === 0) { perRiga[perRiga.indexOf(Math.max(...perRiga))]--; perRiga[i]++; }
+            }
+            const punti = [];
+            for (let r = 0; r < righe; r++) {
+                for (let s = 0; s < perRiga[r]; s++) {
+                    const t = perRiga[r] === 1 ? 0.5 : s / (perRiga[r] - 1);
+                    const ang = Math.PI - t * Math.PI;
+                    punti.push({ x: cx + raggi[r] * Math.cos(ang), y: cy - raggi[r] * Math.sin(ang), ang });
+                }
+            }
+            punti.sort((a, b) => b.ang - a.ang);
+            const spazio = righe > 1 ? (rEst - rInt) / (righe - 1) : (rEst - rInt);
+            return { punti, raggioPallino: Math.max(2.5, Math.min(9, spazio / 2.4)) };
+        }
+
+        function graficoEmiciclo(partiti) {
+            const conSeggi = partiti.map((p, i) => ({ p, i, seggi: parseInt(p.seggi, 10) || 0 })).filter(x => x.seggi > 0);
+            const totale = conSeggi.reduce((a, x) => a + x.seggi, 0);
+            const { punti, raggioPallino } = generaPuntiSemicircolo(totale);
+            let k = 0, cerchi = '';
+            conSeggi.forEach(x => {
+                for (let j = 0; j < x.seggi && k < punti.length; j++, k++) {
+                    cerchi += `<circle cx="${punti[k].x.toFixed(1)}" cy="${punti[k].y.toFixed(1)}" r="${raggioPallino.toFixed(1)}" fill="${escapeHtml(coloreParte(x.p, x.i))}"><title>${escapeHtml(x.p.nome)} (${x.seggi} seggi)</title></circle>`;
+                }
+            });
+            const legenda = conSeggi.map(x => `<span><i class="sw" style="background:${escapeHtml(coloreParte(x.p, x.i))}"></i>${escapeHtml(x.p.nome)} — ${x.seggi}</span>`).join('');
+            return `<svg viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Composizione dell'assemblea">${cerchi}</svg>
+                    <div class="el-seggi-tot">${totale} seggi</div>
+                    <div class="el-legenda">${legenda}</div>`;
+        }
+
+        function graficoBarre(partiti) {
+            const righe = partiti.map((p, i) => ({ p, i, perc: percNum(p.percentuale) }))
+                .sort((a, b) => b.perc - a.perc).slice(0, 8)
+                .map(x => `<div class="nome">${escapeHtml(x.p.nome)}</div>
+                           <div class="traccia"><div class="riempi" style="width:${Math.min(100, x.perc).toFixed(2)}%; background:${escapeHtml(coloreParte(x.p, x.i))}"></div></div>
+                           <div class="perc">${escapeHtml(x.p.percentuale != null && x.p.percentuale !== '' ? x.p.percentuale : fmtPerc(x.perc))}</div>`).join('');
+            return `<div class="el-barre">${righe}</div>`;
+        }
+
+        // Referendum: barra unica SI / NO (come su CEPU).
+        function graficoReferendum(partiti) {
+            const trova = chiavi => partiti.find(p => chiavi.includes(normTesto(p.nome)));
+            const si = trova(['si', 'yes']) || partiti[0];
+            const no = trova(['no']) || partiti.find(p => p !== si);
+            if (!si || !no) return graficoBarre(partiti);
+            const vSi = interoDa(si.voti), vNo = interoDa(no.voti);
+            let pSi = percNum(si.percentuale), pNo = percNum(no.percentuale);
+            if (pSi === 0 && pNo === 0 && (vSi + vNo) > 0) { pSi = vSi / (vSi + vNo) * 100; pNo = 100 - pSi; }
+            const quota = (pSi + pNo) > 0 ? pSi / (pSi + pNo) * 100 : 50;
+            return `<div class="el-ref">
+                        <div class="opz si">${escapeHtml(si.nome)}</div>
+                        <div class="barra" role="img" aria-label="${escapeHtml(si.nome)} ${fmtPerc(pSi)}, ${escapeHtml(no.nome)} ${fmtPerc(pNo)}"><div class="riempi" style="width:${quota.toFixed(2)}%"></div></div>
+                        <div class="opz no">${escapeHtml(no.nome)}</div>
+                        <div class="voti">${vSi.toLocaleString('it-IT')}</div><div></div><div class="voti">${vNo.toLocaleString('it-IT')}</div>
+                        <div class="pc">${fmtPerc(pSi)}</div><div></div><div class="pc">${fmtPerc(pNo)}</div>
+                    </div>`;
+        }
+
+        function creaPannelloElezione(e) {
+            const codice = codiceElezione(e);
+            const partiti = Array.isArray(e.risultati_partiti) ? e.risultati_partiti : [];
+            const card = creaElemento('div', 'el-card');
+
+            // --- Pannello dettagli ---
+            const righe = [];
+            const unitaria = codice === 'S' || e.consultazione_unitaria === true;
+            righe.push(['Consultazione', `<span class="el-tipo">${escapeHtml(e.tipo || MAPPA_TIPO_EL[codice] || 'Elezione')}</span>`]);
+            righe.push(['Data', escapeHtml(formattaDataEl(valoreDataElezione(e)))]);
+            if (codice === 'R') {
+                const quesito = e.quesito || e.descrizione || e.area;
+                if (quesito) righe.push(['Quesito', escapeHtml(quesito)]);
+            } else if (e.comune) {
+                righe.push([unitaria ? 'Circoscrizione' : 'Sezione', escapeHtml(e.comune + (e.area ? ' (' + e.area + ')' : ''))]);
+            }
+            if (e.affluenza) righe.push(['Affluenza', escapeHtml(e.affluenza)]);
+            if (e.elettori) righe.push(['Elettori', escapeHtml(numIt(e.elettori))]);
+            if (e.votanti) righe.push(['Votanti', escapeHtml(numIt(e.votanti))]);
+
+            // Esito: stessa logica di CEPU (eletto / esito del referendum / prima forza)
+            const ordinati = [...partiti];
+            if (codice === 'G') {
+                righe.push(['Eletto Sindaco', escapeHtml(e.candidato_vincente || '—')]);
+            } else if (codice === 'R') {
+                const prev = ordinati.sort((a, b) => percNum(b.percentuale) - percNum(a.percentuale))[0];
+                righe.push(['Esito', escapeHtml(e.candidato_vincente || (prev ? `${prev.nome} (${prev.percentuale})` : '—'))]);
+            } else if (ordinati.length) {
+                const prima = ordinati.sort((a, b) => (parseInt(b.seggi, 10) || 0) - (parseInt(a.seggi, 10) || 0))[0];
+                righe.push(['Prima forza', escapeHtml(e.candidato_vincente || `${prima.nome} (${prima.seggi || 0} seggi)`)]);
+            }
+            const dl = creaElemento('dl', 'el-dettagli');
+            dl.innerHTML = righe.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join('');
+            card.appendChild(dl);
+
+            // --- Solo il grafico ---
+            if (partiti.length) {
+                const conSeggi = partiti.filter(p => (parseInt(p.seggi, 10) || 0) > 0);
+                const grafico = creaElemento('div', 'el-grafico');
+                grafico.innerHTML = codice === 'R' ? graficoReferendum(partiti)
+                    : (conSeggi.length > 1 ? graficoEmiciclo(partiti) : graficoBarre(partiti));
+                card.appendChild(grafico);
+            }
+
+            // --- Link a CEPU (apre direttamente quell'elezione) ---
+            const params = new URLSearchParams();
+            if (codice) params.set('tipo', codice);
+            const dataGrezza = valoreDataElezione(e);
+            if (dataGrezza !== '') params.set('data', String(dataGrezza));
+            if (e.comune && !unitaria) params.set('comune', e.comune);
+            const link = creaElemento('a', 'btn-normaktiv', 'Vedi i risultati completi su CEPU →');
+            link.href = CEPU_URL + (params.toString() ? '?' + params.toString() : '');
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            card.appendChild(link);
+            return card;
+        }
+
+        async function mostraElezione(nodo) {
+            const box = document.getElementById('view-elezione');
+            box.innerHTML = '';
+            box.appendChild(creaElemento('p', 'norme-msg', "Caricamento dell'ultima elezione…"));
+
+            await elezioniPronte;
+            if (organoCorrente !== nodo) return; // nel frattempo è stato scelto un altro organo
+
+            box.innerHTML = '';
+            if (erroreElezioni) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Impossibile leggere le elezioni (' + (erroreElezioni.message || 'errore sconosciuto') + ').'));
+                return;
+            }
+            const e = ultimaElezioneOrgano(nodo);
+            if (!e) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Nessuna elezione registrata per questo organo.'));
+                return;
+            }
+            box.appendChild(creaPannelloElezione(e));
+        }
+
         function mostraDettagli(nodo) {
             document.getElementById('messaggio-iniziale').style.display = 'none';
             const panel = document.getElementById('dettagli-panel');
@@ -285,6 +565,7 @@
             document.getElementById('view-id').innerText = nodo.id_organo;
             organoCorrente = nodo;
             mostraNorme(nodo);
+            mostraElezione(nodo);
 
             const etichetta = etichettaCategoria(nodo);
             const valoreLuogo = cercaLuogo(datiPubblici.luoghi, nodo.luogo) || nodo.luogo;
