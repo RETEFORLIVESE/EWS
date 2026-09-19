@@ -77,13 +77,46 @@
             container.appendChild(creaElementiMenu(nodi));
         }
 
+        function etichettaCategoria(nodo) {
+            if (nodo.categoria === 'assemblea') return 'Assemblea';
+            if (nodo.categoria === 'congresso') return 'Congresso';
+            return '';
+        }
+
+        const ETICHETTE_TIPO_LUOGO = {
+            assemblea: 'Assemblea',
+            distretto: 'Distretto',
+            citta_metropolitana: 'Città metropolitana',
+            cittametropolitana: 'Città metropolitana',
+            congresso: 'Congresso'
+        };
+
+        // I valori dentro "luoghi" possono essere una stringa semplice oppure un oggetto
+        // tipo { nome: "Roma", tipo: "citta_metropolitana" }: qui estraiamo sempre un testo leggibile.
+        function descrizioneLuogo(valore) {
+            if (!valore) return "";
+            if (typeof valore === "string") return valore;
+            if (typeof valore === "object") {
+                const nome = valore.nome || valore.nome_display || valore.citta || valore.nomeCitta || valore.label || valore.title || "";
+                const tipoGrezzo = (valore.tipo || valore.categoria || "").toString().toLowerCase();
+                const tipo = ETICHETTE_TIPO_LUOGO[tipoGrezzo] || tipoGrezzo;
+                if (nome && tipo) return `${nome} (${tipo})`;
+                if (nome) return nome;
+                const primaStringa = Object.values(valore).find(v => typeof v === "string" && v.trim() !== "");
+                if (primaStringa) return primaStringa;
+            }
+            return String(valore);
+        }
+
         function creaElementiMenu(nodi) {
             const frammento = document.createDocumentFragment();
             nodi.forEach(nodo => {
+                const etichetta = etichettaCategoria(nodo);
+                const testoVoce = etichetta ? `${nodo.nome_display} (${etichetta})` : nodo.nome_display;
                 if (nodo.figli && nodo.figli.length > 0) {
                     const details = document.createElement('details');
                     const summary = document.createElement('summary');
-                    summary.innerText = nodo.nome_display;
+                    summary.innerText = testoVoce;
                     summary.onclick = (e) => { 
                         e.preventDefault(); 
                         details.open = !details.open; 
@@ -98,7 +131,7 @@
                 } else {
                     const div = document.createElement('div');
                     div.className = 'nodo-foglia';
-                    div.innerText = nodo.nome_display;
+                    div.innerText = testoVoce;
                     div.onclick = () => mostraDettagli(nodo);
                     frammento.appendChild(div);
                 }
@@ -113,8 +146,10 @@
             document.getElementById('view-nome').innerText = nodo.nome_display;
             document.getElementById('view-id').innerText = nodo.id_organo;
 
-            const nomeLuogo = (datiPubblici.luoghi && datiPubblici.luoghi[nodo.luogo]) ? datiPubblici.luoghi[nodo.luogo] : (nodo.luogo || "Nessun luogo associato");
-            document.getElementById('view-luogo').innerText = "📍 " + nomeLuogo;
+            const etichetta = etichettaCategoria(nodo);
+            const valoreLuogo = (datiPubblici.luoghi && datiPubblici.luoghi[nodo.luogo]) ? datiPubblici.luoghi[nodo.luogo] : nodo.luogo;
+            const nomeLuogo = descrizioneLuogo(valoreLuogo) || "Nessun luogo associato";
+            document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + "📍 " + nomeLuogo;
 
             const btnLink = document.getElementById('view-link');
             if (nodo.link_sito && nodo.link_sito.trim() !== "") {
