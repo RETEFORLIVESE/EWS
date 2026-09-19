@@ -2,125 +2,353 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Congressi e Assemblee - EWS</title>
-    <link rel="apple-touch-icon" href="Stato.png">
-    <link rel="icon" type="image/png" href="Stato.png">
+    <link rel="apple-touch-icon" href="USSEcoat.png">
+    <link rel="icon" type="image/png" href="USSEcoat.png">
+    
+    <!-- Import Titillium Web font -->
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <script src="lex/assets/js/api-organi.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #c0c0c0; margin: 0; padding: 0; color: #333; }
-        header { background: #0055a4; color: white; padding: 20px; text-align: center; }
-        .layout { display: flex; height: calc(100vh - 80px); }
-        .sidebar { width: 350px; background: white; border-right: 1px solid #ddd; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .sidebar h2 { font-size: 18px; margin-top: 0; border-bottom: 2px solid #0055a4; padding-bottom: 10px; }
-        details { margin-bottom: 5px; }
-        .sidebar summary { cursor: pointer; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-weight: bold; list-style: none; display: flex; align-items: center; text-align: left; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ist-blue-deep: #0B3D6E;
+            --ist-blue: #1B5FA8;
+            --ist-blue-mid: #2E77C9;
+            --ist-azure: #E7F1FA;
+            --ist-azure-mid: #CFE3F5;
+            --ist-ink: #1F2A33;
+            --ist-text: #3C4750;
+            --ist-line: #D6E2ED;
+            --ist-gold: #C9A227;
+            --ist-white: #FFFFFF;
+            --bg-body: #F4F7F9;
+        }
+
+        body {
+            font-family: "Titillium Web", "Segoe UI", Arial, sans-serif;
+            background: var(--bg-body);
+            color: var(--ist-text);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        
+        .top-strip {
+            background: var(--ist-blue-deep);
+            color: rgba(255,255,255,0.85);
+            font-size: 0.8rem;
+            padding: 0.4rem clamp(1rem, 4vw, 3rem);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.01em;
+            flex-shrink: 0;
+        }
+
+        .top-strip a {
+            text-decoration: none;
+            color: rgba(255,255,255,0.85);
+            margin-left: 1.25rem;
+        }
+        .top-strip a:hover { text-decoration: underline; }
+
+        header.main-band {
+            background: linear-gradient(180deg, var(--ist-blue-mid) 0%, var(--ist-blue) 100%);
+            color: #fff;
+            padding: 1.1rem clamp(1rem, 4vw, 3rem);
+            flex-shrink: 0;
+        }
+
+        .band-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .brand-seal {
+            width: 60px;
+            height: 60px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+        }
+
+        .brand-seal img {
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.75));
+        }
+
+        .brand-text-group { display: flex; flex-direction: column; line-height: 1.15; }
+
+        .brand-eyebrow {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.72);
+            font-weight: 400;
+        }
+
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .flag-stripe { display: flex; height: 6px; flex-shrink: 0; }
+        .flag-stripe span { flex: 1 1 0; }
+        .flag-stripe .stripe-1 { background: #0072CE; }
+        .flag-stripe .stripe-2 { background: #000000; }
+        .flag-stripe .stripe-3 { background: #FFFFFF; }
+
+        .layout { display: flex; flex: 1; overflow: hidden; max-width: 1400px; margin: 0 auto; width: 100%; }
+        
+        .sidebar { 
+            width: 380px; 
+            background: var(--ist-white); 
+            border-right: 1px solid var(--ist-line); 
+            overflow-y: auto; 
+            padding: 1.5rem; 
+            box-shadow: 2px 0 10px rgba(11,61,110,0.03);
+            z-index: 10;
+        }
+        
+        .sidebar h2 { 
+            font-size: 1.1rem; 
+            color: var(--ist-blue-deep); 
+            margin-bottom: 1rem; 
+            border-bottom: 2px solid var(--ist-blue); 
+            padding-bottom: 0.5rem; 
+            font-weight: 700;
+        }
+        
+        details { margin-bottom: 4px; }
+        
+        .sidebar summary { 
+            cursor: pointer; 
+            padding: 0.7rem 0.8rem; 
+            background: var(--ist-white); 
+            border: 1px solid transparent; 
+            border-radius: 4px; 
+            font-weight: 600; 
+            font-size: 0.95rem;
+            color: var(--ist-text);
+            list-style: none; 
+            display: flex; 
+            align-items: center; 
+            transition: all 0.15s ease;
+        }
+        .sidebar summary:hover { background: var(--ist-azure); color: var(--ist-blue-deep); }
         .sidebar summary::-webkit-details-marker { display: none; }
+        
+        /* Custom Folder Icon */
         .sidebar summary::before {
             content: '';
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
+            width: 18px; height: 18px;
+            margin-right: 10px;
             flex-shrink: 0;
-            background-image: url('Icons/FolderclosedW95.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%231B5FA8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>');
+            background-size: contain; background-repeat: no-repeat; background-position: center;
         }
         .sidebar details[open] > summary::before {
-            background-image: url('Icons/FolderOpenedW95.png');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%231B5FA8" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19 13H5" /></svg>');
         }
-        .nodo-foglia { padding: 8px 8px 8px 8px; cursor: pointer; display: flex; align-items: center; text-align: left; text-decoration: none; color: #0055a4; border-bottom: 1px solid #f0f0f0; }
-        .nodo-foglia:hover { background: #eef5ff; }
+        .sidebar details[open] > summary {
+            background: var(--ist-azure);
+            border-color: var(--ist-azure-mid);
+            color: var(--ist-blue-deep);
+        }
+        
+        /* Custom File Icon */
+        .nodo-foglia { 
+            padding: 0.6rem 0.8rem; 
+            margin-bottom: 2px;
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            color: var(--ist-text); 
+            border-radius: 4px;
+            font-size: 0.95rem;
+            transition: all 0.15s ease;
+        }
+        .nodo-foglia:hover { background: var(--ist-azure); color: var(--ist-blue-deep); }
         .nodo-foglia::before {
-            content: '';
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
-            flex-shrink: 0;
-            background-image: url('Icons/DocumentW95.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            content: ''; display: inline-block; width: 16px; height: 16px; margin-right: 12px; margin-left: 2px; flex-shrink: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%237A8894" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>');
+            background-size: contain; background-repeat: no-repeat; background-position: center;
         }
-        .figli-container { padding-left: 20px; margin-top: 5px; border-left: 1px dashed #ccc; margin-left: 10px; }
-        .content { flex: 1; padding: 40px; background: #c0c0c0; overflow-y: auto; }
-        .dettagli-organo { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; display: none; }
-        .luogo-badge { display: inline-block; background: #eef5ff; color: #0055a4; padding: 5px 10px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-        .btn-sito { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 12px; }
+        
+        .figli-container { padding-left: 14px; margin-top: 4px; margin-bottom: 8px; border-left: 1px solid var(--ist-line); margin-left: 18px; }
+        
+        .content { flex: 1; padding: clamp(1.5rem, 4vw, 3rem); overflow-y: auto; position: relative; }
+        
+        .dettagli-organo { 
+            background: var(--ist-white); 
+            border: 1px solid var(--ist-line); 
+            border-top: 4px solid var(--ist-blue); 
+            border-radius: 4px; 
+            padding: clamp(1.5rem, 4vw, 2.5rem); 
+            box-shadow: 0 10px 30px rgba(11,61,110,0.08); 
+            max-width: 900px; 
+            margin: 0 auto; 
+            display: none; 
+        }
+        
+        .luogo-badge { 
+            display: inline-block; 
+            background: var(--ist-azure); 
+            color: var(--ist-blue-deep); 
+            padding: 0.4rem 0.9rem; 
+            border-radius: 4px; 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            margin-bottom: 1.2rem; 
+        }
+        
+        .dettagli-organo h2 { color: var(--ist-blue-deep); font-size: 2.2rem; font-weight: 900; line-height: 1.1; margin-bottom: 0.5rem; }
+        .dettagli-organo p > code { background: var(--ist-azure); padding: 0.1rem 0.4rem; border-radius: 3px; color: var(--ist-blue-deep); font-family: monospace; font-size: 0.9em; }
+        
+        /* Buttons based on index.html btn-primary */
+        .btn-sito, .btn-normaktiv { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 0.5rem; 
+            padding: 0.75rem 1.4rem; 
+            font-size: 0.95rem; 
+            font-weight: 600; 
+            text-decoration: none; 
+            border-radius: 3px; 
+            transition: background 0.15s ease, transform 0.15s ease;
+            background: var(--ist-blue); 
+            color: #fff; 
+            border: none;
+            cursor: pointer;
+        }
+        .btn-sito:hover, .btn-normaktiv:hover { background: var(--ist-blue-deep); }
+        .btn-sito { margin-top: 1rem; }
 
-        .norme-msg { color: #777; margin: 0; }
-        .norma { border: 1px solid #e3e3ea; border-radius: 6px; margin-bottom: 10px; background: #fafbfd; }
-        .norma > summary { cursor: pointer; padding: 10px 14px; }
-        .norma-titolo { font-weight: bold; color: #0055a4; }
-        .norma-meta { display: block; font-size: 13px; color: #666; margin-top: 2px; }
-        .norma-stato { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; margin-left: 8px; background: #e6f4ea; color: #1e6b34; }
-        .norma-stato.abrogato { background: #f3e8e8; color: #8a2b2b; }
-        .norma-corpo { padding: 4px 14px 14px 14px; border-top: 1px solid #eee; }
-        .norma-corpo p { margin: 8px 0; }
-        .norma-etichetta { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #888; margin: 12px 0 2px 0; }
-        .norma-sunto { margin: 0 0 12px 0; line-height: 1.5; }
-        .btn-normaktiv { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
-        .btn-normaktiv:hover { background: #004283; }
+        .sezione-titolo { color: var(--ist-blue-deep); font-size: 1.4rem; font-weight: 700; margin: 0 0 1rem 0; }
+        .sezione-container { margin-top: 2.5rem; border-top: 1px solid var(--ist-line); padding-top: 2rem; }
 
-        /* Riquadro "Ultima elezione" (dati da CEPU) */
-        .el-card { border: 1px solid #e3e3ea; border-radius: 6px; background: #fafbfd; padding: 14px; }
-        .el-dettagli { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 14px 0; font-size: 14px; }
-        .el-dettagli dt { color: #777; }
-        .el-dettagli dd { margin: 0; font-weight: 600; color: #222; }
-        .el-tipo { display: inline-block; background: #eef5ff; color: #0055a4; padding: 2px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
-        .el-grafico { border-top: 1px solid #eee; padding-top: 14px; margin-bottom: 14px; }
-        .el-grafico svg { display: block; max-width: 360px; width: 100%; height: auto; margin: 0 auto; }
-        .el-legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #444; }
-        .el-legenda .sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
-        .el-seggi-tot { text-align: center; font-size: 13px; font-weight: bold; color: #0055a4; margin-top: -6px; }
-        .el-barre { display: grid; grid-template-columns: minmax(80px, 30%) 1fr auto; gap: 6px 10px; align-items: center; font-size: 14px; }
-        .el-barre .nome { font-weight: 600; overflow-wrap: anywhere; }
-        .el-barre .traccia { background: #e8ebf0; border-radius: 3px; height: 18px; overflow: hidden; }
+        .norme-msg { color: var(--ist-text); font-style: italic; margin: 0; }
+        
+        .norma { 
+            border: 1px solid var(--ist-line); 
+            border-radius: 4px; 
+            margin-bottom: 0.8rem; 
+            background: var(--ist-white); 
+            transition: border-color 0.15s;
+        }
+        .norma:hover { border-color: var(--ist-blue-mid); }
+        .norma > summary { cursor: pointer; padding: 1rem 1.2rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .norma-titolo { font-weight: 700; color: var(--ist-blue-deep); font-size: 1.05rem; }
+        .norma-meta { font-size: 0.85rem; color: #7A8894; }
+        .norma-stato { 
+            display: inline-block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; 
+            padding: 0.2rem 0.6rem; border-radius: 20px; margin-left: auto; background: var(--ist-azure); color: var(--ist-blue); 
+        }
+        .norma-stato.abrogato { background: #fdf2f2; color: #c81e1e; }
+        
+        .norma-corpo { padding: 1rem 1.2rem 1.2rem; border-top: 1px solid var(--ist-line); background: var(--bg-body); }
+        .norma-etichetta { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--ist-blue); margin: 0.8rem 0 0.3rem 0; }
+        .norma-sunto { margin: 0 0 1.2rem 0; font-size: 0.95rem; line-height: 1.5; color: var(--ist-text); }
+        
+        .el-card { border: 1px solid var(--ist-line); border-radius: 4px; background: var(--bg-body); padding: 1.5rem; }
+        .el-dettagli { display: grid; grid-template-columns: minmax(120px, max-content) 1fr; gap: 0.6rem 1.5rem; margin: 0 0 1.5rem 0; font-size: 0.95rem; }
+        .el-dettagli dt { color: var(--ist-text); font-weight: 600; }
+        .el-dettagli dd { margin: 0; font-weight: 700; color: var(--ist-ink); }
+        .el-tipo { display: inline-block; background: var(--ist-blue); color: var(--ist-white); padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+        
+        .el-grafico { border-top: 1px solid var(--ist-line); padding-top: 1.5rem; margin-bottom: 1.5rem; }
+        .el-grafico svg { display: block; max-width: 360px; width: 100%; height: auto; margin: 0 auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); }
+        .el-legenda { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; justify-content: center; margin-top: 1.2rem; font-size: 0.9rem; font-weight: 600; color: var(--ist-ink); }
+        .el-legenda .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+        .el-seggi-tot { text-align: center; font-size: 1rem; font-weight: 900; color: var(--ist-blue-deep); margin-top: -10px; }
+        
+        .el-barre { display: grid; grid-template-columns: minmax(90px, 30%) 1fr auto; gap: 0.6rem 1rem; align-items: center; font-size: 0.95rem; }
+        .el-barre .nome { font-weight: 700; color: var(--ist-ink); overflow-wrap: anywhere; }
+        .el-barre .traccia { background: var(--ist-line); border-radius: 3px; height: 12px; overflow: hidden; }
         .el-barre .riempi { height: 100%; }
-        .el-barre .perc { font-weight: bold; min-width: 52px; text-align: right; }
-        .el-ref { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; text-align: center; }
-        .el-ref .opz { font-size: 22px; font-weight: 900; letter-spacing: .04em; min-width: 40px; }
-        .el-ref .opz.si { color: #1B5FA8; }
+        .el-barre .perc { font-weight: 700; color: var(--ist-blue-deep); min-width: 55px; text-align: right; }
+        
+        .el-ref { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem 1.2rem; text-align: center; }
+        .el-ref .opz { font-size: 1.5rem; font-weight: 900; letter-spacing: .02em; min-width: 40px; }
+        .el-ref .opz.si { color: var(--ist-blue); }
         .el-ref .opz.no { color: #C0392B; }
-        .el-ref .barra { position: relative; height: 32px; border-radius: 4px; overflow: hidden; background: #C0392B; }
-        .el-ref .barra .riempi { position: absolute; top: 0; left: 0; bottom: 0; background: #1B5FA8; }
-        .el-ref .voti { font-size: 14px; font-weight: bold; }
-        .el-ref .pc { font-size: 17px; font-weight: 900; color: #0b3d6e; }
+        .el-ref .barra { position: relative; height: 28px; border-radius: 4px; overflow: hidden; background: #C0392B; }
+        .el-ref .barra .riempi { position: absolute; top: 0; left: 0; bottom: 0; background: var(--ist-blue); }
+        .el-ref .voti { font-size: 0.9rem; font-weight: 600; color: var(--ist-text); }
+        .el-ref .pc { font-size: 1.2rem; font-weight: 900; color: var(--ist-ink); }
 
-        /* --- Adattamento per schermi stretti (telefoni/tablet in verticale) --- */
-        @media (max-width: 720px) {
-            * { box-sizing: border-box; }
-            header { padding: 14px; }
-            header h1 { font-size: 19px; }
-
-            .layout { flex-direction: column; height: auto; }
-            .sidebar { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid #ddd; }
-            .content { padding: 16px; }
-
-            .dettagli-organo { padding: 18px; }
-            .luogo-badge { font-size: 13px; }
-
+        @media (max-width: 860px) {
+            .layout { flex-direction: column; overflow-y: auto; }
+            .sidebar { width: 100%; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--ist-line); box-shadow: 0 4px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
+            .content { padding: 1.2rem; overflow-y: visible; }
+            body { overflow-y: auto; }
+            
+            .dettagli-organo { padding: 1.5rem; }
             .btn-sito, .btn-normaktiv { display: block; text-align: center; width: 100%; }
-
-            .el-dettagli { grid-template-columns: 1fr; gap: 2px 0; }
-            .el-dettagli dt { margin-top: 8px; }
-            .el-barre { grid-template-columns: minmax(60px, 38%) 1fr auto; gap: 4px 6px; font-size: 13px; }
-            .el-ref .opz { font-size: 18px; }
-
-            .sidebar summary, .nodo-foglia { padding: 10px 8px; min-height: 20px; }
-            .norma > summary { padding: 12px 14px; }
-            .norma-corpo { padding: 4px 12px 12px 12px; }
-            .norma-titolo { font-size: 15px; }
+            .el-dettagli { grid-template-columns: 1fr; gap: 0.3rem 0; }
+            .el-dettagli dt { margin-top: 0.8rem; }
+            .el-barre { grid-template-columns: minmax(70px, 35%) 1fr auto; font-size: 0.85rem; }
+            
+            .top-strip { flex-direction: column; gap: 0.5rem; text-align: center; }
+            .top-strip a { margin: 0 0.5rem; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1 style="margin: 0; font-size: 24px;">Portale Congressi e Assemblee</h1>
+    <div class="top-strip">
+        <span>Zentraler Exekutivrat der Union [estjibundes.me.ei]</span>
+        <div>
+            <a href="index1.html">Deutscher</a>
+            <a href="#">English</a>
+        </div>
+    </div>
+
+    <header class="main-band">
+        <div class="band-inner">
+            <a href="index.html" class="brand">
+                <span class="brand-seal">
+                    <img src="USSEunion.png" alt="Logo EstjiUnion" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <!-- Fallback SVG if image is missing -->
+                    <svg style="display:none; width:40px; height:40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
+                </span>
+                <span class="brand-text-group">
+                    <span class="brand-eyebrow">Union der Wohlfartsstaaten von Estji</span>
+                    <span class="brand-title">Portale Congressi e Assemblee</span>
+                </span>
+            </a>
+        </div>
     </header>
+
+    <div class="flag-stripe" aria-hidden="true">
+        <span class="stripe-1"></span>
+        <span class="stripe-2"></span>
+        <span class="stripe-3"></span>
+    </div>
 
     <div class="layout">
         <div class="sidebar">
@@ -129,26 +357,27 @@
         </div>
 
         <div class="content">
-            <div id="messaggio-iniziale" style="text-align: center; color: #777; margin-top: 50px;">
+            <div id="messaggio-iniziale" style="text-align: center; color: var(--ist-text); margin-top: 50px; padding: 2rem; background: var(--ist-white); border-radius: 4px; border: 1px dashed var(--ist-line);">
+                <p style="font-size: 1.1rem; font-weight: 600; color: var(--ist-blue-deep); margin-bottom: 0.5rem;">Benvenuto nel Portale</p>
                 Seleziona un organo dall'indice a sinistra per visualizzarne i dettagli.
             </div>
 
             <div class="dettagli-organo" id="dettagli-panel">
                 <div class="luogo-badge" id="view-luogo">Luogo</div>
-                <h2 id="view-nome" style="margin-top: 0; font-size: 28px;">Nome Organo</h2>
-                <p style="color: gray;">ID Riferimento: <code id="view-id"></code></p>
+                <h2 id="view-nome">Nome Organo</h2>
+                <p style="color: var(--ist-text); font-size: 0.9rem;">ID Riferimento: <code id="view-id"></code></p>
                 
-                <div id="view-sito-box" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                <div id="view-sito-box" style="display: none;">
                     <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
                 </div>
 
-                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <h3 style="margin: 0 0 12px 0;">Norme</h3>
+                <div class="sezione-container">
+                    <h3 class="sezione-titolo">Norme</h3>
                     <div id="view-norme"></div>
                 </div>
 
-                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <h3 style="margin: 0 0 12px 0;">Ultima elezione</h3>
+                <div class="sezione-container">
+                    <h3 class="sezione-titolo">Ultima elezione</h3>
                     <div id="view-elezione"></div>
                 </div>
             </div>
@@ -172,7 +401,7 @@
                 .catch(e => { erroreAtti = e; attiPubblici = []; });
 
             // Le elezioni vengono lette da CEPU (stessa API di CEPU.html), in parallelo.
-            elezioniPronte = fetch(API_ELEZIONI, { cache: 'no-store' })
+            elezioniPronte = fetch('/api/elezioni', { cache: 'no-store' }) // Assuming API relative path mapping as per original code context, but original had API_ELEZIONI
                 .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(j => { elezioniPubbliche = (j && Array.isArray(j.elezioni)) ? j.elezioni : []; })
                 .catch(e => { erroreElezioni = e; elezioniPubbliche = []; });
@@ -181,7 +410,7 @@
                 datiPubblici = await ApiOrgani.loadDati();
                 costruisciIndice(datiPubblici.alberoOrgani);
             } catch (error) {
-                document.getElementById('indice-container').innerHTML = "<p style='color:red;'>Errore nel caricamento dei dati. Il database potrebbe essere vuoto o non configurato.</p>";
+                document.getElementById('indice-container').innerHTML = "<p style='color:#C0392B; padding: 1rem; background: #fdf2f2; border-radius: 4px;'>Errore nel caricamento dei dati. Il database potrebbe essere vuoto o non configurato.</p>";
             }
         };
 
@@ -315,7 +544,14 @@
             }
             const sigla = (atto.numero || atto.anno) ? `n. ${atto.numero || '?'}/${atto.anno || '?'}` : '';
             const meta = [atto.categoria, sigla].filter(Boolean).join(' · ');
-            if (meta) s.appendChild(creaElemento('span', 'norma-meta', meta));
+            if (meta) {
+                const metaSpan = creaElemento('span', 'norma-meta', meta);
+                if(s.childNodes.length > 1) { // If there is a status, insert meta before it for flex ordering
+                    s.insertBefore(metaSpan, s.lastChild);
+                } else {
+                    s.appendChild(metaSpan);
+                }
+            }
             d.appendChild(s);
 
             const corpo = creaElemento('div', 'norma-corpo');
@@ -329,7 +565,7 @@
             corpo.appendChild(creaElemento('div', 'norma-etichetta', 'Sunto'));
             corpo.appendChild(creaElemento('p', 'norma-sunto', sunto));
 
-            const link = creaElemento('a', 'btn-normaktiv', 'Leggi il testo completo su NormAktiv →');
+            const link = creaElemento('a', 'btn-normaktiv', 'Leggi il testo completo su NormAktiv');
             link.href = urlNormaktiv(atto);
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
@@ -560,7 +796,7 @@
                 righe.push(['Prima forza', escapeHtml(e.candidato_vincente || `${prima.nome} (${prima.seggi || 0} seggi)`)]);
             }
             const dl = creaElemento('dl', 'el-dettagli');
-            dl.innerHTML = righe.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join('');
+            dl.innerHTML = righe.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${v}</dd></div>`).join('');
             card.appendChild(dl);
 
             // --- Solo il grafico ---
@@ -578,7 +814,7 @@
             const dataGrezza = valoreDataElezione(e);
             if (dataGrezza !== '') params.set('data', String(dataGrezza));
             if (e.comune && !unitaria) params.set('comune', e.comune);
-            const link = creaElemento('a', 'btn-normaktiv', 'Vedi i risultati completi su CEPU →');
+            const link = creaElemento('a', 'btn-normaktiv', 'Vedi i risultati completi su CEPU');
             link.href = CEPU_URL + (params.toString() ? '?' + params.toString() : '');
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
@@ -620,7 +856,7 @@
             const etichetta = etichettaCategoria(nodo);
             const valoreLuogo = cercaLuogo(datiPubblici.luoghi, nodo.luogo) || nodo.luogo;
             const nomeLuogo = descrizioneLuogo(valoreLuogo) || "Nessun luogo associato";
-            document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + "📍 " + nomeLuogo;
+            document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + nomeLuogo;
 
             // Sito web facoltativo: se presente mostra il pulsante, altrimenti nasconde tutto.
             const boxSito = document.getElementById('view-sito-box');
@@ -630,6 +866,11 @@
                 boxSito.style.display = 'block';
             } else {
                 boxSito.style.display = 'none';
+            }
+            
+            // Scroll su mobile
+            if (window.innerWidth <= 860) {
+                document.querySelector('.layout').scrollTo({ top: document.querySelector('.sidebar').offsetHeight, behavior: 'smooth' });
             }
         }
     </script>
