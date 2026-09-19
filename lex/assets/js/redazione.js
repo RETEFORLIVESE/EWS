@@ -25,11 +25,36 @@
     return [...set];
   }
 
+  const ETICHETTE_TIPO_LUOGO = {
+    assemblea: "Assemblea",
+    distretto: "Distretto",
+    citta_metropolitana: "Città metropolitana",
+    cittametropolitana: "Città metropolitana",
+    congresso: "Congresso"
+  };
+
+  // I valori dentro "luoghi" possono essere una semplice stringa oppure un oggetto
+  // tipo { nome: "Roma", tipo: "citta_metropolitana" }. Qui estraiamo sempre un testo leggibile.
+  function descrizioneLuogo(valore) {
+    if (!valore) return "";
+    if (typeof valore === "string") return valore;
+    if (typeof valore === "object") {
+      const nome = valore.nome || valore.nome_display || valore.citta || valore.nomeCitta || valore.label || valore.title || "";
+      const tipoGrezzo = (valore.tipo || valore.categoria || "").toString().toLowerCase();
+      const tipo = ETICHETTE_TIPO_LUOGO[tipoGrezzo] || (tipoGrezzo ? tipoGrezzo : "");
+      if (nome && tipo) return `${nome} (${tipo})`;
+      if (nome) return nome;
+      const primaStringa = Object.values(valore).find(v => typeof v === "string" && v.trim() !== "");
+      if (primaStringa) return primaStringa;
+    }
+    return String(valore);
+  }
+
   function opzioniLuogo(luogoSelezionato) {
     const codici = Object.keys(luoghi);
     let html = `<option value="">-- Nessun luogo --</option>`;
     html += codici.map(codice =>
-      `<option value="${escapeHtml(codice)}" ${codice === luogoSelezionato ? "selected" : ""}>${escapeHtml(luoghi[codice])}</option>`
+      `<option value="${escapeHtml(codice)}" ${codice === luogoSelezionato ? "selected" : ""}>${escapeHtml(descrizioneLuogo(luoghi[codice]))}</option>`
     ).join("");
     // Se l'atto ha già un luogo che non è (più) nell'elenco corrente, lo mostriamo comunque per non perdere il dato.
     if (luogoSelezionato && !codici.includes(luogoSelezionato)) {
