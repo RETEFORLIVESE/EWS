@@ -36,6 +36,13 @@
         .btn-save:disabled { background: #ccc; cursor: not-allowed; }
 
         .nota-luoghi { background: #eef5ff; border: 1px solid #cfe2ff; color: #0b3d6b; padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; }
+
+        /* Voci collassabili (Organi con figli, Gruppi di Luoghi) */
+        details.node-item { margin-top: 10px; }
+        summary.node-header { cursor: pointer; list-style: none; }
+        summary.node-header::-webkit-details-marker { display: none; }
+        summary.node-header::before { content: '▸'; margin-right: 8px; color: #888; font-size: 12px; display: inline-block; width: 10px; }
+        details.node-item[open] > summary.node-header::before { content: '▾'; }
     </style>
 </head>
 <body>
@@ -179,6 +186,16 @@
 
         function escapeHtml(t) {
             return (t || "").toString().replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
+        // Crea un bottone azione (+, Modifica, Elimina, ecc.) che non fa scattare
+        // l'apertura/chiusura del <details> quando si trova dentro un <summary>.
+        function creaBottoneAzione(testo, classe, gestore) {
+            const b = document.createElement('button');
+            b.className = classe;
+            b.innerText = testo;
+            b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); gestore(); };
+            return b;
         }
 
         function mostraErrore(messaggio) {
@@ -385,37 +402,41 @@
             if (!nodi) return ul;
 
             nodi.forEach(nodo => {
-                const li = document.createElement('li');
-                li.className = 'node-item';
-
-                const header = document.createElement('div');
-                header.className = 'node-header';
                 const iconaTipo = nodo.categoria === 'assemblea' ? '👥' : (nodo.categoria === 'congresso' ? '🏛️' : '📌');
                 const etichettaTipo = nodo.categoria === 'assemblea' ? 'Assemblea' : (nodo.categoria === 'congresso' ? 'Congresso' : 'Non specificato');
                 const infoLuogo = trovaVoceLuogo(nodo.luogo);
                 const testoLuogo = infoLuogo ? ` · 📍 ${escapeHtml(infoLuogo.nome)}` : '';
-                header.innerHTML = `<span>${iconaTipo} <strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
+                const htmlTesto = `<span>${iconaTipo} <strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
 
                 const actions = document.createElement('div');
                 actions.className = 'actions';
+                actions.appendChild(creaBottoneAzione('+', 'btn-add', () => abilitaForm('add', nodo.id_organo, nodo.nome_display)));
+                actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaForm('edit', nodo.id_organo, nodo)));
+                actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaNodo(nodo.id_organo)));
 
-                const btnAdd = document.createElement('button'); btnAdd.className = 'btn-add'; btnAdd.innerText = '+';
-                btnAdd.onclick = () => abilitaForm('add', nodo.id_organo, nodo.nome_display);
+                const haFigli = nodo.figli && nodo.figli.length > 0;
 
-                const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
-                btnEdit.onclick = () => abilitaForm('edit', nodo.id_organo, nodo);
-
-                const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
-                btnDel.onclick = () => eliminaNodo(nodo.id_organo);
-
-                actions.append(btnAdd, btnEdit, btnDel);
-                header.appendChild(actions);
-                li.appendChild(header);
-
-                if (nodo.figli && nodo.figli.length > 0) {
-                    li.appendChild(creaListaNodi(nodo.figli, nodo.id_organo));
+                if (haFigli) {
+                    const details = document.createElement('details');
+                    details.className = 'node-item';
+                    details.open = true;
+                    const summary = document.createElement('summary');
+                    summary.className = 'node-header';
+                    summary.innerHTML = htmlTesto;
+                    summary.appendChild(actions);
+                    details.appendChild(summary);
+                    details.appendChild(creaListaNodi(nodo.figli, nodo.id_organo));
+                    ul.appendChild(details);
+                } else {
+                    const li = document.createElement('li');
+                    li.className = 'node-item';
+                    const header = document.createElement('div');
+                    header.className = 'node-header';
+                    header.innerHTML = htmlTesto;
+                    header.appendChild(actions);
+                    li.appendChild(header);
+                    ul.appendChild(li);
                 }
-                ul.appendChild(li);
             });
             return ul;
         }
@@ -657,10 +678,6 @@
                 const gruppo = eGruppoLuogo(valore);
                 if (!voce && !gruppo) return;
 
-                const li = document.createElement('li');
-                li.className = 'node-item';
-                const header = document.createElement('div');
-                header.className = 'node-header';
                 const actions = document.createElement('div');
                 actions.className = 'actions';
 
@@ -675,33 +692,40 @@
                         }
                     }
                     const extra = dettagli.length ? `<em style="color:#888; font-weight:normal;">— ${escapeHtml(dettagli.join(' · '))}</em>` : '';
-                    header.innerHTML = `<span>📍 <strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
+                    const htmlTesto = `<span>📍 <strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
 
-                    const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
-                    btnEdit.onclick = () => abilitaFormLuogo('edit', 'voce', percorso, chiave);
-                    const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
-                    btnDel.onclick = () => eliminaElementoLuogo(percorso, chiave);
-                    actions.append(btnEdit, btnDel);
+                    actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaFormLuogo('edit', 'voce', percorso, chiave)));
+                    actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaElementoLuogo(percorso, chiave)));
+
+                    const li = document.createElement('li');
+                    li.className = 'node-item';
+                    const header = document.createElement('div');
+                    header.className = 'node-header';
+                    header.innerHTML = htmlTesto;
+                    header.appendChild(actions);
+                    li.appendChild(header);
+                    ul.appendChild(li);
                 } else {
                     const n = contaVoci(valore);
-                    header.innerHTML = `<span>📂 <strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
-
+                    const htmlTesto = `<span>📂 <strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
                     const percorsoGruppo = [...percorso, chiave];
-                    const btnAddVoce = document.createElement('button'); btnAddVoce.className = 'btn-add'; btnAddVoce.innerText = '+ Voce';
-                    btnAddVoce.onclick = () => abilitaFormLuogo('add', 'voce', percorsoGruppo, null);
-                    const btnAddGruppo = document.createElement('button'); btnAddGruppo.className = 'btn-add'; btnAddGruppo.innerText = '+ Gruppo';
-                    btnAddGruppo.onclick = () => abilitaFormLuogo('add', 'gruppo', percorsoGruppo, null);
-                    const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
-                    btnEdit.onclick = () => abilitaFormLuogo('edit', 'gruppo', percorso, chiave);
-                    const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
-                    btnDel.onclick = () => eliminaElementoLuogo(percorso, chiave);
-                    actions.append(btnAddVoce, btnAddGruppo, btnEdit, btnDel);
-                }
 
-                header.appendChild(actions);
-                li.appendChild(header);
-                if (gruppo) li.appendChild(creaListaLuoghi(valore, [...percorso, chiave]));
-                ul.appendChild(li);
+                    actions.appendChild(creaBottoneAzione('+ Voce', 'btn-add', () => abilitaFormLuogo('add', 'voce', percorsoGruppo, null)));
+                    actions.appendChild(creaBottoneAzione('+ Gruppo', 'btn-add', () => abilitaFormLuogo('add', 'gruppo', percorsoGruppo, null)));
+                    actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaFormLuogo('edit', 'gruppo', percorso, chiave)));
+                    actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaElementoLuogo(percorso, chiave)));
+
+                    const details = document.createElement('details');
+                    details.className = 'node-item';
+                    details.open = true;
+                    const summary = document.createElement('summary');
+                    summary.className = 'node-header';
+                    summary.innerHTML = htmlTesto;
+                    summary.appendChild(actions);
+                    details.appendChild(summary);
+                    details.appendChild(creaListaLuoghi(valore, percorsoGruppo));
+                    ul.appendChild(details);
+                }
             });
             return ul;
         }
