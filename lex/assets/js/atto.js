@@ -1,4 +1,31 @@
 (function () {
+  // Immagine facoltativa dell'atto, mostrata tra il pannello delle informazioni e l'indice.
+  // Nell'atto si salvano i campi "immagine" (nome del file o indirizzo) e "didascalia".
+  // Sono accettati indirizzi http(s) e percorsi relativi al sito; qualunque altro schema
+  // (javascript:, data:, ...) viene scartato.
+  const escAttr = t => (t == null ? "" : t).toString().replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function urlImmagineSicuro(valore) {
+    const u = (valore || "").toString().trim();
+    if (!u) return "";
+    if (/^(https?:)?\/\//i.test(u)) return u;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return "";
+    return u;
+  }
+
+  function htmlImmagineAtto(atto) {
+    const src = urlImmagineSicuro(atto.immagine);
+    if (!src) return "";
+    const didascalia = (atto.didascalia || "").toString().trim();
+    return `
+      <figure class="immagine-atto">
+        <img src="${escAttr(src)}" alt="${escAttr(didascalia || atto.titolo)}" loading="lazy"
+             onerror="this.closest('figure').style.display='none'">
+        ${didascalia ? `<figcaption>${escAttr(didascalia)}</figcaption>` : ""}
+      </figure>`;
+  }
+
   async function init() {
     renderTestata("home");
     renderFooter();
@@ -113,6 +140,7 @@
           <div><dt>Articoli</dt><dd>${atto.articoli.filter(a => !eTitoloGruppo(a)).length}</dd></div>
         </dl>
       </section>
+      ${htmlImmagineAtto(atto)}
       <div class="corpo-atto">
         <nav class="indice-articoli" aria-label="Indice degli articoli">
           <h2>Indice</h2>
