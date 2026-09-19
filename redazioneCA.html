@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redazione Organi - EWS</title>
+    <title>Redazione Organi e Luoghi - EWS</title>
     <script src="lex/assets/js/api-organi.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
         header { border-bottom: 2px solid #0055a4; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        
-        #login-panel { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #login-panel input { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-        #login-panel button { width: 100%; padding: 10px; background: #0055a4; color: white; border: none; cursor: pointer; }
+
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; border: 1px solid #0055a4; background: white; color: #0055a4; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: #0055a4; color: white; }
 
         .layout { display: flex; gap: 30px; }
         .tree-panel { flex: 1.5; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .form-panel { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 20px; height: fit-content; }
-        
+
         .node-list { list-style-type: none; padding-left: 20px; margin: 0; }
         .node-item { margin-top: 10px; }
         .node-header { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
-        
+
         .actions button { padding: 4px 8px; margin-left: 5px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
         .btn-add { background: #28a745; color: white; }
         .btn-edit { background: #ffc107; color: black; }
@@ -32,6 +32,8 @@
         .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .btn-save { background: #0055a4; color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+
+        .nota-luoghi { background: #eef5ff; border: 1px solid #cfe2ff; color: #0b3d6b; padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -42,8 +44,8 @@
     <div id="editor-panel" class="hidden">
         <header>
             <div>
-                <h1 style="margin: 0;">Redazione Congressi e Assemblee</h1>
-                <p style="margin: 5px 0 0 0; color: #555;">Gestione della struttura ad albero e dei luoghi.</p>
+                <h1 style="margin: 0;">Redazione Organi e Luoghi</h1>
+                <p style="margin: 5px 0 0 0; color: #555;">Gestione della struttura ad albero di Organi (Congressi/Assemblee) e Luoghi (Città/Distretti), collegati tra loro.</p>
             </div>
             <div>
                 <button onclick="salvaOnline()" style="background: #28a745; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">💾 Salva online su JSONBin</button>
@@ -51,58 +53,126 @@
             </div>
         </header>
 
-        <div class="layout">
-            <div class="tree-panel">
-                <h3>Struttura Attuale</h3>
-                <div id="tree-container">In caricamento...</div>
+        <div class="tab-nav">
+            <button type="button" class="tab-btn active" id="tab-btn-organi" onclick="cambiaScheda('organi')">🏛️ Organi (Congressi/Assemblee)</button>
+            <button type="button" class="tab-btn" id="tab-btn-luoghi" onclick="cambiaScheda('luoghi')">📍 Luoghi (Città/Distretti)</button>
+        </div>
+
+        <!-- SCHEDA ORGANI -->
+        <div id="scheda-organi">
+            <div class="layout">
+                <div class="tree-panel">
+                    <h3>Struttura Organi</h3>
+                    <div id="tree-container">In caricamento...</div>
+                </div>
+
+                <div class="form-panel" id="form-panel-organi">
+                    <h3 id="form-title">Seleziona un'azione</h3>
+                    <p id="form-context" style="color: gray; font-size: 14px; margin-top: -15px;">Clicca su + o Modifica nell'albero per iniziare.</p>
+
+                    <input type="hidden" id="azione_tipo">
+                    <input type="hidden" id="target_id">
+
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="input_categoria" disabled>
+                            <option value="">-- Seleziona --</option>
+                            <option value="congresso">Congresso</option>
+                            <option value="assemblea">Assemblea</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome Display</label>
+                        <input type="text" id="input_nome" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ID Organo (Senza spazi)</label>
+                        <input type="text" id="input_id" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Luogo Associato</label>
+                        <select id="input_luogo" disabled>
+                            <option value="">-- Nessun luogo --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Link Sito Web (Opzionale)</label>
+                        <input type="url" id="input_link" disabled>
+                    </div>
+
+                    <button class="btn-save" id="btn_salva_form" onclick="applicaModifiche()" disabled>Applica Modifiche (Bozza)</button>
+                </div>
             </div>
+        </div>
 
-            <div class="form-panel">
-                <h3 id="form-title">Seleziona un'azione</h3>
-                <p id="form-context" style="color: gray; font-size: 14px; margin-top: -15px;">Clicca su + o Modifica nell'albero per iniziare.</p>
-                
-                <input type="hidden" id="azione_tipo">
-                <input type="hidden" id="target_id">
-
-                <div class="form-group">
-                    <label>Tipo</label>
-                    <select id="input_categoria" disabled>
-                        <option value="">-- Seleziona --</option>
-                        <option value="congresso">Congresso</option>
-                        <option value="assemblea">Assemblea</option>
-                    </select>
+        <!-- SCHEDA LUOGHI -->
+        <div id="scheda-luoghi" class="hidden">
+            <p class="nota-luoghi">
+                Qui costruisci la gerarchia geografica: crea prima il livello superiore (es. una Regione o un Distretto),
+                poi usa "+" su quella voce per aggiungerci sotto le città. Es: crea <strong>EstjiKuro</strong>, poi clicca "+" su
+                EstjiKuro per aggiungere <strong>Tagel</strong> come sua città. Ogni voce creata qui diventa automaticamente
+                selezionabile nel campo "Luogo Associato" della scheda Organi.
+            </p>
+            <div class="layout">
+                <div class="tree-panel">
+                    <h3>Struttura Luoghi</h3>
+                    <div id="luoghi-tree-container">In caricamento...</div>
                 </div>
 
-                <div class="form-group">
-                    <label>Nome Display</label>
-                    <input type="text" id="input_nome" disabled>
-                </div>
-                
-                <div class="form-group">
-                    <label>ID Organo (Senza spazi)</label>
-                    <input type="text" id="input_id" disabled>
-                </div>
+                <div class="form-panel" id="form-panel-luoghi">
+                    <h3 id="luoghi-form-title">Seleziona un'azione</h3>
+                    <p id="luoghi-form-context" style="color: gray; font-size: 14px; margin-top: -15px;">Clicca su + o Modifica nell'albero per iniziare.</p>
 
-                <div class="form-group">
-                    <label>Luogo Associato (Codice es. CIT_FORLI)</label>
-                    <input type="text" id="input_luogo" disabled>
-                </div>
+                    <input type="hidden" id="luoghi_azione_tipo">
+                    <input type="hidden" id="luoghi_target_id">
 
-                <div class="form-group">
-                    <label>Link Sito Web (Opzionale)</label>
-                    <input type="url" id="input_link" disabled>
-                </div>
+                    <div class="form-group">
+                        <label>Tipo di Luogo</label>
+                        <select id="luoghi_input_tipo" disabled>
+                            <option value="">-- Seleziona --</option>
+                            <option value="regione">Regione</option>
+                            <option value="citta_metropolitana">Città Metropolitana</option>
+                            <option value="distretto">Distretto</option>
+                            <option value="citta">Città</option>
+                        </select>
+                    </div>
 
-                <button class="btn-save" id="btn_salva_form" onclick="applicaModifiche()" disabled>Applica Modifiche (Bozza)</button>
+                    <div class="form-group">
+                        <label>Nome</label>
+                        <input type="text" id="luoghi_input_nome" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ID Luogo (codice univoco, senza spazi)</label>
+                        <input type="text" id="luoghi_input_id" disabled>
+                    </div>
+
+                    <button class="btn-save" id="luoghi_btn_salva_form" onclick="applicaModificheLuogo()" disabled>Applica Modifiche (Bozza)</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        let datiInMemoria = { luoghi: {}, alberoOrgani: [] };
+        let datiInMemoria = { luoghi: {}, alberoOrgani: [], alberoLuoghi: [] };
 
         // Login automatico all'apertura della pagina: niente più schermata di accesso.
         const CREDENZIALI_AUTO = { username: 'TandeePetrenka', password: 'TandeePetrenka' };
+
+        const ETICHETTE_TIPO_LUOGO = {
+            regione: "Regione",
+            citta_metropolitana: "Città Metropolitana",
+            distretto: "Distretto",
+            citta: "Città"
+        };
+
+        function escapeHtml(t) {
+            return (t || "").toString().replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
 
         function mostraErrore(messaggio) {
             const box = document.getElementById('errore-globale');
@@ -126,27 +196,176 @@
             document.getElementById('editor-panel').classList.remove('hidden');
             try {
                 datiInMemoria = await ApiOrgani.loadDati();
-                if(!datiInMemoria.alberoOrgani) datiInMemoria.alberoOrgani = [];
+                if (!datiInMemoria.alberoOrgani) datiInMemoria.alberoOrgani = [];
+                if (!datiInMemoria.alberoLuoghi) datiInMemoria.alberoLuoghi = [];
+                if (!datiInMemoria.luoghi) datiInMemoria.luoghi = {};
                 renderizzaAlbero();
+                renderizzaAlberoLuoghi();
             } catch (e) { mostraErrore("Errore caricamento: " + e.message); }
         }
 
         async function salvaOnline() {
             try {
-                await ApiOrgani.saveDati(datiInMemoria); //[cite: 1]
+                await ApiOrgani.saveDati(datiInMemoria);
                 alert("Salvataggio completato con successo su JSONBin!");
             } catch (e) { alert("Errore durante il salvataggio."); }
         }
 
         function eseguiLogout() { ApiOrgani.logout(); location.reload(); }
 
-        // --- MOTORE DI RENDERING ALBERO ---
+        function cambiaScheda(nome) {
+            document.getElementById('scheda-organi').classList.toggle('hidden', nome !== 'organi');
+            document.getElementById('scheda-luoghi').classList.toggle('hidden', nome !== 'luoghi');
+            document.getElementById('tab-btn-organi').classList.toggle('active', nome === 'organi');
+            document.getElementById('tab-btn-luoghi').classList.toggle('active', nome === 'luoghi');
+        }
+
+        // --- FUNZIONI RICORSIVE GENERICHE (usate sia da Organi che da Luoghi) ---
+        function trovaNodoGenerico(array, id, chiaveId) {
+            for (let nodo of (array || [])) {
+                if (nodo[chiaveId] === id) return nodo;
+                if (nodo.figli) {
+                    const trovato = trovaNodoGenerico(nodo.figli, id, chiaveId);
+                    if (trovato) return trovato;
+                }
+            }
+            return null;
+        }
+
+        function rimuoviDaArrayGenerico(array, id, chiaveId) {
+            for (let i = 0; i < array.length; i++) {
+                if (array[i][chiaveId] === id) {
+                    array.splice(i, 1);
+                    return true;
+                }
+                if (array[i].figli && rimuoviDaArrayGenerico(array[i].figli, id, chiaveId)) return true;
+            }
+            return false;
+        }
+
+
+        /* =========================================================
+           HELPER PER "luoghi" (formato piatto oppure a gruppi annidati)
+           Esempi di voce: "ASS_FRL_CENTRO": "Assemblea Centro Storico (Forlì)"
+                        oppure "ID": { nome, tipo, genitore }
+           Un gruppo è un oggetto che contiene altre voci (es. "citta_principali").
+        ========================================================= */
+
+        // Gli organi (congressi/assemblee) vengono registrati anche in "luoghi", dentro questo gruppo,
+        // così altri programmi possono usarli come qualunque altro luogo.
+        const GRUPPO_ORGANI_IN_LUOGHI = 'organi';
+
+        function eVoceLuogo(v) {
+            return typeof v === 'string' || (v !== null && typeof v === 'object' && typeof v.nome === 'string');
+        }
+
+        // Restituisce l'oggetto (radice o gruppo) che contiene la chiave "id", cercando in tutti i gruppi.
+        function trovaContenitoreLuogo(contenitore, id) {
+            if (!contenitore || typeof contenitore !== 'object') return null;
+            if (Object.prototype.hasOwnProperty.call(contenitore, id) && eVoceLuogo(contenitore[id])) return contenitore;
+            for (const chiave of Object.keys(contenitore)) {
+                const v = contenitore[chiave];
+                if (v !== null && typeof v === 'object' && !eVoceLuogo(v)) {
+                    const trovato = trovaContenitoreLuogo(v, id);
+                    if (trovato) return trovato;
+                }
+            }
+            return null;
+        }
+
+        // Elenco piatto [{ id, nome, tipo, gruppo }] di tutte le voci, gruppi compresi (senza doppioni).
+        function elencoLuoghi() {
+            const risultato = [];
+            const visti = new Set();
+            function scorri(contenitore, gruppo) {
+                Object.keys(contenitore || {}).forEach(chiave => {
+                    const v = contenitore[chiave];
+                    if (typeof v === 'string') {
+                        if (!visti.has(chiave)) { visti.add(chiave); risultato.push({ id: chiave, nome: v, tipo: '', gruppo }); }
+                    } else if (v !== null && typeof v === 'object') {
+                        if (typeof v.nome === 'string') {
+                            if (!visti.has(chiave)) { visti.add(chiave); risultato.push({ id: chiave, nome: v.nome, tipo: v.tipo || '', gruppo }); }
+                        } else {
+                            scorri(v, chiave);
+                        }
+                    }
+                });
+            }
+            scorri(datiInMemoria.luoghi, '');
+            return risultato;
+        }
+
+        function trovaVoceLuogo(id) {
+            if (!id) return null;
+            return elencoLuoghi().find(l => l.id === id) || null;
+        }
+
+        function etichettaGruppo(gruppo) {
+            const testo = (gruppo || '').replace(/_/g, ' ');
+            return testo.charAt(0).toUpperCase() + testo.slice(1);
+        }
+
+        function rimuoviVoceLuogo(id) {
+            const contenitore = trovaContenitoreLuogo(datiInMemoria.luoghi, id);
+            if (contenitore) delete contenitore[id];
+        }
+
+        function raccogliIdNodi(nodo, chiaveId) {
+            const ids = [nodo[chiaveId]];
+            (nodo.figli || []).forEach(f => ids.push(...raccogliIdNodi(f, chiaveId)));
+            return ids;
+        }
+
+        // Registra (o aggiorna) un organo dentro "luoghi". Ritorna true se ha scritto qualcosa.
+        function registraOrganoInLuoghi(vecchioId, nuovoId, nome) {
+            nuovoId = (nuovoId || '').trim();
+            nome = (nome || '').trim();
+            if (!nuovoId || !nome) return false;
+
+            if (!datiInMemoria.luoghi || typeof datiInMemoria.luoghi !== 'object') datiInMemoria.luoghi = {};
+            const luoghi = datiInMemoria.luoghi;
+
+            // Se l'ID coincide con un luogo creato nella scheda Luoghi, quel luogo non va toccato.
+            if (trovaNodoGenerico(datiInMemoria.alberoLuoghi, nuovoId, 'id_luogo')) return false;
+
+            // Se l'ID dell'organo è cambiato, togli la vecchia voce (solo se l'avevamo creata noi nel gruppo "organi").
+            if (vecchioId && vecchioId !== nuovoId) rimuoviOrganoDaLuoghi(vecchioId);
+
+            // Voce già presente (anche in un altro gruppo): aggiorna il nome dove si trova.
+            const contenitore = trovaContenitoreLuogo(luoghi, nuovoId);
+            if (contenitore) {
+                if (typeof contenitore[nuovoId] === 'string') contenitore[nuovoId] = nome;
+                else contenitore[nuovoId].nome = nome;
+                return true;
+            }
+
+            // Voce nuova: va nel gruppo degli organi.
+            if (luoghi[GRUPPO_ORGANI_IN_LUOGHI] === undefined) luoghi[GRUPPO_ORGANI_IN_LUOGHI] = {};
+            if (eVoceLuogo(luoghi[GRUPPO_ORGANI_IN_LUOGHI])) return false; // nome del gruppo già usato da una voce normale
+            luoghi[GRUPPO_ORGANI_IN_LUOGHI][nuovoId] = nome;
+            return true;
+        }
+
+        // Toglie da "luoghi" un organo, ma solo se sta nel gruppo creato da questa pagina.
+        // Le voci inserite a mano in altri gruppi non vengono mai cancellate da qui.
+        function rimuoviOrganoDaLuoghi(id) {
+            const luoghi = datiInMemoria.luoghi;
+            const gruppo = luoghi && luoghi[GRUPPO_ORGANI_IN_LUOGHI];
+            if (gruppo && typeof gruppo === 'object' && !eVoceLuogo(gruppo) && Object.prototype.hasOwnProperty.call(gruppo, id)) {
+                delete gruppo[id];
+                if (Object.keys(gruppo).length === 0) delete luoghi[GRUPPO_ORGANI_IN_LUOGHI];
+            }
+        }
+
+        /* =========================================================
+           SEZIONE ORGANI (Congressi / Assemblee)
+        ========================================================= */
+
         function renderizzaAlbero() {
             const container = document.getElementById('tree-container');
             container.innerHTML = '';
             container.appendChild(creaListaNodi(datiInMemoria.alberoOrgani, null));
-            
-            // Bottone aggiunta Radice
+
             const btnRoot = document.createElement('button');
             btnRoot.innerText = "+ Aggiungi Organo Principale";
             btnRoot.className = "btn-add";
@@ -158,27 +377,29 @@
         function creaListaNodi(nodi, parentId) {
             const ul = document.createElement('ul');
             ul.className = 'node-list';
-            if(!nodi) return ul;
+            if (!nodi) return ul;
 
             nodi.forEach(nodo => {
                 const li = document.createElement('li');
                 li.className = 'node-item';
-                
+
                 const header = document.createElement('div');
                 header.className = 'node-header';
                 const iconaTipo = nodo.categoria === 'assemblea' ? '👥' : (nodo.categoria === 'congresso' ? '🏛️' : '📌');
                 const etichettaTipo = nodo.categoria === 'assemblea' ? 'Assemblea' : (nodo.categoria === 'congresso' ? 'Congresso' : 'Non specificato');
-                header.innerHTML = `<span>${iconaTipo} <strong>${nodo.nome_display}</strong> (${nodo.id_organo}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}</em></span>`;
-                
+                const infoLuogo = trovaVoceLuogo(nodo.luogo);
+                const testoLuogo = infoLuogo ? ` · 📍 ${escapeHtml(infoLuogo.nome)}` : '';
+                header.innerHTML = `<span>${iconaTipo} <strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
+
                 const actions = document.createElement('div');
                 actions.className = 'actions';
-                
+
                 const btnAdd = document.createElement('button'); btnAdd.className = 'btn-add'; btnAdd.innerText = '+';
                 btnAdd.onclick = () => abilitaForm('add', nodo.id_organo, nodo.nome_display);
-                
+
                 const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
                 btnEdit.onclick = () => abilitaForm('edit', nodo.id_organo, nodo);
-                
+
                 const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
                 btnDel.onclick = () => eliminaNodo(nodo.id_organo);
 
@@ -194,9 +415,35 @@
             return ul;
         }
 
-        // --- GESTIONE FORM E DATI ---
+        function popolaSelectLuoghi(selezionato) {
+            const select = document.getElementById('input_luogo');
+            const voci = elencoLuoghi();
+            const html = ['<option value="">-- Nessun luogo --</option>'];
+
+            function opzione(l) {
+                const tipo = l.tipo ? (ETICHETTE_TIPO_LUOGO[l.tipo] || l.tipo) : '';
+                const testo = tipo ? `${l.nome} (${tipo})` : l.nome;
+                return `<option value="${escapeHtml(l.id)}" ${l.id === selezionato ? 'selected' : ''}>${escapeHtml(testo)}</option>`;
+            }
+
+            // Prima le voci senza gruppo, poi un <optgroup> per ogni gruppo (nell'ordine in cui compaiono).
+            voci.filter(l => !l.gruppo).forEach(l => html.push(opzione(l)));
+            const gruppi = [...new Set(voci.filter(l => l.gruppo).map(l => l.gruppo))];
+            gruppi.forEach(g => {
+                html.push(`<optgroup label="${escapeHtml(etichettaGruppo(g))}">`);
+                voci.filter(l => l.gruppo === g).forEach(l => html.push(opzione(l)));
+                html.push('</optgroup>');
+            });
+
+            // Se l'organo punta a un luogo che non esiste più, lo mostriamo comunque per non perdere il dato.
+            if (selezionato && !voci.some(l => l.id === selezionato)) {
+                html.push(`<option value="${escapeHtml(selezionato)}" selected>${escapeHtml(selezionato)} (non più nell'elenco)</option>`);
+            }
+            select.innerHTML = html.join('');
+        }
+
         function abilitaForm(tipo, targetId, data) {
-            document.querySelectorAll('.form-panel input, .form-panel select').forEach(el => el.disabled = false);
+            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => el.disabled = false);
             document.getElementById('btn_salva_form').disabled = false;
             document.getElementById('azione_tipo').value = tipo;
             document.getElementById('target_id').value = targetId || 'root';
@@ -207,7 +454,7 @@
                 document.getElementById('input_categoria').value = "";
                 document.getElementById('input_nome').value = "";
                 document.getElementById('input_id').value = "";
-                document.getElementById('input_luogo').value = "";
+                popolaSelectLuoghi("");
                 document.getElementById('input_link').value = "";
             } else if (tipo === 'edit') {
                 document.getElementById('form-title').innerText = "Modifica Sezione";
@@ -215,7 +462,7 @@
                 document.getElementById('input_categoria').value = data.categoria || "";
                 document.getElementById('input_nome').value = data.nome_display || "";
                 document.getElementById('input_id').value = data.id_organo || "";
-                document.getElementById('input_luogo').value = data.luogo || "";
+                popolaSelectLuoghi(data.luogo || "");
                 document.getElementById('input_link').value = data.link_sito || "";
             }
         }
@@ -239,64 +486,216 @@
                 figli: []
             };
 
+            let applicato = false;
+            let vecchioId = null;
+
             if (tipo === 'add') {
-                if(targetId === 'root') {
+                if (targetId === 'root') {
                     datiInMemoria.alberoOrgani.push(nuovoNodo);
+                    applicato = true;
                 } else {
-                    const parent = trovaNodo(datiInMemoria.alberoOrgani, targetId);
-                    if(parent) {
-                        if(!parent.figli) parent.figli = [];
+                    const parent = trovaNodoGenerico(datiInMemoria.alberoOrgani, targetId, 'id_organo');
+                    if (parent) {
+                        if (!parent.figli) parent.figli = [];
                         parent.figli.push(nuovoNodo);
+                        applicato = true;
                     }
                 }
             } else if (tipo === 'edit') {
-                const nodo = trovaNodo(datiInMemoria.alberoOrgani, targetId);
-                if(nodo) {
+                const nodo = trovaNodoGenerico(datiInMemoria.alberoOrgani, targetId, 'id_organo');
+                if (nodo) {
+                    vecchioId = nodo.id_organo;
                     nodo.id_organo = nuovoNodo.id_organo;
                     nodo.nome_display = nuovoNodo.nome_display;
                     nodo.categoria = nuovoNodo.categoria;
                     nodo.luogo = nuovoNodo.luogo;
                     nodo.link_sito = nuovoNodo.link_sito;
+                    applicato = true;
                 }
             }
 
-            // Svuota e disabilita form
-            document.querySelectorAll('.form-panel input, .form-panel select').forEach(el => { el.value = ''; el.disabled = true; });
+            // Registra l'organo anche in "luoghi", così è utilizzabile da altri programmi.
+            const inLuoghi = applicato && registraOrganoInLuoghi(vecchioId, nuovoNodo.id_organo, nuovoNodo.nome_display);
+
+            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('btn_salva_form').disabled = true;
             document.getElementById('form-title').innerText = "Seleziona un'azione";
-            document.getElementById('form-context').innerText = "Modifica applicata in bozza. Ricorda di salvare online.";
-            
+            document.getElementById('form-context').innerText = "Modifica applicata in bozza" + (inLuoghi ? " (organo registrato anche in Luoghi)" : "") + ". Ricorda di salvare online.";
+
             renderizzaAlbero();
         }
 
         function eliminaNodo(id) {
-            if(confirm("Sei sicuro di voler eliminare questo organo e tutti i suoi figli?")) {
-                rimuoviDaArray(datiInMemoria.alberoOrgani, id);
+            if (confirm("Sei sicuro di voler eliminare questo organo e tutti i suoi figli?")) {
+                const nodo = trovaNodoGenerico(datiInMemoria.alberoOrgani, id, 'id_organo');
+                const idRimossi = nodo ? raccogliIdNodi(nodo, 'id_organo') : [id];
+                rimuoviDaArrayGenerico(datiInMemoria.alberoOrgani, id, 'id_organo');
+                idRimossi.forEach(rimuoviOrganoDaLuoghi);
                 renderizzaAlbero();
             }
         }
 
-        // Funzioni Ricorsive Helper
-        function trovaNodo(array, id) {
-            for (let nodo of array) {
-                if (nodo.id_organo === id) return nodo;
-                if (nodo.figli) {
-                    const trovato = trovaNodo(nodo.figli, id);
-                    if (trovato) return trovato;
-                }
-            }
-            return null;
+        /* =========================================================
+           SEZIONE LUOGHI (Città / Distretti / Città Metropolitane / Regioni)
+        ========================================================= */
+
+        function renderizzaAlberoLuoghi() {
+            const container = document.getElementById('luoghi-tree-container');
+            container.innerHTML = '';
+            container.appendChild(creaListaNodiLuoghi(datiInMemoria.alberoLuoghi));
+
+            const btnRoot = document.createElement('button');
+            btnRoot.innerText = "+ Aggiungi Luogo Principale";
+            btnRoot.className = "btn-add";
+            btnRoot.style.marginTop = "15px";
+            btnRoot.onclick = () => abilitaFormLuogo('add', null, 'Radice');
+            container.appendChild(btnRoot);
         }
 
-        function rimuoviDaArray(array, id) {
-            for (let i = 0; i < array.length; i++) {
-                if (array[i].id_organo === id) {
-                    array.splice(i, 1);
-                    return true;
+        function creaListaNodiLuoghi(nodi) {
+            const ul = document.createElement('ul');
+            ul.className = 'node-list';
+            if (!nodi) return ul;
+
+            nodi.forEach(nodo => {
+                const li = document.createElement('li');
+                li.className = 'node-item';
+
+                const header = document.createElement('div');
+                header.className = 'node-header';
+                const etichettaTipo = ETICHETTE_TIPO_LUOGO[nodo.tipo] || 'Non specificato';
+                header.innerHTML = `<span>📍 <strong>${escapeHtml(nodo.nome)}</strong> (${escapeHtml(nodo.id_luogo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}</em></span>`;
+
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+
+                const btnAdd = document.createElement('button'); btnAdd.className = 'btn-add'; btnAdd.innerText = '+';
+                btnAdd.onclick = () => abilitaFormLuogo('add', nodo.id_luogo, nodo.nome);
+
+                const btnEdit = document.createElement('button'); btnEdit.className = 'btn-edit'; btnEdit.innerText = 'Modifica';
+                btnEdit.onclick = () => abilitaFormLuogo('edit', nodo.id_luogo, nodo);
+
+                const btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerText = 'Elimina';
+                btnDel.onclick = () => eliminaNodoLuogo(nodo.id_luogo);
+
+                actions.append(btnAdd, btnEdit, btnDel);
+                header.appendChild(actions);
+                li.appendChild(header);
+
+                if (nodo.figli && nodo.figli.length > 0) {
+                    li.appendChild(creaListaNodiLuoghi(nodo.figli));
                 }
-                if (array[i].figli && rimuoviDaArray(array[i].figli, id)) return true;
+                ul.appendChild(li);
+            });
+            return ul;
+        }
+
+        function abilitaFormLuogo(tipo, targetId, data) {
+            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => el.disabled = false);
+            document.getElementById('luoghi_btn_salva_form').disabled = false;
+            document.getElementById('luoghi_azione_tipo').value = tipo;
+            document.getElementById('luoghi_target_id').value = targetId || 'root';
+
+            if (tipo === 'add') {
+                document.getElementById('luoghi-form-title').innerText = "Aggiungi nuovo Luogo";
+                document.getElementById('luoghi-form-context').innerText = "Verrà inserito sotto: " + (typeof data === 'string' ? data : 'Radice');
+                document.getElementById('luoghi_input_tipo').value = "";
+                document.getElementById('luoghi_input_nome').value = "";
+                document.getElementById('luoghi_input_id').value = "";
+            } else if (tipo === 'edit') {
+                document.getElementById('luoghi-form-title').innerText = "Modifica Luogo";
+                document.getElementById('luoghi-form-context').innerText = "Stai modificando: " + data.nome;
+                document.getElementById('luoghi_input_tipo').value = data.tipo || "";
+                document.getElementById('luoghi_input_nome').value = data.nome || "";
+                document.getElementById('luoghi_input_id').value = data.id_luogo || "";
             }
-            return false;
+        }
+
+        function applicaModificheLuogo() {
+            const tipo = document.getElementById('luoghi_azione_tipo').value;
+            const targetId = document.getElementById('luoghi_target_id').value;
+            const tipoLuogo = document.getElementById('luoghi_input_tipo').value;
+            const idLuogo = document.getElementById('luoghi_input_id').value.trim();
+            const nomeLuogo = document.getElementById('luoghi_input_nome').value.trim();
+
+            if (!tipoLuogo) {
+                alert("Seleziona il Tipo di Luogo prima di continuare.");
+                return;
+            }
+            if (!idLuogo || !nomeLuogo) {
+                alert("Inserisci sia il Nome che l'ID del luogo.");
+                return;
+            }
+
+            const nuovoNodo = {
+                id_luogo: idLuogo,
+                nome: nomeLuogo,
+                tipo: tipoLuogo,
+                figli: []
+            };
+
+            if (tipo === 'add') {
+                if (targetId === 'root') {
+                    datiInMemoria.alberoLuoghi.push(nuovoNodo);
+                } else {
+                    const parent = trovaNodoGenerico(datiInMemoria.alberoLuoghi, targetId, 'id_luogo');
+                    if (parent) {
+                        if (!parent.figli) parent.figli = [];
+                        parent.figli.push(nuovoNodo);
+                    }
+                }
+            } else if (tipo === 'edit') {
+                const nodo = trovaNodoGenerico(datiInMemoria.alberoLuoghi, targetId, 'id_luogo');
+                if (nodo) {
+                    nodo.id_luogo = nuovoNodo.id_luogo;
+                    nodo.nome = nuovoNodo.nome;
+                    nodo.tipo = nuovoNodo.tipo;
+                }
+            }
+
+            // Se l'ID è cambiato in modifica, la vecchia voce va tolta da "luoghi".
+            sincronizzaLuoghiConAlbero(tipo === 'edit' && targetId !== idLuogo ? [targetId] : []);
+
+            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.getElementById('luoghi_btn_salva_form').disabled = true;
+            document.getElementById('luoghi-form-title').innerText = "Seleziona un'azione";
+            document.getElementById('luoghi-form-context').innerText = "Modifica applicata in bozza. Ricorda di salvare online.";
+
+            renderizzaAlberoLuoghi();
+            renderizzaAlbero(); // aggiorna i riferimenti al luogo mostrati sui nodi Organi
+        }
+
+        function eliminaNodoLuogo(id) {
+            if (confirm("Sei sicuro di voler eliminare questo luogo e tutti i suoi figli? Gli Organi che lo referenziano perderanno il collegamento.")) {
+                const nodo = trovaNodoGenerico(datiInMemoria.alberoLuoghi, id, 'id_luogo');
+                const idRimossi = nodo ? raccogliIdNodi(nodo, 'id_luogo') : [id];
+                rimuoviDaArrayGenerico(datiInMemoria.alberoLuoghi, id, 'id_luogo');
+                sincronizzaLuoghiConAlbero(idRimossi);
+                renderizzaAlberoLuoghi();
+                renderizzaAlbero();
+            }
+        }
+
+        // Aggiorna "luoghi" (usato da CA.html, redazione.js e dal menu "Luogo Associato" degli Organi)
+        // a partire dall'albero dei Luoghi. UNISCE le voci invece di sostituire tutto, così restano
+        // intatti i gruppi già presenti (es. citta_principali) e gli organi registrati in "luoghi".
+        // Ogni voce dell'albero viene salvata con nome, tipo e riferimento al genitore.
+        function sincronizzaLuoghiConAlbero(idRimossi) {
+            if (!datiInMemoria.luoghi || typeof datiInMemoria.luoghi !== 'object') datiInMemoria.luoghi = {};
+            const luoghi = datiInMemoria.luoghi;
+
+            (idRimossi || []).forEach(rimuoviVoceLuogo);
+
+            function scorri(nodi, genitoreId) {
+                (nodi || []).forEach(nodo => {
+                    const voce = { nome: nodo.nome, tipo: nodo.tipo, genitore: genitoreId || null };
+                    const contenitore = trovaContenitoreLuogo(luoghi, nodo.id_luogo);
+                    if (contenitore) contenitore[nodo.id_luogo] = voce;
+                    else luoghi[nodo.id_luogo] = voce;
+                    if (nodo.figli && nodo.figli.length) scorri(nodo.figli, nodo.id_luogo);
+                });
+            }
+            scorri(datiInMemoria.alberoLuoghi, null);
         }
     </script>
 </body>
