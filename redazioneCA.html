@@ -36,15 +36,6 @@
 </head>
 <body>
 
-    <!-- SCHERMATA LOGIN -->
-    <div id="login-panel">
-        <h2>Accesso Redazione</h2>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="eseguiLogin()">Accedi</button>
-        <p id="login-error" style="color: red;"></p>
-    </div>
-
     <!-- PANNELLO REDAZIONE -->
     <div id="editor-panel" class="hidden">
         <header>
@@ -99,17 +90,22 @@
     <script>
         let datiInMemoria = { luoghi: {}, alberoOrgani: [] };
 
-        if (ApiOrgani.loadCredentials()) { mostraEditor(); }
+        // Login automatico all'apertura della pagina: niente più schermata di accesso.
+        const CREDENZIALI_AUTO = { username: 'TandeePetrenka', password: 'TandeePetrenka' };
 
-        async function eseguiLogin() {
-            try {
-                await ApiOrgani.login(document.getElementById('username').value, document.getElementById('password').value);
-                mostraEditor();
-            } catch (e) { document.getElementById('login-error').innerText = "Credenziali errate."; }
-        }
+        (async function avvio() {
+            if (!ApiOrgani.loadCredentials()) {
+                try {
+                    await ApiOrgani.login(CREDENZIALI_AUTO.username, CREDENZIALI_AUTO.password);
+                } catch (e) {
+                    document.getElementById('tree-container').innerText = "Errore di accesso automatico: " + e.message;
+                    return;
+                }
+            }
+            mostraEditor();
+        })();
 
         async function mostraEditor() {
-            document.getElementById('login-panel').classList.add('hidden');
             document.getElementById('editor-panel').classList.remove('hidden');
             try {
                 datiInMemoria = await ApiOrgani.loadDati();
