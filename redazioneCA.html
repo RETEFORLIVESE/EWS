@@ -8,31 +8,36 @@
     <link rel="icon" type="image/png" href="Stato.png">
     <script src="lex/assets/js/api-organi.js"></script>
     <style>
+        * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
-        header { border-bottom: 2px solid #0055a4; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        header { border-bottom: 2px solid #0055a4; margin-bottom: 20px; padding-bottom: 10px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+        header > div:last-child { display: flex; flex-wrap: wrap; gap: 10px; }
+        header > div:last-child button { flex: 1 1 auto; white-space: nowrap; }
 
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 10px 20px; border: 1px solid #0055a4; background: white; color: #0055a4; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .tab-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1 1 auto; min-width: 160px; padding: 10px 20px; border: 1px solid #0055a4; background: white; color: #0055a4; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .tab-btn.active { background: #0055a4; color: white; }
 
-        .layout { display: flex; gap: 30px; }
-        .tree-panel { flex: 1.5; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-panel { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 20px; height: fit-content; }
+        .layout { display: flex; flex-wrap: wrap; gap: 30px; }
+        .tree-panel { flex: 1.5 1 420px; min-width: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; }
+        .form-panel { flex: 1 1 300px; min-width: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 20px; height: fit-content; }
 
         .node-list { list-style-type: none; padding-left: 20px; margin: 0; }
         .node-item { margin-top: 10px; }
-        .node-header { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
+        .node-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
+        .node-header > span { word-break: break-word; }
 
-        .actions button { padding: 4px 8px; margin-left: 5px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
+        .actions { display: flex; flex-wrap: wrap; gap: 5px; }
+        .actions button { padding: 6px 10px; margin-left: 0; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; min-height: 30px; }
         .btn-add { background: #28a745; color: white; }
         .btn-edit { background: #ffc107; color: black; }
         .btn-del { background: #dc3545; color: white; }
 
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-save { background: #0055a4; color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-save { background: #0055a4; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .btn-save:disabled { background: #ccc; cursor: not-allowed; }
 
         .nota-luoghi { background: #eef5ff; border: 1px solid #cfe2ff; color: #0b3d6b; padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; }
@@ -43,6 +48,27 @@
         summary.node-header::-webkit-details-marker { display: none; }
         summary.node-header::before { content: '▸'; margin-right: 8px; color: #888; font-size: 12px; display: inline-block; width: 10px; }
         details.node-item[open] > summary.node-header::before { content: '▾'; }
+
+        /* --- Adattamento per schermi stretti (telefoni/tablet in verticale) --- */
+        @media (max-width: 720px) {
+            body { padding: 12px; }
+            header { flex-direction: column; align-items: stretch; }
+            header h1 { font-size: 20px; }
+            header > div:last-child button { width: 100%; }
+
+            .tab-btn { min-width: 0; padding: 12px 10px; font-size: 14px; }
+
+            .layout { flex-direction: column; gap: 16px; }
+            .tree-panel, .form-panel { flex: 1 1 auto; width: 100%; }
+            .form-panel { position: static; }
+
+            .tree-panel { padding: 14px; }
+            .node-list { padding-left: 12px; }
+
+            .node-header { flex-direction: column; align-items: flex-start; }
+            .actions { width: 100%; }
+            .actions button { flex: 1 1 auto; }
+        }
     </style>
 </head>
 <body>
