@@ -30,7 +30,9 @@
     distretto: "Distretto",
     citta_metropolitana: "Città metropolitana",
     cittametropolitana: "Città metropolitana",
-    congresso: "Congresso"
+    congresso: "Congresso",
+    citta: "Città",
+    regione: "Regione"
   };
 
   // I valori dentro "luoghi" possono essere una semplice stringa oppure un oggetto
@@ -50,15 +52,74 @@
     return String(valore);
   }
 
+  // "luoghi" può essere raggruppato, ad esempio:
+  //   { livello_statale: { TALEEN: "Taleen", ... }, citta_principali: { ... } }
+  // I nomi dei gruppi (livello_statale, citta_principali...) NON sono luoghi: nell'atto va salvato
+  // l'ID della singola voce (TALEEN), mai il nome del gruppo.
+  const CAMPI_NOME_LUOGO = ["nome", "nome_display", "citta", "nomeCitta", "label", "title"];
+
+  // Una voce è una stringa oppure un oggetto con un campo nome; ogni altro oggetto è un gruppo.
+  function eVoceLuogo(v) {
+    if (typeof v === "string") return true;
+    return v !== null && typeof v === "object" && !Array.isArray(v) && CAMPI_NOME_LUOGO.some(c => typeof v[c] === "string");
+  }
+  function eGruppoLuogo(v) {
+    return v !== null && typeof v === "object" && !Array.isArray(v) && !eVoceLuogo(v);
+  }
+
+  const etichettaGruppo = chiave => {
+    const t = (chiave || "").toString().replace(/_/g, " ");
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  };
+
+  // Elenco piatto di tutte le voci, a qualsiasi profondità, senza doppioni:
+  // [{ id, testo, gruppo }] dove "gruppo" è il percorso leggibile (es. "Assemblee quartieri › Forli").
+  function elencoLuoghi() {
+    const risultato = [];
+    const visti = new Set();
+    (function scorri(contenitore, percorso) {
+      Object.keys(contenitore || {}).forEach(chiave => {
+        const v = contenitore[chiave];
+        if (eVoceLuogo(v)) {
+          if (!visti.has(chiave)) {
+            visti.add(chiave);
+            risultato.push({ id: chiave, testo: descrizioneLuogo(v), gruppo: percorso.map(etichettaGruppo).join(" › ") });
+          }
+        } else if (eGruppoLuogo(v)) {
+          scorri(v, [...percorso, chiave]);
+        }
+      });
+    })(luoghi, []);
+    return risultato;
+  }
+
+  function esisteGruppoLuogo(chiaveCercata) {
+    return (function cerca(contenitore) {
+      return Object.keys(contenitore || {}).some(chiave => {
+        const v = contenitore[chiave];
+        return eGruppoLuogo(v) && (chiave === chiaveCercata || cerca(v));
+      });
+    })(luoghi);
+  }
+
   function opzioniLuogo(luogoSelezionato) {
-    const codici = Object.keys(luoghi);
+    const voci = elencoLuoghi();
+    const opzione = l =>
+      `<option value="${escapeHtml(l.id)}" ${l.id === luogoSelezionato ? "selected" : ""}>${escapeHtml(l.testo)}</option>`;
+
     let html = `<option value="">-- Nessun luogo --</option>`;
-    html += codici.map(codice =>
-      `<option value="${escapeHtml(codice)}" ${codice === luogoSelezionato ? "selected" : ""}>${escapeHtml(descrizioneLuogo(luoghi[codice]))}</option>`
-    ).join("");
-    // Se l'atto ha già un luogo che non è (più) nell'elenco corrente, lo mostriamo comunque per non perdere il dato.
-    if (luogoSelezionato && !codici.includes(luogoSelezionato)) {
-      html += `<option value="${escapeHtml(luogoSelezionato)}" selected>${escapeHtml(luogoSelezionato)} (non più nell'elenco)</option>`;
+    html += voci.filter(l => !l.gruppo).map(opzione).join("");
+    [...new Set(voci.filter(l => l.gruppo).map(l => l.gruppo))].forEach(g => {
+      html += `<optgroup label="${escapeHtml(g)}">${voci.filter(l => l.gruppo === g).map(opzione).join("")}</optgroup>`;
+    });
+
+    // Valore salvato che non corrisponde a nessun luogo: lo mostriamo comunque, ben segnalato,
+    // così non passa inosservato (capita se in passato è stato salvato il nome di un gruppo).
+    if (luogoSelezionato && !voci.some(l => l.id === luogoSelezionato)) {
+      const nota = esisteGruppoLuogo(luogoSelezionato)
+        ? "è un gruppo, non un luogo: scegli una voce dall'elenco"
+        : "non più nell'elenco";
+      html += `<option value="${escapeHtml(luogoSelezionato)}" selected>${escapeHtml(luogoSelezionato)} (${nota})</option>`;
     }
     return html;
   }
