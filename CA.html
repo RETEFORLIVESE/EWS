@@ -8,13 +8,13 @@
     <link rel="icon" type="image/png" href="Stato.png">
     <script src="lex/assets/js/api-organi.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; margin: 0; padding: 0; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #c0c0c0; margin: 0; padding: 0; color: #333; }
         header { background: #0055a4; color: white; padding: 20px; text-align: center; }
         .layout { display: flex; height: calc(100vh - 80px); }
         .sidebar { width: 350px; background: white; border-right: 1px solid #ddd; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .sidebar h2 { font-size: 18px; margin-top: 0; border-bottom: 2px solid #0055a4; padding-bottom: 10px; }
         details { margin-bottom: 5px; }
-        .sidebar summary { cursor: pointer; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-weight: bold; list-style: none; display: flex; align-items: center; }
+        .sidebar summary { cursor: pointer; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-weight: bold; list-style: none; display: flex; align-items: center; text-align: left; }
         .sidebar summary::-webkit-details-marker { display: none; }
         .sidebar summary::before {
             content: '';
@@ -31,7 +31,7 @@
         .sidebar details[open] > summary::before {
             background-image: url('Icons/FolderOpenedW95.png');
         }
-        .nodo-foglia { padding: 8px 8px 8px 8px; cursor: pointer; display: flex; align-items: center; text-decoration: none; color: #0055a4; border-bottom: 1px solid #f0f0f0; }
+        .nodo-foglia { padding: 8px 8px 8px 8px; cursor: pointer; display: flex; align-items: center; text-align: left; text-decoration: none; color: #0055a4; border-bottom: 1px solid #f0f0f0; }
         .nodo-foglia:hover { background: #eef5ff; }
         .nodo-foglia::before {
             content: '';
@@ -46,7 +46,7 @@
             background-position: center;
         }
         .figli-container { padding-left: 20px; margin-top: 5px; border-left: 1px dashed #ccc; margin-left: 10px; }
-        .content { flex: 1; padding: 40px; background: #f4f4f9; overflow-y: auto; }
+        .content { flex: 1; padding: 40px; background: #c0c0c0; overflow-y: auto; }
         .dettagli-organo { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; display: none; }
         .luogo-badge { display: inline-block; background: #eef5ff; color: #0055a4; padding: 5px 10px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
         .btn-sito { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 12px; }
