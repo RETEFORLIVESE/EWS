@@ -16,11 +16,35 @@
         details { margin-bottom: 5px; }
         .sidebar summary { cursor: pointer; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-weight: bold; list-style: none; display: flex; align-items: center; }
         .sidebar summary::-webkit-details-marker { display: none; }
-        .sidebar summary::before { content: '📁 '; margin-right: 8px; }
-        .sidebar details[open] > summary::before { content: '📂 '; }
-        .nodo-foglia { padding: 8px 8px 8px 24px; cursor: pointer; display: block; text-decoration: none; color: #0055a4; border-bottom: 1px solid #f0f0f0; }
+        .sidebar summary::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            flex-shrink: 0;
+            background-image: url('Icons/FolderclosedW95.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .sidebar details[open] > summary::before {
+            background-image: url('Icons/FolderOpenedW95.png');
+        }
+        .nodo-foglia { padding: 8px 8px 8px 8px; cursor: pointer; display: flex; align-items: center; text-decoration: none; color: #0055a4; border-bottom: 1px solid #f0f0f0; }
         .nodo-foglia:hover { background: #eef5ff; }
-        .nodo-foglia::before { content: '📄 '; margin-right: 8px; }
+        .nodo-foglia::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            flex-shrink: 0;
+            background-image: url('Icons/DocumentW95.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
         .figli-container { padding-left: 20px; margin-top: 5px; border-left: 1px dashed #ccc; margin-left: 10px; }
         .content { flex: 1; padding: 40px; background: #f4f4f9; overflow-y: auto; }
         .dettagli-organo { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; display: none; }
