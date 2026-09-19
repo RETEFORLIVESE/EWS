@@ -158,6 +158,17 @@
         color: var(--ist-text);
         background: var(--ist-white);
     }
+    .campo select {
+        width: 100%;
+        border: 1px solid var(--ist-line);
+        border-radius: 3px;
+        padding: 0.55rem 0.65rem;
+        font-family: inherit;
+        font-size: 0.92rem;
+        color: var(--ist-text);
+        background: var(--ist-white);
+    }
+    .campo select:focus { outline: 2px solid var(--ist-blue-mid); outline-offset: 1px; }
     .campo input:focus, .campo textarea:focus {
         outline: 2px solid var(--ist-blue-mid);
         outline-offset: 1px;
@@ -446,6 +457,7 @@
         .due-colonne, .riga-partito .griglia, .riga-partito .griglia-tre { grid-template-columns: 1fr 1fr; }
     }
 </style>
+    <script src="lex/assets/js/api-organi.js"></script>
 </head>
 <body>
 
@@ -554,6 +566,14 @@
             <div class="campo">
                 <label id="lbl-vincitore" for="in-vincitore">Vincitore (opzionale)</label>
                 <input type="text" id="in-vincitore" placeholder="Se vuoto, calcolato in automatico">
+            </div>
+
+            <div class="campo">
+                <label for="in-organo">Organo collegato (ID)</label>
+                <select id="in-organo">
+                    <option value="">— Nessun organo —</option>
+                </select>
+                <span class="hint" id="hint-organo">Facoltativo. Collega l'elezione a un organo del portale Congressi e Assemblee: comparirà nel suo riquadro «Ultima elezione».</span>
             </div>
 
             <div id="blocco-referendum" style="display:none;">
@@ -993,6 +1013,54 @@
     }
 
     // ============================================================
+    // Organo collegato: menu a tendina con gli ID degli organi (Congressi/Assemblee)
+    // ============================================================
+    // L'elenco viene letto dallo stesso database di CA.html / redazioneCA.html.
+    // Il valore scelto viene salvato nel record come "id_organo".
+    let organiElenco = [];   // [{ id, nome, categoria, livello }]
+
+    function appiattisciOrgani(nodi, livello, out) {
+        (nodi || []).forEach(n => {
+            if (n && n.id_organo) {
+                out.push({ id: n.id_organo, nome: n.nome_display || n.id_organo, categoria: n.categoria || '', livello });
+            }
+            if (n && n.figli) appiattisciOrgani(n.figli, livello + 1, out);
+        });
+        return out;
+    }
+
+    function popolaSelectOrgano(selezionato) {
+        const select = document.getElementById('in-organo');
+        if (!select) return;
+        const etichettaCat = { congresso: 'Congresso', assemblea: 'Assemblea' };
+        const html = ['<option value="">— Nessun organo —</option>'];
+        organiElenco.forEach(o => {
+            const rientro = '\u00A0\u00A0'.repeat(o.livello);
+            const cat = etichettaCat[o.categoria] ? ' — ' + etichettaCat[o.categoria] : '';
+            html.push(`<option value="${escapeHtml(o.id)}" ${o.id === selezionato ? 'selected' : ''}>${escapeHtml(rientro + o.nome + ' (' + o.id + ')' + cat)}</option>`);
+        });
+        // ID salvato ma non più presente tra gli organi: lo mostriamo comunque per non perdere il collegamento
+        if (selezionato && !organiElenco.some(o => o.id === selezionato)) {
+            html.push(`<option value="${escapeHtml(selezionato)}" selected>${escapeHtml(selezionato)} (non più nell'elenco)</option>`);
+        }
+        select.innerHTML = html.join('');
+    }
+
+    async function caricaOrgani() {
+        const hint = document.getElementById('hint-organo');
+        try {
+            if (typeof ApiOrgani === 'undefined') throw new Error('api-organi.js non caricato');
+            const dati = await ApiOrgani.loadDati();
+            organiElenco = appiattisciOrgani(dati && dati.alberoOrgani, 0, []);
+            // Conserva la scelta già fatta nel modulo mentre l'elenco si caricava
+            popolaSelectOrgano(document.getElementById('in-organo').value);
+            if (organiElenco.length === 0) hint.textContent = 'Nessun organo registrato: aggiungili da redazioneCA.html.';
+        } catch (errore) {
+            hint.textContent = 'Impossibile leggere l\'elenco degli organi (' + (errore.message || 'errore') + '). Il collegamento non è disponibile.';
+        }
+    }
+
+    // ============================================================
     // Cambio tipo elezione: aggiorna etichette e placeholder
     // ============================================================
     function tipoSelezionato() {
@@ -1091,6 +1159,10 @@
 
         if (consultazioneUnitaria) record.consultazione_unitaria = true;
 
+        // Collegamento all'organo (ID scelto dal menu a tendina): scritto solo se selezionato
+        const idOrgano = document.getElementById('in-organo').value;
+        if (idOrgano) record.id_organo = idOrgano;
+
         // Campi di scrutinio del referendum: scritti solo se compilati, così i
         // record senza questi dati restano puliti e la pagina pubblica omette
         // le righe corrispondenti
@@ -1188,6 +1260,7 @@
         document.getElementById('in-area').value = '';
         document.getElementById('in-affluenza').value = '';
         document.getElementById('in-vincitore').value = '';
+        popolaSelectOrgano('');
         ['in-sezioni-scrutinate', 'in-sezioni-totali', 'in-elettori', 'in-votanti', 'in-schede-nulle', 'in-schede-bianche']
             .forEach(id => { document.getElementById(id).value = ''; });
         righeDraft = [];
@@ -1251,6 +1324,7 @@
         document.getElementById('in-area').value = record.area;
         document.getElementById('in-affluenza').value = percentualeANumero(record.affluenza);
         document.getElementById('in-vincitore').value = record.candidato_vincente || '';
+        popolaSelectOrgano(record.id_organo || '');
 
         // Campi di scrutinio del referendum (vuoti se il record non li contiene)
         const valoreOpzionale = (v) => (v === undefined || v === null || v === '') ? '' : v;
@@ -1334,7 +1408,7 @@
                     <div class="scheda-record ${i === indiceInModifica ? 'in-modifica' : ''}">
                         <div class="info-record">
                             <div class="comune">${escapeHtml(r.comune)}</div>
-                            <div class="meta">${escapeHtml(r.data)} &middot; ${escapeHtml(r.area)} &middot; ${r.risultati_partiti.length} liste/opzioni</div>
+                            <div class="meta">${escapeHtml(r.data)} &middot; ${escapeHtml(r.area)} &middot; ${r.risultati_partiti.length} liste/opzioni${r.id_organo ? ' &middot; 🏛️ ' + escapeHtml(r.id_organo) : ''}</div>
                         </div>
                         <div class="azioni-record">
                             <button type="button" class="btn-secondario" data-azione="link" data-indice="${i}" title="Copia il link che apre direttamente questa elezione sul sito pubblico">🔗 Link diretto</button>
@@ -1502,6 +1576,7 @@
     // Avvio
     // ============================================================
     verificaSessioneEsistente();
+    caricaOrgani();
     aggiornaCampiPerTipo();
     renderElenco();
     aggiornaOutputJSON();
