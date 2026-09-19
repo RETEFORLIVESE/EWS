@@ -23,7 +23,9 @@
         .content { flex: 1; padding: 40px; background: #f4f4f9; overflow-y: auto; }
         .dettagli-organo { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; display: none; }
         .luogo-badge { display: inline-block; background: #eef5ff; color: #0055a4; padding: 5px 10px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-        .btn-sito { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 20px; }
+        .btn-sito { display: inline-block; background: #0055a4; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 12px; }
+        .sito-web { margin: 0 0 4px 0; word-break: break-all; }
+        .sito-web a { color: #0055a4; }
     </style>
 </head>
 <body>
@@ -49,7 +51,10 @@
                 
                 <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <p>Atti e deliberazioni di questo organo verranno elencati qui.</p>
-                    <a href="#" id="view-link" class="btn-sito" target="_blank" style="display: none;">Visita il Sito Ufficiale</a>
+                    <div id="view-sito-box" style="display: none;">
+                        <p class="sito-web">🌐 Sito web: <a href="#" id="view-sito-url" target="_blank" rel="noopener noreferrer"></a></p>
+                        <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -108,6 +113,35 @@
             return String(valore);
         }
 
+        // "luoghi" può essere piatto oppure raggruppato (es. livello_statale, citta_principali, ...):
+        // cerchiamo l'ID a qualsiasi profondità e restituiamo il valore della voce.
+        function cercaLuogo(contenitore, id) {
+            if (!contenitore || typeof contenitore !== 'object' || !id) return null;
+            const eVoce = v => typeof v === 'string' || (v && typeof v === 'object' && typeof v.nome === 'string');
+            if (Object.prototype.hasOwnProperty.call(contenitore, id) && eVoce(contenitore[id])) return contenitore[id];
+            for (const chiave of Object.keys(contenitore)) {
+                const v = contenitore[chiave];
+                if (v && typeof v === 'object' && !eVoce(v)) {
+                    const trovato = cercaLuogo(v, id);
+                    if (trovato) return trovato;
+                }
+            }
+            return null;
+        }
+
+        // Rende l'indirizzo cliccabile: aggiunge https:// se manca e accetta solo http/https.
+        function normalizzaUrl(valore) {
+            let url = (valore || '').toString().trim();
+            if (!url) return '';
+            if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url.replace(/^\/+/, '');
+            try {
+                const u = new URL(url);
+                return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+            } catch (e) {
+                return '';
+            }
+        }
+
         function creaElementiMenu(nodi) {
             const frammento = document.createDocumentFragment();
             nodi.forEach(nodo => {
@@ -147,16 +181,22 @@
             document.getElementById('view-id').innerText = nodo.id_organo;
 
             const etichetta = etichettaCategoria(nodo);
-            const valoreLuogo = (datiPubblici.luoghi && datiPubblici.luoghi[nodo.luogo]) ? datiPubblici.luoghi[nodo.luogo] : nodo.luogo;
+            const valoreLuogo = cercaLuogo(datiPubblici.luoghi, nodo.luogo) || nodo.luogo;
             const nomeLuogo = descrizioneLuogo(valoreLuogo) || "Nessun luogo associato";
             document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + "📍 " + nomeLuogo;
 
-            const btnLink = document.getElementById('view-link');
-            if (nodo.link_sito && nodo.link_sito.trim() !== "") {
-                btnLink.href = nodo.link_sito;
-                btnLink.style.display = 'inline-block';
+            // Sito web facoltativo: se presente mostra l'indirizzo e il pulsante, altrimenti nasconde tutto.
+            const boxSito = document.getElementById('view-sito-box');
+            const urlSito = normalizzaUrl(nodo.link_sito);
+            if (urlSito) {
+                const testoSito = urlSito.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                const linkTesto = document.getElementById('view-sito-url');
+                linkTesto.href = urlSito;
+                linkTesto.innerText = testoSito;
+                document.getElementById('view-link').href = urlSito;
+                boxSito.style.display = 'block';
             } else {
-                btnLink.style.display = 'none';
+                boxSito.style.display = 'none';
             }
         }
     </script>
