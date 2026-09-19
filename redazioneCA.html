@@ -36,6 +36,8 @@
 </head>
 <body>
 
+    <div id="errore-globale" style="display:none; max-width:600px; margin:60px auto; background:#fdecea; color:#611a15; border:1px solid #f5c2c0; padding:20px; border-radius:8px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;"></div>
+
     <!-- PANNELLO REDAZIONE -->
     <div id="editor-panel" class="hidden">
         <header>
@@ -93,12 +95,18 @@
         // Login automatico all'apertura della pagina: niente più schermata di accesso.
         const CREDENZIALI_AUTO = { username: 'TandeePetrenka', password: 'TandeePetrenka' };
 
+        function mostraErrore(messaggio) {
+            const box = document.getElementById('errore-globale');
+            box.innerText = messaggio;
+            box.style.display = 'block';
+        }
+
         (async function avvio() {
             if (!ApiOrgani.loadCredentials()) {
                 try {
                     await ApiOrgani.login(CREDENZIALI_AUTO.username, CREDENZIALI_AUTO.password);
                 } catch (e) {
-                    document.getElementById('tree-container').innerText = "Errore di accesso automatico: " + e.message;
+                    mostraErrore("Errore di accesso automatico: " + e.message);
                     return;
                 }
             }
@@ -111,7 +119,7 @@
                 datiInMemoria = await ApiOrgani.loadDati();
                 if(!datiInMemoria.alberoOrgani) datiInMemoria.alberoOrgani = [];
                 renderizzaAlbero();
-            } catch (e) { document.getElementById('tree-container').innerText = "Errore caricamento: " + e.message; }
+            } catch (e) { mostraErrore("Errore caricamento: " + e.message); }
         }
 
         async function salvaOnline() {
