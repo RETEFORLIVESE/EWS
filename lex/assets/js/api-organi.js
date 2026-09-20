@@ -1,14 +1,12 @@
 // lex/assets/js/api-organi.js
 // Libreria client per CA.html / redazioneCA.html.
-// Le letture (/api/organi, /api/atti-organi) NON cambiano URL: la migrazione
-// è avvenuta dietro le quinte (ora leggono da GitHub invece che da JSONBin).
-// La scrittura ora passa da /api/salva-organi con un token di sessione,
-// invece del PUT diretto a JSONBin con la Master Key.
+// Login e salvataggio ora passano dallo STESSO endpoint della lettura
+// (/api/organi, distinto da un campo "azione" nel corpo della richiesta POST),
+// per ridurre il numero di funzioni serverless. Le norme collegate leggono
+// da /api/atti (prima era /api/atti-organi, rimosso).
 
 const ApiOrgani = (function () {
     const STORAGE_KEY = 'organi_sessione';
-
-    // --- Sessione (token, non più binId/apiKey) ---
 
     function loadCredentials() {
         const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -30,13 +28,11 @@ const ApiOrgani = (function () {
         sessionStorage.removeItem(STORAGE_KEY);
     }
 
-    // --- Login ---
-
     async function login(username, password) {
-        const risposta = await fetch('/api/login-organi', {
+        const risposta = await fetch('/api/organi', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ azione: 'login', username, password })
         });
 
         let dati = {};
@@ -49,8 +45,6 @@ const ApiOrgani = (function () {
         saveCredentials({ token: dati.token, username: dati.username || username });
         return dati;
     }
-
-    // --- Lettura pubblica (usata sia da CA.html che da redazioneCA.html) ---
 
     async function loadDati() {
         const risposta = await fetch('/api/organi', { cache: 'no-store' });
@@ -66,10 +60,10 @@ const ApiOrgani = (function () {
         return dati;
     }
 
-    // --- Lettura pubblica degli atti (norme) collegati ---
+    // --- Lettura pubblica degli atti (norme) collegati — ora da /api/atti ---
 
     async function loadAtti() {
-        const risposta = await fetch('/api/atti-organi', { cache: 'no-store' });
+        const risposta = await fetch('/api/atti', { cache: 'no-store' });
         let dati = {};
         try { dati = await risposta.json(); } catch (e) { /* ignora */ }
         if (!risposta.ok || !dati || dati.error) {
@@ -78,21 +72,19 @@ const ApiOrgani = (function () {
         return Array.isArray(dati.atti) ? dati.atti : [];
     }
 
-    // --- Scrittura (solo dopo login, tramite il server: /api/salva-organi) ---
-
     async function saveDati(datiCompleti) {
         const sessione = loadCredentials();
         if (!sessione) {
             throw new Error('Sessione scaduta: effettua di nuovo il login.');
         }
 
-        const risposta = await fetch('/api/salva-organi', {
+        const risposta = await fetch('/api/organi', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + sessione.token
             },
-            body: JSON.stringify(datiCompleti)
+            body: JSON.stringify({ azione: 'salva', ...datiCompleti })
         });
 
         if (!risposta.ok) {

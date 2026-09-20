@@ -1,7 +1,8 @@
 // assets/js/ctsu-core.js
-// Config pubblica + header/footer + libreria client, in un solo file per
-// tenere basso il numero di file: viene incluso da ctsu.html, progetto.html
-// e redazione-ctsu.html.
+// Config pubblica + header/footer + libreria client, in un solo file.
+// Login e salvataggio ora passano dallo STESSO endpoint della lettura
+// (/api/ctsu, distinto da un campo "azione" nel corpo della richiesta POST);
+// l'endpoint separato /api/ctsu-redazione non esiste più.
 
 const SITE_CONFIG_CTSU = {
   nomeFazione: "CTSU",
@@ -101,7 +102,6 @@ const APICtsu = {
     return !!this._sessione.token;
   },
 
-  // LETTURA — pubblica, endpoint a parte (resta un semplice GET)
   async loadProgetti() {
     const res = await fetch('/api/ctsu');
     const data = await res.json().catch(() => ({}));
@@ -111,10 +111,9 @@ const APICtsu = {
     return Array.isArray(data.progetti) ? data.progetti : [];
   },
 
-  // SCRITTURA e LOGIN — passano entrambi da /api/ctsu-redazione, con "azione" nel corpo
   async saveProgetti(progetti) {
     if (!this.isAuthenticated()) throw new Error("Non autenticato: effettua il login.");
-    const res = await fetch('/api/ctsu-redazione', {
+    const res = await fetch('/api/ctsu', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -130,7 +129,7 @@ const APICtsu = {
   },
 
   async login(username, password) {
-    const res = await fetch('/api/ctsu-redazione', {
+    const res = await fetch('/api/ctsu', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ azione: 'login', username, password })
