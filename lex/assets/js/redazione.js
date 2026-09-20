@@ -148,7 +148,7 @@
       <div class="redazione-sottocomma">
         <span class="redazione-sottocomma__lettera">${letteraDa(iSotto)})</span>
         <textarea class="redazione-sottocomma-testo" rows="1" placeholder="Testo del sottocomma">${escapeHtml(testo)}</textarea>
-        <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link title="Inserisci un collegamento nel testo selezionato">🔗</button>
+        <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link onmousedown="event.preventDefault()" title="Inserisci un collegamento nel testo selezionato">🔗</button>
         <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-sottocomma title="Rimuovi sottocomma">✕</button>
       </div>`;
   }
@@ -159,7 +159,7 @@
       <div class="redazione-comma">
         <div class="redazione-comma__intestazione">
           <span class="redazione-comma__numero">Comma ${iComma + 1}</span>
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link title="Inserisci un collegamento nel testo selezionato">🔗 Link</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link onmousedown="event.preventDefault()" title="Inserisci un collegamento nel testo selezionato">🔗 Link</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-aggiungi-sottocomma>+ sottocomma</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-comma style="margin-left:auto;">Rimuovi comma</button>
         </div>
@@ -234,10 +234,12 @@
     const commi = commiDiArticolo(art);
     const commiHtml = commi.map((c, ic) => renderComma(c, ic)).join("");
     return `
-      <div class="redazione-articolo" data-indice="${i}">
+      <div class="redazione-articolo redazione-blocco" data-indice="${i}">
         <div class="redazione-articolo__intestazione">
           <span>Articolo</span>
           <input type="text" class="redazione-art-numero" value="${escapeHtml(art.numero)}" style="width:70px;" />
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-sposta="su" title="Sposta su">↑</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-sposta="giu" title="Sposta giù">↓</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-articolo="${i}" style="margin-left:auto;">Rimuovi articolo</button>
         </div>
         <input type="text" class="redazione-art-rubrica" placeholder="Rubrica dell'articolo" value="${escapeHtml(art.rubrica)}" />
@@ -253,6 +255,23 @@
           <textarea class="redazione-analisi-testo" rows="4" placeholder="1. Testo del primo comma...&#10;a) primo sottocomma&#10;b) secondo sottocomma&#10;2. Testo del secondo comma..."></textarea>
           <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-analizza-testo>Suddividi automaticamente</button>
         </details>
+      </div>`;
+  }
+
+  // Blocco "titolo di gruppo": un'intestazione (es. "TITOLO I — Disposizioni
+  // generali") che raggruppa visivamente gli articoli successivi, senza essere
+  // essa stessa un articolo numerato. Corrisponde a { tipo: "titolo", testo }
+  // nell'array atto.articoli (vedi eTitoloGruppo in formattazione.js).
+  function renderRigaTitolo(item, i) {
+    return `
+      <div class="redazione-titolo-gruppo redazione-blocco" data-indice="${i}">
+        <div class="redazione-articolo__intestazione">
+          <span>Titolo di gruppo</span>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-sposta="su" title="Sposta su">↑</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-sposta="giu" title="Sposta giù">↓</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-titolo style="margin-left:auto;">Rimuovi</button>
+        </div>
+        <input type="text" class="redazione-titolo-testo" placeholder='es. "TITOLO I — Disposizioni generali"' value="${escapeHtml(item.testo || "")}" />
       </div>`;
   }
 
@@ -305,8 +324,11 @@
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
         <h3>Articoli</h3>
-        <div id="redazione-articoli">${articoli.map((a, i) => renderRigaArticolo(a, i)).join("")}</div>
-        <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-articolo">+ Aggiungi articolo</button>
+        <div id="redazione-articoli">${articoli.map((a, i) => eTitoloGruppo(a) ? renderRigaTitolo(a, i) : renderRigaArticolo(a, i)).join("")}</div>
+        <div class="redazione-riga-campi">
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-articolo">+ Aggiungi articolo</button>
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-titolo">+ Aggiungi titolo di gruppo</button>
+        </div>
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva sul database</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">Annulla</button>
@@ -318,14 +340,19 @@
   /* ---------- RACCOLTA E SALVATAGGIO ---------- */
 
   function leggiArticoli() {
-    return [...document.querySelectorAll("#redazione-articoli .redazione-articolo")].map(el => ({
-      numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
-      rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
-      commi: raccogliCommiDalDOM(el).map(c => ({
-        testo: c.testo.trim(),
-        sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
-      })),
-    }));
+    return [...document.querySelectorAll("#redazione-articoli > .redazione-articolo, #redazione-articoli > .redazione-titolo-gruppo")].map(el => {
+      if (el.classList.contains("redazione-titolo-gruppo")) {
+        return { tipo: "titolo", testo: el.querySelector(".redazione-titolo-testo").value.trim() };
+      }
+      return {
+        numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
+        rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
+        commi: raccogliCommiDalDOM(el).map(c => ({
+          testo: c.testo.trim(),
+          sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
+        })),
+      };
+    });
   }
 
   function raccogliAtto() {
@@ -429,6 +456,34 @@
         const c = document.getElementById("redazione-articoli");
         const n = c.querySelectorAll(".redazione-articolo").length + 1;
         c.insertAdjacentHTML("beforeend", renderRigaArticolo({ numero: n, rubrica: "", commi: [{ testo: "", sottocommi: [] }] }, n));
+        return;
+      }
+
+      if (e.target.id === "redazione-aggiungi-titolo") {
+        const c = document.getElementById("redazione-articoli");
+        c.insertAdjacentHTML("beforeend", renderRigaTitolo({ tipo: "titolo", testo: "" }, 0));
+        return;
+      }
+
+      // ---- Rimuovi un blocco titolo di gruppo ----
+      const rimTitolo = e.target.closest("[data-rimuovi-titolo]");
+      if (rimTitolo) {
+        rimTitolo.closest(".redazione-titolo-gruppo").remove();
+        return;
+      }
+
+      // ---- Sposta su/giù un blocco (articolo o titolo di gruppo) ----
+      const sposta = e.target.closest("[data-sposta]");
+      if (sposta) {
+        const riga = sposta.closest(".redazione-blocco");
+        if (riga) {
+          const direzione = sposta.getAttribute("data-sposta");
+          if (direzione === "su" && riga.previousElementSibling) {
+            riga.parentElement.insertBefore(riga, riga.previousElementSibling);
+          } else if (direzione === "giu" && riga.nextElementSibling) {
+            riga.parentElement.insertBefore(riga.nextElementSibling, riga);
+          }
+        }
         return;
       }
 
