@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CTSU</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="CTSU.png?v=1">
+  <link rel="icon" type="image/png" sizes="192x192" href="CTSU.png?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="CTSU.png?v=1">
+  <meta name="description" content="Raccolta ufficiale dei progetti tecnici e delle relazioni della fazione." />
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="testata-root"></div>
+
+  <main class="container">
+    <section class="hero" style="margin:-1px -24px 0; padding-left:24px; padding-right:24px;">
+      <div class="container hero__inner" style="padding:0;">
+        <div>
+          <span class="hero__kicker">Portale tecnico</span>
+          <h1 class="hero__titolo">Progetti tecnici e relazioni</h1>
+          <p class="hero__sottotitolo">
+            Consulta i progetti tecnici, le relazioni e i cantieri della fazione.
+            Ricerca per titolo, argomento o categoria.
+          </p>
+          <form id="form-ricerca" class="ricerca" role="search">
+            <label for="campo-ricerca" class="sr-only" style="position:absolute; left:-9999px;">Cerca nei progetti</label>
+            <input id="campo-ricerca" type="text" placeholder="Cerca per titolo, argomento o categoria&hellip;" autocomplete="off" />
+            <button type="submit">Cerca</button>
+          </form>
+        </div>
+        <div class="hero__pannello">
+          <h2>Accesso rapido</h2>
+          <ul>
+            <li><a href="ctsu.html?stato=In+corso">Progetti in corso<span>Cantieri e lavori attualmente attivi</span></a></li>
+            <li><a href="ctsu.html?stato=Completato">Progetti completati<span>Le opere già realizzate</span></a></li>
+            <li><a href="redazione-ctsu.html">Area di redazione<span>Crea o modifica un progetto</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-band" style="margin:0 -24px; padding:0;">
+      <div class="container">
+        <div class="stat-item"><b id="stat-totale">0</b><span>Progetti pubblicati</span></div>
+        <div class="stat-item"><b id="stat-in-corso">0</b><span>In corso</span></div>
+        <div class="stat-item"><b id="stat-categorie">0</b><span>Categorie</span></div>
+      </div>
+    </section>
+
+    <h2 class="sezione-titolo" style="margin-top:40px;">Elenco dei progetti</h2>
+    <div id="filtri-root" class="filtri"></div>
+    <p id="conteggio-risultati" style="font-family:var(--font-chrome); font-size:0.85rem; color:var(--inchiostro-tenue); margin:0 0 16px;"></p>
+    <div id="elenco-root" class="elenco-atti"></div>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script src="assets/js/ctsu-core.js"></script>
+  <script src="assets/js/main-ctsu.js"></script>
+</body>
+</html>
