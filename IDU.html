@@ -998,9 +998,9 @@
     s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
     s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
     s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" },
-    t1: { name: "T1", color: "#bf2008", system: "tram", icon: "T1" },
-    t2: { name: "T2", color: "#063d8a", system: "tram", icon: "T2" },
-    t3: { name: "T3", color: "#2f8f4e", system: "tram", icon: "T3" }
+    t1: { name: "T1", color: "#063d8a", system: "tram", icon: "T1" },
+    t2: { name: "T2", color: "#84060c", system: "tram", icon: "T2" },
+    t3: { name: "T3", color: "#2f8f4e" , system: "tram", icon: "T3" }
   };
 
   var SYSTEM_LABELS = { metro: "Metropolitana", rer: "RER", tram: "Tram", shutle: "Shùtle" };
@@ -1026,7 +1026,10 @@
    rc: ["n_t_c","newshinguku","nationes","lufte","hotspot","iketal","oberdan","tegelg","1_le","hopera_cycula","sars_f"],
    s1: ["lampugnano","alx_der","goberdan","bennon","port","anarkios","webariik","regio","termini","toer","cotoplatz","fluvia","pernety","bovaes","1_le"],
    s3: ["port_d_expo","bovaes","pernety","ankita_nord","ankita_feld","ecles"],
-   s6: ["bennon","t_littoria","alx_der","unionplz","fsd","suomentaku"]
+   s6: ["bennon","t_littoria","alx_der","unionplz","fsd","suomentaku"],
+   t1: ["tallin_akuna","termini","murer","embas","port_d_expo","estjilinn"],
+   t2: ["tallin_akuna","termini","anaekios","port","bennon","dakisula","talindam"],
+   t3: ["tallin_akuna","11kunta","suomenlapsi"]
   };
 
   // Ogni stazione puo' avere due campi facoltativi, oltre a id/name/x/y/lines:
@@ -1066,26 +1069,27 @@
         { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["rc","ma","m7"] },
         { id: "1_le", name: "1 Île", x: 500, y: 316, lines: ["ra","rc","ma","s1"] },
         { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["rb","m1"] },
-        { id: "kaksyembas", name: "KaksyEmbas", x: 560, y: 340, lines: ["t1"],details: "Da Espandere [Rc]." },
-        { id: "yksiembas", name: "KaksyEmbas", x: 520, y: 360, lines: ["t1"]},
-        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["s3","m7","m5","rb","m1"] },
+        { id: "embas", name: "Embas", x: 540, y: 350, lines: ["t1"],details: "Da Espandere [Rc]." },
+        { id: "murer", name: "Murer", x: 508, y: 410, lines: ["t1"]},
+        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["t1","s3","m7","m5","rb","m1"] },
         { id: "ostiense", name: "Ostiense", x: 815, y: 300, lines: ["rb","m7","ma"] },
         { id: "lybica", name: "Lybica", x: 950, y: 300, lines: ["rb"] },
         { id: "ecles", name: "Ecles", x: 900, y: 250, lines: ["m7","s3"] },
         { id: "bobigny", name: "Bobigny", x: 801, y: 364, lines: ["m5"] },
-        { id: "estjilinn", name: "EstjiLinn", x: 744, y: 364, lines: ["m5","m1","ma"] },
+        { id: "estjilinn", name: "EstjiLinn", x: 744, y: 364, lines: ["t1","m5","m1","ma"] },
         { id: "monparnass", name: "MonParnass", x: 600, y: 228, lines: ["m4","rb","m5"] },
-        { id: "suomenlapsi", name: "SuomenLapsi", x: 164, y: 292, lines: ["m8"] },
+        { id: "suomenlapsi", name: "SuomenLapsi", x: 164, y: 292, lines: ["m8","t3"] },
         { id: "suomentaku", name: "SuomenTaku", x: 212, y: 324, lines: ["m6","s6"] },
         { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 351, y: 330, lines: ["m4","s6"] },
+        { id: "11kunta", name: "11 Kunta", x: 280, y: 292, lines: ["t3"] },
         { id: "prolet", name: "Prolet", x: 100, y: 406, lines: ["m8"] },
         { id: "fsd", name: "FSD", x: 212, y: 413, lines: ["m8","s6"] },
         { id: "unionplz", name: "UnionPlz", x: 306, y: 451, lines: ["m3","m8","s6"] },
         { id: "alx_der", name: "Alx.der", x: 306, y: 498, lines: ["m3","s1","s6"] },
-        { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, lines: ["m3","m4","m6"] },
+        { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, lines: ["t1","t3","t2","m3","m4","m6"] },
         { id: "outlx", name: "Outlx", x: 306, y: 406, lines: ["m3"] },
-        { id: "kompasse", name: "Kompasse", x: 406, y: 394, lines: ["m4","m6"] },
-        { id: "termini", name: "Termini", x: 386, y: 425, lines: ["m4","m6"] },
+        { id: "kompasse", name: "Kompasse", x: 425, y: 376, lines: ["m4","m6"] },
+        { id: "termini", name: "Termini", x: 402, y: 425, lines: ["t2","m4","m6","t1","t2","t3"] },
         { id: "newpenn", name: "NewPenn", x: 580, y: 430, lines: ["m6","ra","m1"] },
         { id: "oberdan", name: "Oberdan", x: 632, y: 394, lines: ["m7","rc"] },
         { id: "thalè", name: "Thalè", x: 675, y: 430, lines: ["ra","m7","m1"] },
@@ -1095,11 +1099,11 @@
         { id: "goberdan", name: "Goberdan", x: 371, y: 510, lines: ["m8","s1"] },
         { id: "webariik", name: "WebaRiik", x: 508, y: 463, lines: ["m1","s1"] },
         { id: "regio", name: "Regio", x: 508, y: 425, lines: ["s1"] },
-        { id: "anarkios", name: "Anarkios", x: 403, y: 463, lines: ["m1","s1"] },
+        { id: "anarkios", name: "Anarkios", x: 403, y: 463, lines: ["m1","t2","s1"] },
         { id: "t_littoria", name: "T.Littoria", x: 316, y: 535, lines: ["s6","m2","m3"] },
         { id: "p_littoria", name: "P.Littoria", x: 254, y: 535, lines: ["m2"] },
         { id: "royale", name: "Royale", x: 164, y: 551, lines: ["m2"] },
-        { id: "port", name: "LaFinance", x: 403, y: 545, lines: ["m2","m1","s1"] },
+        { id: "port", name: "LaFinance", x: 403, y: 545, lines: ["m2","t2","m1","s1"] },
         { id: "n_t_c", name: "N.T.C.", x: 486, y: 545, lines: ["m2","rc"] ,
           details: "National Trade Cener. Capitale dell'EstjiKuro.",
           links: [{ label: "Sito Ufficiale", url: "https://example.com/ikebukuro-bus" }] },
@@ -1109,9 +1113,9 @@
         { id: "gallier", name: "Gallier", x: 710, y: 545, lines: ["m2","m7","ra"] },
         { id: "colonia", name: "Colonia", x: 710, y: 650, lines: ["ra"] },
         { id: "chatillon", name: "Chatillon", x: 727, y: 569, lines: ["m7"] },
-        { id: "bennon", name: "Bennon", x: 403, y: 580, lines: ["m1","s1","s6"] },
-        { id: "dakisula", name: "DakIsula", x: 403, y: 609, lines: ["m1"] },
-        { id: "talindam", name: "TalinDam", x: 423, y: 651, lines: ["m1"] },
+        { id: "bennon", name: "Bennon", x: 403, y: 580, lines: ["m1","s1","t2","s6"] },
+        { id: "dakisula", name: "DakIsula", x: 403, y: 609, lines: ["m1","t2"] },
+        { id: "talindam", name: "TalinDam", x: 423, y: 651, lines: ["m1","t2"] },
         { id: "baterina", name: "Baterina", x: 45, y: 637, lines: ["m2"] },
         { id: "lampugnano", name: "Lampugnano", x: 269, y: 637, lines: ["s1","m3"] }
   ];
