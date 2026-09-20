@@ -1,26 +1,29 @@
-// js/api-organi.js
+// lex/assets/js/api-organi.js
 // Libreria client per CA.html / redazioneCA.html.
-// Gestisce login, lettura pubblica e salvataggio (dopo login) dell'albero Organi.
+// Le letture (/api/organi, /api/atti-organi) NON cambiano URL: la migrazione
+// è avvenuta dietro le quinte (ora leggono da GitHub invece che da JSONBin).
+// La scrittura ora passa da /api/salva-organi con un token di sessione,
+// invece del PUT diretto a JSONBin con la Master Key.
 
 const ApiOrgani = (function () {
-    const STORAGE_KEY = 'organi_credenziali';
+    const STORAGE_KEY = 'organi_sessione';
 
-    // --- Credenziali (memorizzate solo per la sessione del browser) ---
+    // --- Sessione (token, non più binId/apiKey) ---
 
     function loadCredentials() {
         const raw = sessionStorage.getItem(STORAGE_KEY);
         if (!raw) return null;
         try {
-            const cred = JSON.parse(raw);
-            if (cred && cred.binId && cred.apiKey) return cred;
+            const sessione = JSON.parse(raw);
+            if (sessione && sessione.token) return sessione;
             return null;
         } catch (e) {
             return null;
         }
     }
 
-    function saveCredentials(cred) {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cred));
+    function saveCredentials(sessione) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(sessione));
     }
 
     function logout() {
@@ -43,7 +46,7 @@ const ApiOrgani = (function () {
             throw new Error(dati.error || 'Credenziali non valide.');
         }
 
-        saveCredentials({ binId: dati.binId, apiKey: dati.apiKey, username: dati.username || username });
+        saveCredentials({ token: dati.token, username: dati.username || username });
         return dati;
     }
 
@@ -63,7 +66,7 @@ const ApiOrgani = (function () {
         return dati;
     }
 
-    // --- Lettura pubblica degli atti (norme), letti dal server con BIN_ID ---
+    // --- Lettura pubblica degli atti (norme) collegati ---
 
     async function loadAtti() {
         const risposta = await fetch('/api/atti-organi', { cache: 'no-store' });
@@ -75,25 +78,27 @@ const ApiOrgani = (function () {
         return Array.isArray(dati.atti) ? dati.atti : [];
     }
 
-    // --- Scrittura (solo dopo login, direttamente su JSONBin) ---
+    // --- Scrittura (solo dopo login, tramite il server: /api/salva-organi) ---
 
     async function saveDati(datiCompleti) {
-        const cred = loadCredentials();
-        if (!cred) {
+        const sessione = loadCredentials();
+        if (!sessione) {
             throw new Error('Sessione scaduta: effettua di nuovo il login.');
         }
 
-        const risposta = await fetch(`https://api.jsonbin.io/v3/b/${cred.binId}`, {
-            method: 'PUT',
+        const risposta = await fetch('/api/salva-organi', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Master-Key': cred.apiKey
+                'Authorization': 'Bearer ' + sessione.token
             },
             body: JSON.stringify(datiCompleti)
         });
 
         if (!risposta.ok) {
-            throw new Error('Errore salvataggio: HTTP ' + risposta.status);
+            let dati = {};
+            try { dati = await risposta.json(); } catch (e) { /* ignora */ }
+            throw new Error(dati.error || ('Errore salvataggio: HTTP ' + risposta.status));
         }
         return risposta.json();
     }

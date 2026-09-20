@@ -1,30 +1,34 @@
 // assets/js/api.js
-const API = {
-  _creds: { binId: null, apiKey: null },
+// Libreria client per normaktiv.html / atto.html / redazione.html.
+// La lettura (/api/atti) NON cambia URL. La scrittura ora passa da
+// /api/salva-atti con un token di sessione, invece del PUT diretto a JSONBin.
 
-  setCredentials(binId, apiKey) {
-    this._creds = { binId, apiKey };
-    try { sessionStorage.setItem('fz_creds', JSON.stringify(this._creds)); } catch (e) {}
+const API = {
+  _sessione: { token: null, username: null },
+
+  setSessione(token, username) {
+    this._sessione = { token, username };
+    try { sessionStorage.setItem('fz_sessione', JSON.stringify(this._sessione)); } catch (e) {}
   },
 
   loadCredentials() {
     try {
-      const raw = sessionStorage.getItem('fz_creds');
-      if (raw) this._creds = JSON.parse(raw);
+      const raw = sessionStorage.getItem('fz_sessione');
+      if (raw) this._sessione = JSON.parse(raw);
     } catch (e) {}
-    return this._creds;
+    return this._sessione;
   },
 
   clearCredentials() {
-    this._creds = { binId: null, apiKey: null };
-    try { sessionStorage.removeItem('fz_creds'); } catch (e) {}
+    this._sessione = { token: null, username: null };
+    try { sessionStorage.removeItem('fz_sessione'); } catch (e) {}
   },
 
   isAuthenticated() {
-    return !!(this._creds.binId && this._creds.apiKey);
+    return !!this._sessione.token;
   },
 
-  // LETTURA — passa dal server (nessuna chiave nel browser)
+  // LETTURA — pubblica, URL invariato
   async loadAtti() {
     const res = await fetch('/api/atti');
     const data = await res.json().catch(() => ({}));
@@ -34,18 +38,21 @@ const API = {
     return Array.isArray(data.atti) ? data.atti : [];
   },
 
-  // SCRITTURA — usa le chiavi ottenute dal login
+  // SCRITTURA — ora passa dal server con il token di sessione
   async saveAtti(atti) {
     if (!this.isAuthenticated()) throw new Error("Non autenticato: effettua il login.");
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${this._creds.binId}`, {
-      method: 'PUT',
+    const res = await fetch('/api/salva-atti', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Master-Key': this._creds.apiKey
+        'Authorization': 'Bearer ' + this._sessione.token
       },
       body: JSON.stringify({ atti })
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
     return true;
   },
 
@@ -60,10 +67,10 @@ const API = {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Credenziali errate');
     }
-    this.setCredentials(data.token.binId, data.token.apiKey);
+    this.setSessione(data.token, username);
     return data;
   }
 };
 
-// Carica le credenziali se presenti (es. dopo un refresh della pagina)
+// Carica la sessione se presente (es. dopo un refresh della pagina)
 API.loadCredentials();
