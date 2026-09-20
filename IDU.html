@@ -997,7 +997,10 @@
     rc: { name: "RERc", color: "#063d8a", system: "rer", icon: "Rc" },
     s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
     s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
-    s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" }
+    s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" },
+    t1: { name: "T1", color: "#bf2008", system: "tram", icon: "T1" },
+    t2: { name: "T2", color: "#063d8a", system: "tram", icon: "T2" },
+    t3: { name: "T3", color: "#2f8f4e", system: "tram", icon: "T3" }
   };
 
   var SYSTEM_LABELS = { metro: "Metropolitana", rer: "RER", tram: "Tram", shutle: "Shùtle" };
@@ -1048,11 +1051,11 @@
         { id: "fluvia", name: "Fluvia", x: 503, y: 131, lines: ["ma","s1"] },
         { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 500, y: 202, lines: ["ma","rb"] },
         { id: "a_t_c", name: "A.T.C.", x: 600, y: 100, lines: ["m1"] },
-        { id: "ankita_nord", name: "Ankita Nord", x: 739, y: 131, lines: ["s3","ma"] },
+        { id: "ankita_nord", name: "Ankita Nord", x: 750, y: 131, lines: ["s3","ma"] },
         { id: "ankita_feld", name: "Ankita Feld", x: 850, y: 131, lines: ["s3"] },
-        { id: "pernety", name: "Pernety", x: 669, y: 131, lines: ["s1","m5","s3"] },
-        { id: "bovaes", name: "Bovaes", x: 570, y: 270, lines: ["s1","s3"] },
-        { id: "mariotte", name: "Mariotte", x: 669, y: 228, lines: ["m4","m5"] },
+        { id: "pernety", name: "Pernety", x: 680, y: 131, lines: ["s1","m5","s3"] },
+        { id: "bovaes", name: "Bovaes", x: 620, y: 250, lines: ["s1","s3"] },
+        { id: "mariotte", name: "Mariotte", x: 680, y: 228, lines: ["m4","m5"] },
         { id: "viktorplatz", name: "ViktorPlatz", x: 815, y: 216, lines: ["ma","m4"] },
         { id: "estji_viter", name: "Estji-Viter", x: 350, y: 233, lines: ["m4","ra","m8"] },
         { id: "cotoplatz", name: "CotoPlatz", x: 500, y: 261, lines: ["ma","s1","m4"] },
@@ -1063,6 +1066,8 @@
         { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["rc","ma","m7"] },
         { id: "1_le", name: "1 Île", x: 500, y: 316, lines: ["ra","rc","ma","s1"] },
         { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["rb","m1"] },
+        { id: "kaksyembas", name: "KaksyEmbas", x: 560, y: 340, lines: ["t1"],details: "Da Espandere [Rc]." },
+        { id: "yksiembas", name: "KaksyEmbas", x: 520, y: 360, lines: ["t1"]},
         { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["s3","m7","m5","rb","m1"] },
         { id: "ostiense", name: "Ostiense", x: 815, y: 300, lines: ["rb","m7","ma"] },
         { id: "lybica", name: "Lybica", x: 950, y: 300, lines: ["rb"] },
