@@ -1,28 +1,19 @@
+// api/organi.js — lettura pubblica dell'albero Organi (CA.html).
+// Prima leggeva da JSONBin (BIN_ID_ORGANI); ora legge organi.json dalla repo DATA.
+
+import { leggiFileJson } from './_github.js';
+
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: "Metodo non consentito" });
-    }
-
-    const { BIN_ID_ORGANI, API_KEY } = process.env;
-
-    if (!BIN_ID_ORGANI || !API_KEY) {
-        return res.status(500).json({ error: "Configurazione del server mancante." }); //
+        res.setHeader('Allow', 'GET');
+        return res.status(405).json({ error: 'Metodo non consentito' });
     }
 
     try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID_ORGANI}/latest`, {
-            headers: {
-                'X-Master-Key': API_KEY //
-            }
-        });
-
-        if (!response.ok) {
-            return res.status(500).json({ error: `Errore lettura: JSONBin ${response.status}` }); //
-        }
-
-        const data = await response.json();
-        res.status(200).json(data.record);
+        const dati = await leggiFileJson('organi.json', { alberoOrgani: [], alberoLuoghi: [], luoghi: {} });
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json(dati);
     } catch (error) {
-        res.status(500).json({ error: "Errore interno del server." });
+        return res.status(500).json({ error: 'Errore interno del server: ' + error.message });
     }
 }

@@ -1,13 +1,10 @@
-// api/login-organi.js
-// Login della redazione Congressi e Assemblee (Organi).
-// Stessa struttura e stesse credenziali di login-elezioni.js.
+// api/login-organi.js — login redazione Congressi e Assemblee (organi.json).
 //
-// Variabili d'ambiente richieste su Vercel:
-//   BIN_ID_ORGANI    -> id del bin JSONBin degli organi
-//   API_KEY          -> Master Key di JSONBin (condivisa con gli altri endpoint)
-// Opzionali (per non tenere le credenziali nel codice):
+// Variabili d'ambiente (invariate rispetto a prima):
 //   REDAZIONE_USER      -> nome utente della redazione
 //   REDAZIONE_PASSWORD  -> password della redazione
+
+import { creaToken } from './_sessione.js';
 
 const VALID_USERS = [
     {
@@ -19,13 +16,7 @@ const VALID_USERS = [
 export default function handler(req, res) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
-        return res.status(405).json({ error: "Metodo non consentito" });
-    }
-
-    const { BIN_ID_ORGANI, API_KEY } = process.env;
-
-    if (!BIN_ID_ORGANI || !API_KEY) {
-        return res.status(500).json({ error: "Configurazione del server mancante." });
+        return res.status(405).json({ error: 'Metodo non consentito' });
     }
 
     let corpo = req.body;
@@ -37,16 +28,14 @@ export default function handler(req, res) {
     const password = corpo && corpo.password ? String(corpo.password) : '';
 
     const utente = VALID_USERS.find(u => u.username === username && u.password === password);
-
     if (!utente) {
-        return res.status(401).json({ error: "Credenziali non valide" });
+        return res.status(401).json({ error: 'Credenziali non valide' });
     }
 
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
         success: true,
         username: utente.username,
-        binId: BIN_ID_ORGANI,
-        apiKey: API_KEY
+        token: creaToken(utente.username)
     });
 }

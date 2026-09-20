@@ -1,13 +1,10 @@
-// Funzione serverless Vercel — login della redazione elezioni.
-// Se le credenziali sono corrette restituisce BIN_ID_ELEZIONI e la Master Key:
-// è l'UNICO momento in cui le chiavi arrivano al browser.
+// api/login-elezioni.js — login redazione CEPU (elezioni.json).
 //
-// Variabili d'ambiente richieste su Vercel:
-//   BIN_ID_ELEZIONI     -> id del bin JSONBin delle elezioni
-//   API_KEY_ELEZIONI    -> Master Key di JSONBin (fallback: API_KEY)
-// Opzionali (consigliate, per non tenere le credenziali nel codice):
+// Variabili d'ambiente (invariate rispetto a prima):
 //   REDAZIONE_USER      -> nome utente della redazione
 //   REDAZIONE_PASSWORD  -> password della redazione
+
+import { creaToken } from './_sessione.js';
 
 const VALID_USERS = [
     {
@@ -22,13 +19,6 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Metodo non consentito.' });
     }
 
-    const BIN_ID = process.env.BIN_ID_ELEZIONI;
-    const API_KEY = process.env.API_KEY_ELEZIONI || process.env.API_KEY;
-
-    if (!BIN_ID || !API_KEY) {
-        return res.status(500).json({ error: 'Configurazione del server mancante.' });
-    }
-
     let corpo = req.body;
     if (typeof corpo === 'string') {
         try { corpo = JSON.parse(corpo); } catch (e) { corpo = {}; }
@@ -38,17 +28,16 @@ export default async function handler(req, res) {
     const password = corpo && corpo.password ? String(corpo.password) : '';
 
     const utente = VALID_USERS.find(u => u.username === username && u.password === password);
-
     if (!utente) {
         return res.status(401).json({ error: 'Nome utente o password errati.' });
     }
 
     res.setHeader('Cache-Control', 'no-store');
+    // NB: prima qui c'era "token: { binId, apiKey }" (oggetto). Ora è una stringa.
+    // redazioneCEPU.html va adeguato di conseguenza (vedi patch dedicata).
     return res.status(200).json({
+        success: true,
         username: utente.username,
-        token: {
-            binId: BIN_ID,
-            apiKey: API_KEY
-        }
+        token: creaToken(utente.username)
     });
 }
