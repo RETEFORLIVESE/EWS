@@ -1,7 +1,14 @@
 // api/elezioni.js — lettura pubblica delle elezioni (CEPU.html).
-// Prima leggeva da JSONBin (BIN_ID_ELEZIONI); ora legge elezioni.json dalla repo DATA.
+// elezioni.json nella repo DATA è salvato come { "elezioni": [ ... ] }: gestiamo
+// anche il caso in cui sia un array nudo, per robustezza.
 
 import { leggiFileJson } from './_github.js';
+
+function estraiElezioni(registro) {
+    if (Array.isArray(registro)) return registro;
+    if (registro && Array.isArray(registro.elezioni)) return registro.elezioni;
+    return [];
+}
 
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
@@ -10,9 +17,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        const elezioni = await leggiFileJson('elezioni.json', []);
+        const registro = await leggiFileJson('elezioni.json', { elezioni: [] });
         res.setHeader('Cache-Control', 'no-store');
-        return res.status(200).json({ elezioni: Array.isArray(elezioni) ? elezioni : [] });
+        return res.status(200).json({ elezioni: estraiElezioni(registro) });
     } catch (error) {
         return res.status(500).json({ error: 'Errore lettura: ' + error.message });
     }

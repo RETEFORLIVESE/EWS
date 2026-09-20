@@ -1,5 +1,5 @@
 // api/salva-elezioni.js — salva l'elenco elezioni (redazioneCEPU.html).
-// Sostituisce il PUT diretto dal browser a JSONBin.
+// Scrive nel formato { "elezioni": [...] }, coerente con quello già presente in elezioni.json.
 
 import { sessioneDaRichiesta } from './_sessione.js';
 import { scriviFileJson } from './_github.js';
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        await scriviFileJson('elezioni.json', elezioni, `Aggiornamento elezioni (${sessione.username})`);
+        await scriviFileJson('elezioni.json', { elezioni }, `Aggiornamento elezioni (${sessione.username})`);
         return res.status(200).json({ success: true });
     } catch (error) {
         return res.status(500).json({ error: 'Errore salvataggio: ' + error.message });

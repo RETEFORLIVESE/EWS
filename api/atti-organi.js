@@ -4,6 +4,12 @@
 
 import { leggiFileJson } from './_github.js';
 
+function estraiAtti(registro) {
+    if (Array.isArray(registro)) return registro;
+    if (registro && Array.isArray(registro.atti)) return registro.atti;
+    return [];
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
         res.setHeader('Allow', 'GET');
@@ -11,9 +17,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        const atti = await leggiFileJson('atti.json', []);
+        const registro = await leggiFileJson('atti.json', { atti: [] });
         res.setHeader('Cache-Control', 'no-store');
-        return res.status(200).json({ atti: Array.isArray(atti) ? atti : [] });
+        return res.status(200).json({ atti: estraiAtti(registro) });
     } catch (error) {
         return res.status(500).json({ error: 'Impossibile leggere gli atti: ' + error.message });
     }

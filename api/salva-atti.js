@@ -1,5 +1,5 @@
 // api/salva-atti.js — salva l'elenco atti (redazione.html / NormAktiv).
-// Sostituisce il PUT diretto dal browser a JSONBin.
+// Scrive nel formato { "atti": [...] }, coerente con quello già presente in atti.json.
 
 import { sessioneDaRichiesta } from './_sessione.js';
 import { scriviFileJson } from './_github.js';
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        await scriviFileJson('atti.json', atti, `Aggiornamento atti (${sessione.username})`);
+        await scriviFileJson('atti.json', { atti }, `Aggiornamento atti (${sessione.username})`);
         return res.status(200).json({ success: true });
     } catch (error) {
         return res.status(500).json({ message: 'Errore salvataggio: ' + error.message });
