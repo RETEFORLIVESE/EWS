@@ -1,7 +1,7 @@
 // assets/js/api.js
 // Libreria client per normaktiv.html / atto.html / redazione.html.
-// La lettura (/api/atti) NON cambia URL. La scrittura ora passa da
-// /api/salva-atti con un token di sessione, invece del PUT diretto a JSONBin.
+// Login e salvataggio ora passano dallo STESSO endpoint della lettura
+// (/api/atti, distinto da un campo "azione" nel corpo della richiesta POST).
 
 const API = {
   _sessione: { token: null, username: null },
@@ -28,7 +28,6 @@ const API = {
     return !!this._sessione.token;
   },
 
-  // LETTURA — pubblica, URL invariato
   async loadAtti() {
     const res = await fetch('/api/atti');
     const data = await res.json().catch(() => ({}));
@@ -38,16 +37,15 @@ const API = {
     return Array.isArray(data.atti) ? data.atti : [];
   },
 
-  // SCRITTURA — ora passa dal server con il token di sessione
   async saveAtti(atti) {
     if (!this.isAuthenticated()) throw new Error("Non autenticato: effettua il login.");
-    const res = await fetch('/api/salva-atti', {
+    const res = await fetch('/api/atti', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + this._sessione.token
       },
-      body: JSON.stringify({ atti })
+      body: JSON.stringify({ azione: 'salva', atti })
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -56,12 +54,11 @@ const API = {
     return true;
   },
 
-  // Login verso il backend
   async login(username, password) {
-    const res = await fetch('/api/login', {
+    const res = await fetch('/api/atti', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ azione: 'login', username, password })
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
@@ -72,5 +69,4 @@ const API = {
   }
 };
 
-// Carica la sessione se presente (es. dopo un refresh della pagina)
 API.loadCredentials();
