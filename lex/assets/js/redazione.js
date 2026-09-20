@@ -3,7 +3,6 @@
   let vista = "menu";
   let idInModifica = null;
   let atti = [];
-  let luoghi = {}; // { codice: "Nome visualizzato" }, letti da /api/organi
 
   const slugify = t => (t || "").toString().toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -23,105 +22,6 @@
     ["Statuto Costituzionale", "Regolamento", "Codice", "Editto", "Decreto"]
       .forEach(c => set.add(c));
     return [...set];
-  }
-
-  const ETICHETTE_TIPO_LUOGO = {
-    assemblea: "Assemblea",
-    distretto: "Distretto",
-    citta_metropolitana: "Città metropolitana",
-    cittametropolitana: "Città metropolitana",
-    congresso: "Congresso",
-    citta: "Città",
-    regione: "Regione"
-  };
-
-  // I valori dentro "luoghi" possono essere una semplice stringa oppure un oggetto
-  // tipo { nome: "Roma", tipo: "citta_metropolitana" }. Qui estraiamo sempre un testo leggibile.
-  function descrizioneLuogo(valore) {
-    if (!valore) return "";
-    if (typeof valore === "string") return valore;
-    if (typeof valore === "object") {
-      const nome = valore.nome || valore.nome_display || valore.citta || valore.nomeCitta || valore.label || valore.title || "";
-      const tipoGrezzo = (valore.tipo || valore.categoria || "").toString().toLowerCase();
-      const tipo = ETICHETTE_TIPO_LUOGO[tipoGrezzo] || (tipoGrezzo ? tipoGrezzo : "");
-      if (nome && tipo) return `${nome} (${tipo})`;
-      if (nome) return nome;
-      const primaStringa = Object.values(valore).find(v => typeof v === "string" && v.trim() !== "");
-      if (primaStringa) return primaStringa;
-    }
-    return String(valore);
-  }
-
-  // "luoghi" può essere raggruppato, ad esempio:
-  //   { livello_statale: { TALEEN: "Taleen", ... }, citta_principali: { ... } }
-  // I nomi dei gruppi (livello_statale, citta_principali...) NON sono luoghi: nell'atto va salvato
-  // l'ID della singola voce (TALEEN), mai il nome del gruppo.
-  const CAMPI_NOME_LUOGO = ["nome", "nome_display", "citta", "nomeCitta", "label", "title"];
-
-  // Una voce è una stringa oppure un oggetto con un campo nome; ogni altro oggetto è un gruppo.
-  function eVoceLuogo(v) {
-    if (typeof v === "string") return true;
-    return v !== null && typeof v === "object" && !Array.isArray(v) && CAMPI_NOME_LUOGO.some(c => typeof v[c] === "string");
-  }
-  function eGruppoLuogo(v) {
-    return v !== null && typeof v === "object" && !Array.isArray(v) && !eVoceLuogo(v);
-  }
-
-  const etichettaGruppo = chiave => {
-    const t = (chiave || "").toString().replace(/_/g, " ");
-    return t.charAt(0).toUpperCase() + t.slice(1);
-  };
-
-  // Elenco piatto di tutte le voci, a qualsiasi profondità, senza doppioni:
-  // [{ id, testo, gruppo }] dove "gruppo" è il percorso leggibile (es. "Assemblee quartieri › Forli").
-  function elencoLuoghi() {
-    const risultato = [];
-    const visti = new Set();
-    (function scorri(contenitore, percorso) {
-      Object.keys(contenitore || {}).forEach(chiave => {
-        const v = contenitore[chiave];
-        if (eVoceLuogo(v)) {
-          if (!visti.has(chiave)) {
-            visti.add(chiave);
-            risultato.push({ id: chiave, testo: descrizioneLuogo(v), gruppo: percorso.map(etichettaGruppo).join(" › ") });
-          }
-        } else if (eGruppoLuogo(v)) {
-          scorri(v, [...percorso, chiave]);
-        }
-      });
-    })(luoghi, []);
-    return risultato;
-  }
-
-  function esisteGruppoLuogo(chiaveCercata) {
-    return (function cerca(contenitore) {
-      return Object.keys(contenitore || {}).some(chiave => {
-        const v = contenitore[chiave];
-        return eGruppoLuogo(v) && (chiave === chiaveCercata || cerca(v));
-      });
-    })(luoghi);
-  }
-
-  function opzioniLuogo(luogoSelezionato) {
-    const voci = elencoLuoghi();
-    const opzione = l =>
-      `<option value="${escapeHtml(l.id)}" ${l.id === luogoSelezionato ? "selected" : ""}>${escapeHtml(l.testo)}</option>`;
-
-    let html = `<option value="">-- Nessun luogo --</option>`;
-    html += voci.filter(l => !l.gruppo).map(opzione).join("");
-    [...new Set(voci.filter(l => l.gruppo).map(l => l.gruppo))].forEach(g => {
-      html += `<optgroup label="${escapeHtml(g)}">${voci.filter(l => l.gruppo === g).map(opzione).join("")}</optgroup>`;
-    });
-
-    // Valore salvato che non corrisponde a nessun luogo: lo mostriamo comunque, ben segnalato,
-    // così non passa inosservato (capita se in passato è stato salvato il nome di un gruppo).
-    if (luogoSelezionato && !voci.some(l => l.id === luogoSelezionato)) {
-      const nota = esisteGruppoLuogo(luogoSelezionato)
-        ? "è un gruppo, non un luogo: scegli una voce dall'elenco"
-        : "non più nell'elenco";
-      html += `<option value="${escapeHtml(luogoSelezionato)}" selected>${escapeHtml(luogoSelezionato)} (${nota})</option>`;
-    }
-    return html;
   }
 
   function mostraMessaggio(msg) {
@@ -225,7 +125,7 @@
         <div>
           <span class="badge-categoria">${escapeHtml(a.categoria)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(a.titolo)}</p>
-          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${a.articoli.filter(x => !eTitoloGruppo(x)).length} articoli</p>
+          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${a.articoli.length} articoli</p>
         </div>
         <div class="redazione-riga__azioni">
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-modifica="${escapeHtml(a.id)}">Modifica</button>
@@ -248,6 +148,7 @@
       <div class="redazione-sottocomma">
         <span class="redazione-sottocomma__lettera">${letteraDa(iSotto)})</span>
         <textarea class="redazione-sottocomma-testo" rows="1" placeholder="Testo del sottocomma">${escapeHtml(testo)}</textarea>
+        <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link title="Inserisci un collegamento nel testo selezionato">🔗</button>
         <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-sottocomma title="Rimuovi sottocomma">✕</button>
       </div>`;
   }
@@ -258,12 +159,67 @@
       <div class="redazione-comma">
         <div class="redazione-comma__intestazione">
           <span class="redazione-comma__numero">Comma ${iComma + 1}</span>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link title="Inserisci un collegamento nel testo selezionato">🔗 Link</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-aggiungi-sottocomma>+ sottocomma</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-comma style="margin-left:auto;">Rimuovi comma</button>
         </div>
         <textarea class="redazione-comma-testo" placeholder="Testo del comma" rows="2">${escapeHtml(comma.testo)}</textarea>
         <div class="redazione-sottocommi">${sottocommi}</div>
       </div>`;
+  }
+
+  // Chiede all'utente dove deve puntare il collegamento e lo inserisce
+  // avvolgendo il testo selezionato nella textarea con un tag <a>.
+  //
+  // Formati accettati per la destinazione:
+  //   - https://... oppure http://...            -> link esterno (si apre in una nuova scheda)
+  //   - "1,3" (articolo,comma)                    -> #art-1-c3   (link interno allo stesso atto)
+  //   - "1"   (solo articolo)                     -> #art-1
+  //   - "#qualcosa"                                -> usato così com'è (avanzato)
+  function inserisciCollegamento(textarea) {
+    const inizio = textarea.selectionStart;
+    const fine = textarea.selectionEnd;
+    if (inizio === fine) {
+      alert("Seleziona prima, nel testo, la parola o la frase da collegare.");
+      return;
+    }
+    const testoSelezionato = textarea.value.slice(inizio, fine);
+
+    const destinazione = prompt(
+      "Dove deve puntare il collegamento?\n\n" +
+      "• Indirizzo web: https://esempio.example\n" +
+      "• Riferimento interno ad articolo e comma DI QUESTO ATTO: 1,3  (= art. 1, comma 3)\n" +
+      "• Solo articolo: 1  (= art. 1)",
+      ""
+    );
+    if (!destinazione) return;
+    const valore = destinazione.trim();
+
+    const mArtComma = valore.match(/^(\d+)\s*,\s*(\d+)$/);
+    const mArt = valore.match(/^(\d+)$/);
+
+    let href, attributiExtra = "";
+    if (/^https?:\/\//i.test(valore)) {
+      href = valore;
+      attributiExtra = ' target="_blank" rel="noopener noreferrer"';
+    } else if (mArtComma) {
+      href = `#art-${mArtComma[1]}-c${mArtComma[2]}`;
+    } else if (mArt) {
+      href = `#art-${mArt[1]}`;
+    } else if (valore.startsWith("#")) {
+      href = valore;
+    } else {
+      alert('Formato non riconosciuto. Usa un indirizzo che inizi con http/https, oppure "articolo,comma" (es. 1,3) o solo "articolo" (es. 1).');
+      return;
+    }
+
+    const tag = `<a href="${href}"${attributiExtra}>${testoSelezionato}</a>`;
+    textarea.value = textarea.value.slice(0, inizio) + tag + textarea.value.slice(fine);
+
+    // Riporta il focus e il cursore subito dopo il collegamento appena inserito.
+    const nuovaPosizione = inizio + tag.length;
+    textarea.focus();
+    textarea.setSelectionRange(nuovaPosizione, nuovaPosizione);
   }
 
   // Legge lo stato attuale dei commi/sottocommi direttamente dal DOM di un articolo.
@@ -274,32 +230,6 @@
     }));
   }
 
-  // Pulsanti ▲ ▼ per spostare una voce (articolo o titolo) in alto o in basso.
-  function pulsantiSposta() {
-    return `
-          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--secondario" data-sposta="su" title="Sposta in alto" aria-label="Sposta in alto">▲</button>
-          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--secondario" data-sposta="giu" title="Sposta in basso" aria-label="Sposta in basso">▼</button>`;
-  }
-
-  // Un titolo è un'intestazione di gruppo { tipo: "titolo", testo }: non è un articolo,
-  // non ha numero né commi e nell'atto viene mostrato come semplice testo centrato in grassetto.
-  function renderRigaTitolo(voce) {
-    return `
-      <div class="redazione-titolo-gruppo" data-tipo="titolo">
-        <div class="redazione-titolo-gruppo__intestazione">
-          <span>Titolo</span>
-          ${pulsantiSposta()}
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-converti-in-articolo title="Trasforma questo titolo in un articolo">→ Articolo</button>
-          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-titolo style="margin-left:auto;">Rimuovi titolo</button>
-        </div>
-        <input type="text" class="redazione-titolo-testo" placeholder="es. TITOLO I - FORMA DELLO STATO" value="${escapeHtml(voce.testo)}" />
-      </div>`;
-  }
-
-  function renderRigaVoce(voce, i) {
-    return eTitoloGruppo(voce) ? renderRigaTitolo(voce) : renderRigaArticolo(voce, i);
-  }
-
   function renderRigaArticolo(art, i) {
     const commi = commiDiArticolo(art);
     const commiHtml = commi.map((c, ic) => renderComma(c, ic)).join("");
@@ -308,8 +238,6 @@
         <div class="redazione-articolo__intestazione">
           <span>Articolo</span>
           <input type="text" class="redazione-art-numero" value="${escapeHtml(art.numero)}" style="width:70px;" />
-          ${pulsantiSposta()}
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-converti-in-titolo title="Trasforma questo articolo in un titolo (il testo del titolo sarà la rubrica)">→ Titolo</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-articolo="${i}" style="margin-left:auto;">Rimuovi articolo</button>
         </div>
         <input type="text" class="redazione-art-rubrica" placeholder="Rubrica dell'articolo" value="${escapeHtml(art.rubrica)}" />
@@ -367,33 +295,18 @@
         <div class="redazione-riga-campi">
           <div class="redazione-campo"><label for="f-data">Data di emanazione</label><input type="text" id="f-data" placeholder="es. 12 agosto 2024" value="${atto ? escapeHtml(atto.dataEmanazione) : ""}" /></div>
           <div class="redazione-campo"><label for="f-promulgato">Promulgato da</label><input type="text" id="f-promulgato" value="${atto ? escapeHtml(atto.promulgatoDa) : ""}" /></div>
-          <div class="redazione-campo">
-            <label for="f-luogo">Luogo</label>
-            <select id="f-luogo">${opzioniLuogo(atto ? atto.luogo : "")}</select>
-          </div>
         </div>
         <div class="redazione-campo">
           <label for="f-sommario">Sommario (mostrato nell'elenco)</label>
           <textarea id="f-sommario" rows="2">${atto ? escapeHtml(atto.sommario) : ""}</textarea>
-        </div>
-        <div class="redazione-riga-campi">
-          <div class="redazione-campo">
-            <label for="f-immagine">Immagine (opzionale)</label>
-            <input type="text" id="f-immagine" value="${atto ? escapeHtml(atto.immagine) : ""}" placeholder="es. Stato.png oppure https://…/immagine.png" />
-          </div>
-          <div class="redazione-campo">
-            <label for="f-didascalia">Didascalia dell'immagine</label>
-            <input type="text" id="f-didascalia" value="${atto ? escapeHtml(atto.didascalia) : ""}" />
-          </div>
         </div>
         <div class="redazione-campo">
           <label for="f-id">Identificativo URL (id)</label>
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
         <h3>Articoli</h3>
-        <div id="redazione-articoli">${articoli.map((a, i) => renderRigaVoce(a, i)).join("")}</div>
+        <div id="redazione-articoli">${articoli.map((a, i) => renderRigaArticolo(a, i)).join("")}</div>
         <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-articolo">+ Aggiungi articolo</button>
-        <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-titolo">+ Aggiungi titolo</button>
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva sul database</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">Annulla</button>
@@ -404,24 +317,15 @@
 
   /* ---------- RACCOLTA E SALVATAGGIO ---------- */
 
-  // Legge articoli e titoli nell'ordine esatto in cui compaiono nell'editor
-  // (quindi rispetta gli spostamenti fatti con ▲ ▼).
   function leggiArticoli() {
-    return [...document.querySelectorAll("#redazione-articoli > .redazione-articolo, #redazione-articoli > .redazione-titolo-gruppo")]
-      .map(el => {
-        if (el.classList.contains("redazione-titolo-gruppo")) {
-          return { tipo: "titolo", testo: el.querySelector(".redazione-titolo-testo").value.trim() };
-        }
-        return {
-          numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
-          rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
-          commi: raccogliCommiDalDOM(el).map(c => ({
-            testo: c.testo.trim(),
-            sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
-          })),
-        };
-      })
-      .filter(v => !eTitoloGruppo(v) || v.testo !== ""); // i titoli vuoti non vengono salvati
+    return [...document.querySelectorAll("#redazione-articoli .redazione-articolo")].map(el => ({
+      numero: el.querySelector(".redazione-art-numero").value.trim() || "1",
+      rubrica: el.querySelector(".redazione-art-rubrica").value.trim(),
+      commi: raccogliCommiDalDOM(el).map(c => ({
+        testo: c.testo.trim(),
+        sottocommi: c.sottocommi.map(s => s.trim()).filter(s => s !== "")
+      })),
+    }));
   }
 
   function raccogliAtto() {
@@ -429,8 +333,6 @@
     const catNuova = document.getElementById("f-categoria-nuova").value.trim();
     const categoria = catNuova || document.getElementById("f-categoria").value;
     const idBase = slugify(document.getElementById("f-id").value.trim() || titolo);
-    const immagine = document.getElementById("f-immagine").value.trim();
-    const didascalia = document.getElementById("f-didascalia").value.trim();
     return {
       id: idUnivoco(idBase, idInModifica),
       categoria,
@@ -439,10 +341,8 @@
       titolo,
       dataEmanazione: document.getElementById("f-data").value.trim(),
       promulgatoDa: document.getElementById("f-promulgato").value.trim(),
-      luogo: document.getElementById("f-luogo").value,
       stato: document.getElementById("f-stato").value,
       sommario: document.getElementById("f-sommario").value.trim(),
-      ...(immagine ? { immagine, didascalia } : {}),
       articoli: leggiArticoli(),
     };
   }
@@ -532,58 +432,12 @@
         return;
       }
 
-      // ---- Sposta un articolo o un titolo in alto / in basso ----
-      const sposta = e.target.closest("[data-sposta]");
-      if (sposta) {
-        const riga = sposta.closest(".redazione-articolo, .redazione-titolo-gruppo");
-        const su = sposta.getAttribute("data-sposta") === "su";
-        const altra = su ? riga.previousElementSibling : riga.nextElementSibling;
-        if (altra) {
-          if (su) riga.parentNode.insertBefore(riga, altra);
-          else riga.parentNode.insertBefore(altra, riga);
-          riga.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          sposta.focus();
-        }
-        return;
-      }
-
-      // ---- Aggiungi un titolo in fondo all'elenco ----
-      if (e.target.id === "redazione-aggiungi-titolo") {
-        const c = document.getElementById("redazione-articoli");
-        c.insertAdjacentHTML("beforeend", renderRigaTitolo({ testo: "" }));
-        c.lastElementChild.querySelector(".redazione-titolo-testo").focus();
-        return;
-      }
-
-      // ---- Rimuovi un titolo ----
-      const rimTitolo = e.target.closest("[data-rimuovi-titolo]");
-      if (rimTitolo) {
-        rimTitolo.closest(".redazione-titolo-gruppo").remove();
-        return;
-      }
-
-      // ---- Trasforma un articolo in titolo (per correggere i titoli salvati come articoli) ----
-      const inTitolo = e.target.closest("[data-converti-in-titolo]");
-      if (inTitolo) {
-        const riga = inTitolo.closest(".redazione-articolo");
-        const rubrica = riga.querySelector(".redazione-art-rubrica").value.trim();
-        const commi = raccogliCommiDalDOM(riga);
-        const haTesto = commi.some(c => c.testo.trim() !== "" || c.sottocommi.some(s => s.trim() !== ""));
-        if (haTesto && !confirm("Questo articolo contiene dei commi: trasformandolo in titolo andranno persi. Continuare?")) return;
-        const testo = rubrica || (commi[0] ? commi[0].testo.trim() : "");
-        riga.insertAdjacentHTML("afterend", renderRigaTitolo({ testo }));
-        riga.remove();
-        return;
-      }
-
-      // ---- Trasforma un titolo in articolo ----
-      const inArticolo = e.target.closest("[data-converti-in-articolo]");
-      if (inArticolo) {
-        const riga = inArticolo.closest(".redazione-titolo-gruppo");
-        const testo = riga.querySelector(".redazione-titolo-testo").value.trim();
-        const n = document.querySelectorAll("#redazione-articoli .redazione-articolo").length + 1;
-        riga.insertAdjacentHTML("afterend", renderRigaArticolo({ numero: n, rubrica: testo, commi: [{ testo: "", sottocommi: [] }] }, n));
-        riga.remove();
+      // ---- Inserisci collegamento nel testo selezionato (comma o sottocomma) ----
+      const link = e.target.closest("[data-inserisci-link]");
+      if (link) {
+        const contenitore = link.closest(".redazione-comma, .redazione-sottocomma");
+        const textarea = contenitore ? contenitore.querySelector("textarea") : null;
+        if (textarea) inserisciCollegamento(textarea);
         return;
       }
 
@@ -702,18 +556,6 @@
     } catch (e) {
       alert("Errore nel caricamento degli atti: " + e.message);
       atti = [];
-    }
-
-    try {
-      const risposta = await fetch('/api/organi', { cache: 'no-store' });
-      if (risposta.ok) {
-        const dati = await risposta.json();
-        luoghi = (dati && dati.luoghi) || {};
-      } else {
-        luoghi = {};
-      }
-    } catch (e) {
-      luoghi = {}; // non bloccante: il menu a tendina resterà vuoto/con solo il valore esistente
     }
 
     vai("menu");
