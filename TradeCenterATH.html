@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade Center - Home Page</title>
+<style>
+/* ==========================================================
+   Trade Center 1995-98 - base stili
+   Tutto parte dai token in :root: cambia quelli e cambia il sito.
+   ========================================================== */
+:root {
+  /* colori (palette "Windows 95 + cielo di Manhattan") */
+  --silver:      #c0c0c0;   /* superfici dei pulsanti */
+  --silver-tile: #bcbcbc;   /* seconda tinta dello sfondo a mattonelle */
+  --bevel-light: #ffffff;   /* bordo chiaro dei rilievi */
+  --bevel-dark:  #404040;   /* bordo scuro dei rilievi */
+  --bevel-mid:   #808080;
+  --paper:       #ffffff;   /* pagina */
+  --note:        #ffffe0;   /* riquadri "post-it" */
+  --ink:         #000000;
+  --navy:        #000066;   /* titoli e intestazioni tabella */
+  --steel:       #3c4656;   /* finestre delle torri */
+  --alu:         #aab0ba;   /* facciata in alluminio */
+  --sky-1: #5b8fc7; --sky-2: #7aa8d8; --sky-3: #9cc3e6; --sky-4: #bcd8f0;
+  --link:  #0000ee;
+  --vlink: #551a8b;
+  --alert: #cc0000;
+  --title-1: #000080;   /* barra titolo delle finestre: da qui... */
+  --title-2: #1084d0;   /* ...a qui */
+
+  /* tipografia */
+  --font-body: "Times New Roman", Times, serif;
+  --font-ui:   Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
+
+  /* misure: la pagina pensa in 800x600 */
+  --page-width: 760px;
+  --side-width: 170px;
+  --gap: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: var(--gap);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--ink);
+  background-color: var(--silver);
+  /* sfondo a mattonelle 4x4, come i GIF ripetuti dell'epoca */
+  background-image: conic-gradient(var(--silver) 25%, var(--silver-tile) 0 50%, var(--silver) 0 75%, var(--silver-tile) 0);
+  background-size: 4px 4px;
+}
+
+a:link    { color: var(--link); }
+a:visited { color: var(--vlink); }
+a:active  { color: var(--alert); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 1px dotted var(--ink);
+  outline-offset: 1px;
+}
+
+/* ---------- Rilievi (bevel): il gesto grafico di tutto il sito ---------- */
+.raised, .btn, .nav a {
+  border: 2px solid;
+  border-color: var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+  background: var(--silver);
+}
+.sunken, .box, input[type=text], input[type=email], select, table.data td {
+  border: 2px solid;
+  border-color: var(--bevel-mid) var(--bevel-light) var(--bevel-light) var(--bevel-mid);
+}
+
+/* ---------- Pagina ---------- */
+.page {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  background: var(--paper);
+  border: 2px solid;
+  border-color: var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+  outline: 1px solid var(--ink);
+}
+
+/* ---------- Banner: torri disegnate in CSS, cielo a fasce (256 colori) ---------- */
+.banner {
+  position: relative;
+  height: 132px;
+  overflow: hidden;
+  border-bottom: 2px solid var(--ink);
+  background: linear-gradient(var(--sky-1) 0 25%, var(--sky-2) 0 50%, var(--sky-3) 0 75%, var(--sky-4) 0);
+}
+.banner h1 {
+  position: absolute;
+  left: 14px; top: 22px;
+  margin: 0;
+  font: bold 44px/1.05 var(--font-ui);
+  color: var(--paper);
+  text-shadow: 2px 2px 0 var(--navy);   /* ombra dura, niente sfumature */
+}
+.banner p {
+  position: absolute;
+  left: 16px; top: 80px;
+  margin: 0;
+  font: italic 15px var(--font-body);
+  color: var(--navy);
+}
+.tower {
+  position: absolute;
+  bottom: 0;
+  width: 46px;
+  /* pilastri in alluminio + finestre strette: la facciata delle torri */
+  background: repeating-linear-gradient(90deg, var(--alu) 0 2px, var(--steel) 2px 4px);
+  border: 1px solid var(--ink);
+  border-bottom: 0;
+}
+.tower.north { right: 96px; height: 118px; }
+.tower.south { right: 40px; height: 108px; }
+.tower.north::before {   /* antenna */
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 100%;
+  width: 2px; height: 12px;
+  margin-left: -1px;
+  background: var(--ink);
+}
+
+/* ---------- Layout: barra laterale + contenuto ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: var(--side-width) 1fr;
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+/* ---------- Navigazione ---------- */
+.nav ul { list-style: none; margin: 0 0 var(--gap); padding: 0; }
+.nav li { margin-bottom: 4px; }
+.nav a {
+  display: block;
+  padding: 4px 8px;
+  font: bold 13px var(--font-ui);
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav a:hover { background: #d4d4d4; }
+.nav a:active, .nav a[aria-current] {
+  border-color: var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+  padding: 5px 7px 3px 9px;
+}
+
+.side .box { font: 12px/1.35 var(--font-ui); padding: 6px; margin-bottom: var(--gap); background: var(--note); }
+.side .box b { display: block; margin-bottom: 2px; color: var(--navy); }
+
+/* contatore visitatori */
+.counter { font: 12px var(--font-ui); text-align: center; }
+.odometer { display: inline-flex; gap: 1px; margin-top: 3px; padding: 2px; background: var(--ink); border: 2px inset var(--bevel-mid); }
+.odometer span { padding: 1px 3px; font: bold 14px var(--font-mono); color: #33ff33; background: #101010; }
+
+/* ---------- Contenuto ---------- */
+.content { min-width: 0; padding: 0 4px; }
+.content h1, .content h2, .content h3 { font-family: var(--font-ui); color: var(--navy); line-height: 1.15; }
+.content h1 { margin: 4px 0 8px; font-size: 26px; }
+.content h2 { margin: 18px 0 6px; font-size: 19px; }
+.content h3 { margin: 12px 0 4px; font-size: 15px; }
+.content p  { margin: 0 0 10px; }
+.content ul, .content ol { margin: 0 0 10px; padding-left: 24px; }
+.content li { margin-bottom: 3px; }
+
+hr { height: 4px; margin: 14px 0; border: 1px solid; border-color: var(--bevel-mid) var(--bevel-light) var(--bevel-light) var(--bevel-mid); background: var(--silver); }
+
+.box { padding: 8px 10px; background: var(--note); }
+.box > :last-child { margin-bottom: 0; }
+
+/* etichetta NEW! che lampeggia (solo se il sistema non chiede meno movimento) */
+.new { font: bold 11px var(--font-ui); color: var(--alert); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .new { animation: none; } }
+
+/* striscia "lavori in corso" */
+.construction {
+  padding: 4px;
+  background: repeating-linear-gradient(45deg, #ffcc00 0 10px, var(--ink) 10px 20px);
+}
+.construction span { display: block; padding: 3px 8px; font: bold 13px var(--font-ui); background: var(--paper); }
+
+/* ---------- Tabelle ---------- */
+table.data { width: 100%; border-collapse: separate; border-spacing: 2px; margin-bottom: 10px; font-size: 14px; }
+table.data th { padding: 4px 6px; text-align: left; font: bold 13px var(--font-ui); color: var(--paper); background: var(--navy); }
+table.data td { padding: 4px 6px; vertical-align: top; background: #efefef; }
+.scroll-x { overflow-x: auto; }
+
+/* ---------- Form e pulsanti ---------- */
+form label { display: block; margin-bottom: 8px; font: bold 13px var(--font-ui); }
+input[type=text], input[type=email], select {
+  display: block; width: 100%; max-width: 320px; margin-top: 2px; padding: 3px 4px;
+  font: 14px var(--font-ui); background: var(--paper);
+}
+.check { font-weight: normal; }
+.btn {
+  padding: 4px 14px;
+  font: bold 13px var(--font-ui);
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn:active {
+  border-color: var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+  padding: 5px 13px 3px 15px;
+}
+/* un link che sembra un pulsante: stessi rilievi, niente sottolineatura */
+a.btn, a.btn:link, a.btn:visited { display: inline-block; color: var(--ink); text-decoration: none; }
+a.btn:hover { background: #d4d4d4; }
+/* pulsante compatto per tabelle e schede */
+.btn-sm { padding: 2px 8px; font-size: 12px; }
+.btn-sm:active { padding: 3px 7px 1px 9px; }
+
+code, kbd { font: 14px var(--font-mono); background: #e8e8e8; padding: 0 3px; }
+blockquote { margin: 0 0 10px; padding: 4px 12px; border-left: 4px solid var(--bevel-mid); font-style: italic; }
+
+/* ---------- Schede a finestra (negozi del mall) ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--gap);
+  margin-bottom: 10px;
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+  background: var(--silver);
+  border: 2px solid;
+  border-color: var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+}
+.content .titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 2px;
+  padding: 2px 3px 2px 5px;
+  font: bold 13px var(--font-ui);
+  color: var(--paper);
+  background: linear-gradient(90deg, var(--title-1), var(--title-2));
+}
+.titlebar::after {              /* pulsante "chiudi", solo decorativo */
+  content: "\00d7";
+  content: "\00d7" / "";
+  width: 16px; height: 14px;
+  font: bold 13px/12px var(--font-ui);
+  text-align: center;
+  color: var(--ink);
+  background: var(--silver);
+  border: 1px solid;
+  border-color: var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+}
+.window-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  background: var(--paper);
+  border: 2px solid;
+  border-color: var(--bevel-mid) var(--bevel-light) var(--bevel-light) var(--bevel-mid);
+}
+.content .window-body p { margin: 0 0 6px; font-size: 14px; }
+.content .window-body .where { margin: 0; font: 12px var(--font-ui); color: var(--bevel-dark); }
+.content .window-body .go { margin: auto 0 0; padding-top: 8px; }
+
+/* ---------- Piede pagina ---------- */
+.footer { padding: 10px; text-align: center; font: 12px/1.5 var(--font-ui); border-top: 2px solid var(--ink); background: var(--silver); }
+.footer address { font: 13px var(--font-mono); font-style: normal; margin: 6px 0; }
+.badge { display: inline-block; margin: 4px 2px 0; padding: 2px 8px; font: bold 11px var(--font-ui); }
+
+/* ---------- Schermi stretti ---------- */
+@media (max-width: 620px) {
+  .layout { grid-template-columns: 1fr; }
+  .banner h1 { font-size: 30px; top: 30px; }
+  .banner p { top: 76px; }
+  .tower.north { right: 60px; }
+  .tower.south { right: 10px; }
+  .nav ul { display: flex; flex-wrap: wrap; gap: 4px; }
+  .nav li { margin: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="banner">
+    <h1>The Trade Center</h1>
+    <p>Athenon, E.NOR</p>
+    <div class="tower north" aria-hidden="true"></div>
+    <div class="tower south" aria-hidden="true"></div>
+  </header>
+
+  <div class="layout">
+
+    <aside class="side">
+      <nav class="nav" aria-label="Main">
+        <ul>
+          <li><a href="#welcome" aria-current="page">Home</a></li>
+          <li><a href="#new">What's New</a></li>
+          <li><a href="#visit">Visitor Info</a></li>
+          <li><a href="#directory">Directory</a></li>
+          <li><a href="#mail">Mailing List</a></li>
+          <li><a href="#offices">Offices</a></li>
+          <li><a href="#mall">The Mall</a></li>
+          <li><a href="#styles">Style Sampler</a></li>
+        </ul>
+      </nav>
+
+      <div class="box">
+        <b>Quick facts</b>
+        Seven buildings.<br>
+        One address.<br>
+        Open every day.
+      </div>
+
+      <div class="counter">
+        You are visitor number<br>
+        <span class="odometer" role="img" aria-label="4187">
+          <span>0</span><span>0</span><span>4</span><span>1</span><span>8</span><span>7</span>
+        </span>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <section id="welcome">
+        <h1>Welcome to the Trade Center</h1>
+        <p>This is our home on the World Wide Web. Here you can find out how to visit us, what is on the Concourse, and how to reach the trade services in our offices.</p>
+        <p>We are still building this site, floor by floor. Please check back often.</p>
+      </section>
+
+      <hr>
+
+      <section id="new">
+        <h2>What's New</h2>
+        <div class="box">
+          <ul>
+            <li><span class="new">NEW!</span> Offices and Concourse shops added to the directory (04/05/97)</li>
+            <li><span class="new">NEW!</span> Visitor Information page updated (03/14/97)</li>
+            <li>Mailing list sign-up is open (03/02/97)</li>
+            <li>Plaza events calendar for the summer (02/20/97)</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="visit">
+        <h2>Visitor Information</h2>
+        <p>The Trade Center is at the southern end of Manhattan. Subway and PATH trains stop at the Concourse level, under the Plaza.</p>
+        <h3>Getting here</h3>
+        <ol>
+          <li>Take the subway or PATH train to the Trade Center station.</li>
+          <li>Follow the signs to the Concourse.</li>
+          <li>Take the escalators up to the Plaza.</li>
+        </ol>
+        <blockquote>Tip: the Concourse is indoors, so it is a good place to wait out the rain.</blockquote>
+      </section>
+
+      <section id="directory">
+        <h2>Directory</h2>
+        <div class="scroll-x">
+          <table class="data">
+            <thead>
+              <tr><th>Area</th><th>Where</th><th>What you will find</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Plaza</td><td>Street level</td><td>Open-air square, summer events</td></tr>
+              <tr><td>Concourse</td><td>Below the Plaza</td><td>Shops, places to eat, subway and PATH</td></tr>
+              <tr><td>Trade Services</td><td>Office floors</td><td>Import and export help, trade information</td></tr>
+              <tr><td>Observation Deck</td><td>Upper floors</td><td>Views over the harbor and the city</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="construction"><span>Floor plans: under construction</span></div>
+      </section>
+      
+      <hr>
+
+      <section id="offices">
+        <h2>Offices</h2>
+        <p>Companies from all over the world work in the building. Most of them deal in shipping, insurance, law and trade. This is a short list of who is where.</p>
+        <div class="scroll-x">
+          <table class="data">
+            <thead>
+              <tr><th>Floors</th><th>Tenant</th><th>Business</th><th>Web</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>9-10</td><td>Hartwell &amp; Boyce</td><td>Customs brokers</td>
+                  <td><a class="btn btn-sm" href="http://www.hartwellboyce.example/" aria-label="Visit the Hartwell &amp; Boyce web site">Visit site</a></td></tr>
+              <tr><td>12-14</td><td>Meridian Freight Lines</td><td>Freight forwarding and shipping</td>
+                  <td><a class="btn btn-sm" href="http://www.meridianfreight.example/" aria-label="Visit the Meridian Freight Lines web site">Visit site</a></td></tr>
+              <tr><td>21-23</td><td>Atlantic Marine Assurance</td><td>Cargo and marine insurance</td>
+                  <td><a class="btn btn-sm" href="http://www.atlanticmarine.example/" aria-label="Visit the Atlantic Marine Assurance web site">Visit site</a></td></tr>
+              <tr><td>31</td><td>Harbor Trade Council</td><td>Export advice for small firms</td>
+                  <td><a class="btn btn-sm" href="http://www.harbortrade.example/" aria-label="Visit the Harbor Trade Council web site">Visit site</a></td></tr>
+              <tr><td>44-46</td><td>Lindqvist Nordic Trading</td><td>Import agents</td>
+                  <td><a class="btn btn-sm" href="http://www.lindqvist-trading.example/" aria-label="Visit the Lindqvist Nordic Trading web site">Visit site</a></td></tr>
+              <tr><td>52</td><td>Beacon Language Services</td><td>Translators and interpreters</td>
+                  <td><a class="btn btn-sm" href="http://www.beaconlanguage.example/" aria-label="Visit the Beacon Language Services web site">Visit site</a></td></tr>
+              <tr><td>63-64</td><td>Corbett &amp; Sloane LLP</td><td>Lawyers, international trade</td>
+                  <td><a class="btn btn-sm" href="http://www.corbettsloane.example/" aria-label="Visit the Corbett &amp; Sloane web site">Visit site</a></td></tr>
+              <tr><td>Concourse</td><td>Building Management</td><td>Lost and found, mail, tenant questions</td>
+                  <td><a class="btn btn-sm" href="mailto:management@tradecenter.example" aria-label="Send an e-mail to Building Management">E-mail us</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The buttons open each company's own web site. Looking for someone who is not listed? Ask at the lobby desk.</p>
+      </section>
+
+      <section id="mall">
+        <h2>The Mall</h2>
+        <p>The Concourse runs under the Plaza, right next to the subway and PATH trains. Here is what you will find.</p>
+        <div class="cards">
+
+          <article class="window">
+            <h3 class="titlebar">Harbor News &amp; Books</h3>
+            <div class="window-body">
+              <p>Papers, magazines and paperbacks for the ride home.</p>
+              <p class="where"><b>Newsstand</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.harbornews.example/" aria-label="Visit the Harbor News &amp; Books web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Bagel Depot</h3>
+            <div class="window-body">
+              <p>Fresh bagels and hot coffee. Breakfast is served until 11.</p>
+              <p class="where"><b>Food</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.bageldepot.example/" aria-label="Visit the Bagel Depot web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Pasta Express</h3>
+            <div class="window-body">
+              <p>Hot lunches to go, and a few tables if you want to stay.</p>
+              <p class="where"><b>Food court</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.pastaexpress.example/" aria-label="Visit the Pasta Express web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Liberty Photo</h3>
+            <div class="window-body">
+              <p>One-hour film developing and passport pictures. <span class="new">NEW!</span></p>
+              <p class="where"><b>Services</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.libertyphoto.example/" aria-label="Visit the Liberty Photo web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Corner Shoe &amp; Key</h3>
+            <div class="window-body">
+              <p>Heel repairs, shoe shines and duplicate keys while you wait.</p>
+              <p class="where"><b>Services</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.cornershoeandkey.example/" aria-label="Visit the Corner Shoe &amp; Key web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Video Junction</h3>
+            <div class="window-body">
+              <p>Rent a movie for the weekend. New releases every Tuesday.</p>
+              <p class="where"><b>Entertainment</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.videojunction.example/" aria-label="Visit the Video Junction web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Plaza Flowers</h3>
+            <div class="window-body">
+              <p>Bouquets, plants and gift cards, right by the fountain.</p>
+              <p class="where"><b>Gifts</b>, Plaza level</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.plazaflowers.example/" aria-label="Visit the Plaza Flowers web site">Visit web site</a></p>
+            </div>
+          </article>
+
+          <article class="window">
+            <h3 class="titlebar">Harbor Savings Bank</h3>
+            <div class="window-body">
+              <p>Teller windows and a cash machine open all day.</p>
+              <p class="where"><b>Bank</b>, Concourse</p>
+              <p class="go"><a class="btn btn-sm" href="http://www.harborsavings.example/" aria-label="Visit the Harbor Savings Bank web site">Visit web site</a></p>
+            </div>
+          </article>
+
+        </div>
+        <div class="box">
+          <p>Shop hours vary. Most Concourse shops are open on weekdays from early morning until the evening rush.</p>
+        </div>
+      </section>
+
+      <hr>
+
+      <section id="styles">
+        <h2>Style Sampler</h2>
+        <p>For the webmaster: every element the site uses, in one place.</p>
+        <h3>Heading level 3</h3>
+        <p>Body text in Times, with a <a href="#welcome">link you have not visited</a>, a <a href="">visited link</a> and some <code>monospaced code</code>. Press <kbd>Ctrl</kbd>+<kbd>D</kbd> to bookmark this page.</p>
+        <ul>
+          <li>Unordered list item</li>
+          <li>Another item</li>
+        </ul>
+        <p>
+          <a href="#welcome" class="btn">Button as link</a>
+          <a href="#welcome" class="btn btn-sm">Small button as link</a>
+          <span class="new">NEW!</span>
+        </p>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    <address>Trade Center &bull; New York, NY 10048 &bull; webmaster@tradecenter.example</address>
+    <div>Last updated: April 5, 1997</div>
+    <span class="badge raised">Best viewed with Netscape Navigator 3.0</span>
+    <span class="badge raised">Best viewed at 800 x 600</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

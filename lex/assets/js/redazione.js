@@ -11,6 +11,41 @@
   const escapeHtml = t => (t || "").toString().replace(/[&<>"']/g,
     c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  // Indirizzo dell'immagine dell'atto: accetta link http(s) (o //...) e percorsi
+  // relativi alla cartella del sito (es. "immagini/stemma.png"); scarta qualunque
+  // altro schema (javascript:, data:, ...). Stessa regola usata in atto.js.
+  function urlImmagineSicuro(valore) {
+    const u = (valore || "").toString().trim();
+    if (!u) return "";
+    if (/^(https?:)?\/\//i.test(u)) return u;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return "";
+    return u;
+  }
+
+  function aggiornaAnteprimaImmagine() {
+    const campo = document.getElementById("f-immagine");
+    const box = document.getElementById("f-immagine-anteprima");
+    if (!campo || !box) return;
+    const grezzo = campo.value.trim();
+    const src = urlImmagineSicuro(grezzo);
+    if (!grezzo) {
+      box.innerHTML = "";
+      box.style.display = "none";
+      return;
+    }
+    box.style.display = "block";
+    if (!src) {
+      box.innerHTML = '<span style="color:#a72e23;font-size:.82rem;">Indirizzo non valido: usa un link http(s) o un percorso del sito.</span>';
+      return;
+    }
+    box.innerHTML = '<img alt="Anteprima" style="width:120px;height:120px;object-fit:contain;background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);" />' +
+      '<span class="redazione-anteprima-errore" style="display:none;color:#a72e23;font-size:.82rem;">Immagine non trovata: controlla il percorso o il link.</span>';
+    const img = box.querySelector("img");
+    const errore = box.querySelector(".redazione-anteprima-errore");
+    img.onerror = () => { img.style.display = "none"; errore.style.display = "inline"; };
+    img.src = src;
+  }
+
   function idUnivoco(base, escludi) {
     let c = base || "atto", n = 2;
     while (atti.some(a => a.id === c && a.id !== escludi)) c = `${base}-${n++}`;
@@ -320,6 +355,20 @@
           <textarea id="f-sommario" rows="2">${atto ? escapeHtml(atto.sommario) : ""}</textarea>
         </div>
         <div class="redazione-campo">
+          <label for="f-immagine">Immagine dell'atto (facoltativa)</label>
+          <input type="text" id="f-immagine" value="${atto ? escapeHtml(atto.immagine || "") : ""}"
+                 placeholder="link https://... oppure percorso nella repo, es. immagini/stemma.png" autocomplete="off" />
+          <small style="color:var(--inchiostro-tenue);font-size:.78rem;">
+            Viene mostrata sopra l'indice, sotto il pannello dei dati generali. Puoi incollare un link
+            oppure indicare il percorso di un file già presente nella repository (relativo alla cartella del sito).
+          </small>
+          <div id="f-immagine-anteprima" style="display:none;margin-top:6px;"></div>
+        </div>
+        <div class="redazione-campo">
+          <label for="f-didascalia">Didascalia dell'immagine (facoltativa)</label>
+          <input type="text" id="f-didascalia" value="${atto ? escapeHtml(atto.didascalia || "") : ""}" />
+        </div>
+        <div class="redazione-campo">
           <label for="f-id">Identificativo URL (id)</label>
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
@@ -370,6 +419,8 @@
       promulgatoDa: document.getElementById("f-promulgato").value.trim(),
       stato: document.getElementById("f-stato").value,
       sommario: document.getElementById("f-sommario").value.trim(),
+      immagine: urlImmagineSicuro(document.getElementById("f-immagine").value),
+      didascalia: document.getElementById("f-didascalia").value.trim(),
       articoli: leggiArticoli(),
     };
   }
@@ -406,7 +457,7 @@
     const root = document.getElementById("redazione-root");
     if (vista === "menu") root.innerHTML = renderMenu();
     else if (vista === "carica") root.innerHTML = renderCarica();
-    else if (vista === "editor") root.innerHTML = renderEditor(extra || null);
+    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); aggiornaAnteprimaImmagine(); }
     window.scrollTo(0, 0);
   }
 
@@ -592,6 +643,7 @@
     });
 
     root.addEventListener("input", e => {
+      if (e.target.id === "f-immagine") aggiornaAnteprimaImmagine();
       if (e.target.id === "redazione-filtro") {
         const q = e.target.value.trim().toLowerCase();
         document.querySelectorAll("#redazione-elenco-carica .redazione-riga").forEach(r => {
