@@ -6,7 +6,7 @@
 
 const SITE_CONFIG_CTSU = {
   nomeFazione: "CTSU",
-  motto: "Centro Tecnico per gli Studi e le Relazioni sui progetti dell'Unione",
+  motto: "Consiglio Tecnico-Scentifico dell'Unione",
   annoFondazione: 2024,
   emblema: "CTSU.png",
   discord: "",
