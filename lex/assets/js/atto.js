@@ -27,6 +27,38 @@
       </figure>`;
   }
 
+  // Risolve i codici salvati in atto.luoghi nei rispettivi nomi leggibili,
+  // leggendo organi.json dal repo pubblico RETEFORLIVESE/DATA (stessa fonte
+  // usata in redazione.js per compilare l'elenco). Se un codice non viene
+  // trovato nella mappa, si mostra il codice stesso.
+  async function caricaMappaLuoghi() {
+    try {
+      const res = await fetch("https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/organi.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const dati = await res.json();
+      const luoghi = (dati && dati.luoghi) || {};
+      const mappa = {};
+      Object.values(luoghi).forEach(valoreCategoria => {
+        if (!valoreCategoria || typeof valoreCategoria !== "object") return;
+        Object.entries(valoreCategoria).forEach(([codice, voce]) => {
+          mappa[codice] = typeof voce === "string" ? voce : (voce && voce.nome) || codice;
+        });
+      });
+      return mappa;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function htmlLuoghiAtto(atto, mappaLuoghi) {
+    const codici = Array.isArray(atto.luoghi) ? atto.luoghi : [];
+    if (!codici.length) return "";
+    const pillole = codici.map(c =>
+      `<span class="badge-categoria" title="${escAttr(c)}">📍 ${escAttr(mappaLuoghi[c] || c)}</span>`
+    ).join(" ");
+    return `<div class="intestazione-atto__luoghi" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">${pillole}</div>`;
+  }
+
   async function init() {
     renderTestata("home");
     renderFooter();
@@ -54,6 +86,10 @@
     }
 
     document.title = atto.titolo + " — " + SITE_CONFIG.nomeFazione;
+
+    const mappaLuoghi = (Array.isArray(atto.luoghi) && atto.luoghi.length)
+      ? await caricaMappaLuoghi()
+      : {};
 
     const badgeStato = atto.stato === "vigente"
       ? `<span class="badge-stato">vigente</span>`
@@ -134,6 +170,7 @@
         </div>
         <h1>${atto.titolo}</h1>
         <p>${atto.sommario}</p>
+        ${htmlLuoghiAtto(atto, mappaLuoghi)}
         <dl class="intestazione-atto__dati">
           <div><dt>Numero</dt><dd>${atto.numero}/${atto.anno}</dd></div>
           <div><dt>Data di emanazione</dt><dd>${atto.dataEmanazione}</dd></div>
