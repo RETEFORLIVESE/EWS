@@ -4,6 +4,49 @@
   let idInModifica = null;
   let atti = [];
 
+  // ---- Luoghi collegabili all'atto: letti da organi.json (repo pubblico
+  // RETEFORLIVESE/DATA), alla voce "luoghi". Non richiedono login: si legge
+  // il raw file direttamente dal browser, stesso repo dove vive atti.json.
+  const URL_ORGANI_JSON = "https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/organi.json";
+  const ETICHETTE_CATEGORIE_LUOGHI = {
+    livello_federale: "Livello federale",
+    livello_statale: "Livello statale",
+    citta_principali: "Città principali",
+    distretti: "Distretti",
+    assemblee_locali: "Assemblee locali",
+    regione: "Regioni",
+    organi: "Organi"
+  };
+  let luoghiDisponibili = []; // [{ codice, nome, categoria }]
+
+  // Una voce di organi.json > luoghi > <categoria> > <codice> può essere una
+  // semplice stringa (il nome) oppure un oggetto { nome, tipo }.
+  function normalizzaLuogo(codice, voce) {
+    if (typeof voce === "string") return { codice, nome: voce };
+    if (voce && typeof voce === "object") return { codice, nome: voce.nome || codice };
+    return { codice, nome: codice };
+  }
+
+  async function caricaLuoghi() {
+    try {
+      const res = await fetch(URL_ORGANI_JSON, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const dati = await res.json();
+      const luoghi = (dati && dati.luoghi) || {};
+      const elenco = [];
+      for (const [chiaveCategoria, valoreCategoria] of Object.entries(luoghi)) {
+        if (!valoreCategoria || typeof valoreCategoria !== "object") continue; // salta voci non a elenco (es. "Unione": "Unione")
+        for (const [codice, voce] of Object.entries(valoreCategoria)) {
+          elenco.push({ ...normalizzaLuogo(codice, voce), categoria: chiaveCategoria });
+        }
+      }
+      return elenco;
+    } catch (e) {
+      console.error("Errore nel caricamento dei luoghi da organi.json:", e);
+      return [];
+    }
+  }
+
   const slugify = t => (t || "").toString().toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
@@ -310,6 +353,58 @@
       </div>`;
   }
 
+  // Selettore multiplo dei luoghi collegati all'atto: checkbox raggruppate
+  // per categoria (come in organi.json), con un campo di filtro testuale.
+  // "selezionati" è l'elenco dei codici già salvati sull'atto (se in modifica).
+  function renderCampoLuoghi(selezionati) {
+    const giaSelezionati = new Set(selezionati || []);
+
+    if (!luoghiDisponibili.length) {
+      return `
+        <div class="redazione-campo">
+          <label>Luoghi collegati</label>
+          <p style="color:var(--inchiostro-tenue);font-size:.85rem;margin:4px 0 0;">
+            Elenco dei luoghi non disponibile al momento (errore nel caricamento da organi.json).
+          </p>
+        </div>`;
+    }
+
+    const gruppi = {};
+    luoghiDisponibili.forEach(l => {
+      (gruppi[l.categoria] = gruppi[l.categoria] || []).push(l);
+    });
+
+    const html = Object.keys(gruppi).map(cat => {
+      const etichetta = ETICHETTE_CATEGORIE_LUOGHI[cat] || cat;
+      const righe = gruppi[cat]
+        .slice()
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+        .map(v => `
+          <label class="redazione-luogo-riga" style="display:flex; align-items:center; gap:6px; padding:3px 0; font-weight:400; cursor:pointer;">
+            <input type="checkbox" class="redazione-luogo-checkbox" value="${escapeHtml(v.codice)}" ${giaSelezionati.has(v.codice) ? "checked" : ""} />
+            <span>${escapeHtml(v.nome)}</span>
+            <small style="color:var(--inchiostro-tenue);font-size:.75rem;">${escapeHtml(v.codice)}</small>
+          </label>`).join("");
+      return `
+        <div class="redazione-luoghi-gruppo" data-gruppo-luoghi>
+          <strong style="display:block; margin:10px 0 4px; font-family:var(--font-chrome,'Titillium Web',sans-serif); font-size:.78rem; letter-spacing:.04em; text-transform:uppercase; color:var(--blu-800, #0b3d6e);">${escapeHtml(etichetta)}</strong>
+          ${righe}
+        </div>`;
+    }).join("");
+
+    return `
+      <div class="redazione-campo">
+        <label for="f-luoghi-filtro">Luoghi collegati (facoltativo)</label>
+        <input type="text" id="f-luoghi-filtro" placeholder="Filtra per nome o codice…" autocomplete="off" style="margin-bottom:8px;" />
+        <div id="redazione-luoghi-lista" style="max-height:260px; overflow-y:auto; border:1px solid var(--bordo, #d6e2ed); border-radius:4px; padding:8px 10px;">
+          ${html}
+        </div>
+        <small style="color:var(--inchiostro-tenue);font-size:.78rem;">
+          Seleziona uno o più luoghi a cui l'atto si applica. L'elenco è letto da organi.json (repo RETEFORLIVESE/DATA).
+        </small>
+      </div>`;
+  }
+
   function renderEditor(atto) {
     idInModifica = atto ? atto.id : null;
     const articoli = atto ? atto.articoli.map(a => ({ ...a })) : [{ numero: 1, rubrica: "", commi: [{ testo: "", sottocommi: [] }] }];
@@ -368,6 +463,7 @@
           <label for="f-didascalia">Didascalia dell'immagine (facoltativa)</label>
           <input type="text" id="f-didascalia" value="${atto ? escapeHtml(atto.didascalia || "") : ""}" />
         </div>
+        ${renderCampoLuoghi(atto ? atto.luoghi : [])}
         <div class="redazione-campo">
           <label for="f-id">Identificativo URL (id)</label>
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
@@ -421,6 +517,7 @@
       sommario: document.getElementById("f-sommario").value.trim(),
       immagine: urlImmagineSicuro(document.getElementById("f-immagine").value),
       didascalia: document.getElementById("f-didascalia").value.trim(),
+      luoghi: [...document.querySelectorAll(".redazione-luogo-checkbox:checked")].map(el => el.value),
       articoli: leggiArticoli(),
     };
   }
@@ -650,6 +747,17 @@
           r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
         });
       }
+      if (e.target.id === "f-luoghi-filtro") {
+        const q = e.target.value.trim().toLowerCase();
+        document.querySelectorAll("#redazione-luoghi-lista .redazione-luogo-riga").forEach(r => {
+          r.style.display = r.textContent.toLowerCase().includes(q) ? "flex" : "none";
+        });
+        // Nasconde anche le intestazioni di gruppo rimaste senza righe visibili.
+        document.querySelectorAll("#redazione-luoghi-lista [data-gruppo-luoghi]").forEach(g => {
+          const haRigheVisibili = [...g.querySelectorAll(".redazione-luogo-riga")].some(r => r.style.display !== "none");
+          g.style.display = haRigheVisibili ? "" : "none";
+        });
+      }
     });
   }
 
@@ -657,6 +765,8 @@
 
   async function avviaRedazione() {
     initEventi();
+
+    luoghiDisponibili = await caricaLuoghi(); // non lancia mai: [] in caso di errore
 
     try {
       atti = await API.loadAtti();
