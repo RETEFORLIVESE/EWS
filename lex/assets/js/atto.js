@@ -51,12 +51,12 @@
   }
 
   function htmlLuoghiAtto(atto, mappaLuoghi) {
-    const codici = Array.isArray(atto.luoghi) ? atto.luoghi : [];
-    if (!codici.length) return "";
-    const pillole = codici.map(c =>
-      `<span class="badge-categoria" title="${escAttr(c)}">📍 ${escAttr(mappaLuoghi[c] || c)}</span>`
-    ).join(" ");
-    return `<div class="intestazione-atto__luoghi" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">${pillole}</div>`;
+    const codice = (atto.luogo || "").toString().trim();
+    if (!codice) return "";
+    const nome = mappaLuoghi[codice] || codice;
+    return `<div class="intestazione-atto__luogo" style="margin-top:10px;">
+      <span class="badge-categoria" title="${escAttr(codice)}">📍 ${escAttr(nome)}</span>
+    </div>`;
   }
 
   async function init() {
@@ -87,7 +87,7 @@
 
     document.title = atto.titolo + " — " + SITE_CONFIG.nomeFazione;
 
-    const mappaLuoghi = (Array.isArray(atto.luoghi) && atto.luoghi.length)
+    const mappaLuoghi = (atto.luogo && atto.luogo.toString().trim())
       ? await caricaMappaLuoghi()
       : {};
 
