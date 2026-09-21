@@ -1,4 +1,16 @@
 // assets/js/progetto.js — pagina di dettaglio di un progetto CTSU (stesso pattern di atto.js/NormAktiv).
+//
+// Struttura di progetto.sezioni (retrocompatibile: i vecchi progetti, con solo { titolo, testo }, funzionano invariati):
+//   { tipo: "sezione", titolo, testo, commi: [ ... ] }   // "tipo" assente = sezione
+//   { tipo: "titolo",  numero, titolo }                   // TITOLO I - NOME: raggruppa le sezioni che seguono
+//   { tipo: "immagine", url, didascalia }                 // immagine fra una sezione e l'altra
+//
+// Un comma è  { testo, sottocommi: [ ... ] }  oppure  { tipo: "immagine", url, didascalia }.
+// Un sottocomma è  { testo }  oppure  { tipo: "immagine", url, didascalia }.
+//
+// Numerazione (fatta qui, non salvata): le sezioni contano solo le sezioni, i commi solo i commi di testo,
+// i sottocommi (a, b, c...) solo i sottocommi di testo; le immagini non consumano numeri.
+// Ancore: #sez-N, #sez-N-c-M, #sez-N-c-M-s-K, #tit-N.
 (function () {
   const escAttr = t => (t == null ? "" : t).toString().replace(/[&<>"']/g,
     c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -11,7 +23,54 @@
     return u;
   }
 
-  // Immagine di copertina: va SOPRA l'indice, nella colonna di sinistra
+  const lettera = n => (n <= 26 ? String.fromCharCode(96 + n) : String(n));   // 1 -> a, 2 -> b ...
+
+  /* ---------- LETTURA DELLA STRUTTURA ---------- */
+
+  // Sottocommi di un comma, con la lettera già calcolata.
+  function leggiSottocommi(comma) {
+    let l = 0;
+    return (Array.isArray(comma.sottocommi) ? comma.sottocommi : []).map(y => {
+      if (!y || typeof y !== "object") return null;
+      if (y.tipo === "immagine") return { immagine: true, dati: y };
+      l++;
+      return { immagine: false, n: l, dati: y };
+    }).filter(Boolean);
+  }
+
+  // Commi di una sezione, con il numero già calcolato.
+  function leggiCommi(sezione) {
+    let c = 0;
+    return (Array.isArray(sezione.commi) ? sezione.commi : []).map(x => {
+      if (!x || typeof x !== "object") return null;
+      if (x.tipo === "immagine") return { immagine: true, dati: x };
+      c++;
+      return { immagine: false, n: c, dati: x, sotto: leggiSottocommi(x) };
+    }).filter(Boolean);
+  }
+
+  // Blocchi di primo livello (sezioni, titoli, immagini) con numerazione separata per tipo.
+  function leggiBlocchi(progetto) {
+    let s = 0, t = 0;
+    return (Array.isArray(progetto.sezioni) ? progetto.sezioni : []).map(b => {
+      if (!b || typeof b !== "object") return null;
+      if (b.tipo === "titolo") { t++; return { tipo: "titolo", n: t, dati: b }; }
+      if (b.tipo === "immagine") return { tipo: "immagine", n: 0, dati: b };
+      s++;
+      return { tipo: "sezione", n: s, dati: b, commi: leggiCommi(b) };
+    }).filter(Boolean);
+  }
+
+  // "TITOLO I - FORMA DELLO STATO": senza numero d'articolo/sezione accanto.
+  function etichettaTitolo(b) {
+    const numero = (b.dati.numero || "").toString().trim() || ctsuRomano(b.n);
+    const nome = (b.dati.titolo || "").toString().trim();
+    return ("TITOLO " + numero + (nome ? " - " + nome : "")).toLocaleUpperCase("it-IT");
+  }
+
+  /* ---------- HTML ---------- */
+
+  // Copertina: va SOPRA l'indice, nella colonna di sinistra
   // (stessa posizione dell'immagine di un atto in NormAktiv).
   function htmlCopertina(progetto) {
     const src = urlSicuro(progetto.copertina);
@@ -23,12 +82,32 @@
       </figure>`;
   }
 
+  // Immagine inserita nel testo (fra le sezioni, come comma o come sottocomma).
+  function htmlImmagineTesto(g, progetto) {
+    const src = urlSicuro(g.url);
+    if (!src) return "";
+    const didascalia = (g.didascalia || "").toString().trim();
+    return `<figure class="immagine-atto immagine-testo"><img src="${escAttr(src)}" alt="${escAttr(didascalia || progetto.titolo)}" loading="lazy" onerror="this.closest('figure').style.display='none'">${didascalia ? `<figcaption>${escAttr(didascalia)}</figcaption>` : ""}</figure>`;
+  }
+
   function htmlIndice(progetto) {
-    const sezioni = progetto.sezioni || [];
-    if (!sezioni.length) return "";
-    const voci = sezioni.map((s, i) =>
-      `<li><a href="#sez-${i + 1}">${escAttr(s.titolo || `Sezione ${i + 1}`)}</a></li>`
-    ).join("");
+    const voci = leggiBlocchi(progetto).map(b => {
+      if (b.tipo === "titolo") {
+        return `<li class="indice-titolo-gruppo"><a href="#tit-${b.n}">${escAttr(etichettaTitolo(b))}</a></li>`;
+      }
+      if (b.tipo !== "sezione") return "";
+
+      const commi = b.commi.filter(c => !c.immagine).map(c => {
+        const sotto = c.sotto.filter(y => !y.immagine).map(y =>
+          `<li><a href="#sez-${b.n}-c-${c.n}-s-${y.n}">lett. ${lettera(y.n)})</a></li>`
+        ).join("");
+        return `<li><a href="#sez-${b.n}-c-${c.n}">Comma ${c.n}</a>${sotto ? `<ul class="indice-sottocommi">${sotto}</ul>` : ""}</li>`;
+      }).join("");
+
+      return `<li><a href="#sez-${b.n}">${escAttr(b.dati.titolo || `Sezione ${b.n}`)}</a>${commi ? `<ul class="indice-commi">${commi}</ul>` : ""}</li>`;
+    }).join("");
+
+    if (!voci) return "";
     let extra = "";
     if ((progetto.galleria || []).length) extra += `<li><a href="#galleria-progetto">Galleria fotografica</a></li>`;
     if ((progetto.allegati || []).length) extra += `<li><a href="#allegati-progetto">Allegati</a></li>`;
@@ -39,12 +118,49 @@
       </nav>`;
   }
 
-  function htmlSezioni(progetto) {
-    return (progetto.sezioni || []).map((s, i) => `
-      <article class="articolo" id="sez-${i + 1}">
-        <h3>${escAttr(s.titolo || `Sezione ${i + 1}`)}</h3>
-        <div class="comma"><p>${s.testo || ""}</p></div>
-      </article>`).join("");
+  // ATTENZIONE: dentro ".comma" gli a-capo del sorgente HTML verrebbero mostrati
+  // (il CSS usa white-space: pre-line), quindi questi pezzi sono costruiti senza spazi né a-capo.
+  function htmlSottocommi(sotto, idBase, progetto) {
+    if (!sotto.length) return "";
+    const voci = sotto.map(y => {
+      if (y.immagine) {
+        const img = htmlImmagineTesto(y.dati, progetto);
+        return img ? `<li class="sottocomma-immagine">${img}</li>` : "";
+      }
+      // value = numero d'ordine: così la lettera resta giusta anche con immagini in mezzo
+      return `<li value="${y.n}" id="${idBase}-s-${y.n}">${y.dati.testo || ""}</li>`;
+    }).join("");
+    return `<ol class="sottocommi">${voci}</ol>`;
+  }
+
+  function htmlCommi(sezione, progetto) {
+    return sezione.commi.map(c => {
+      if (c.immagine) {
+        const img = htmlImmagineTesto(c.dati, progetto);
+        return img ? `<div class="comma">${img}</div>` : "";
+      }
+      const id = `sez-${sezione.n}-c-${c.n}`;
+      return `<div class="comma" id="${id}"><p><span class="comma__numero">${c.n}.</span> ${c.dati.testo || ""}</p>${htmlSottocommi(c.sotto, id, progetto)}</div>`;
+    }).join("");
+  }
+
+  function htmlBlocchi(progetto) {
+    return leggiBlocchi(progetto).map(b => {
+      if (b.tipo === "titolo") {
+        return `<div class="titolo-gruppo" id="tit-${b.n}"><h2>${escAttr(etichettaTitolo(b))}</h2></div>`;
+      }
+      if (b.tipo === "immagine") {
+        return htmlImmagineTesto(b.dati, progetto);
+      }
+      const intro = (b.dati.testo || "").toString().trim()
+        ? `<div class="comma"><p>${b.dati.testo}</p></div>`
+        : "";
+      return `
+      <article class="articolo" id="sez-${b.n}">
+        <h3>${escAttr(b.dati.titolo || `Sezione ${b.n}`)}</h3>
+        ${intro}${htmlCommi(b, progetto)}
+      </article>`;
+    }).join("");
   }
 
   function htmlGalleria(progetto) {
@@ -142,11 +258,18 @@
           ${htmlIndice(progetto)}
         </div>
         <div class="articoli">
-          ${htmlSezioni(progetto)}
+          ${htmlBlocchi(progetto)}
           ${htmlGalleria(progetto)}
           ${htmlAllegati(progetto)}
         </div>
       </div>`;
+
+    // Se l'indirizzo contiene un'ancora (#sez-2-c-1...), il contenuto è stato creato dopo il
+    // caricamento della pagina: si riposiziona a mano la vista.
+    if (location.hash) {
+      const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (el) el.scrollIntoView();
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

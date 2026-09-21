@@ -1,4 +1,9 @@
 // assets/js/redazione-ctsu.js — redazione dei progetti tecnici CTSU.
+//
+// Struttura di un progetto (vedi anche progetto.js):
+//   sezioni: [ TITOLO | sezione | immagine ]   ->  sezione = { titolo, testo, commi: [ comma | immagine ] }
+//   comma    = { testo, sottocommi: [ sottocomma | immagine ] }
+// I numeri (Sezione 1, Comma 2, lettera b, TITOLO I) non vengono salvati: si ricalcolano dall'ordine.
 (function () {
   let vista = "menu";
   let idInModifica = null;
@@ -126,7 +131,7 @@
           <span class="badge-categoria">${escapeHtml(p.categoria)}</span>
           <span class="badge-stato">${escapeHtml(p.stato)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(p.titolo)}</p>
-          <p class="redazione-riga__meta">${(p.sezioni || []).length} sezioni &middot; ${(p.galleria || []).length} foto &middot; ${(p.allegati || []).length} allegati</p>
+          <p class="redazione-riga__meta">${(p.sezioni || []).filter(b => b && (!b.tipo || b.tipo === "sezione")).length} sezioni &middot; ${(p.galleria || []).length} foto &middot; ${(p.allegati || []).length} allegati</p>
         </div>
         <div class="redazione-riga__azioni">
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-modifica="${escapeHtml(p.id)}">Modifica</button>
@@ -144,8 +149,8 @@
 
   /* ---------- COLLEGAMENTI E TABELLE NEL TESTO DI UNA SEZIONE ---------- */
 
-  // Stesso meccanismo già usato in NormAktiv, ma il riferimento interno rapido
-  // punta a "#sez-N" (la sezione N di QUESTO progetto) invece che ad articolo/comma.
+  // Stesso meccanismo già usato in NormAktiv, ma i riferimenti interni rapidi puntano
+  // a sezioni, commi e sottocommi di QUESTO progetto (#sez-N, #sez-N-c-M, #sez-N-c-M-s-K, #tit-N).
   function inserisciCollegamento(textarea) {
     const inizio = textarea.selectionStart;
     const fine = textarea.selectionEnd;
@@ -157,7 +162,10 @@
     const destinazione = prompt(
       "Dove deve puntare il collegamento?\n\n" +
       "• Indirizzo web: https://esempio.example\n" +
-      "• Riferimento interno a una sezione DI QUESTO PROGETTO: 2  (= Sezione 2)\n" +
+      "• Sezione DI QUESTO PROGETTO: 2  (= Sezione 2)\n" +
+      "• Comma: 2.3  (= Sezione 2, comma 3)\n" +
+      "• Sottocomma: 2.3.b  (= Sezione 2, comma 3, lettera b)\n" +
+      "• Titolo: T1  (= TITOLO I)\n" +
       "• Riferimento avanzato: #qualcosa",
       ""
     );
@@ -165,15 +173,21 @@
     const valore = destinazione.trim();
 
     let href, attributiExtra = "";
+    const rif = valore.match(/^(\d+)(?:\.(\d+)(?:\.([a-z]|\d+))?)?$/i);
+    const tit = valore.match(/^T(\d+)$/i);
     if (/^https?:\/\//i.test(valore)) {
       href = valore;
       attributiExtra = ' target="_blank" rel="noopener noreferrer"';
-    } else if (/^\d+$/.test(valore)) {
-      href = `#sez-${valore}`;
+    } else if (rif) {
+      href = `#sez-${rif[1]}`;
+      if (rif[2]) href += `-c-${rif[2]}`;
+      if (rif[3]) href += `-s-${/^\d+$/.test(rif[3]) ? rif[3] : rif[3].toLowerCase().charCodeAt(0) - 96}`;
+    } else if (tit) {
+      href = `#tit-${tit[1]}`;
     } else if (valore.startsWith("#")) {
       href = valore;
     } else {
-      alert('Formato non riconosciuto. Usa un indirizzo che inizi con http/https, oppure il numero di una sezione (es. 2).');
+      alert('Formato non riconosciuto. Usa un indirizzo che inizi con http/https, oppure un riferimento come 2, 2.3, 2.3.b oppure T1.');
       return;
     }
 
@@ -211,25 +225,177 @@
     textarea.setSelectionRange(nuovaPosizione, nuovaPosizione);
   }
 
-  /* ---------- SEZIONI (editor) ---------- */
+  /* ---------- STRUTTURA DELLA RELAZIONE (editor) ---------- */
 
-  function renderSezione(sez, i) {
+  const BTN = "redazione-btn redazione-btn--piccolo";
+
+  const STRUMENTI_TESTO =
+    `<button type="button" class="${BTN}" data-inserisci-link onmousedown="event.preventDefault()" title="Inserisci un collegamento nel testo selezionato">🔗 Link</button>` +
+    `<button type="button" class="${BTN}" data-inserisci-tabella onmousedown="event.preventDefault()" title="Inserisci una tabella nel testo">📊 Tabella</button>`;
+
+  const BOTTONI_SPOSTA =
+    `<button type="button" class="${BTN}" data-sposta="su" title="Sposta su">↑</button>` +
+    `<button type="button" class="${BTN}" data-sposta="giu" title="Sposta giù">↓</button>`;
+
+  const bottoneRimuovi = (testo, stile) =>
+    `<button type="button" class="${BTN} redazione-btn--pericolo" data-rimuovi ${stile ? `style="${stile}"` : ""} title="Rimuovi">${testo}</button>`;
+
+  const bottoneAggiungi = (tipo, testo) =>
+    `<button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-aggiungi="${tipo}">${testo}</button>`;
+
+  function campiImmagine(g) {
     return `
-      <div class="redazione-articolo redazione-blocco" data-indice="${i}">
-        <div class="redazione-articolo__intestazione">
-          <span>Sezione ${i + 1}</span>
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-link onmousedown="event.preventDefault()" title="Inserisci un collegamento nel testo selezionato">🔗 Link</button>
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-inserisci-tabella onmousedown="event.preventDefault()" title="Inserisci una tabella nel testo">📊 Tabella</button>
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-sposta="su" title="Sposta su">↑</button>
-          <button type="button" class="redazione-btn redazione-btn--piccolo" data-sposta="giu" title="Sposta giù">↓</button>
-          <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-rimuovi-sezione style="margin-left:auto;">Rimuovi sezione</button>
-        </div>
-        <input type="text" class="redazione-sez-titolo" placeholder="Titolo della sezione (es. Obiettivi del progetto)" value="${escapeHtml(sez.titolo)}" />
-        <textarea class="redazione-sez-testo" placeholder="Testo della sezione" rows="5">${escapeHtml(sez.testo)}</textarea>
+      <div class="redazione-immagine-campi">
+        <input type="text" class="redazione-img-url" placeholder="Indirizzo web dell'immagine (https://...)" value="${escapeHtml(g.url)}" />
+        <input type="text" class="redazione-img-didascalia" placeholder="Didascalia (facoltativa)" value="${escapeHtml(g.didascalia)}" />
       </div>`;
   }
 
+  /* --- sottocomma --- */
+  function renderSottocomma(y) {
+    if (y && y.tipo === "immagine") {
+      return `
+        <div class="redazione-sottocomma redazione-blocco" data-tipo="sottocomma-immagine">
+          <span class="redazione-sottocomma__lettera redazione-etichetta">🖼</span>
+          ${campiImmagine(y)}
+          <div class="redazione-sottocomma__strumenti">${BOTTONI_SPOSTA}${bottoneRimuovi("✕")}</div>
+        </div>`;
+    }
+    return `
+      <div class="redazione-sottocomma redazione-blocco" data-tipo="sottocomma">
+        <span class="redazione-sottocomma__lettera redazione-etichetta">a)</span>
+        <textarea class="redazione-testo-campo redazione-sottocomma-testo" rows="2" placeholder="Testo del sottocomma">${escapeHtml(y && y.testo)}</textarea>
+        <div class="redazione-sottocomma__strumenti">
+          <button type="button" class="${BTN}" data-inserisci-link onmousedown="event.preventDefault()" title="Inserisci un collegamento nel testo selezionato">🔗</button>
+          ${BOTTONI_SPOSTA}${bottoneRimuovi("✕")}
+        </div>
+      </div>`;
+  }
+
+  /* --- comma (di testo o immagine) --- */
+  function renderComma(c) {
+    if (c && c.tipo === "immagine") {
+      return `
+        <div class="redazione-comma redazione-blocco" data-tipo="comma-immagine">
+          <div class="redazione-comma__intestazione redazione-intestazione-blocco">
+            <span class="redazione-etichetta">Immagine (comma)</span>
+            ${BOTTONI_SPOSTA}
+            ${bottoneRimuovi("Rimuovi", "margin-left:auto;")}
+          </div>
+          ${campiImmagine(c)}
+        </div>`;
+    }
+    const sotto = (c && Array.isArray(c.sottocommi) ? c.sottocommi : []).map(renderSottocomma).join("");
+    return `
+      <div class="redazione-comma redazione-blocco" data-tipo="comma">
+        <div class="redazione-comma__intestazione redazione-intestazione-blocco">
+          <span class="redazione-etichetta">Comma</span>
+          ${STRUMENTI_TESTO}${BOTTONI_SPOSTA}
+          ${bottoneRimuovi("Rimuovi comma", "margin-left:auto;")}
+        </div>
+        <textarea class="redazione-testo-campo redazione-comma-testo" rows="3" placeholder="Testo del comma">${escapeHtml(c && c.testo)}</textarea>
+        <div class="redazione-sottocommi">${sotto}</div>
+        <div class="redazione-azioni-riga">
+          ${bottoneAggiungi("sottocomma", "+ Sottocomma")}
+          ${bottoneAggiungi("sottocomma-immagine", "🖼 + Immagine come sottocomma")}
+        </div>
+      </div>`;
+  }
+
+  /* --- sezione --- */
+  function renderSezione(sez) {
+    const commi = (Array.isArray(sez.commi) ? sez.commi : []).map(renderComma).join("");
+    return `
+      <div class="redazione-articolo redazione-blocco" data-tipo="sezione">
+        <div class="redazione-articolo__intestazione redazione-intestazione-blocco">
+          <span class="redazione-etichetta">Sezione</span>
+          ${STRUMENTI_TESTO}${BOTTONI_SPOSTA}
+          ${bottoneRimuovi("Rimuovi sezione", "margin-left:auto;")}
+        </div>
+        <input type="text" class="redazione-sez-titolo" placeholder="Titolo della sezione (es. Obiettivi del progetto)" value="${escapeHtml(sez.titolo)}" />
+        <textarea class="redazione-testo-campo redazione-sez-testo" rows="4" placeholder="Testo della sezione (facoltativo se usi i commi)">${escapeHtml(sez.testo)}</textarea>
+        <div class="redazione-commi">${commi}</div>
+        <div class="redazione-azioni-riga">
+          ${bottoneAggiungi("comma", "+ Comma")}
+          ${bottoneAggiungi("comma-immagine", "🖼 + Immagine come comma")}
+        </div>
+      </div>`;
+  }
+
+  /* --- TITOLO (raggruppa le sezioni che seguono: "TITOLO I - FORMA DELLO STATO") --- */
+  function renderTitolo(t) {
+    return `
+      <div class="redazione-titolo-gruppo redazione-blocco" data-tipo="titolo">
+        <div class="redazione-titolo-gruppo__intestazione redazione-intestazione-blocco">
+          <span class="redazione-etichetta">TITOLO</span>
+          ${BOTTONI_SPOSTA}
+          ${bottoneRimuovi("Rimuovi titolo", "margin-left:auto;")}
+        </div>
+        <div class="redazione-titolo-riga">
+          <input type="text" class="redazione-titolo-numero" placeholder="Numero (auto)" value="${escapeHtml(t.numero)}" />
+          <input type="text" class="redazione-titolo-testo" placeholder="Nome del titolo (es. Forma dello Stato)" value="${escapeHtml(t.titolo)}" />
+        </div>
+      </div>`;
+  }
+
+  /* --- immagine fra una sezione e l'altra --- */
+  function renderImmagineBlocco(g) {
+    return `
+      <div class="redazione-articolo redazione-blocco" data-tipo="immagine">
+        <div class="redazione-articolo__intestazione redazione-intestazione-blocco">
+          <span class="redazione-etichetta">Immagine</span>
+          ${BOTTONI_SPOSTA}
+          ${bottoneRimuovi("Rimuovi immagine", "margin-left:auto;")}
+        </div>
+        ${campiImmagine(g)}
+      </div>`;
+  }
+
+  function renderBlocco(b) {
+    if (b && b.tipo === "titolo") return renderTitolo(b);
+    if (b && b.tipo === "immagine") return renderImmagineBlocco(b);
+    return renderSezione(b || { titolo: "", testo: "", commi: [] });
+  }
+
+  /* --- numerazione mostrata nelle etichette (Sezione 1, Comma 2, b), TITOLO I) --- */
+  const letteraDi = n => (n <= 26 ? String.fromCharCode(96 + n) : String(n));
+  const etichettaDi = el => el.querySelector(":scope > .redazione-etichetta, :scope > .redazione-intestazione-blocco > .redazione-etichetta");
+  const figliBlocco = (el, contenitore) => [...el.querySelectorAll(`:scope > ${contenitore} > .redazione-blocco`)];
+
+  function rinumera() {
+    let s = 0, t = 0;
+    document.querySelectorAll("#redazione-sezioni > .redazione-blocco").forEach(b => {
+      const et = etichettaDi(b);
+      if (b.dataset.tipo === "titolo") {
+        t++;
+        const campo = b.querySelector(".redazione-titolo-numero");
+        campo.placeholder = ctsuRomano(t) + " (auto)";
+        if (et) et.textContent = "TITOLO " + (campo.value.trim() || ctsuRomano(t));
+      } else if (b.dataset.tipo === "immagine") {
+        if (et) et.textContent = "Immagine";
+      } else {
+        s++;
+        if (et) et.textContent = "Sezione " + s;
+        let c = 0;
+        figliBlocco(b, ".redazione-commi").forEach(cb => {
+          const etc = etichettaDi(cb);
+          if (cb.dataset.tipo === "comma-immagine") { if (etc) etc.textContent = "Immagine (comma)"; return; }
+          c++;
+          if (etc) etc.textContent = "Comma " + c;
+          let l = 0;
+          figliBlocco(cb, ".redazione-sottocommi").forEach(sb => {
+            const ets = etichettaDi(sb);
+            if (sb.dataset.tipo === "sottocomma-immagine") { if (ets) ets.textContent = "🖼"; return; }
+            l++;
+            if (ets) ets.textContent = letteraDi(l) + ")";
+          });
+        });
+      }
+    });
+  }
+
   /* ---------- GALLERIA (editor) ---------- */
+
 
   function renderGalleriaRiga(g, i) {
     return `
@@ -255,7 +421,9 @@
 
   function renderEditor(progetto) {
     idInModifica = progetto ? progetto.id : null;
-    const sezioni = progetto && progetto.sezioni && progetto.sezioni.length ? progetto.sezioni : [{ titolo: "", testo: "" }];
+    const blocchi = progetto && Array.isArray(progetto.sezioni) && progetto.sezioni.length
+      ? progetto.sezioni
+      : [{ tipo: "sezione", titolo: "", testo: "", commi: [] }];
     const galleria = (progetto && progetto.galleria) || [];
     const allegati = (progetto && progetto.allegati) || [];
     const cat = progetto ? progetto.categoria : "";
@@ -324,9 +492,18 @@
           <input type="text" id="f-id" value="${progetto ? escapeHtml(progetto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
 
-        <h3>Sezioni della relazione</h3>
-        <div id="redazione-sezioni">${sezioni.map((s, i) => renderSezione(s, i)).join("")}</div>
-        <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-sezione">+ Aggiungi sezione</button>
+        <h3>Struttura della relazione</h3>
+        <p style="font-size:.82rem;color:var(--inchiostro-tenue);margin:0 0 10px;">
+          Un <strong>TITOLO</strong> raggruppa le sezioni che lo seguono (es. &laquo;TITOLO I - FORMA DELLO STATO&raquo;).
+          Ogni sezione può avere dei <strong>commi</strong>, e ogni comma dei <strong>sottocommi</strong> (a, b, c&hellip;).
+          Le immagini si possono inserire fra le sezioni, oppure come comma o sottocomma.
+        </p>
+        <div id="redazione-sezioni">${blocchi.map(renderBlocco).join("")}</div>
+        <div class="redazione-azioni-riga">
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-sezione">+ Aggiungi sezione</button>
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-titolo">+ Aggiungi TITOLO</button>
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-immagine">🖼 + Aggiungi immagine</button>
+        </div>
 
         <h3 style="margin-top:28px;">Galleria fotografica</h3>
         <p style="font-size:.82rem;color:var(--inchiostro-tenue);margin:0 0 10px;">Un'immagine per riga, con indirizzo web e didascalia facoltativa.</p>
@@ -348,11 +525,42 @@
 
   /* ---------- RACCOLTA E SALVATAGGIO ---------- */
 
+  const valoreDi = (el, selettore) => {
+    const campo = el.querySelector(selettore);
+    return campo ? campo.value.trim() : "";
+  };
+  const testoDi = el => valoreDi(el, ":scope > .redazione-testo-campo");
+
+  function leggiImmagine(el) {
+    return { tipo: "immagine", url: valoreDi(el, ".redazione-img-url"), didascalia: valoreDi(el, ".redazione-img-didascalia") };
+  }
+
+  function leggiSottocommi(commaEl) {
+    return figliBlocco(commaEl, ".redazione-sottocommi")
+      .map(el => el.dataset.tipo === "sottocomma-immagine" ? leggiImmagine(el) : { testo: testoDi(el) })
+      .filter(y => y.tipo === "immagine" ? y.url !== "" : y.testo !== "");
+  }
+
+  function leggiCommi(sezioneEl) {
+    return figliBlocco(sezioneEl, ".redazione-commi")
+      .map(el => el.dataset.tipo === "comma-immagine"
+        ? leggiImmagine(el)
+        : { testo: testoDi(el), sottocommi: leggiSottocommi(el) })
+      .filter(c => c.tipo === "immagine" ? c.url !== "" : (c.testo !== "" || c.sottocommi.length > 0));
+  }
+
+  // Blocchi di primo livello nell'ordine in cui compaiono: TITOLI, sezioni (con commi) e immagini.
   function leggiSezioni() {
-    return [...document.querySelectorAll("#redazione-sezioni > .redazione-articolo")].map(el => ({
-      titolo: el.querySelector(".redazione-sez-titolo").value.trim(),
-      testo: el.querySelector(".redazione-sez-testo").value.trim()
-    }));
+    return [...document.querySelectorAll("#redazione-sezioni > .redazione-blocco")].map(el => {
+      switch (el.dataset.tipo) {
+        case "titolo":
+          return { tipo: "titolo", numero: valoreDi(el, ".redazione-titolo-numero"), titolo: valoreDi(el, ".redazione-titolo-testo") };
+        case "immagine":
+          return leggiImmagine(el);
+        default:
+          return { tipo: "sezione", titolo: valoreDi(el, ".redazione-sez-titolo"), testo: testoDi(el), commi: leggiCommi(el) };
+      }
+    }).filter(b => b.tipo !== "immagine" || b.url !== "");
   }
 
   function leggiGalleria() {
@@ -431,7 +639,7 @@
     const root = document.getElementById("redazione-root");
     if (vista === "menu") root.innerHTML = renderMenu();
     else if (vista === "carica") root.innerHTML = renderCarica();
-    else if (vista === "editor") root.innerHTML = renderEditor(extra || null);
+    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); rinumera(); }
     window.scrollTo(0, 0);
   }
 
@@ -467,25 +675,27 @@
         return;
       }
 
-      // ---- Inserisci collegamento nel testo selezionato di una sezione ----
+      // ---- Inserisci collegamento / tabella nel testo di una sezione, di un comma o di un sottocomma ----
+      const textareaDi = el => {
+        const blocco = el.closest(".redazione-blocco");
+        return blocco ? blocco.querySelector(":scope > .redazione-testo-campo") : null;
+      };
+
       const link = e.target.closest("[data-inserisci-link]");
       if (link) {
-        const contenitore = link.closest(".redazione-articolo");
-        const textarea = contenitore ? contenitore.querySelector(".redazione-sez-testo") : null;
+        const textarea = textareaDi(link);
         if (textarea) inserisciCollegamento(textarea);
         return;
       }
 
-      // ---- Inserisci una tabella nel testo di una sezione ----
       const tabella = e.target.closest("[data-inserisci-tabella]");
       if (tabella) {
-        const contenitore = tabella.closest(".redazione-articolo");
-        const textarea = contenitore ? contenitore.querySelector(".redazione-sez-testo") : null;
+        const textarea = textareaDi(tabella);
         if (textarea) inserisciTabella(textarea);
         return;
       }
 
-      // ---- Sposta su/giù una sezione ----
+      // ---- Sposta su/giù un blocco (titolo, sezione, immagine, comma, sottocomma) ----
       const sposta = e.target.closest("[data-sposta]");
       if (sposta) {
         const riga = sposta.closest(".redazione-blocco");
@@ -496,25 +706,55 @@
           } else if (direzione === "giu" && riga.nextElementSibling) {
             riga.parentElement.insertBefore(riga.nextElementSibling, riga);
           }
+          rinumera();
         }
         return;
       }
 
-      // ---- Aggiungi sezione ----
-      if (e.target.id === "redazione-aggiungi-sezione") {
-        const c = document.getElementById("redazione-sezioni");
-        c.insertAdjacentHTML("beforeend", renderSezione({ titolo: "", testo: "" }, c.children.length));
+      // ---- Aggiunge un blocco in fondo a un contenitore e mette il cursore nel primo campo ----
+      const aggiungi = (contenitore, html) => {
+        contenitore.insertAdjacentHTML("beforeend", html);
+        rinumera();
+        const nuovo = contenitore.lastElementChild;
+        const campo = nuovo && nuovo.querySelector(".redazione-sez-titolo, .redazione-testo-campo, .redazione-img-url, .redazione-titolo-testo");
+        if (campo) campo.focus();
+      };
+
+      // Primo livello: sezione, TITOLO, immagine
+      const radice = document.getElementById("redazione-sezioni");
+      if (e.target.id === "redazione-aggiungi-sezione") { aggiungi(radice, renderSezione({ titolo: "", testo: "", commi: [] })); return; }
+      if (e.target.id === "redazione-aggiungi-titolo") { aggiungi(radice, renderTitolo({ numero: "", titolo: "" })); return; }
+      if (e.target.id === "redazione-aggiungi-immagine") { aggiungi(radice, renderImmagineBlocco({ url: "", didascalia: "" })); return; }
+
+      // Dentro una sezione (comma / immagine come comma) o dentro un comma (sottocomma / immagine come sottocomma)
+      const agg = e.target.closest("[data-aggiungi]");
+      if (agg) {
+        const tipo = agg.getAttribute("data-aggiungi");
+        const blocco = agg.closest(".redazione-blocco");
+        if (!blocco) return;
+        if (tipo === "comma") aggiungi(blocco.querySelector(":scope > .redazione-commi"), renderComma({ testo: "", sottocommi: [] }));
+        else if (tipo === "comma-immagine") aggiungi(blocco.querySelector(":scope > .redazione-commi"), renderComma({ tipo: "immagine", url: "", didascalia: "" }));
+        else if (tipo === "sottocomma") aggiungi(blocco.querySelector(":scope > .redazione-sottocommi"), renderSottocomma({ testo: "" }));
+        else if (tipo === "sottocomma-immagine") aggiungi(blocco.querySelector(":scope > .redazione-sottocommi"), renderSottocomma({ tipo: "immagine", url: "", didascalia: "" }));
         return;
       }
 
-      // ---- Rimuovi sezione ----
-      const rimSez = e.target.closest("[data-rimuovi-sezione]");
-      if (rimSez) {
-        if (document.querySelectorAll("#redazione-sezioni > .redazione-articolo").length <= 1) {
+      // ---- Rimuovi un blocco ----
+      const rimuovi = e.target.closest("[data-rimuovi]");
+      if (rimuovi) {
+        const blocco = rimuovi.closest(".redazione-blocco");
+        if (!blocco) return;
+        if (blocco.dataset.tipo === "sezione" &&
+            document.querySelectorAll('#redazione-sezioni > .redazione-blocco[data-tipo="sezione"]').length <= 1) {
           alert("Deve rimanere almeno una sezione.");
           return;
         }
-        rimSez.closest(".redazione-articolo").remove();
+        if (blocco.querySelector(".redazione-blocco") &&
+            !confirm("Questo blocco contiene commi, sottocommi o immagini: verranno rimossi insieme a lui. Continuare?")) {
+          return;
+        }
+        blocco.remove();
+        rinumera();
         return;
       }
 
@@ -574,6 +814,7 @@
     });
 
     root.addEventListener("input", e => {
+      if (e.target.classList && e.target.classList.contains("redazione-titolo-numero")) rinumera();
       if (e.target.id === "redazione-filtro") {
         const q = e.target.value.trim().toLowerCase();
         document.querySelectorAll("#redazione-elenco-carica .redazione-riga").forEach(r => {
