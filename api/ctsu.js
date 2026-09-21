@@ -148,12 +148,12 @@ module.exports = async function handler(req, res) {
     if (!body || typeof body !== 'object') return rispondi(400, { error: 'Richiesta non valida.' });
 
     if (body.azione === 'login') {
-      if (!process.env.SESSION_SECRET) {
-        return rispondi(500, { success: false, error: 'Server non configurato (SESSION_SECRET).' });
+      if (!process.env.AUTH_SECRET) {
+        return rispondi(500, { success: false, error: 'Server non configurato (AUTH_SECRET).' });
       }
       const nome = pulisciNome(body.username);
       if (!nome) return rispondi(400, { success: false, error: 'Inserisci il tuo nome.' });
-      if (!uguali(body.password, process.env.SESSION_SECRET)) {
+      if (!uguali(body.password, process.env.AUTH_SECRET)) {
         await pausa(700);   // rallenta i tentativi ripetuti
         return rispondi(401, { success: false, error: 'Credenziali errate' });
       }
