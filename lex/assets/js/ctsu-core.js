@@ -5,7 +5,7 @@
 // l'endpoint separato /api/ctsu-redazione non esiste più.
 
 const SITE_CONFIG_CTSU = {
-  nomeFazione: "CTSU",
+  nomeFazione: "EstjiBundesSystem",
   motto: "Consiglio Tecnico-Scentifico dell'Unione",
   annoFondazione: 2024,
   emblema: "CTSU.png",
