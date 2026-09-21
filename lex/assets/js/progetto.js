@@ -228,6 +228,16 @@
 
     document.title = progetto.titolo + " — " + SITE_CONFIG_CTSU.nomeFazione;
 
+    // Il campo "luogo" contiene l'ID di una voce di luoghi (lo stesso di CA.html):
+    // qui si mostra il nome. Se l'ID non si trova (o i luoghi non si leggono) resta il valore salvato.
+    let nomeLuogo = progetto.luogo || "";
+    if (nomeLuogo) {
+      try {
+        const voce = ctsuCercaLuogo(await APICtsu.loadLuoghi(), nomeLuogo);
+        if (voce && voce.nome) nomeLuogo = voce.nome;
+      } catch (e) { /* si lascia il valore salvato */ }
+    }
+
     root.innerHTML = `
       <p class="breadcrumb">
         <a href="ctsu.html">Home</a> &rsaquo;
@@ -243,7 +253,7 @@
         <p>${escAttr(progetto.sommario)}</p>
         <dl class="intestazione-atto__dati">
           <div><dt>Organo responsabile</dt><dd>${escAttr(progetto.organo_responsabile || "—")}</dd></div>
-          <div><dt>Luogo</dt><dd>${escAttr(progetto.luogo || "—")}</dd></div>
+          <div><dt>Luogo</dt><dd>${escAttr(nomeLuogo || "—")}</dd></div>
           <div><dt>Responsabile di progetto</dt><dd>${escAttr(progetto.responsabile || "—")}</dd></div>
           <div><dt>Data di inizio</dt><dd>${escAttr(progetto.data_inizio || "—")}</dd></div>
           <div><dt>Fine prevista</dt><dd>${escAttr(progetto.data_fine_prevista || "—")}</dd></div>
