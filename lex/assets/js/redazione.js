@@ -353,16 +353,14 @@
       </div>`;
   }
 
-  // Selettore multiplo dei luoghi collegati all'atto: checkbox raggruppate
-  // per categoria (come in organi.json), con un campo di filtro testuale.
-  // "selezionati" è l'elenco dei codici già salvati sull'atto (se in modifica).
-  function renderCampoLuoghi(selezionati) {
-    const giaSelezionati = new Set(selezionati || []);
-
+  // Selettore del luogo collegato all'atto: un'unica select con optgroup per
+  // categoria (come in organi.json). "selezionato" è il codice già salvato
+  // sull'atto (se in modifica), oppure stringa vuota/undefined.
+  function renderCampoLuogo(selezionato) {
     if (!luoghiDisponibili.length) {
       return `
         <div class="redazione-campo">
-          <label>Luoghi collegati</label>
+          <label>Luogo collegato</label>
           <p style="color:var(--inchiostro-tenue);font-size:.85rem;margin:4px 0 0;">
             Elenco dei luoghi non disponibile al momento (errore nel caricamento da organi.json).
           </p>
@@ -374,33 +372,25 @@
       (gruppi[l.categoria] = gruppi[l.categoria] || []).push(l);
     });
 
-    const html = Object.keys(gruppi).map(cat => {
+    const optgroups = Object.keys(gruppi).map(cat => {
       const etichetta = ETICHETTE_CATEGORIE_LUOGHI[cat] || cat;
-      const righe = gruppi[cat]
+      const opzioni = gruppi[cat]
         .slice()
         .sort((a, b) => a.nome.localeCompare(b.nome))
-        .map(v => `
-          <label class="redazione-luogo-riga" style="display:flex; align-items:center; gap:6px; padding:3px 0; font-weight:400; cursor:pointer;">
-            <input type="checkbox" class="redazione-luogo-checkbox" value="${escapeHtml(v.codice)}" ${giaSelezionati.has(v.codice) ? "checked" : ""} />
-            <span>${escapeHtml(v.nome)}</span>
-            <small style="color:var(--inchiostro-tenue);font-size:.75rem;">${escapeHtml(v.codice)}</small>
-          </label>`).join("");
-      return `
-        <div class="redazione-luoghi-gruppo" data-gruppo-luoghi>
-          <strong style="display:block; margin:10px 0 4px; font-family:var(--font-chrome,'Titillium Web',sans-serif); font-size:.78rem; letter-spacing:.04em; text-transform:uppercase; color:var(--blu-800, #0b3d6e);">${escapeHtml(etichetta)}</strong>
-          ${righe}
-        </div>`;
+        .map(v => `<option value="${escapeHtml(v.codice)}" ${v.codice === selezionato ? "selected" : ""}>${escapeHtml(v.nome)} (${escapeHtml(v.codice)})</option>`)
+        .join("");
+      return `<optgroup label="${escapeHtml(etichetta)}">${opzioni}</optgroup>`;
     }).join("");
 
     return `
       <div class="redazione-campo">
-        <label for="f-luoghi-filtro">Luoghi collegati (facoltativo)</label>
-        <input type="text" id="f-luoghi-filtro" placeholder="Filtra per nome o codice…" autocomplete="off" style="margin-bottom:8px;" />
-        <div id="redazione-luoghi-lista" style="max-height:260px; overflow-y:auto; border:1px solid var(--bordo, #d6e2ed); border-radius:4px; padding:8px 10px;">
-          ${html}
-        </div>
+        <label for="f-luogo">Luogo collegato (facoltativo)</label>
+        <select id="f-luogo">
+          <option value="" ${!selezionato ? "selected" : ""}>&mdash; Nessuno &mdash;</option>
+          ${optgroups}
+        </select>
         <small style="color:var(--inchiostro-tenue);font-size:.78rem;">
-          Seleziona uno o più luoghi a cui l'atto si applica. L'elenco è letto da organi.json (repo RETEFORLIVESE/DATA).
+          Il luogo a cui l'atto si applica. L'elenco è letto da organi.json (repo RETEFORLIVESE/DATA).
         </small>
       </div>`;
   }
@@ -463,7 +453,7 @@
           <label for="f-didascalia">Didascalia dell'immagine (facoltativa)</label>
           <input type="text" id="f-didascalia" value="${atto ? escapeHtml(atto.didascalia || "") : ""}" />
         </div>
-        ${renderCampoLuoghi(atto ? atto.luoghi : [])}
+        ${renderCampoLuogo(atto ? atto.luogo : "")}
         <div class="redazione-campo">
           <label for="f-id">Identificativo URL (id)</label>
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
@@ -517,7 +507,7 @@
       sommario: document.getElementById("f-sommario").value.trim(),
       immagine: urlImmagineSicuro(document.getElementById("f-immagine").value),
       didascalia: document.getElementById("f-didascalia").value.trim(),
-      luoghi: [...document.querySelectorAll(".redazione-luogo-checkbox:checked")].map(el => el.value),
+      luogo: document.getElementById("f-luogo").value || "",
       articoli: leggiArticoli(),
     };
   }
@@ -745,17 +735,6 @@
         const q = e.target.value.trim().toLowerCase();
         document.querySelectorAll("#redazione-elenco-carica .redazione-riga").forEach(r => {
           r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
-        });
-      }
-      if (e.target.id === "f-luoghi-filtro") {
-        const q = e.target.value.trim().toLowerCase();
-        document.querySelectorAll("#redazione-luoghi-lista .redazione-luogo-riga").forEach(r => {
-          r.style.display = r.textContent.toLowerCase().includes(q) ? "flex" : "none";
-        });
-        // Nasconde anche le intestazioni di gruppo rimaste senza righe visibili.
-        document.querySelectorAll("#redazione-luoghi-lista [data-gruppo-luoghi]").forEach(g => {
-          const haRigheVisibili = [...g.querySelectorAll(".redazione-luogo-riga")].some(r => r.style.display !== "none");
-          g.style.display = haRigheVisibili ? "" : "none";
         });
       }
     });
