@@ -86,6 +86,74 @@ function iniettaStiliCtsu() {
   document.head.appendChild(st);
 }
 
+/* ---------- LUOGHI (registro condiviso con CA.html, NormAktiv e CEPU) ---------- */
+
+// "luoghi" (letto da /api/organi) è raggruppato: { livello_statale: { TDR: "Nome", ... },
+// citta_principali: { "ELIN-TLN": { nome: "Taleen", tipo: "citta_metropolitana" } }, ... }.
+// Nei progetti si salva l'ID della voce (es. "ELIN-TLN"), MAI il nome del gruppo: è lo
+// stesso ID con cui CA.html collega norme, elezioni e progetti agli organi.
+const CTSU_ETICHETTE_GRUPPO = {
+  livello_federale: "Livello federale", livello_statale: "Livello statale",
+  citta_principali: "Città principali", distretti: "Distretti",
+  assemblee_locali: "Assemblee locali", regione: "Regioni", organi: "Organi"
+};
+const CTSU_ETICHETTE_TIPO = {
+  citta_metropolitana: "Città metropolitana", cittametropolitana: "Città metropolitana",
+  distretto: "Distretto", assemblea: "Assemblea", regione: "Regione", congresso: "Congresso"
+};
+
+// Una voce è una stringa ("Köln") oppure { nome, tipo }. Restituisce sempre { nome, tipo } o null.
+function ctsuVoceLuogo(v) {
+  if (typeof v === "string") return { nome: v, tipo: "" };
+  if (v && typeof v === "object" && typeof v.nome === "string") return { nome: v.nome, tipo: (v.tipo || "").toString() };
+  return null;
+}
+
+// Cerca un ID a qualsiasi profondità (come cercaLuogo() di CA.html).
+function ctsuCercaLuogo(nodo, id) {
+  if (!nodo || typeof nodo !== "object" || !id) return null;
+  if (Object.prototype.hasOwnProperty.call(nodo, id)) {
+    const v = ctsuVoceLuogo(nodo[id]);
+    if (v) return v;
+  }
+  for (const chiave of Object.keys(nodo)) {
+    const figlio = nodo[chiave];
+    if (figlio && typeof figlio === "object" && !ctsuVoceLuogo(figlio)) {
+      const trovato = ctsuCercaLuogo(figlio, id);
+      if (trovato) return trovato;
+    }
+  }
+  return null;
+}
+
+// Elenco piatto per il menu a tendina: [{ gruppo, voci: [{ id, nome, tipo }] }] nell'ordine del registro.
+function ctsuElencoLuoghi(luoghi) {
+  const gruppi = new Map();
+  const visita = (nodo, chiaveGruppo) => {
+    Object.keys(nodo).forEach(chiave => {
+      const voce = ctsuVoceLuogo(nodo[chiave]);
+      if (voce) {
+        if (!gruppi.has(chiaveGruppo)) gruppi.set(chiaveGruppo, []);
+        gruppi.get(chiaveGruppo).push({ id: chiave, nome: voce.nome, tipo: voce.tipo });
+      } else if (nodo[chiave] && typeof nodo[chiave] === "object" && !Array.isArray(nodo[chiave])) {
+        visita(nodo[chiave], chiave);
+      }
+    });
+  };
+  if (luoghi && typeof luoghi === "object") visita(luoghi, "");
+  return [...gruppi.entries()].map(([chiave, voci]) => ({
+    gruppo: chiave === "" ? "Altri luoghi"
+      : (CTSU_ETICHETTE_GRUPPO[chiave] || (chiave.charAt(0).toUpperCase() + chiave.slice(1).replace(/_/g, " "))),
+    voci
+  }));
+}
+
+// "Taleen (Città metropolitana) · ELIN-TLN"
+function ctsuEtichettaLuogo(voce) {
+  const tipo = voce.tipo ? (CTSU_ETICHETTE_TIPO[voce.tipo.toLowerCase()] || voce.tipo) : "";
+  return voce.nome + (tipo ? " (" + tipo + ")" : "") + " · " + voce.id;
+}
+
 /* ---------- HEADER / FOOTER ---------- */
 
 function renderTestataCtsu(paginaAttiva) {
@@ -169,6 +237,18 @@ const APICtsu = {
 
   isAuthenticated() {
     return !!this._sessione.token;
+  },
+
+  // Registro dei luoghi, lo stesso di CA.html: si legge da /api/organi (campo "luoghi").
+  _luoghi: null,
+  async loadLuoghi() {
+    if (!this._luoghi) {
+      this._luoghi = fetch('/api/organi', { cache: 'no-store' })
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(j => (j && j.luoghi && typeof j.luoghi === 'object' && !Array.isArray(j.luoghi)) ? j.luoghi : {})
+        .catch(e => { this._luoghi = null; throw e; });
+    }
+    return this._luoghi;
   },
 
   async loadProgetti() {
