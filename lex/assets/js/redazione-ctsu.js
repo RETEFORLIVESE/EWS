@@ -8,6 +8,7 @@
   let vista = "menu";
   let idInModifica = null;
   let progetti = [];
+  let luoghi = null;   // registro dei luoghi (lo stesso di CA.html); null = non disponibile
 
   const slugify = t => (t || "").toString().toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -417,6 +418,47 @@
       </div>`;
   }
 
+/* ---------- LUOGO (collegamento con CA.html) ---------- */
+
+  const SUGGERIMENTO_LUOGO =
+    `<span style="font-size:.75rem;color:var(--inchiostro-tenue);font-family:var(--font-testo);text-transform:none;letter-spacing:0;font-weight:400;">` +
+    `Si salva l'ID del luogo: il progetto comparirà su CA.html sotto l'organo che usa questo luogo.</span>`;
+
+  function campoLuogo(valore) {
+    valore = (valore || "").toString().trim();
+
+    // Elenco dei luoghi non raggiungibile: si può scrivere l'ID a mano.
+    if (!luoghi) {
+      return `
+        <div class="redazione-campo">
+          <label for="f-luogo">Luogo (ID)</label>
+          <input type="text" id="f-luogo" value="${escapeHtml(valore)}" placeholder="ID della voce di luoghi, es. ELIN-TLN" />
+          <span style="font-size:.75rem;color:#a72e23;">Impossibile leggere l'elenco dei luoghi: scrivi l'ID a mano oppure ricarica la pagina.</span>
+        </div>`;
+    }
+
+    const gruppi = ctsuElencoLuoghi(luoghi);
+    const presente = gruppi.some(g => g.voci.some(v => v.id === valore));
+    const opzioni = gruppi.map(g => `
+      <optgroup label="${escapeHtml(g.gruppo)}">
+        ${g.voci.map(v => `<option value="${escapeHtml(v.id)}" ${v.id === valore ? "selected" : ""}>${escapeHtml(ctsuEtichettaLuogo(v))}</option>`).join("")}
+      </optgroup>`).join("");
+    // Un valore vecchio (es. un nome scritto a mano) non va perso: resta selezionabile, ma segnalato.
+    const vecchio = valore && !presente
+      ? `<option value="${escapeHtml(valore)}" selected>${escapeHtml(valore)} — non presente nei luoghi</option>`
+      : "";
+
+    return `
+      <div class="redazione-campo">
+        <label for="f-luogo">Luogo</label>
+        <select id="f-luogo">
+          <option value="">— nessun luogo —</option>
+          ${vecchio}${opzioni}
+        </select>
+        ${SUGGERIMENTO_LUOGO}
+      </div>`;
+  }
+
   /* ---------- EDITOR COMPLETO ---------- */
 
   function renderEditor(progetto) {
@@ -462,7 +504,7 @@
 
         <div class="redazione-riga-campi">
           <div class="redazione-campo"><label for="f-organo">Organo responsabile</label><input type="text" id="f-organo" value="${progetto ? escapeHtml(progetto.organo_responsabile) : ""}" /></div>
-          <div class="redazione-campo"><label for="f-luogo">Luogo</label><input type="text" id="f-luogo" value="${progetto ? escapeHtml(progetto.luogo) : ""}" /></div>
+          ${campoLuogo(progetto ? progetto.luogo : "")}
           <div class="redazione-campo"><label for="f-responsabile">Responsabile di progetto</label><input type="text" id="f-responsabile" value="${progetto ? escapeHtml(progetto.responsabile) : ""}" /></div>
         </div>
 
@@ -833,6 +875,12 @@
     } catch (e) {
       alert("Errore nel caricamento dei progetti: " + e.message);
       progetti = [];
+    }
+    try {
+      luoghi = await APICtsu.loadLuoghi();
+    } catch (e) {
+      console.warn("Elenco dei luoghi non disponibile:", e);
+      luoghi = null;
     }
     vai("menu");
   }
