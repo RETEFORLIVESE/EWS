@@ -25,7 +25,6 @@ function renderTestataCtsu(paginaAttiva) {
       <div class="container">
         <span>${SITE_CONFIG_CTSU.nomeFazione} &middot; [estjibundes.me.ei]</span>
         <span>
-          <a href="redazione-ctsu.html">Area Amministrativa</a>
           ${SITE_CONFIG_CTSU.discord ? `<a href="${SITE_CONFIG_CTSU.discord}" target="_blank" rel="noopener">Discord</a>` : ""}
         </span>
       </div>
@@ -33,7 +32,7 @@ function renderTestataCtsu(paginaAttiva) {
     <header class="testata">
       <div class="container testata__riga">
         <div class="testata__emblema" aria-hidden="true">
-          <img src="${SITE_CONFIG_CTSU.emblema}" alt="CTSU">
+          <img src="${SITE_CONFIG_CTSU.emblema}" alt="CTSU" onerror="this.parentNode.style.display='none'">
         </div>
         <div class="testata__testi">
           <p class="testata__eyebrow"></p>
@@ -51,7 +50,6 @@ function renderTestataCtsu(paginaAttiva) {
           <li><a href="ctsu.html" class="${paginaAttiva === "home" ? "attiva" : ""}">Home</a></li>
           <li><a href="ctsu.html?stato=In+corso" class="${paginaAttiva === "in-corso" ? "attiva" : ""}">Progetti in corso</a></li>
           <li><a href="ctsu.html?stato=Completato" class="${paginaAttiva === "completati" ? "attiva" : ""}">Progetti completati</a></li>
-          <li><a href="redazione-ctsu.html" class="${paginaAttiva === "redazione" ? "attiva" : ""}">Redazione</a></li>
         </ul>
       </div>
     </nav>`;
