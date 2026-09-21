@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Progetto — CTSU</title>
-  <meta name="description" content="Scheda di dettaglio di un progetto tecnico CTSU." />
+  <title>CTSU — Redazione</title>
+  <meta name="description" content="Area di redazione per creare e modificare i progetti tecnici CTSU." />
   <link rel="icon" type="image/png" href="CTSU.png" />
   <link rel="apple-touch-icon" href="CTSU.png" />
   <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
@@ -270,14 +270,63 @@ footer{background:var(--blu-900);color:#b9c8d6;padding:34px 0 22px;margin-top:40
 .elenco-allegati li{background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-chrome);font-size:.92rem;}
 main.container{padding-bottom:64px;}
 
+/* ===== Login redazione ===== */
+.login-wrap{max-width:440px;margin:48px auto 80px;padding:2rem 2rem 1.6rem;background:#fff;border:1px solid var(--bordo);border-top:5px solid var(--blu-700);border-radius:8px;box-shadow:0 10px 30px rgba(11,61,110,.12);color:var(--inchiostro);}
+.login-wrap h2{margin:0 0 .3rem;font-family:var(--font-chrome);letter-spacing:.03em;font-size:1.35rem;color:var(--blu-900);}
+.login-wrap p.sottotitolo{margin:0 0 1.2rem;color:var(--inchiostro-tenue);font-size:.88rem;}
+.login-wrap label{display:block;font-family:var(--font-chrome);font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--blu-800);margin-bottom:.25rem;}
+.login-wrap input{width:100%;padding:.7rem .85rem;margin-bottom:.9rem;background:var(--carta);border:1px solid var(--bordo);color:var(--inchiostro);border-radius:4px;font-family:var(--font-chrome);font-size:.95rem;transition:border-color .15s,box-shadow .15s;}
+.login-wrap input:focus{outline:none;border-color:var(--blu-accento);box-shadow:0 0 0 3px rgba(46,119,201,.18);}
+.login-wrap button{width:100%;padding:.8rem;background:var(--blu-700);border:none;color:#fff;border-radius:4px;cursor:pointer;font-family:var(--font-chrome);font-weight:700;font-size:.95rem;letter-spacing:.04em;transition:background .15s;}
+.login-wrap button:hover:not(:disabled){background:var(--blu-800);}
+.login-wrap button:disabled{opacity:.6;cursor:not-allowed;}
+.login-error{color:#a72e23;background:#fdeceb;border:1px solid rgba(205,33,42,.25);border-radius:4px;font-size:.85rem;min-height:1.2em;margin:.6rem 0 0;padding:.4rem .6rem;text-align:center;display:none;}
+.login-error.show{display:block;}
+.admin-topbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin:1.2rem 0 .5rem;padding:.7rem 1rem;background:var(--carta-scura);border-left:4px solid var(--blu-700);border-radius:4px;font-family:var(--font-chrome);font-size:.88rem;color:var(--inchiostro);}
+.admin-topbar strong{color:var(--blu-900);}
+.admin-topbar button{background:transparent;border:1px solid var(--blu-700);color:var(--blu-700);padding:6px 14px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;transition:all .15s;}
+.admin-topbar button:hover{background:var(--blu-700);color:#fff;}
+
   </style>
 </head>
 <body>
   <div id="testata-root"></div>
-  <main class="container" id="progetto-root"></main>
+
+  <main class="container">
+
+    <!-- AREA DI LOGIN (visibile solo se non autenticato) -->
+    <div id="login-area" style="display:none;">
+      <div class="login-wrap">
+        <h2>&#128272; Accesso redazione</h2>
+        <p class="sottotitolo">Inserisci il tuo nome e la password di accesso per modificare i progetti.</p>
+
+        <label for="adminUsername">Nome</label>
+        <input type="text" id="adminUsername" placeholder="es. Mario Rossi"
+               autocomplete="username" autocapitalize="off" spellcheck="false" />
+
+        <label for="adminPassword">Password</label>
+        <input type="password" id="adminPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+               autocomplete="current-password" />
+
+        <button id="loginBtn" type="button">Accedi</button>
+        <p class="login-error" id="loginError"></p>
+      </div>
+    </div>
+
+    <!-- AREA REDAZIONE (visibile solo se autenticato) -->
+    <div id="admin-content" style="display:none;">
+      <div class="admin-topbar">
+        <span>&#128100; Connesso come <strong id="adminUsernameLabel">&mdash;</strong></span>
+        <button id="logoutBtn" type="button">Esci</button>
+      </div>
+      <div id="redazione-root"></div>
+    </div>
+
+  </main>
+
   <div id="footer-root"></div>
 
   <script src="assets/js/ctsu-core.js"></script>
-  <script src="assets/js/progetto.js"></script>
+  <script src="assets/js/redazione-ctsu.js"></script>
 </body>
 </html>
