@@ -277,6 +277,7 @@
         .sezione-titolo::before { width: 28px; height: 28px; }
         .sezione-norme::before { background-image: url('Icons/NormAktivW95.png'); }
         .sezione-elezione::before { background-image: url('Icons/ElectionW95.png'); }
+        .sezione-ctsu::before { background-image: url('CTSU.png'); image-rendering: auto; }
         .sezione-container { margin-top: 2.5rem; border-top: 1px solid var(--ist-line); padding-top: 2rem; }
 
         .norme-msg { color: var(--ist-text); font-style: italic; margin: 0; }
@@ -404,6 +405,11 @@
                 </div>
 
                 <div class="sezione-container">
+                    <h3 class="sezione-titolo sezione-ctsu">Progetti CTSU</h3>
+                    <div id="view-progetti"></div>
+                </div>
+
+                <div class="sezione-container">
                     <h3 class="sezione-titolo sezione-elezione">Ultima elezione</h3>
                     <div id="view-elezione"></div>
                 </div>
@@ -438,12 +444,21 @@
         let elezioniPubbliche = [];
         let erroreElezioni = null;
         let elezioniPronte = Promise.resolve();
+        let progettiCtsu = [];
+        let erroreProgetti = null;
+        let progettiPronti = Promise.resolve();
 
         window.onload = async function() {
             // Le norme (atti) vengono lette dal server con BIN_ID, in parallelo all'indice.
             attiPronti = ApiOrgani.loadAtti()
                 .then(atti => { attiPubblici = atti; })
                 .catch(e => { erroreAtti = e; attiPubblici = []; });
+
+            // I progetti tecnici CTSU vengono letti da /api/ctsu, in parallelo.
+            progettiPronti = fetch('/api/ctsu', { cache: 'no-store' })
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(j => { progettiCtsu = (j && Array.isArray(j.progetti)) ? j.progetti : []; })
+                .catch(e => { erroreProgetti = e; progettiCtsu = []; });
 
             // Le elezioni vengono lette da CEPU (stessa API di CEPU.html), in parallelo.
             elezioniPronte = fetch('/api/elezioni', { cache: 'no-store' }) // Assuming API relative path mapping as per original code context, but original had API_ELEZIONI
@@ -660,6 +675,91 @@
                 return;
             }
             norme.forEach(a => box.appendChild(creaNorma(a)));
+        }
+
+        /* =========================================================
+           PROGETTI CTSU
+        ========================================================= */
+        // Indirizzo della scheda completa del progetto (progetto.html?id=...).
+        // ⚠️ Se le pagine CTSU non stanno nella stessa cartella di CA.html, cambia questo prefisso
+        // (es. 'ctsu/progetto.html?id=' oppure l'indirizzo completo del sito).
+        const CTSU_PROGETTO_URL = 'progetto.html?id=';
+
+        // In cima i progetti attivi, in fondo quelli chiusi.
+        const ORDINE_STATO_PROGETTO = ['in corso', 'approvato', 'in progettazione', 'sospeso', 'completato', 'annullato'];
+        function rangoStatoProgetto(p) {
+            const i = ORDINE_STATO_PROGETTO.indexOf(String(p.stato || '').toLowerCase());
+            return i === -1 ? ORDINE_STATO_PROGETTO.length : i;
+        }
+
+        function creaProgetto(p) {
+            const d = creaElemento('details', 'norma');
+            const s = document.createElement('summary');
+            s.appendChild(creaElemento('span', 'norma-titolo', p.titolo || '(senza titolo)'));
+            if (p.categoria) s.appendChild(creaElemento('span', 'norma-meta', p.categoria));
+            if (p.stato) {
+                s.appendChild(creaElemento('span', 'norma-stato' + (String(p.stato).toLowerCase() === 'annullato' ? ' abrogato' : ''), p.stato));
+            }
+            d.appendChild(s);
+
+            const corpo = creaElemento('div', 'norma-corpo');
+
+            const righe = [
+                ['Organo responsabile', p.organo_responsabile],
+                ['Responsabile di progetto', p.responsabile],
+                ['Data di inizio', p.data_inizio],
+                ['Fine prevista', p.data_fine_prevista],
+                ['Completamento', p.data_completamento],
+                ['Budget previsto', p.budget_previsto],
+                ['Costo effettivo', p.costo_effettivo]
+            ].filter(([, v]) => v && String(v).trim() !== '');
+            if (righe.length) {
+                const dl = creaElemento('dl', 'el-dettagli');
+                dl.innerHTML = righe.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+                corpo.appendChild(dl);
+            }
+
+            const nSez = Array.isArray(p.sezioni) ? p.sezioni.filter(b => b && (!b.tipo || b.tipo === 'sezione')).length : 0;
+            const sunto = (p.sommario || '').toString().trim()
+                || (nSez ? `Progetto composto da ${nSez} ${nSez === 1 ? 'sezione' : 'sezioni'}.` : 'Sunto non disponibile.');
+            corpo.appendChild(creaElemento('div', 'norma-etichetta', 'Sunto'));
+            corpo.appendChild(creaElemento('p', 'norma-sunto', sunto));
+
+            const link = creaElemento('a', 'btn-normaktiv', 'Leggi il progetto completo su CTSU');
+            link.href = CTSU_PROGETTO_URL + encodeURIComponent(p.id || '');
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            corpo.appendChild(link);
+            d.appendChild(corpo);
+            return d;
+        }
+
+        // I progetti di un organo sono quelli il cui "luogo" è l'ID del luogo associato all'organo
+        // (oppure l'ID dell'organo stesso): la stessa regola delle norme.
+        async function mostraProgetti(nodo) {
+            const box = document.getElementById('view-progetti');
+            box.innerHTML = '';
+            box.appendChild(creaElemento('p', 'norme-msg', 'Caricamento dei progetti…'));
+
+            await progettiPronti;
+            if (organoCorrente !== nodo) return; // nel frattempo è stato scelto un altro organo
+
+            box.innerHTML = '';
+            if (erroreProgetti) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Impossibile leggere i progetti (' + (erroreProgetti.message || 'errore sconosciuto') + ').'));
+                return;
+            }
+
+            const chiavi = [nodo.luogo, nodo.id_organo].filter(Boolean);
+            const progetti = progettiCtsu
+                .filter(p => p && chiavi.includes(p.luogo))
+                .sort((a, b) => (rangoStatoProgetto(a) - rangoStatoProgetto(b)) || String(a.titolo || '').localeCompare(String(b.titolo || '')));
+
+            if (progetti.length === 0) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Nessun progetto CTSU collegato a questo organo.'));
+                return;
+            }
+            progetti.forEach(p => box.appendChild(creaProgetto(p)));
         }
 
         /* =========================================================
@@ -907,6 +1007,7 @@
             document.getElementById('view-id').innerText = nodo.id_organo;
             organoCorrente = nodo;
             mostraNorme(nodo);
+            mostraProgetti(nodo);
             mostraElezione(nodo);
 
             const etichetta = etichettaCategoria(nodo);
