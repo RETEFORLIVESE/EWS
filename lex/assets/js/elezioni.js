@@ -1,3 +1,4 @@
+//assets/js
 (function () {
   let elezioni = [];
   let filtroStato = "Tutte";
