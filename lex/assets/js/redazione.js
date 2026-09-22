@@ -4,10 +4,13 @@
   let idInModifica = null;
   let atti = [];
 
-  // ---- Luoghi collegabili all'atto: letti da organi.json (repo pubblico
-  // RETEFORLIVESE/DATA), alla voce "luoghi". Non richiedono login: si legge
-  // il raw file direttamente dal browser, stesso repo dove vive atti.json.
-  const URL_ORGANI_JSON = "https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/organi.json";
+  // ---- Luoghi collegabili all'atto: letti da organi.json (repo DATA,
+  // privata), alla voce "luoghi". Non richiedono login: passano comunque dal
+  // server (endpoint /api/atti?risorsa=organi), che legge il file con il
+  // GITHUB_TOKEN. Non si può più leggere il raw file direttamente dal
+  // browser (raw.githubusercontent.com) perché richiederebbe che la repo sia
+  // pubblica.
+  const URL_ORGANI_JSON = "/api/atti?risorsa=organi";
   const ETICHETTE_CATEGORIE_LUOGHI = {
     livello_federale: "Livello federale",
     livello_statale: "Livello statale",
