@@ -133,31 +133,21 @@
     return `<ol class="sottocommi">${voci}</ol>`;
   }
 
-  // Un'immagine che segue direttamente un comma di testo viene affiancata a destra di
-  // quello stesso comma (invece di comparire come blocco a sé, impilato sotto). Un'immagine
-  // che non segue un comma di testo (es. è la prima, o segue un'altra immagine) resta come
-  // prima: un blocco a tutta larghezza.
+  // Un comma di testo può avere un campo facoltativo "immagine" (url, didascalia): se presente,
+  // viene mostrata affiancata a destra del testo di quello stesso comma (non più dedotta
+  // dall'ordine dei blocchi). Un'immagine autonoma (tipo:"immagine", inserita come proprio
+  // comma) resta invece come prima: un blocco a sé, a tutta larghezza.
   function htmlCommi(sezione, progetto) {
-    const items = sezione.commi;
-    let html = "";
-    for (let i = 0; i < items.length; i++) {
-      const c = items[i];
+    return sezione.commi.map(c => {
       if (c.immagine) {
         const img = htmlImmagineTesto(c.dati, progetto);
-        html += img ? `<div class="comma">${img}</div>` : "";
-        continue;
+        return img ? `<div class="comma">${img}</div>` : "";
       }
       const id = `sez-${sezione.n}-c-${c.n}`;
-      let immagineDestra = "";
-      const prossimo = items[i + 1];
-      if (prossimo && prossimo.immagine) {
-        immagineDestra = htmlImmagineTesto(prossimo.dati, progetto);
-        if (immagineDestra) i++;   // l'immagine è già stata resa qui: la si salta nel giro successivo
-      }
+      const immagineDestra = c.dati.immagine ? htmlImmagineTesto(c.dati.immagine, progetto) : "";
       const classe = immagineDestra ? " comma--con-immagine-destra" : "";
-      html += `<div class="comma${classe}" id="${id}">${immagineDestra ? `<div class="comma__immagine-destra">${immagineDestra}</div>` : ""}<p><span class="comma__numero">${c.n}.</span> ${c.dati.testo || ""}</p>${htmlSottocommi(c.sotto, id, progetto)}</div>`;
-    }
-    return html;
+      return `<div class="comma${classe}" id="${id}">${immagineDestra ? `<div class="comma__immagine-destra">${immagineDestra}</div>` : ""}<p><span class="comma__numero">${c.n}.</span> ${c.dati.testo || ""}</p>${htmlSottocommi(c.sotto, id, progetto)}</div>`;
+    }).join("");
   }
 
   function htmlBlocchi(progetto) {
