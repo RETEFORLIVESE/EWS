@@ -133,15 +133,31 @@
     return `<ol class="sottocommi">${voci}</ol>`;
   }
 
+  // Un'immagine che segue direttamente un comma di testo viene affiancata a destra di
+  // quello stesso comma (invece di comparire come blocco a sé, impilato sotto). Un'immagine
+  // che non segue un comma di testo (es. è la prima, o segue un'altra immagine) resta come
+  // prima: un blocco a tutta larghezza.
   function htmlCommi(sezione, progetto) {
-    return sezione.commi.map(c => {
+    const items = sezione.commi;
+    let html = "";
+    for (let i = 0; i < items.length; i++) {
+      const c = items[i];
       if (c.immagine) {
         const img = htmlImmagineTesto(c.dati, progetto);
-        return img ? `<div class="comma">${img}</div>` : "";
+        html += img ? `<div class="comma">${img}</div>` : "";
+        continue;
       }
       const id = `sez-${sezione.n}-c-${c.n}`;
-      return `<div class="comma" id="${id}"><p><span class="comma__numero">${c.n}.</span> ${c.dati.testo || ""}</p>${htmlSottocommi(c.sotto, id, progetto)}</div>`;
-    }).join("");
+      let immagineDestra = "";
+      const prossimo = items[i + 1];
+      if (prossimo && prossimo.immagine) {
+        immagineDestra = htmlImmagineTesto(prossimo.dati, progetto);
+        if (immagineDestra) i++;   // l'immagine è già stata resa qui: la si salta nel giro successivo
+      }
+      const classe = immagineDestra ? " comma--con-immagine-destra" : "";
+      html += `<div class="comma${classe}" id="${id}">${immagineDestra ? `<div class="comma__immagine-destra">${immagineDestra}</div>` : ""}<p><span class="comma__numero">${c.n}.</span> ${c.dati.testo || ""}</p>${htmlSottocommi(c.sotto, id, progetto)}</div>`;
+    }
+    return html;
   }
 
   function htmlBlocchi(progetto) {
