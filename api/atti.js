@@ -22,11 +22,33 @@ function estraiAtti(registro) {
     return [];
 }
 
+// File JSON leggibili pubblicamente (senza login) tramite questo endpoint,
+// usando ?risorsa=<chiave>. Servono a far passare dal server anche le letture
+// che prima il browser faceva direttamente su raw.githubusercontent.com: da
+// quando la repo DATA è privata, quelle letture dirette non funzionano più
+// (raw.githubusercontent.com richiede repo pubblica o un token, che non va
+// mai esposto al browser). Aggiungi qui altre voci se in futuro serviranno
+// altri file letti pubblicamente dal sito (es. organi.json).
+const RISORSE_PUBBLICHE = {
+    atti: 'atti.json',
+    organi: 'organi.json'
+};
+
 async function gestisciGet(req, res) {
+    const chiave = (req.query && req.query.risorsa) || 'atti';
+    const file = RISORSE_PUBBLICHE[chiave];
+    if (!file) {
+        return res.status(400).json({ message: `Risorsa "${chiave}" non riconosciuta.` });
+    }
     try {
-        const registro = await leggiFileJson('atti.json', { atti: [] });
         res.setHeader('Cache-Control', 'no-store');
-        return res.status(200).json({ atti: estraiAtti(registro) });
+        if (chiave === 'atti') {
+            const registro = await leggiFileJson(file, { atti: [] });
+            return res.status(200).json({ atti: estraiAtti(registro) });
+        }
+        // Le altre risorse (es. organi.json) vengono restituite così come sono.
+        const dati = await leggiFileJson(file, {});
+        return res.status(200).json(dati);
     } catch (error) {
         return res.status(500).json({ message: 'Errore lettura: ' + error.message });
     }
