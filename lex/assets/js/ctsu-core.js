@@ -90,6 +90,8 @@ function iniettaStiliCtsu() {
 .redazione-sottocomma .redazione-testo-campo,.redazione-sottocomma .redazione-immagine-campi{flex:1;min-width:0;}
 .redazione-sottocomma__strumenti{display:grid;grid-template-columns:auto auto;gap:4px;flex:none;}
 .redazione-sottocomma .redazione-btn--piccolo{padding:4px 9px;}
+.redazione-comma__immagine-destra{margin:8px 0;padding:8px 10px;border:1px dashed rgba(0,0,0,.2);border-radius:6px;background:rgba(0,0,0,.02);}
+.redazione-comma__immagine-destra > .redazione-etichetta{display:block;margin-bottom:6px;font-size:.82rem;font-weight:600;}
 `;
   document.head.appendChild(st);
 }
