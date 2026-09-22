@@ -698,10 +698,10 @@
     const API_LOGIN = '/api/elezioni';
     const CHIAVE_CREDENZIALI = 'cepu_redazione_credenziali_v1';
 
-    let credenziali = { binId: null, apiKey: null };
+    let credenziali = { token: null };
 
     function salvaCredenziali(token) {
-        credenziali = { binId: token.binId, apiKey: token.apiKey };
+        credenziali = { token: token };
         try {
             sessionStorage.setItem(CHIAVE_CREDENZIALI, JSON.stringify(credenziali));
         } catch (err) { /* sessione non salvabile: si continua comunque */ }
@@ -712,8 +712,8 @@
             const salvate = sessionStorage.getItem(CHIAVE_CREDENZIALI);
             if (!salvate) return false;
             const dati = JSON.parse(salvate);
-            if (dati && dati.binId && dati.apiKey) {
-                credenziali = { binId: dati.binId, apiKey: dati.apiKey };
+            if (dati && dati.token) {
+                credenziali = { token: dati.token };
                 return true;
             }
         } catch (err) { /* credenziali non recuperabili: serve un nuovo login */ }
@@ -721,7 +721,7 @@
     }
 
     function dimenticaCredenziali() {
-        credenziali = { binId: null, apiKey: null };
+        credenziali = { token: null };
         try { sessionStorage.removeItem(CHIAVE_CREDENZIALI); } catch (err) { /* niente da fare */ }
     }
 
@@ -747,18 +747,21 @@
     }
 
     async function salvaDatasetNelDatabase(listaElezioni) {
-        if (!credenziali.binId || !credenziali.apiKey) {
+        if (!credenziali.token) {
             throw new Error('Sessione scaduta: esegui di nuovo l\'accesso per salvare.');
         }
         impostaStatoDatabase('Salvataggio nel database…', 'caricamento');
-        const risposta = await fetch(`https://api.jsonbin.io/v3/b/${credenziali.binId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': credenziali.apiKey },
-            body: JSON.stringify({ elezioni: listaElezioni })
+        const risposta = await fetch(API_LETTURA, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${credenziali.token}`
+            },
+            body: JSON.stringify({ azione: 'salva', elezioni: listaElezioni })
         });
+        const dati = await risposta.json().catch(() => ({}));
         if (!risposta.ok) {
-            const testoErrore = await risposta.text();
-            throw new Error(`Errore Server (${risposta.status}): ${testoErrore}`);
+            throw new Error(dati.error || `Errore Server (${risposta.status})`);
         }
         impostaStatoDatabase('✓ Salvato nel database', 'ok');
     }
@@ -817,7 +820,7 @@
             const risposta = await fetch(API_LOGIN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: utente, password: password })
+                body: JSON.stringify({ azione: 'login', username: utente, password: password })
             });
             const dati = await risposta.json().catch(() => ({}));
 
