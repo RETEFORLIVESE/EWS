@@ -68,6 +68,14 @@ function iniettaStiliCtsu() {
 .articoli > .immagine-atto.immagine-testo{margin:0;}
 .articolo .comma > .immagine-atto.immagine-testo{margin:4px 0 0;}
 .titolo-gruppo{scroll-margin-top:76px;}
+/* immagine affiancata a destra del comma di testo che la precede */
+.comma--con-immagine-destra{overflow:hidden;}
+.comma__immagine-destra{float:right;margin:0 0 8px 18px;max-width:42%;}
+.comma__immagine-destra .immagine-atto.immagine-testo{margin:0;}
+.comma__immagine-destra .immagine-atto.immagine-testo img{max-height:280px;}
+@media (max-width: 640px){
+  .comma__immagine-destra{float:none;max-width:100%;margin:0 0 10px;}
+}
 .sottocommi > li.sottocomma-immagine{list-style:none;}
 .sottocommi > li.sottocomma-immagine .immagine-atto{margin:4px 0 4px;}
 /* titolo cliccabile nell'indice */
