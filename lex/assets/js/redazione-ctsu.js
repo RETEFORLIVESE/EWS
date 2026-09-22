@@ -287,6 +287,7 @@
         </div>`;
     }
     const sotto = (c && Array.isArray(c.sottocommi) ? c.sottocommi : []).map(renderSottocomma).join("");
+    const imgDestra = (c && c.immagine && typeof c.immagine === "object") ? c.immagine : { url: "", didascalia: "" };
     return `
       <div class="redazione-comma redazione-blocco" data-tipo="comma">
         <div class="redazione-comma__intestazione redazione-intestazione-blocco">
@@ -295,6 +296,13 @@
           ${bottoneRimuovi("Rimuovi comma", "margin-left:auto;")}
         </div>
         <textarea class="redazione-testo-campo redazione-comma-testo" rows="3" placeholder="Testo del comma">${escapeHtml(c && c.testo)}</textarea>
+        <div class="redazione-comma__immagine-destra">
+          <span class="redazione-etichetta">🖼 Immagine a destra del comma (facoltativa)</span>
+          <div class="redazione-immagine-campi">
+            <input type="text" class="redazione-img-destra-url" placeholder="Indirizzo web dell'immagine (https://...)" value="${escapeHtml(imgDestra.url)}" />
+            <input type="text" class="redazione-img-destra-didascalia" placeholder="Didascalia (facoltativa)" value="${escapeHtml(imgDestra.didascalia)}" />
+          </div>
+        </div>
         <div class="redazione-sottocommi">${sotto}</div>
         <div class="redazione-azioni-riga">
           ${bottoneAggiungi("sottocomma", "+ Sottocomma")}
@@ -585,10 +593,13 @@
 
   function leggiCommi(sezioneEl) {
     return figliBlocco(sezioneEl, ".redazione-commi")
-      .map(el => el.dataset.tipo === "comma-immagine"
-        ? leggiImmagine(el)
-        : { testo: testoDi(el), sottocommi: leggiSottocommi(el) })
-      .filter(c => c.tipo === "immagine" ? c.url !== "" : (c.testo !== "" || c.sottocommi.length > 0));
+      .map(el => {
+        if (el.dataset.tipo === "comma-immagine") return leggiImmagine(el);
+        const base = { testo: testoDi(el), sottocommi: leggiSottocommi(el) };
+        const url = valoreDi(el, ".redazione-img-destra-url");
+        return url ? { ...base, immagine: { url, didascalia: valoreDi(el, ".redazione-img-destra-didascalia") } } : base;
+      })
+      .filter(c => c.tipo === "immagine" ? c.url !== "" : (c.testo !== "" || c.sottocommi.length > 0 || !!c.immagine));
   }
 
   // Blocchi di primo livello nell'ordine in cui compaiono: TITOLI, sezioni (con commi) e immagini.
