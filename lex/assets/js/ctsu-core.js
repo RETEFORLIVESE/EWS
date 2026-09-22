@@ -70,9 +70,9 @@ function iniettaStiliCtsu() {
 .titolo-gruppo{scroll-margin-top:76px;}
 /* immagine affiancata a destra del comma di testo che la precede */
 .comma--con-immagine-destra{overflow:hidden;}
-.comma__immagine-destra{float:right;margin:0 0 8px 18px;max-width:42%;}
+.comma__immagine-destra{float:right;margin:0 0 8px 18px;max-width:55%;}
 .comma__immagine-destra .immagine-atto.immagine-testo{margin:0;}
-.comma__immagine-destra .immagine-atto.immagine-testo img{max-height:280px;}
+.comma__immagine-destra .immagine-atto.immagine-testo img{max-height:420px;}
 @media (max-width: 640px){
   .comma__immagine-destra{float:none;max-width:100%;margin:0 0 10px;}
 }
