@@ -1,0 +1,730 @@
+<!-- Mappa unificata del sistema di transito dell'USSE / [TB] & cutv -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Île-de-USSE Mobilités — Mappa della rete</title>
+<link rel="apple-touch-icon" href="IDU.png">
+<link rel="icon" type="image/png" href="IDU.png">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --fa-blue-deep: #0a4d78;
+    --fa-blue: #1ba0e2;
+    --fa-blue-mid: #4fc3f7;
+    --fa-azure: #eafcff;
+    --fa-azure-mid: #cdf3ff;
+    --fa-ink: #0d3350;
+    --fa-text: #2f5871;
+    --fa-line: #bfe6f5;
+    --fa-white: #ffffff;
+    --fa-glass: rgba(255,255,255,0.6);
+    --fa-glass-strong: rgba(255,255,255,0.88);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fa-blue-deep: #7fd6f7;
+      --fa-ink: #eaf6ff;
+      --fa-text: #b7d3e6;
+      --fa-line: rgba(255,255,255,0.14);
+      --fa-azure: #0c2438;
+      --fa-azure-mid: #123049;
+      --fa-glass: rgba(18,38,58,0.55);
+      --fa-glass-strong: rgba(16,34,52,0.92);
+    }
+  }
+  :root[data-theme="dark"] {
+    --fa-blue-deep: #7fd6f7;
+    --fa-ink: #eaf6ff;
+    --fa-text: #b7d3e6;
+    --fa-line: rgba(255,255,255,0.14);
+    --fa-azure: #0c2438;
+    --fa-azure-mid: #123049;
+    --fa-glass: rgba(18,38,58,0.55);
+    --fa-glass-strong: rgba(16,34,52,0.92);
+  }
+
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--fa-azure);
+    color: var(--fa-text);
+    font-family: "Titillium Web", "Segoe UI", Arial, sans-serif;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+  }
+  a { color: inherit; }
+  img, svg { max-width: 100%; display: block; }
+  button { font-family: inherit; }
+
+  /* ---------- Top institutional strip ---------- */
+  .top-strip {
+    background: linear-gradient(180deg, #0e5c8c 0%, #073a5c 100%);
+    color: rgba(255,255,255,0.9);
+    font-size: 0.78rem;
+    padding: 0.4rem clamp(1rem, 4vw, 3rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 4px rgba(0,0,0,0.2);
+  }
+  .top-strip a { text-decoration: none; color: rgba(255,255,255,0.9); margin-left: 1.25rem; }
+  .top-strip a:hover { text-decoration: underline; }
+
+  /* ---------- Main header band ---------- */
+  header.main-band {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 45%),
+      linear-gradient(180deg, #4fc7f2 0%, #1487c9 55%, #0a5f96 100%);
+    color: #fff;
+    padding: 0.75rem clamp(1rem, 4vw, 3rem);
+    flex-shrink: 0;
+    box-shadow: 0 4px 18px rgba(10,77,120,0.35), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .band-inner {
+    max-width: 1400px; margin: 0 auto;
+    display: flex; align-items: center; gap: 1rem; justify-content: space-between; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 0.8rem; text-decoration: none; color: #fff; }
+  .brand-seal {
+    width: 54px; height: 54px; display: grid; place-items: center; flex-shrink: 0; border-radius: 50%;
+    background: radial-gradient(circle at 35% 25%, rgba(255,255,255,0.65), rgba(255,255,255,0) 55%);
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.6)) drop-shadow(0 0 16px rgba(255,255,255,0.35));
+    overflow: hidden;
+  }
+  .brand-seal img { width: 100%; height: 100%; object-fit: contain; }
+  .brand-text-group { display: flex; flex-direction: column; line-height: 1.15; }
+  .brand-eyebrow { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .brand-title { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.01em; text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .header-updated { font-size: 0.78rem; color: rgba(255,255,255,0.85); text-align: right; }
+
+  /* ---------- Flag stripe (tricolore) ---------- */
+  .flag-stripe { display: flex; height: 8px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .flag-stripe span { flex: 1 1 0; }
+  .flag-stripe .stripe-1 { background: linear-gradient(180deg, #34478a, #00105e); }
+  .flag-stripe .stripe-2 { background: linear-gradient(180deg, #333, #000); }
+  .flag-stripe .stripe-3 { background: linear-gradient(180deg, #dedede, #a3a3a3); }
+
+  /* ---------- App body: mappa + pannello laterale ---------- */
+  .app-main { flex: 1; display: flex; min-height: 0; }
+
+  .map-stage { position: relative; flex: 1; min-width: 0; background: var(--fa-azure-mid); overflow: hidden; }
+  .map-viewport { width: 100%; height: 100%; overflow: hidden; cursor: grab; touch-action: none; }
+  .map-viewport.dragging { cursor: grabbing; }
+  .map-inner { transform-origin: 0 0; will-change: transform; width: 100%; height: 100%; }
+  #network-map { width: 100%; height: 100%; display: block; }
+  .map-bg-photo { filter: grayscale(85%) blur(0.5px) brightness(1.15) contrast(0.9); opacity: 0.55; pointer-events: none; }
+  .map-bg-overlay { fill: var(--fa-azure); opacity: 0.5; pointer-events: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .map-bg-photo { filter: grayscale(85%) blur(0.5px) brightness(0.6) contrast(1.1); opacity: 0.4; }
+  }
+  :root[data-theme="dark"] .map-bg-photo { filter: grayscale(85%) blur(0.5px) brightness(0.6) contrast(1.1); opacity: 0.4; }
+
+  .map-station { cursor: pointer; }
+  .map-station circle { transition: r 0.15s ease, stroke-width 0.15s ease; }
+  .map-station:hover circle, .map-station.active circle { stroke-width: 4; }
+  .map-station text { font-family: "Titillium Web", sans-serif; font-size: 13px; fill: var(--fa-ink); font-weight: 600; pointer-events: none; }
+  .line-path { cursor: pointer; }
+  .dimmed { opacity: 0.12 !important; }
+
+  /* controlli zoom */
+  .map-controls {
+    position: absolute; top: 1rem; right: 1rem; z-index: 5;
+    display: flex; flex-direction: column; gap: 0.4rem;
+    background: var(--fa-glass-strong); border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 12px; padding: 0.4rem; backdrop-filter: blur(8px);
+    box-shadow: 0 8px 20px rgba(10,77,120,0.18);
+  }
+  .map-controls button {
+    width: 38px; height: 38px; border: none; border-radius: 8px; cursor: pointer;
+    background: var(--fa-white); color: var(--fa-blue-deep); font-size: 1.2rem; font-weight: 700;
+    display: grid; place-items: center; transition: background 0.15s ease;
+  }
+  .map-controls button:hover { background: var(--fa-azure-mid); }
+  .map-controls button#zoom-reset { font-size: 0.85rem; }
+  .map-hint {
+    position: absolute; bottom: 0.9rem; left: 1rem; z-index: 5;
+    font-size: 0.74rem; color: var(--fa-blue-deep); background: var(--fa-glass-strong);
+    padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.5);
+    pointer-events: none;
+  }
+
+  /* ---------- Pannello laterale ---------- */
+  .side-panel {
+    width: 340px; flex-shrink: 0; background: var(--fa-glass-strong);
+    border-left: 1px solid rgba(255,255,255,0.5);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 1.1rem 1.1rem 2rem;
+    display: flex; flex-direction: column; gap: 1.3rem;
+  }
+  .side-block h3 {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--fa-blue); font-weight: 700; margin-bottom: 0.7rem;
+  }
+
+  /* bottoni sistema, in colonna sul lato */
+  .system-buttons { display: flex; flex-direction: column; gap: 0.45rem; }
+  .system-buttons button {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    color: var(--fa-ink); font-weight: 700; font-size: 0.85rem;
+    background: rgba(255,255,255,0.5); border: 2px solid transparent; border-radius: 10px;
+    padding: 0.55rem 0.8rem; cursor: pointer; text-align: left;
+    transition: border-color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    opacity: 0.6;
+  }
+  .system-buttons button.active { border-color: var(--fa-ink); opacity: 1; background: rgba(255,255,255,0.85); }
+  .system-buttons button:hover { opacity: 1; }
+
+  /* tabella linee (elenco trasformato) */
+  .lines-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .lines-table th {
+    text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--fa-text); padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--fa-line);
+  }
+  .lines-table td { padding: 0.4rem; border-bottom: 1px solid var(--fa-line); vertical-align: middle; }
+  .lines-table tr { cursor: pointer; transition: background 0.15s ease; }
+  .lines-table tr:hover { background: rgba(255,255,255,0.5); }
+  .lines-table tr.active-row { background: rgba(255,255,255,0.85); }
+  .line-swatch {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%; color: #fff; font-weight: 900; font-size: 0.68rem;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 1px 3px rgba(0,0,0,0.2); flex-shrink: 0;
+  }
+  .lines-table .line-name-cell { display: flex; align-items: center; gap: 0.5rem; }
+
+  /* pannello info stazione */
+  .map-info { font-size: 0.85rem; }
+  .map-info h4 { font-size: 1rem; color: var(--fa-ink); margin-bottom: 0.3rem; }
+  .map-info-placeholder { color: var(--fa-text); opacity: 0.8; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+  .map-pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; color: #fff; font-size: 0.72rem; font-weight: 700; }
+  .station-details { margin-top: 0.6rem; color: var(--fa-text); white-space: pre-line; }
+  .station-links { margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  .map-info-link { font-size: 0.82rem; font-weight: 700; color: var(--fa-blue-deep); text-decoration: underline; }
+
+  @media (max-width: 820px) {
+    html, body { overflow: auto; height: auto; }
+    .app-main { flex-direction: column; }
+    .map-stage { height: 62vh; flex: none; }
+    .side-panel { width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.5); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-strip">
+    <span>EstjiLinn-Taleen</span>
+    <div>
+      <a href="#">Italiano</a>
+      <a href="#">Français</a>
+    </div>
+  </div>
+
+  <header class="main-band">
+    <div class="band-inner">
+      <a href="#" class="brand">
+        <span class="brand-seal"><img src="IDU.png" alt="Logo IDU"></span>
+        <span class="brand-text-group">
+          <span class="brand-eyebrow">Île-de-USSE Mobilités</span>
+          <span class="brand-title">Mappa della rete</span>
+        </span>
+      </a>
+      <div class="header-updated">Aggiornata al 26/08/2026</div>
+    </div>
+  </header>
+
+  <div class="flag-stripe" aria-hidden="true">
+    <span class="stripe-1"></span>
+    <span class="stripe-2"></span>
+    <span class="stripe-3"></span>
+  </div>
+
+  <main class="app-main">
+    <div class="map-stage">
+      <div class="map-viewport" id="map-viewport">
+        <div class="map-inner" id="map-inner">
+          <svg id="network-map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA">
+            <image href="UsseGeoMap.png" x="0" y="0" width="1000" height="700" preserveAspectRatio="xMidYMid slice" class="map-bg-photo"></image>
+            <rect x="0" y="0" width="1000" height="700" class="map-bg-overlay"></rect>
+          </svg>
+        </div>
+      </div>
+      <div class="map-controls">
+        <button type="button" id="zoom-in" aria-label="Zoom avanti">+</button>
+        <button type="button" id="zoom-out" aria-label="Zoom indietro">−</button>
+        <button type="button" id="zoom-reset" aria-label="Reimposta vista">↺</button>
+      </div>
+      <div class="map-hint">Trascina per muoverti · rotella o pizzica per zoommare</div>
+    </div>
+
+    <aside class="side-panel">
+      <div class="side-block">
+        <h3>Sistema</h3>
+        <div class="system-buttons" id="map-legend"></div>
+      </div>
+
+      <div class="side-block">
+        <h3>Linee</h3>
+        <table class="lines-table" id="lines-table">
+          <thead><tr><th>Linea</th><th>Sistema</th></tr></thead>
+          <tbody id="lines-table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="side-block">
+        <h3>Stazione selezionata</h3>
+        <div class="map-info" id="map-info">
+          <p class="map-info-placeholder">Tocca un punto sulla mappa per vedere il nome della stazione e le linee che vi transitano.</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+<script>
+(function () {
+  if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+  }
+  "use strict";
+
+  /* =====================================================================
+     DATI DELLA RETE (stessi dati del sito originale)
+     La mappa di sfondo (TaleenMap.png) e' una immagine ad alta risoluzione
+     (6976x7920px): lo zoom qui sotto scala l'SVG con una transform CSS,
+     cosi' anche a forte ingrandimento l'immagine resta nitida invece di
+     sgranarsi come farebbe un semplice ridimensionamento del viewBox.
+  ===================================================================== */
+  var LINES = {
+    m1: { name: "Linea 1", color: "#bf2008", system: "metro", icon: "M1" },
+    m2: { name: "Linea 2", color: "#2f8f4e", system: "metro", icon: "M2" },
+    m3: { name: "Linea 3", color: "#c9971f", system: "metro", icon: "M3" },
+    m4: { name: "Linea 4", color: "#4489e3", system: "metro", icon: "M4" },
+    m5: { name: "Linea 5", color: "#8ef19e", system: "metro", icon: "M5" },
+    m6: { name: "Linea 6", color: "#240a4a", system: "metro", icon: "M6" },
+    m7: { name: "Linea 7", color: "#732d05", system: "metro", icon: "M7" },
+    m8: { name: "Linea 8", color: "#056473", system: "metro", icon: "M8" },
+    ma: { name: "Linea A", color: "#687ab3", system: "metro", icon: "Ma" },
+    ra: { name: "RERa", color: "#8a060c", system: "rer", icon: "Ra" },
+    rb: { name: "RERb", color: "#068a20", system: "rer", icon: "Rb" },
+    rc: { name: "RERc", color: "#063d8a", system: "rer", icon: "Rc" },
+    s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
+    s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
+    s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" },
+    t1: { name: "T1", color: "#063d8a", system: "tram", icon: "T1" },
+    t2: { name: "T2", color: "#84060c", system: "tram", icon: "T2" },
+    t3: { name: "T3", color: "#2f8f4e", system: "tram", icon: "T3" }
+  };
+
+  var SYSTEM_LABELS = { metro: "Metropolitana", rer: "RER", tram: "Tram", shutle: "Shùtle" };
+
+  var LINE_PATHS = {
+   m1: ["talindam","dakisula","bennon","port","anarkios","webariik","newpenn","thalè","iketal","estjilinn","port_d_expo","portmailotte","monparnass","a_t_c"],
+   m2: ["baterina","royale", "p_littoria", "t_littoria","port","n_t_c","newshinguku","nationes","gallier"],
+   m3: ["lampugnano","t_littoria","alx_der","unionplz","outlx","tallin_akuna","natio","sarsovg","sars_f"],
+   m4: ["s_fulcrea","kaßazion","estji_viter","tamperan_tassavalta","tallin_akuna","kompasse","toer","cotoplatz","alina","monparnass","mariotte","viktorplatz"],
+   m5: ["pernety","mariotte","port_d_expo","estjilinn","bobigny"],
+   m6: ["samar","s_fulcrea","estji_kaßache","suomentaku","tallin_akuna","kompasse","newpenn","nationes"],
+   m7: ["ecles","ostiense","port_d_expo","tegelg","oberdan","thalè","alexander_platz","lufte","gallier","chatillon"],
+   m8: ["estji_viter","estji_kaßache","suomenlapsi","prolet","fsd","unionplz","goberdan"],
+   ma: ["fluvia","ankita_nord","viktorplatz","ostiense","estjilinn","tegelg","1_le","cotoplatz","alina","hopera_cyrcula","sars_f","fluvia"],
+   ra: ["noviforum","sars_f","estji_viter","sarsovg","1_le","newpenn","thalè","hotspot","lufte","gallier","colonia"],
+   rb: ["ikebukuro","s_fulcrea","sars_f","hopera_cyrcula","monparnass","portmailotte","port_d_expo","ostiense","lybica"],
+   rc: ["n_t_c","newshinguku","nationes","lufte","hotspot","iketal","oberdan","tegelg","1_le","hopera_cycula","sars_f"],
+   s1: ["lampugnano","alx_der","goberdan","bennon","port","anarkios","webariik","regio","termini","toer","cotoplatz","fluvia","pernety","bovaes","1_le"],
+   s3: ["port_d_expo","bovaes","pernety","ankita_nord","ankita_feld","ecles"],
+   s6: ["bennon","t_littoria","alx_der","unionplz","fsd","suomentaku"],
+   t1: ["tallin_akuna","termini","murer","embas","port_d_expo","estjilinn"],
+   t2: ["tallin_akuna","termini","anaekios","port","bennon","dakisula","talindam"],
+   t3: ["tallin_akuna","11kunta","suomenlapsi"]
+  };
+
+  var STATIONS = [
+        { id: "ikebukuro", name: "Ikebukuro", x: 0, y: 202, lines: ["rb"],
+          details: "Capolinea Ovest della rete. Capitale dell'EstjiKuro."},
+        { id: "samar", name: "Samar", x: 194, y: 145, lines: ["m6"] },
+        { id: "s_fulcrea", name: "S.Fulcrea", x: 194, y: 202, lines: ["rb","m4","m6"] },
+        { id: "estji_kaßache", name: "Estji-Kaßache", x: 212, y: 234, lines: ["m8","m6"] },
+        { id: "kaßazion", name: "Kaßazion", x: 300, y: 202, lines: ["m4"] },
+        { id: "sars_f", name: "Sars F.", x: 453, y: 202, lines: ["m3","ma","rb","ra","rc"] },
+        { id: "noviforum", name: "NoviForum", x: 453, y: 0, lines: ["ra"] },
+        { id: "fluvia", name: "Fluvia", x: 503, y: 131, lines: ["ma","s1"] },
+        { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 500, y: 202, lines: ["ma","rb"] },
+        { id: "a_t_c", name: "A.T.C.", x: 600, y: 100, lines: ["m1"] },
+        { id: "ankita_nord", name: "Ankita Nord", x: 750, y: 131, lines: ["s3","ma"] },
+        { id: "ankita_feld", name: "Ankita Feld", x: 850, y: 131, lines: ["s3"] },
+        { id: "pernety", name: "Pernety", x: 680, y: 131, lines: ["s1","m5","s3"] },
+        { id: "bovaes", name: "Bovaes", x: 620, y: 250, lines: ["s1","s3"] },
+        { id: "mariotte", name: "Mariotte", x: 680, y: 228, lines: ["m4","m5"] },
+        { id: "viktorplatz", name: "ViktorPlatz", x: 815, y: 216, lines: ["ma","m4"] },
+        { id: "estji_viter", name: "Estji-Viter", x: 350, y: 233, lines: ["m4","ra","m8"] },
+        { id: "cotoplatz", name: "CotoPlatz", x: 500, y: 261, lines: ["ma","s1","m4"] },
+        { id: "sarsovg", name: "SarsOVG", x: 403, y: 292, lines: ["m3","ra"] },
+        { id: "alina", name: "Alina", x: 547, y: 226, lines: ["ma","m4"] },
+        { id: "natio", name: "Natio", x: 403, y: 347, lines: ["m3"] },
+        { id: "toer", name: "Toer", x: 453, y: 347, lines: ["m4","s1"] },
+        { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["rc","ma","m7"] },
+        { id: "1_le", name: "1 Île", x: 500, y: 316, lines: ["ra","rc","ma","s1"] },
+        { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["rb","m1"] },
+        { id: "embas", name: "Embas", x: 540, y: 350, lines: ["t1"], details: "Da Espandere [Rc]." },
+        { id: "murer", name: "Murer", x: 508, y: 410, lines: ["t1"]},
+        { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["t1","s3","m7","m5","rb","m1"] },
+        { id: "ostiense", name: "Ostiense", x: 815, y: 300, lines: ["rb","m7","ma"] },
+        { id: "lybica", name: "Lybica", x: 950, y: 300, lines: ["rb"] },
+        { id: "ecles", name: "Ecles", x: 900, y: 250, lines: ["m7","s3"] },
+        { id: "bobigny", name: "Bobigny", x: 801, y: 364, lines: ["m5"] },
+        { id: "estjilinn", name: "EstjiLinn", x: 744, y: 364, lines: ["t1","m5","m1","ma"] },
+        { id: "monparnass", name: "MonParnass", x: 600, y: 228, lines: ["m4","rb","m5"] },
+        { id: "suomenlapsi", name: "SuomenLapsi", x: 164, y: 292, lines: ["m8","t3"] },
+        { id: "suomentaku", name: "SuomenTaku", x: 212, y: 324, lines: ["m6","s6"] },
+        { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 351, y: 330, lines: ["m4","s6"] },
+        { id: "11kunta", name: "11 Kunta", x: 280, y: 292, lines: ["t3"] },
+        { id: "prolet", name: "Prolet", x: 100, y: 406, lines: ["m8"] },
+        { id: "fsd", name: "FSD", x: 212, y: 413, lines: ["m8","s6"] },
+        { id: "unionplz", name: "UnionPlz", x: 306, y: 451, lines: ["m3","m8","s6"] },
+        { id: "alx_der", name: "Alx.der", x: 306, y: 498, lines: ["m3","s1","s6"] },
+        { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, lines: ["t1","t3","t2","m3","m4","m6"] },
+        { id: "outlx", name: "Outlx", x: 306, y: 406, lines: ["m3"] },
+        { id: "kompasse", name: "Kompasse", x: 425, y: 376, lines: ["m4","m6"] },
+        { id: "termini", name: "Termini", x: 402, y: 425, lines: ["t2","m4","m6","t1","t2","t3"] },
+        { id: "newpenn", name: "NewPenn", x: 580, y: 430, lines: ["m6","ra","m1"] },
+        { id: "oberdan", name: "Oberdan", x: 632, y: 394, lines: ["m7","rc"] },
+        { id: "thalè", name: "Thalè", x: 675, y: 430, lines: ["ra","m7","m1"] },
+        { id: "iketal", name: "IkeTal", x: 744, y: 430, lines: ["m1","rc"] },
+        { id: "hotspot", name: "Hotspot", x: 781, y: 451, lines: ["ra"] },
+        { id: "alexander_platz", name: "Alexander Platz", x: 712, y: 484, lines: ["m7"] },
+        { id: "goberdan", name: "Goberdan", x: 371, y: 510, lines: ["m8","s1"] },
+        { id: "webariik", name: "WebaRiik", x: 508, y: 463, lines: ["m1","s1"] },
+        { id: "regio", name: "Regio", x: 508, y: 425, lines: ["s1"] },
+        { id: "anarkios", name: "Anarkios", x: 403, y: 463, lines: ["m1","t2","s1"] },
+        { id: "t_littoria", name: "T.Littoria", x: 316, y: 535, lines: ["s6","m2","m3"] },
+        { id: "p_littoria", name: "P.Littoria", x: 254, y: 535, lines: ["m2"] },
+        { id: "royale", name: "Royale", x: 164, y: 551, lines: ["m2"] },
+        { id: "port", name: "LaFinance", x: 403, y: 545, lines: ["m2","t2","m1","s1"] },
+        { id: "n_t_c", name: "N.T.C.", x: 486, y: 545, lines: ["m2","rc"],
+          details: "National Trade Cener. Capitale dell'EstjiKuro.",
+          links: [{ label: "Sito Ufficiale", url: "https://example.com/ikebukuro-bus" }] },
+        { id: "newshinguku", name: "NewShinguku", x: 550, y: 545, lines: ["m2","rc"] },
+        { id: "nationes", name: "Nationes", x: 634, y: 545, lines: ["m2","rc","m6","m7"] },
+        { id: "lufte", name: "Lufte", x: 710, y: 506, lines: ["ra","m7","rc"] },
+        { id: "gallier", name: "Gallier", x: 710, y: 545, lines: ["m2","m7","ra"] },
+        { id: "colonia", name: "Colonia", x: 710, y: 650, lines: ["ra"] },
+        { id: "chatillon", name: "Chatillon", x: 727, y: 569, lines: ["m7"] },
+        { id: "bennon", name: "Bennon", x: 403, y: 580, lines: ["m1","s1","t2","s6"] },
+        { id: "dakisula", name: "DakIsula", x: 403, y: 609, lines: ["m1","t2"] },
+        { id: "talindam", name: "TalinDam", x: 423, y: 651, lines: ["m1","t2"] },
+        { id: "baterina", name: "Baterina", x: 45, y: 637, lines: ["m2"] },
+        { id: "lampugnano", name: "Lampugnano", x: 269, y: 637, lines: ["s1","m3"] }
+  ];
+
+  var svgNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(svgNS, tag);
+    for (var k in attrs) { e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+  function byId(id) { for (var i=0;i<STATIONS.length;i++){ if (STATIONS[i].id===id) return STATIONS[i]; } return null; }
+
+  var svg = document.getElementById("network-map");
+  var activeSystem = null;
+  var activeLine = null;
+
+  function stationSystems(st) {
+    var out = [];
+    st.lines.forEach(function (lk) {
+      var sys = LINES[lk] && LINES[lk].system;
+      if (sys && out.indexOf(sys) === -1) out.push(sys);
+    });
+    return out;
+  }
+
+  Object.keys(LINE_PATHS).forEach(function (lineKey) {
+    var ids = LINE_PATHS[lineKey];
+    var line = LINES[lineKey];
+    if (!line || !ids || ids.length < 2) return;
+    var pathStations = ids.map(byId).filter(Boolean);
+    if (pathStations.length < 2) return;
+    var points = pathStations.map(function (s) { return s.x + "," + s.y; }).join(" ");
+    var pl = el("polyline", {
+      class: "line-path", "data-line": lineKey, "data-systems": line.system, points: points,
+      fill: "none", stroke: line.color, "stroke-width": "6",
+      "stroke-linecap": "round", "stroke-linejoin": "round", opacity: "0.9"
+    });
+    pl.addEventListener("click", function () {
+      activeLine = (activeLine === lineKey) ? null : lineKey;
+      applyFilter();
+    });
+    svg.appendChild(pl);
+  });
+
+  STATIONS.forEach(function (st) {
+    var systems = stationSystems(st);
+    var g = el("g", { class: "map-station", "data-id": st.id, "data-systems": systems.join(","), "data-lines": st.lines.join(","), tabindex: "0", role: "button", "aria-label": st.name });
+
+    if (st.lines.length > 1) {
+      var ring = el("circle", { cx: st.x, cy: st.y, r: 12, fill: "#fff", stroke: "var(--fa-ink)", "stroke-width": "3" });
+      g.appendChild(ring);
+      var dot = el("circle", { cx: st.x, cy: st.y, r: 5, fill: "var(--fa-ink)" });
+      g.appendChild(dot);
+    } else {
+      var mainColor = LINES[st.lines[0]] ? LINES[st.lines[0]].color : "var(--fa-ink)";
+      var c = el("circle", { cx: st.x, cy: st.y, r: 9, fill: mainColor, stroke: "#fff", "stroke-width": "3" });
+      g.appendChild(c);
+    }
+
+    var nearLeftEdge = st.x < 80;
+    var labelX = nearLeftEdge ? st.x + 16 : st.x + (st.x > 500 ? 16 : st.x < 500 ? -16 : 0);
+    var anchor = nearLeftEdge ? "start" : (st.x > 500 ? "start" : st.x < 500 ? "end" : "middle");
+    var labelY = st.y < 40 ? st.y + 24 : st.y - 16;
+
+    var t = el("text", { x: labelX, y: labelY, "text-anchor": anchor });
+    t.textContent = st.name;
+    g.appendChild(t);
+
+    g.addEventListener("click", function () { selectStation(st.id); });
+    g.addEventListener("keypress", function (ev) { if (ev.key === "Enter" || ev.key === " ") selectStation(st.id); });
+
+    svg.appendChild(g);
+  });
+
+  function selectStation(id) {
+    var st = byId(id);
+    if (!st) return;
+    document.querySelectorAll(".map-station").forEach(function (n) { n.classList.remove("active"); });
+    var node = svg.querySelector('.map-station[data-id="' + id + '"]');
+    if (node) node.classList.add("active");
+
+    var info = document.getElementById("map-info");
+    var pills = st.lines.map(function (lk) {
+      var line = LINES[lk];
+      return '<span class="map-pill" style="background:' + (line ? line.color : "var(--fa-ink)") + '">' + (line ? line.name : lk) + "</span>";
+    }).join("");
+    info.innerHTML =
+      "<h4>" + st.name + "</h4>" +
+      "<p>" + (st.lines.length > 1 ? "Stazione di interscambio." : "Servita da " + (LINES[st.lines[0]] ? LINES[st.lines[0]].name : st.lines[0]) + ".") + "</p>" +
+      '<div class="pill-row">' + pills + "</div>";
+
+    if (st.details) {
+      var details = document.createElement("p");
+      details.className = "station-details";
+      details.textContent = st.details;
+      info.appendChild(details);
+    }
+
+    if (st.links && st.links.length) {
+      var linksWrap = document.createElement("div");
+      linksWrap.className = "station-links";
+      st.links.forEach(function (lnk) {
+        if (!lnk || !lnk.url) return;
+        var a = document.createElement("a");
+        a.className = "map-info-link";
+        a.href = lnk.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = lnk.label || lnk.url;
+        linksWrap.appendChild(a);
+      });
+      info.appendChild(linksWrap);
+    }
+  }
+
+  var legend = document.getElementById("map-legend");
+  var tableBody = document.getElementById("lines-table-body");
+
+  function applyFilter() {
+    document.querySelectorAll(".map-station, .line-path").forEach(function (n) {
+      var isMatch;
+      if (activeLine) {
+        if (n.classList.contains("line-path")) {
+          isMatch = n.getAttribute("data-line") === activeLine;
+        } else {
+          var lines = (n.getAttribute("data-lines") || "").split(",");
+          isMatch = lines.indexOf(activeLine) !== -1;
+        }
+      } else {
+        var systems = (n.getAttribute("data-systems") || "").split(",");
+        isMatch = !activeSystem || systems.indexOf(activeSystem) !== -1;
+      }
+      n.classList.toggle("dimmed", !isMatch);
+    });
+    legend.querySelectorAll("button[data-filter]").forEach(function (b) {
+      b.classList.toggle("active", (b.dataset.filter || null) === activeSystem);
+    });
+    renderLinesTable();
+  }
+
+  function makeFilterButton(key, label) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.filter = key || "";
+    btn.textContent = label;
+    btn.addEventListener("click", function () {
+      activeSystem = (activeSystem === key) ? null : key;
+      activeLine = null;
+      applyFilter();
+    });
+    legend.appendChild(btn);
+  }
+
+  makeFilterButton(null, "Tutti");
+  Object.keys(SYSTEM_LABELS).forEach(function (key) {
+    makeFilterButton(key, SYSTEM_LABELS[key]);
+  });
+
+  // elenco linee trasformato in una tabella: righe cliccabili, colonna
+  // "Sistema" con l'etichetta leggibile, filtrata in base al sistema attivo
+  function renderLinesTable() {
+    tableBody.innerHTML = "";
+    Object.keys(LINES).forEach(function (lk) {
+      var line = LINES[lk];
+      if (activeSystem && line.system !== activeSystem) return;
+      var tr = document.createElement("tr");
+      if (activeLine === lk) tr.classList.add("active-row");
+      tr.innerHTML =
+        '<td><div class="line-name-cell"><span class="line-swatch" style="background:' + line.color + '">' + (line.icon || lk.toUpperCase()) + '</span>' + line.name + '</div></td>' +
+        '<td>' + SYSTEM_LABELS[line.system] + '</td>';
+      tr.addEventListener("click", function () {
+        activeLine = (activeLine === lk) ? null : lk;
+        applyFilter();
+      });
+      tableBody.appendChild(tr);
+    });
+  }
+
+  // ---- adatta il viewBox al contenuto reale della rete -------------------
+  function fitMapView() {
+    var pad = 30;
+    var box = null;
+    try {
+      var b = svg.getBBox();
+      if (b && b.width > 0 && b.height > 0) box = { x: b.x, y: b.y, w: b.width, h: b.height };
+    } catch (e) { /* ignorato: si usa il calcolo di riserva */ }
+
+    if (!box) {
+      var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      STATIONS.forEach(function (s) {
+        if (s.x < minX) minX = s.x;
+        if (s.x > maxX) maxX = s.x;
+        if (s.y < minY) minY = s.y;
+        if (s.y > maxY) maxY = s.y;
+      });
+      if (!isFinite(minX)) return;
+      minX -= 150; maxX += 170; minY -= 40; maxY += 30;
+      box = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+    }
+
+    svg.setAttribute(
+      "viewBox",
+      (box.x - pad) + " " + (box.y - pad) + " " + (box.w + pad * 2) + " " + (box.h + pad * 2)
+    );
+  }
+
+  fitMapView();
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fitMapView); }
+  window.addEventListener("load", fitMapView);
+
+  applyFilter();
+
+  /* =====================================================================
+     ZOOM & PAN
+     La trasformazione (translate/scale) e' applicata via CSS al contenitore
+     .map-inner, non al viewBox dell'SVG: cosi' le coordinate delle stazioni
+     restano invariate e l'immagine di sfondo (altissima risoluzione) resta
+     nitida anche con forte ingrandimento.
+  ===================================================================== */
+  var viewport = document.getElementById("map-viewport");
+  var inner = document.getElementById("map-inner");
+  var scale = 1, tx = 0, ty = 0;
+  var MIN_SCALE = 0.5, MAX_SCALE = 12;
+
+  function applyTransform() {
+    inner.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + scale + ")";
+  }
+
+  function zoomAt(clientX, clientY, factor) {
+    var rect = viewport.getBoundingClientRect();
+    var offsetX = clientX - rect.left;
+    var offsetY = clientY - rect.top;
+    var newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+    if (newScale === scale) return;
+    tx = offsetX - (offsetX - tx) * (newScale / scale);
+    ty = offsetY - (offsetY - ty) * (newScale / scale);
+    scale = newScale;
+    applyTransform();
+  }
+
+  function resetView() {
+    scale = 1; tx = 0; ty = 0;
+    applyTransform();
+  }
+  resetView();
+
+  viewport.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    var factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    zoomAt(e.clientX, e.clientY, factor);
+  }, { passive: false });
+
+  viewport.addEventListener("dblclick", function (e) {
+    zoomAt(e.clientX, e.clientY, 1.6);
+  });
+
+  var pointers = {};
+  var dragging = false, lastX = 0, lastY = 0, lastPinchDist = null;
+
+  viewport.addEventListener("pointerdown", function (e) {
+    pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    viewport.setPointerCapture(e.pointerId);
+    if (Object.keys(pointers).length === 1) {
+      dragging = true; lastX = e.clientX; lastY = e.clientY;
+      viewport.classList.add("dragging");
+    }
+  });
+
+  viewport.addEventListener("pointermove", function (e) {
+    if (!pointers[e.pointerId]) return;
+    pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(pointers);
+    if (ids.length === 2) {
+      dragging = false;
+      var p1 = pointers[ids[0]], p2 = pointers[ids[1]];
+      var dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      var midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
+      if (lastPinchDist) { zoomAt(midX, midY, dist / lastPinchDist); }
+      lastPinchDist = dist;
+    } else if (ids.length === 1 && dragging) {
+      tx += e.clientX - lastX; ty += e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      applyTransform();
+    }
+  });
+
+  function endPointer(e) {
+    delete pointers[e.pointerId];
+    var ids = Object.keys(pointers);
+    if (ids.length < 2) lastPinchDist = null;
+    if (ids.length === 0) { dragging = false; viewport.classList.remove("dragging"); }
+    else if (ids.length === 1) { dragging = true; lastX = pointers[ids[0]].x; lastY = pointers[ids[0]].y; }
+  }
+  viewport.addEventListener("pointerup", endPointer);
+  viewport.addEventListener("pointercancel", endPointer);
+
+  document.getElementById("zoom-in").addEventListener("click", function () {
+    var r = viewport.getBoundingClientRect();
+    zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.35);
+  });
+  document.getElementById("zoom-out").addEventListener("click", function () {
+    var r = viewport.getBoundingClientRect();
+    zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.35);
+  });
+  document.getElementById("zoom-reset").addEventListener("click", resetView);
+})();
+</script>
+</body>
+</html>
