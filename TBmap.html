@@ -252,6 +252,7 @@
           <svg id="network-map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA">
             <image href="UsseGeoMap.png" x="-2000" y="-1400" width="10928" height="7428" preserveAspectRatio="xMidYMid slice" class="map-bg-photo"></image>
             <rect x="0" y="0" width="1000" height="700" class="map-bg-overlay"></rect>
+            <g id="network-layer"></g>
           </svg>
         </div>
       </div>
@@ -431,6 +432,7 @@
   function byId(id) { for (var i=0;i<STATIONS.length;i++){ if (STATIONS[i].id===id) return STATIONS[i]; } return null; }
 
   var svg = document.getElementById("network-map");
+  var layer = document.getElementById("network-layer");
   var activeSystem = null;
   var activeLine = null;
 
@@ -455,7 +457,7 @@
       fill: "none", stroke: line.color, "stroke-width": "6",
       "stroke-linecap": "round", "stroke-linejoin": "round", opacity: "0.9"
     });
-    svg.appendChild(pl);
+    layer.appendChild(pl);
   });
 
   STATIONS.forEach(function (st) {
@@ -484,7 +486,7 @@
 
     g.addEventListener("keypress", function (ev) { if (ev.key === "Enter" || ev.key === " ") selectStation(st.id); });
 
-    svg.appendChild(g);
+    layer.appendChild(g);
   });
 
   function selectStation(id) {
@@ -596,7 +598,7 @@
     var pad = 30;
     var box = null;
     try {
-      var b = svg.getBBox();
+      var b = layer.getBBox();
       if (b && b.width > 0 && b.height > 0) box = { x: b.x, y: b.y, w: b.width, h: b.height };
     } catch (e) { /* ignorato: si usa il calcolo di riserva */ }
 
