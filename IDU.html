@@ -340,6 +340,20 @@
   .map-canvas::-webkit-scrollbar { height: 8px; }
   .map-canvas::-webkit-scrollbar-thumb { background: rgba(10,77,120,0.25); border-radius: 999px; }
   #network-map { width: 100%; height: auto; display: block; cursor: default; overflow: visible; }
+  .map-bg-photo {
+    filter: grayscale(85%) blur(1px) brightness(1.15) contrast(0.9);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .map-bg-overlay {
+    fill: var(--fa-azure);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .map-bg-photo { filter: grayscale(85%) blur(1px) brightness(0.6) contrast(1.1); opacity: 0.4; }
+  }
+  :root[data-theme="dark"] .map-bg-photo { filter: grayscale(85%) blur(1px) brightness(0.6) contrast(1.1); opacity: 0.4; }
   .map-station { cursor: pointer; }
   .map-station circle { transition: r 0.15s ease, stroke-width 0.15s ease; }
   .map-station:hover circle, .map-station.active circle { stroke-width: 4; }
@@ -777,7 +791,10 @@
           <div class="map-legend" id="map-legend"></div>
           <div class="line-legend" id="line-legend"></div>
           <div class="map-canvas">
-            <svg id="network-map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA"></svg>
+            <svg id="network-map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mappa schematica della rete TETA">
+              <image href="TaleenMap.png" x="0" y="0" width="1000" height="700" preserveAspectRatio="xMidYMid slice" class="map-bg-photo"></image>
+              <rect x="0" y="0" width="1000" height="700" class="map-bg-overlay"></rect>
+            </svg>
           </div>
         </div>
         
