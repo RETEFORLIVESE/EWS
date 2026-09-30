@@ -236,6 +236,7 @@
       { font: "helvetica", stile: "bold", size: 9, colore: C.blu, dopo: 3 });
     pdf.scrivi(progetto.titolo, { font: "helvetica", stile: "bold", size: 20, colore: C.scuro, dopo: 3, interlinea: 1.25 });
     if (progetto.sommario) pdf.scrivi(progetto.sommario, { colore: C.tenue, dopo: 4 });
+    // copertina: resta in intestazione, a tutta larghezza
     if (progetto.copertina) await pdf.immagine(progetto.copertina, "", { maxH: 60 });
 
     pdf.linea();
@@ -263,7 +264,7 @@
         continue;
       }
       if (b.tipo === "immagine") {
-        await pdf.immagine(b.dati.url, b.dati.didascalia);
+        await pdf.immagineDestra(b.dati.url, b.dati.didascalia);
         continue;
       }
 
@@ -274,14 +275,14 @@
 
       for (const c of b.commi) {
         if (c.immagine) {
-          await pdf.immagine(c.dati.url, c.dati.didascalia);
+          await pdf.immagineDestra(c.dati.url, c.dati.didascalia);
           continue;
         }
+        // immagine del comma: a destra, con il testo del comma che le scorre accanto
+        if (c.dati.immagine) await pdf.immagineDestra(c.dati.immagine.url, c.dati.immagine.didascalia);
         pdf.scrivi(`${c.n}. ${c.dati.testo || ""}`, { dopo: 1.5 });
-        // immagine affiancata al comma: nel PDF va subito sotto il suo testo
-        if (c.dati.immagine) await pdf.immagine(c.dati.immagine.url, c.dati.immagine.didascalia, { maxW: 110, maxH: 80 });
         for (const y of c.sotto) {
-          if (y.immagine) await pdf.immagine(y.dati.url, y.dati.didascalia, { maxW: 110, maxH: 80 });
+          if (y.immagine) await pdf.immagineDestra(y.dati.url, y.dati.didascalia);
           else pdf.scrivi(`${lettera(y.n)}) ${y.dati.testo || ""}`, { x: 28, dopo: 1 });
         }
         pdf.spazio(1);
@@ -296,7 +297,7 @@
       pdf.riservaSpazio(60);
       pdf.scrivi("Galleria fotografica", { font: "helvetica", stile: "bold", size: 13, colore: C.blu, dopo: 2 });
       pdf.linea(C.linea, 0.3);
-      for (const g of galleria) await pdf.immagine(g.url, g.didascalia, { maxW: 130, maxH: 85 });
+      for (const g of galleria) await pdf.immagineDestra(g.url, g.didascalia);
     }
 
     // --- Allegati (link cliccabili) ---
