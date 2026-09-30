@@ -104,24 +104,56 @@
     const logo = marca.logo ? await caricaImmagine(marca.logo, "png") : null;
     let y = MT;
 
-    const nuovaPaginaSe = h => { if (y + h > PH - MB) { doc.addPage(); y = MT; } };
+    // Immagini che non entravano nello spazio rimasto: il testo prosegue senza buchi e
+    // l'immagine viene posata in cima alla pagina successiva.
+    let inAttesa = [];
+    // Zone occupate da immagini a destra sulla pagina corrente: il testo si stringe per aggirarle.
+    let zone = [];
+    const GAP = 5;
+    const riduzioneAt = (y0, y1) => {
+      let r = 0;
+      zone.forEach(z => { if (z.y0 < y1 && z.y1 > y0) r = Math.max(r, z.w + GAP); });
+      return r;
+    };
+    const fineZone = () => zone.reduce((m, z) => Math.max(m, z.y1), 0);
+    function nuovaPagina() {
+      doc.addPage(); y = MT; zone = [];
+      const coda = inAttesa; inAttesa = [];
+      coda.forEach(c => c.destra ? posaDestra(c.img, c.didascalia, c.w, c.h) : posaImmagine(c.img, c.didascalia, c.w, c.h));
+    }
+    const nuovaPaginaSe = h => { if (y + h > PH - MB) nuovaPagina(); };
 
-    // Testo semplice con a capo automatico; spezza le pagine riga per riga.
+    // Testo semplice con a capo automatico; spezza le pagine riga per riga e si stringe
+    // accanto alle immagini posate a destra.
     function scriviTesto(testo, o = {}) {
       const { font = "times", stile = "normal", size = 11, x = MX, larghezza = W - (x - MX),
               align = "left", colore = COLORI.testo, dopo = 2, interlinea = 1.35 } = o;
-      doc.setFont(font, stile);
-      doc.setFontSize(size);
-      doc.setTextColor(colore[0], colore[1], colore[2]);
       const hRiga = size * MM * interlinea;
+      const imposta = () => {
+        doc.setFont(font, stile);
+        doc.setFontSize(size);
+        doc.setTextColor(colore[0], colore[1], colore[2]);
+      };
       htmlInTesto(testo).split("\n").forEach(p => {
-        const righe = p.trim() === "" ? [""] : doc.splitTextToSize(p, larghezza);
-        righe.forEach(r => {
+        const parole = p.trim() === "" ? [] : p.trim().split(/\s+/);
+        if (!parole.length) { nuovaPaginaSe(hRiga); y += hRiga; return; }
+        let i = 0;
+        while (i < parole.length) {
           nuovaPaginaSe(hRiga);
-          const px = align === "center" ? x + larghezza / 2 : x;
-          doc.text(r, px, y + size * MM, { align });
+          imposta();
+          const lw = Math.max(40, larghezza - riduzioneAt(y, y + hRiga));
+          let riga = parole[i++];
+          if (doc.getTextWidth(riga) > lw) {
+            const pezzi = doc.splitTextToSize(riga, lw);
+            riga = pezzi[0];
+            if (pezzi.length > 1) parole.splice(i, 0, pezzi.slice(1).join(""));
+          } else {
+            while (i < parole.length && doc.getTextWidth(riga + " " + parole[i]) <= lw) riga += " " + parole[i++];
+          }
+          const px = align === "center" ? x + lw / 2 : x;
+          doc.text(riga, px, y + size * MM, { align });
           y += hRiga;
-        });
+        }
       });
       y += dopo;
     }
@@ -130,6 +162,7 @@
     // righe alternate e riga d'intestazione ripetuta se la tabella continua su un'altra pagina.
     function tabella(html, o = {}) {
       const { x = MX, larghezza = W - (x - MX), size = 9 } = o;
+      if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
       const d = new DOMParser().parseFromString(html, "text/html");
       const righe = [...d.querySelectorAll("tr")].map(tr => {
         const celle = [...tr.children].filter(c => /^(TD|TH)$/.test(c.tagName)).map(c => ({
@@ -193,7 +226,7 @@
       righe.forEach(r => {
         const m = misura(r);
         if (y + m.h > PH - MB) {
-          doc.addPage(); y = MT;
+          nuovaPagina();
           if (intest && r !== intest) disegna(misura(intest), intest, false);
         }
         if (!r.intestazione) corpo++;
@@ -217,7 +250,7 @@
       nuovaPaginaSe(2);
       doc.setDrawColor(colore[0], colore[1], colore[2]);
       doc.setLineWidth(spessore);
-      doc.line(MX, y, PW - MX, y);
+      doc.line(MX, y, PW - MX - riduzioneAt(y, y + 1), y);
       y += 4;
     }
 
@@ -240,7 +273,19 @@
       y += 2;
     }
 
-    // Immagine centrata con didascalia. Se non si riesce a incorporarla, resta la didascalia.
+    function posaImmagine(img, didascalia, w, h) {
+      nuovaPaginaSe(h + (didascalia ? 8 : 0) + 2);
+      doc.addImage(img.data, img.tipo, MX + (W - w) / 2, y, w, h);
+      y += h + 2;
+      if (didascalia) scrivi(didascalia, { font: "helvetica", stile: "italic", size: 9, colore: COLORI.tenue, align: "center", dopo: 3 });
+      else y += 2;
+    }
+
+    // Immagine centrata con didascalia, senza spostare il testo:
+    //  - se entra nello spazio rimasto, va qui;
+    //  - se ne manca poco, viene rimpicciolita per starci;
+    //  - altrimenti il testo continua e l'immagine va in cima alla pagina dopo.
+    // Se non si riesce a incorporarla (file non raggiungibile o server che non lo consente), resta la didascalia.
     async function immagine(src, didascalia, o = {}) {
       const { maxW = W, maxH = 90 } = o;
       const url = urlSicuro(src);
@@ -253,12 +298,57 @@
       const rapporto = img.w / img.h;
       let w = maxW, h = w / rapporto;
       if (h > maxH) { h = maxH; w = h * rapporto; }
-      const hDida = didascalia ? 8 : 0;
-      nuovaPaginaSe(h + hDida + 2);
-      doc.addImage(img.data, img.tipo, MX + (W - w) / 2, y, w, h);
-      y += h + 2;
-      if (didascalia) scrivi(didascalia, { font: "helvetica", stile: "italic", size: 9, colore: COLORI.tenue, align: "center", dopo: 3 });
-      else y += 2;
+      const extra = (didascalia ? 8 : 0) + 2;
+      const libero = PH - MB - y;
+      if (h + extra <= libero) {
+        posaImmagine(img, didascalia, w, h);
+      } else {
+        const h2 = libero - extra;
+        if (h2 >= Math.max(30, h * 0.6)) posaImmagine(img, didascalia, h2 * rapporto, h2);
+        else inAttesa.push({ img, didascalia, w, h });
+      }
+    }
+
+    // Immagine a destra: il testo che segue le scorre accanto, a sinistra.
+    // Più immagini di fila si impilano sulla colonna di destra.
+    function posaDestra(img, didascalia, w, h) {
+      const testoDida = didascalia ? htmlInTesto(didascalia) : "";
+      const righeDida = ww => {
+        if (!testoDida) return [];
+        doc.setFont("helvetica", "italic"); doc.setFontSize(8);
+        return doc.splitTextToSize(testoDida, ww);
+      };
+      const hDida = ww => { const r = righeDida(ww); return r.length ? r.length * 3.4 + 1.5 : 0; };
+      const yPos = Math.max(y, fineZone());
+      const libero = PH - MB - yPos;
+      if (h + hDida(w) + 2 > libero) {
+        const h2 = libero - hDida(w) - 2;
+        if (h2 >= Math.max(30, h * 0.6)) { w = w * h2 / h; h = h2; }
+        else { inAttesa.push({ destra: true, img, didascalia, w, h }); return; }
+      }
+      const xImg = PW - MX - w;
+      doc.addImage(img.data, img.tipo, xImg, yPos, w, h);
+      const righe = righeDida(w);
+      if (righe.length) {
+        doc.setTextColor(COLORI.tenue[0], COLORI.tenue[1], COLORI.tenue[2]);
+        righe.forEach((r, i) => doc.text(r, xImg + w / 2, yPos + h + 3 + i * 3.4, { align: "center" }));
+      }
+      zone.push({ y0: yPos, y1: yPos + h + hDida(w) + 2, w });
+    }
+
+    async function immagineDestra(src, didascalia, o = {}) {
+      const { maxW = 62, maxH = 85 } = o;
+      const url = urlSicuro(src);
+      if (!url) return;
+      const img = await caricaImmagine(url, "jpeg");
+      if (!img) {
+        if (didascalia) scrivi("[Immagine: " + didascalia + "]", { font: "helvetica", stile: "italic", size: 9, colore: COLORI.tenue });
+        return;
+      }
+      const rapporto = img.w / img.h;
+      let w = maxW, h = w / rapporto;
+      if (h > maxH) { h = maxH; w = h * rapporto; }
+      posaDestra(img, didascalia, w, h);
     }
 
     // Testo cliccabile che apre un indirizzo.
@@ -300,6 +390,7 @@
     }
 
     function salva(nomeFile, piede) {
+      while (inAttesa.length) nuovaPagina();
       const n = doc.getNumberOfPages();
       for (let i = 1; i <= n; i++) {
         doc.setPage(i);
@@ -312,7 +403,7 @@
       doc.save(nomeFile);
     }
 
-    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, link, salva };
+    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, link, salva };
   }
 
   function nomeFile(titolo, predefinito) {
