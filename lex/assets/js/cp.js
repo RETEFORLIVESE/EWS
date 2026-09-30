@@ -1,4 +1,5 @@
 // assets/js/cp.js — Consiglio di Pianificazione: piani economici (statali e unitari).
+// AUTONOMO: non richiede ctsu-core.js. Grafica in CP.html (<style>), testata/footer/dati qui sotto.
 //
 // Un piano è un documento salvato nello stesso archivio dei progetti CTSU (/api/ctsu),
 // riconoscibile da tipo_documento === "piano_economico". Campi propri:
@@ -9,6 +10,118 @@
 // CP.html?ambito=statale     -> solo i piani statali (oppure unitario)
 // CP.html?id=<id-del-piano>  -> lettura del piano
 (function () {
+
+  /* =====================================================================
+     CONFIGURAZIONE, TESTATA, FOOTER E DATI — tutto qui dentro.
+     CP non dipende più da ctsu-core.js: modifica liberamente questo file
+     e lo <style> di CP.html senza toccare le pagine del CTSU.
+     ===================================================================== */
+
+  const CP_CONFIG = {
+    nomeSito: "Zentraler Planungsrat",
+    sigla: "CP",
+    motto: "Piani economici dell'Unione",
+    annoFondazione: 2024,
+    emblema: "CCP.png",          // cambia qui l'emblema (o metti un file CP.png)
+    homeCtsu: "ctsu.html"         // dove porta il link \"Home\" nel menu
+  };
+
+  const romano = n => {
+    const t = [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];
+    let r = ""; n = Math.max(0, Math.floor(Number(n) || 0));
+    for (const [v, s] of t) while (n >= v) { r += s; n -= v; }
+    return r;
+  };
+
+  function renderTestataCp() {
+    const el = document.getElementById("testata-root");
+    if (!el) return;
+    el.innerHTML = `
+      <div class="striscia-top">
+        <div class="container"><span>${CP_CONFIG.sigla} &middot; [estjibundes.me.ei]</span><span></span></div>
+      </div>
+      <header class="testata">
+        <div class="container testata__riga">
+          <div class="testata__emblema" aria-hidden="true">
+            <img src="${CP_CONFIG.emblema}" alt="${CP_CONFIG.sigla}" onerror="this.parentNode.style.display='none'">
+          </div>
+          <div class="testata__testi">
+            <p class="testata__eyebrow"></p>
+            <h2 class="testata__nome">${CP_CONFIG.nomeSito}</h2>
+            <p class="testata__motto">${CP_CONFIG.motto}</p>
+          </div>
+        </div>
+      </header>
+      <div class="fascia-tricolore" role="presentation"><span class="verde"></span><span class="bianco"></span><span class="rosso"></span></div>
+      <nav class="nav-principale" aria-label="Navigazione principale">
+        <div class="container">
+          <ul>
+            <li><a href="${CP_CONFIG.homeCtsu}">Home CTSU</a></li>
+            <li><a href="CP.html" class="attiva">Piani economici</a></li>
+            <li><a href="CP.html?ambito=statale">Piani statali</a></li>
+            <li><a href="CP.html?ambito=unitario">Piani unitari</a></li>
+          </ul>
+        </div>
+      </nav>`;
+  }
+
+  function renderFooterCp() {
+    const el = document.getElementById("footer-root");
+    if (!el) return;
+    el.innerHTML = `
+      <div class="fascia-tricolore" role="presentation"><span class="verde"></span><span class="bianco"></span><span class="rosso"></span></div>
+      <footer>
+        <div class="container footer__contenuto">
+          <span>&copy; ${CP_CONFIG.annoFondazione}&ndash;${new Date().getFullYear()} ${CP_CONFIG.nomeSito}. Raccolta amministrata a fini interni, senza valore legale reale.</span>
+          <span></span>
+        </div>
+      </footer>`;
+  }
+
+  // Lettura (sola lettura) dei piani: stesso archivio dei progetti, /api/ctsu,
+  // riconoscibili da tipo_documento === "piano_economico".
+  async function leggiRisposta(res) {
+    const testo = await res.text();
+    try { return testo ? JSON.parse(testo) : {}; }
+    catch (e) { return { error: `Risposta non valida dal server (HTTP ${res.status}).` }; }
+  }
+
+  async function caricaPiani() {
+    const res = await fetch("/api/ctsu", { cache: "no-store" });
+    const data = await leggiRisposta(res);
+    if (!res.ok) throw new Error(data.error ? `HTTP ${res.status}: ${data.error}` : `HTTP ${res.status}`);
+    const tutti = Array.isArray(data.progetti) ? data.progetti : [];
+    return tutti.filter(p => p && typeof p === "object" && p.tipo_documento === "piano_economico");
+  }
+
+  // Registro dei luoghi (lo stesso di CA.html), da /api/organi (campo "luoghi").
+  let _luoghi = null;
+  function caricaLuoghi() {
+    if (!_luoghi) {
+      _luoghi = fetch("/api/organi", { cache: "no-store" })
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(j => (j && j.luoghi && typeof j.luoghi === "object" && !Array.isArray(j.luoghi)) ? j.luoghi : {})
+        .catch(e => { _luoghi = null; throw e; });
+    }
+    return _luoghi;
+  }
+
+  function voceLuogo(v) {
+    if (typeof v === "string") return { nome: v, tipo: "" };
+    if (v && typeof v === "object" && typeof v.nome === "string") return { nome: v.nome, tipo: (v.tipo || "").toString() };
+    return null;
+  }
+
+  function cercaLuogo(nodo, id) {
+    if (!nodo || typeof nodo !== "object" || !id) return null;
+    if (Object.prototype.hasOwnProperty.call(nodo, id)) { const v = voceLuogo(nodo[id]); if (v) return v; }
+    for (const k of Object.keys(nodo)) {
+      const f = nodo[k];
+      if (f && typeof f === "object" && !voceLuogo(f)) { const t = cercaLuogo(f, id); if (t) return t; }
+    }
+    return null;
+  }
+
   const esc = t => (t == null ? "" : t).toString().replace(/[&<>"']/g,
     c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -64,7 +177,7 @@
   }
 
   function etichettaTitolo(b) {
-    const numero = (b.dati.numero || "").toString().trim() || ctsuRomano(b.n);
+    const numero = (b.dati.numero || "").toString().trim() || romano(b.n);
     const nome = (b.dati.titolo || "").toString().trim();
     return ("TITOLO " + numero + (nome ? " - " + nome : "")).toLocaleUpperCase("it-IT");
   }
@@ -186,13 +299,13 @@
   /* ---------- VISTA: LETTURA DI UN PIANO ---------- */
 
   async function mostraPiano(root, piano) {
-    document.title = piano.titolo + " — " + SITE_CONFIG_CTSU.nomeConsiglioPianificazione;
+    document.title = piano.titolo + " — " + CP_CONFIG.nomeSito;
     const amb = ambitoDi(piano);
 
     let nomeLuogo = piano.luogo_piano || "";
     if (nomeLuogo) {
       try {
-        const voce = ctsuCercaLuogo(await APICtsu.loadLuoghi(), nomeLuogo);
+        const voce = cercaLuogo(await caricaLuoghi(), nomeLuogo);
         if (voce && voce.nome) nomeLuogo = voce.nome;
       } catch (e) { /* resta il valore salvato */ }
     }
@@ -200,8 +313,8 @@
     const dato = (nome, valore) => `<div><dt>${nome}</dt><dd>${esc(valore || "—")}</dd></div>`;
     root.innerHTML = `
       <p class="breadcrumb">
-        <a href="ctsu.html">Home</a> &rsaquo;
-        <a href="CP.html">${SITE_CONFIG_CTSU.nomeConsiglioPianificazione}</a> &rsaquo;
+        <a href="${CP_CONFIG.homeCtsu}">Home</a> &rsaquo;
+        <a href="CP.html">${CP_CONFIG.nomeSito}</a> &rsaquo;
         <a href="CP.html?ambito=${amb}">${AMBITI[amb].plurale}</a> &rsaquo;
         ${esc(piano.titolo)}
       </p>
@@ -259,7 +372,7 @@
   }
 
   function mostraElenco(root, piani) {
-    document.title = SITE_CONFIG_CTSU.nomeConsiglioPianificazione + " — Piani economici";
+    document.title = CP_CONFIG.nomeSito + " — Piani economici";
     const params = new URLSearchParams(location.search);
     const filtro = {
       ambito: AMBITI[params.get("ambito")] ? params.get("ambito") : "",
@@ -274,7 +387,7 @@
       <section class="hero" style="margin:-1px -24px 0; padding-left:24px; padding-right:24px;">
         <div class="container hero__inner" style="padding:0;">
           <div>
-            <span class="hero__kicker">${esc(SITE_CONFIG_CTSU.nomeConsiglioPianificazione)}</span>
+            <span class="hero__kicker">${esc(CP_CONFIG.nomeSito)}</span>
             <h1 class="hero__titolo">Piani economici dell'Unione</h1>
             <p class="hero__sottotitolo">
               I piani economici pubblicati dal Consiglio di Pianificazione, divisi in piani statali e piani unitari.
@@ -364,12 +477,12 @@
   /* ---------- AVVIO ---------- */
 
   async function init() {
-    renderTestataCtsu("cp");
-    renderFooterCtsu();
+    renderTestataCp();
+    renderFooterCp();
     const root = document.getElementById("cp-root");
     let piani = [];
     try {
-      piani = await APICtsu.loadPiani();
+      piani = await caricaPiani();
     } catch (e) {
       root.innerHTML = `<div class="nessun-risultato" style="margin-top:40px;">Non è stato possibile caricare i piani economici (${esc(e.message)}). Ricarica la pagina tra qualche istante.</div>`;
       return;
@@ -379,9 +492,9 @@
     if (id) {
       const piano = piani.find(p => p.id === id);
       if (piano) return mostraPiano(root, piano);
-      document.title = "Piano non trovato — " + SITE_CONFIG_CTSU.nomeConsiglioPianificazione;
+      document.title = "Piano non trovato — " + CP_CONFIG.nomeSito;
       root.innerHTML = `
-        <p class="breadcrumb"><a href="ctsu.html">Home</a> &rsaquo; <a href="CP.html">${SITE_CONFIG_CTSU.nomeConsiglioPianificazione}</a> &rsaquo; Piano non trovato</p>
+        <p class="breadcrumb"><a href="${CP_CONFIG.homeCtsu}">Home</a> &rsaquo; <a href="CP.html">${CP_CONFIG.nomeSito}</a> &rsaquo; Piano non trovato</p>
         <div class="nessun-risultato">Il piano richiesto non esiste o è stato rimosso. Torna all'<a href="CP.html">elenco dei piani</a>.</div>`;
       return;
     }

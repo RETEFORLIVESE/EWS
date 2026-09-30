@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consiglio Centrale di Pianificazione</title>
+  <title>Consiglio di Pianificazione — Piani economici</title>
   <link rel="apple-touch-icon" href="/CTSU.png">
   <link rel="icon" type="image/png" href="/CTSU.png">
   <meta name="description" content="Piani economici statali e unitari pubblicati dal Consiglio di Pianificazione." />
@@ -270,6 +270,28 @@ footer{background:var(--blu-900);color:#b9c8d6;padding:34px 0 22px;margin-top:40
 .elenco-allegati li{background:#fff;border:1px solid var(--bordo);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-chrome);font-size:.92rem;}
 main.container{padding-bottom:64px;}
 
+/* ---- stili propri di CP (prima iniettati da ctsu-core.js) ---- */
+.immagine-atto.immagine-testo{margin:0 0 14px;text-align:center;}
+.immagine-atto.immagine-testo img{width:auto;max-width:100%;max-height:520px;aspect-ratio:auto;margin:0 auto;object-fit:contain;}
+.articoli > .immagine-atto.immagine-testo{margin:0;}
+.articolo .comma > .immagine-atto.immagine-testo{margin:4px 0 0;}
+.titolo-gruppo{scroll-margin-top:76px;}
+.comma--con-immagine-destra{overflow:hidden;}
+.comma__immagine-destra{float:right;margin:0 0 8px 18px;max-width:55%;}
+.comma__immagine-destra .immagine-atto.immagine-testo{margin:0;}
+.comma__immagine-destra .immagine-atto.immagine-testo img{max-height:420px;}
+@media (max-width: 640px){
+  .comma__immagine-destra{float:none;max-width:100%;margin:0 0 10px;}
+}
+.sottocommi > li.sottocomma-immagine{list-style:none;}
+.sottocommi > li.sottocomma-immagine .immagine-atto{margin:4px 0 4px;}
+.indice-titolo-gruppo a{display:inline;padding:0;font-size:inherit;font-weight:inherit;color:inherit;letter-spacing:inherit;}
+.indice-titolo-gruppo a:hover{background:none;text-decoration:underline;}
+.badge-ambito{display:inline-block;font-family:var(--font-chrome);font-size:.68rem;font-weight:700;letter-spacing:.03em;color:var(--blu-900);background:var(--carta-scura-mid);border-radius:999px;padding:3px 10px;}
+.badge-ambito--unitario{color:#6b5000;background:#f6ecc7;}
+.scheda-atto__dati{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;list-style:none;font-family:var(--font-chrome);font-size:.8rem;color:var(--inchiostro-tenue);}
+.scheda-atto__dati b{color:var(--inchiostro);font-weight:600;}
+
   </style>
 </head>
 <body>
@@ -277,7 +299,6 @@ main.container{padding-bottom:64px;}
   <main class="container" id="cp-root"></main>
   <div id="footer-root"></div>
 
-  <script src="assets/js/ctsu-core.js"></script>
   <script src="assets/js/cp.js"></script>
 </body>
 </html>
