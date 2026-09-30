@@ -296,6 +296,129 @@
       </section>`;
   }
 
+  /* ---------- ESPORTAZIONE IN PDF (motore comune in assets/js/pdf-export.js) ---------- */
+  // Stesso motore di NormAktiv e CTSU: barra in alto su ogni pagina con logo e nome del sito.
+
+  function caricaPdfExport() {
+    if (window.PdfExport) return Promise.resolve(window.PdfExport);
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "assets/js/pdf-export.js";
+      s.onload = () => window.PdfExport ? resolve(window.PdfExport) : reject(new Error("Modulo PDF non valido"));
+      s.onerror = () => reject(new Error("File assets/js/pdf-export.js non trovato"));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function scaricaPdfPiano(piano, nomeLuogo) {
+    const PE = await caricaPdfExport();
+    const C = PE.colori;
+    const pdf = await PE.crea({
+      marca: { nome: CP_CONFIG.nomeSito, sottotitolo: CP_CONFIG.motto, logo: CP_CONFIG.emblema }
+    });
+
+    pdf.scrivi(`PIANO ${AMBITI[ambitoDi(piano)].etichetta.toUpperCase()}  |  ${(piano.stato || "").toString().toUpperCase()}`,
+      { font: "helvetica", stile: "bold", size: 9, colore: C.blu, dopo: 3 });
+    pdf.scrivi(piano.titolo, { font: "helvetica", stile: "bold", size: 20, colore: C.scuro, dopo: 3, interlinea: 1.25 });
+    if (piano.sommario) pdf.scrivi(piano.sommario, { colore: C.tenue, dopo: 4 });
+    if (piano.copertina) await pdf.immagine(piano.copertina, "", { maxH: 60 });
+
+    pdf.linea();
+    pdf.dati([
+      ["Ente redattore", piano.organo_responsabile || "—"],
+      ["Luogo", nomeLuogo || "—"],
+      ["Responsabile del piano", piano.responsabile || "—"],
+      ["Periodo di validità", piano.periodo_validita || "—"],
+      ["Data di approvazione", piano.data_approvazione || "—"],
+      ["Risorse totali", piano.risorse_totali || "—"]
+    ]);
+    pdf.linea();
+    pdf.spazio(3);
+
+    for (const b of leggiBlocchi(piano)) {
+      if (b.tipo === "titolo") {
+        pdf.spazio(4);
+        pdf.riservaSpazio(20);
+        pdf.scrivi(etichettaTitolo(b), { font: "helvetica", stile: "bold", size: 13, colore: C.blu, align: "center", dopo: 2 });
+        pdf.linea(C.linea, 0.3);
+        pdf.spazio(1);
+        continue;
+      }
+      if (b.tipo === "immagine") {
+        await pdf.immagineDestra(b.dati.url, b.dati.didascalia);
+        continue;
+      }
+
+      pdf.riservaSpazio(28);
+      pdf.scrivi(b.dati.titolo || `Sezione ${b.n}`,
+        { font: "helvetica", stile: "bold", size: 12.5, colore: C.scuro, dopo: 2.5 });
+      if ((b.dati.testo || "").toString().trim()) pdf.scrivi(b.dati.testo, { dopo: 1.5 });
+
+      for (const c of b.commi) {
+        if (c.immagine) {
+          await pdf.immagineDestra(c.dati.url, c.dati.didascalia);
+          continue;
+        }
+        if (c.dati.immagine) await pdf.immagineDestra(c.dati.immagine.url, c.dati.immagine.didascalia);
+        pdf.scrivi(`${c.n}. ${c.dati.testo || ""}`, { dopo: 1.5 });
+        for (const y of c.sotto) {
+          if (y.immagine) await pdf.immagineDestra(y.dati.url, y.dati.didascalia);
+          else pdf.scrivi(`${lettera(y.n)}) ${y.dati.testo || ""}`, { x: 28, dopo: 1 });
+        }
+        pdf.spazio(1);
+      }
+      pdf.spazio(4);
+    }
+
+    const galleria = (piano.galleria || []).filter(g => g && urlSicuro(g.url));
+    if (galleria.length) {
+      pdf.spazio(4);
+      pdf.riservaSpazio(60);
+      pdf.scrivi("Galleria fotografica", { font: "helvetica", stile: "bold", size: 13, colore: C.blu, dopo: 2 });
+      pdf.linea(C.linea, 0.3);
+      for (const g of galleria) await pdf.immagineDestra(g.url, g.didascalia);
+    }
+
+    const allegati = (piano.allegati || []).filter(a => a && urlSicuro(a.url));
+    if (allegati.length) {
+      pdf.spazio(4);
+      pdf.riservaSpazio(30);
+      pdf.scrivi("Allegati", { font: "helvetica", stile: "bold", size: 13, colore: C.blu, dopo: 2 });
+      pdf.linea(C.linea, 0.3);
+      allegati.forEach(a => pdf.link(a.titolo || a.url, urlSicuro(a.url)));
+    }
+
+    pdf.salva(PE.nomeFile(piano.titolo, "piano-economico"), piano.titolo);
+  }
+
+  function htmlBottonePdf() {
+    return `
+      <div class="intestazione-atto__azioni" style="margin-top:16px;">
+        <button type="button" id="btn-scarica-pdf"
+          style="background:var(--blu-700,#12508c); color:#fff; border:none; border-radius:4px; padding:9px 18px;
+                 font-family:var(--font-chrome,'Titillium Web',sans-serif); font-weight:700; font-size:0.9rem;
+                 letter-spacing:0.03em; cursor:pointer;">
+          ⬇ Scarica in PDF
+        </button>
+      </div>`;
+  }
+
+  function collegaBottonePdf(piano, nomeLuogo) {
+    const btn = document.getElementById("btn-scarica-pdf");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      const testoOriginale = btn.textContent;
+      btn.disabled = true; btn.style.opacity = "0.6"; btn.textContent = "Generazione PDF…";
+      try {
+        await scaricaPdfPiano(piano, nomeLuogo);
+      } catch (e) {
+        alert("Errore nella creazione del PDF: " + e.message);
+      } finally {
+        btn.disabled = false; btn.style.opacity = ""; btn.textContent = testoOriginale;
+      }
+    });
+  }
+
   /* ---------- VISTA: LETTURA DI UN PIANO ---------- */
 
   async function mostraPiano(root, piano) {
@@ -333,6 +456,7 @@
           ${dato("Data di approvazione", piano.data_approvazione)}
           ${dato("Risorse totali", piano.risorse_totali)}
         </dl>
+        ${htmlBottonePdf()}
       </section>
       <div class="corpo-atto">
         <div class="colonna-indice">
@@ -345,6 +469,8 @@
           ${htmlAllegati(piano)}
         </div>
       </div>`;
+
+    collegaBottonePdf(piano, nomeLuogo);
 
     if (location.hash) {
       const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
