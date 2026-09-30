@@ -106,8 +106,8 @@
 
     const nuovaPaginaSe = h => { if (y + h > PH - MB) { doc.addPage(); y = MT; } };
 
-    // Testo con a capo automatico; spezza le pagine riga per riga.
-    function scrivi(testo, o = {}) {
+    // Testo semplice con a capo automatico; spezza le pagine riga per riga.
+    function scriviTesto(testo, o = {}) {
       const { font = "times", stile = "normal", size = 11, x = MX, larghezza = W - (x - MX),
               align = "left", colore = COLORI.testo, dopo = 2, interlinea = 1.35 } = o;
       doc.setFont(font, stile);
@@ -124,6 +124,93 @@
         });
       });
       y += dopo;
+    }
+
+    // Tabella HTML (es. .tabella-progetto): griglia con bordi, intestazione evidenziata,
+    // righe alternate e riga d'intestazione ripetuta se la tabella continua su un'altra pagina.
+    function tabella(html, o = {}) {
+      const { x = MX, larghezza = W - (x - MX), size = 9 } = o;
+      const d = new DOMParser().parseFromString(html, "text/html");
+      const righe = [...d.querySelectorAll("tr")].map(tr => {
+        const celle = [...tr.children].filter(c => /^(TD|TH)$/.test(c.tagName)).map(c => ({
+          testo: htmlInTesto(c.innerHTML),
+          span: Math.max(1, parseInt(c.getAttribute("colspan"), 10) || 1),
+          th: c.tagName === "TH"
+        }));
+        return { celle, intestazione: celle.length > 0 && (celle.every(c => c.th) || !!tr.closest("thead")) };
+      }).filter(r => r.celle.length);
+      if (!righe.length) return;
+
+      const nCol = Math.max(...righe.map(r => r.celle.reduce((s, c) => s + c.span, 0)));
+      // larghezza delle colonne in proporzione al contenuto (con un minimo e un massimo di "peso")
+      const peso = new Array(nCol).fill(4);
+      righe.forEach(r => {
+        let j = 0;
+        r.celle.forEach(c => {
+          if (c.span === 1) {
+            const parolaLunga = Math.max(0, ...c.testo.split(/\s+/).map(p => p.length));
+            peso[j] = Math.max(peso[j], Math.min(40, Math.max(parolaLunga, Math.min(c.testo.length, 28))));
+          }
+          j += c.span;
+        });
+      });
+      const somma = peso.reduce((a, b) => a + b, 0);
+      const largCol = peso.map(p => larghezza * p / somma);
+
+      const pad = 1.6, lh = size * MM * 1.3;
+      const misura = r => {
+        let j = 0, cx = x, h = 0;
+        const celle = r.celle.map(c => {
+          const w = largCol.slice(j, j + c.span).reduce((a, b) => a + b, 0);
+          doc.setFont("helvetica", (r.intestazione || c.th) ? "bold" : "normal");
+          doc.setFontSize(size);
+          const righeTesto = doc.splitTextToSize(c.testo, Math.max(4, w - pad * 2));
+          h = Math.max(h, righeTesto.length * lh + pad * 2);
+          const cella = { righe: righeTesto, w, x: cx, th: c.th };
+          j += c.span; cx += w;
+          return cella;
+        });
+        return { celle, h };
+      };
+      const disegna = (m, r, zebra) => {
+        m.celle.forEach(c => {
+          if (r.intestazione) { doc.setFillColor(231, 241, 250); doc.rect(c.x, y, c.w, m.h, "F"); }
+          else if (zebra) { doc.setFillColor(245, 249, 253); doc.rect(c.x, y, c.w, m.h, "F"); }
+          doc.setDrawColor(160, 182, 204); doc.setLineWidth(0.25);
+          doc.rect(c.x, y, c.w, m.h, "S");
+          doc.setFont("helvetica", (r.intestazione || c.th) ? "bold" : "normal");
+          doc.setFontSize(size);
+          const col = r.intestazione ? COLORI.scuro : COLORI.testo;
+          doc.setTextColor(col[0], col[1], col[2]);
+          c.righe.forEach((rg, i) => doc.text(rg, c.x + pad, y + pad + size * MM + i * lh));
+        });
+        y += m.h;
+      };
+
+      const intest = righe[0].intestazione ? righe[0] : null;
+      y += 1.5;
+      let corpo = 0;
+      righe.forEach(r => {
+        const m = misura(r);
+        if (y + m.h > PH - MB) {
+          doc.addPage(); y = MT;
+          if (intest && r !== intest) disegna(misura(intest), intest, false);
+        }
+        if (!r.intestazione) corpo++;
+        disegna(m, r, !r.intestazione && corpo % 2 === 0);
+      });
+      y += 1.5;
+    }
+
+    // Testo che può contenere tabelle: il testo viene scritto a paragrafi, le tabelle disegnate come tabelle.
+    function scrivi(testo, o = {}) {
+      const s = (testo == null ? "" : testo).toString();
+      if (!/<table[\s>]/i.test(s)) return scriviTesto(s, o);
+      s.split(/(<table[\s\S]*?<\/table>)/i).forEach((parte, i) => {
+        if (i % 2 === 1) tabella(parte, o);
+        else if (htmlInTesto(parte)) scriviTesto(parte, Object.assign({}, o, { dopo: 0.5 }));
+      });
+      y += (o.dopo == null ? 2 : o.dopo);
     }
 
     function linea(colore = COLORI.blu, spessore = 0.5) {
