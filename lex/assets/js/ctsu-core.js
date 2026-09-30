@@ -11,7 +11,7 @@
 
 const SITE_CONFIG_CTSU = {
   nomeFazione: "CTSU",
-  motto: "Consiglio Tecnico-Scentifico dell'Unione",
+  motto: "Consiglio Tecnico-Scientifico dell'Unione",
   annoFondazione: 2024,
   emblema: "CTSU.png",
   icona: "CTSU.png",
