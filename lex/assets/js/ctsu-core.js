@@ -18,7 +18,8 @@ const SITE_CONFIG_CTSU = {
   discord: "",
   sitoServer: "",
   titoloSito: "CTSU",
-  descrizioneSito: "Raccolta ufficiale dei progetti tecnici e delle relazioni della fazione"
+  descrizioneSito: "Raccolta ufficiale dei progetti tecnici e delle relazioni della fazione",
+  nomeConsiglioPianificazione: "Consiglio di Pianificazione"
 };
 
 /* ---------- ICONA DELLA PAGINA (favicon) ---------- */
@@ -81,6 +82,12 @@ function iniettaStiliCtsu() {
 /* titolo cliccabile nell'indice */
 .indice-titolo-gruppo a{display:inline;padding:0;font-size:inherit;font-weight:inherit;color:inherit;letter-spacing:inherit;}
 .indice-titolo-gruppo a:hover{background:none;text-decoration:underline;}
+
+/* Consiglio di Pianificazione: etichetta dell'ambito del piano */
+.badge-ambito{display:inline-block;font-family:var(--font-chrome);font-size:.68rem;font-weight:700;letter-spacing:.03em;color:var(--blu-900);background:var(--carta-scura-mid);border-radius:999px;padding:3px 10px;}
+.badge-ambito--unitario{color:#6b5000;background:#f6ecc7;}
+.scheda-atto__dati{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;list-style:none;font-family:var(--font-chrome);font-size:.8rem;color:var(--inchiostro-tenue);}
+.scheda-atto__dati b{color:var(--inchiostro);font-weight:600;}
 
 /* editor di redazione */
 .redazione-azioni-riga{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
@@ -199,6 +206,7 @@ function renderTestataCtsu(paginaAttiva) {
           <li><a href="ctsu.html" class="${paginaAttiva === "home" ? "attiva" : ""}">Home</a></li>
           <li><a href="ctsu.html?stato=In+corso" class="${paginaAttiva === "in-corso" ? "attiva" : ""}">Progetti in corso</a></li>
           <li><a href="ctsu.html?stato=Completato" class="${paginaAttiva === "completati" ? "attiva" : ""}">Progetti completati</a></li>
+          <li><a href="CP.html" class="${paginaAttiva === "cp" ? "attiva" : ""}">${SITE_CONFIG_CTSU.nomeConsiglioPianificazione}</a></li>
         </ul>
       </div>
     </nav>`;
@@ -261,16 +269,34 @@ const APICtsu = {
     return this._luoghi;
   },
 
-  async loadProgetti() {
+  // I piani economici (Consiglio di Pianificazione) vivono nello stesso archivio dei progetti
+  // (/api/ctsu), riconoscibili da tipo_documento === "piano_economico". Qui si separano:
+  //  - loadProgetti() restituisce SOLO i progetti (le pagine CTSU esistenti non vedono i piani);
+  //  - loadPiani()    restituisce SOLO i piani;
+  //  - ogni salvataggio rimette insieme le due liste, così salvare gli uni non cancella gli altri.
+  _progetti: null,
+  _piani: null,
+
+  _eUnPiano(p) {
+    return !!p && typeof p === 'object' && p.tipo_documento === 'piano_economico';
+  },
+
+  async _leggiTutti() {
     const res = await fetch('/api/ctsu');
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       throw new Error(data.error ? `HTTP ${res.status}: ${data.error}` : `HTTP ${res.status}`);
     }
-    return Array.isArray(data.progetti) ? data.progetti : [];
+    const tutti = Array.isArray(data.progetti) ? data.progetti : [];
+    this._progetti = tutti.filter(p => !this._eUnPiano(p));
+    this._piani = tutti.filter(p => this._eUnPiano(p));
   },
 
-  async saveProgetti(progetti) {
+  async loadProgetti() { await this._leggiTutti(); return this._progetti; },
+  async loadPiani() { await this._leggiTutti(); return this._piani; },
+  async loadTutti() { await this._leggiTutti(); return { progetti: this._progetti, piani: this._piani }; },
+
+  async _invia(lista) {
     if (!this.isAuthenticated()) throw new Error("Non autenticato: effettua il login.");
     const res = await fetch('/api/ctsu', {
       method: 'POST',
@@ -278,12 +304,26 @@ const APICtsu = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + this._sessione.token
       },
-      body: JSON.stringify({ azione: 'salva', progetti })
+      body: JSON.stringify({ azione: 'salva', progetti: lista })
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.error || `HTTP ${res.status}`);
     }
+    return true;
+  },
+
+  async saveProgetti(progetti) {
+    if (this._piani === null) await this._leggiTutti();
+    await this._invia([...progetti, ...this._piani]);
+    this._progetti = progetti;
+    return true;
+  },
+
+  async savePiani(piani) {
+    if (this._progetti === null) await this._leggiTutti();
+    await this._invia([...this._progetti, ...piani]);
+    this._piani = piani;
     return true;
   },
 

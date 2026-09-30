@@ -8,6 +8,8 @@
   let vista = "menu";
   let idInModifica = null;
   let progetti = [];
+  let piani = [];      // piani economici (Consiglio di Pianificazione), stesso archivio dei progetti
+  let modo = "progetto";   // "progetto" | "piano": cosa si sta creando/modificando
   let luoghi = null;   // registro dei luoghi (lo stesso di CA.html); null = non disponibile
 
   const slugify = t => (t || "").toString().toLowerCase()
@@ -17,11 +19,15 @@
   const escapeHtml = t => (t || "").toString().replace(/[&<>"']/g,
     c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  const STATI_PIANO = ["In elaborazione", "In consultazione", "Approvato", "In vigore", "Concluso", "Archiviato"];
+  const AMBITI_PIANO = { statale: "Statale", unitario: "Unitario" };
+  const listaCorrente = () => (modo === "piano" ? piani : progetti);
+
   const STATI_PROGETTO = ["In progettazione", "Approvato", "In corso", "Sospeso", "Completato", "Annullato"];
 
   function idUnivoco(base, escludi) {
     let c = base || "progetto", n = 2;
-    while (progetti.some(p => p.id === c && p.id !== escludi)) c = `${base}-${n++}`;
+    while ([...progetti, ...piani].some(p => p.id === c && p.id !== escludi)) c = `${base}-${n++}`;
     return c;
   }
 
@@ -102,11 +108,13 @@
   function renderMenu() {
     return `
       <p class="breadcrumb"><a href="ctsu.html">Home</a> &rsaquo; Redazione</p>
-      <h1 style="margin-bottom:4px;">Redazione dei progetti</h1>
+      <h1 style="margin-bottom:4px;">Redazione</h1>
       <p style="color:var(--inchiostro-tenue); max-width:60ch; margin-top:0;">
         Le modifiche vengono salvate direttamente sul database condiviso: saranno visibili a tutti gli utenti del sito.
       </p>
-      <div class="redazione-menu" style="grid-template-columns:repeat(2,1fr);">
+
+      <h2 style="font-family:var(--font-chrome); font-size:1.05rem; margin:24px 0 0;">Progetti tecnici</h2>
+      <div class="redazione-menu" style="grid-template-columns:repeat(2,1fr); margin-top:12px;">
         <button type="button" class="redazione-card" data-azione="nuovo">
           <span class="redazione-card__numero">1</span>
           <span class="redazione-card__titolo">Crea nuovo progetto</span>
@@ -118,33 +126,62 @@
           <span class="redazione-card__desc">Scegli un progetto già presente e modificane il contenuto.</span>
         </button>
       </div>
+
+      <h2 style="font-family:var(--font-chrome); font-size:1.05rem; margin:8px 0 0;">Consiglio di Pianificazione &mdash; piani economici</h2>
+      <p style="color:var(--inchiostro-tenue); max-width:60ch; margin:4px 0 0; font-size:.9rem;">
+        I piani vengono pubblicati sulla pagina <a href="CP.html">CP.html</a>, divisi in statali e unitari.
+      </p>
+      <div class="redazione-menu" style="grid-template-columns:repeat(2,1fr); margin-top:12px;">
+        <button type="button" class="redazione-card" data-azione="nuovo-piano">
+          <span class="redazione-card__numero">3</span>
+          <span class="redazione-card__titolo">Crea nuovo piano economico</span>
+          <span class="redazione-card__desc">Scrivi un piano statale o unitario, con titoli, sezioni, commi e tabelle.</span>
+        </button>
+        <button type="button" class="redazione-card" data-azione="carica-piani">
+          <span class="redazione-card__numero">4</span>
+          <span class="redazione-card__titolo">Carica piano esistente</span>
+          <span class="redazione-card__desc">Scegli un piano già pubblicato e modificane il contenuto.</span>
+        </button>
+      </div>
+
       <p id="redazione-messaggio" class="redazione-messaggio" style="display:none;"></p>
       <p style="margin-top:20px; color:var(--inchiostro-tenue); font-size:0.85rem;">
-        Progetti attualmente nel database: <strong>${progetti.length}</strong>
+        Nel database: <strong>${progetti.length}</strong> progetti &middot; <strong>${piani.length}</strong> piani economici
       </p>`;
   }
 
   function renderCarica() {
-    const lista = [...progetti].sort((a, b) => (a.titolo || "").localeCompare(b.titolo || ""));
-    const righe = lista.map(p => `
+    const eiPiano = modo === "piano";
+    const lista = [...listaCorrente()].sort((a, b) => (a.titolo || "").localeCompare(b.titolo || ""));
+    const righe = lista.map(p => {
+      const nSez = (p.sezioni || []).filter(b => b && (!b.tipo || b.tipo === "sezione")).length;
+      const badge = eiPiano
+        ? `<span class="badge-ambito ${p.ambito === "unitario" ? "badge-ambito--unitario" : ""}">${escapeHtml(AMBITI_PIANO[p.ambito] || "Statale")}</span>`
+        : `<span class="badge-categoria">${escapeHtml(p.categoria)}</span>`;
+      const meta = eiPiano
+        ? `${nSez} sezioni &middot; ${escapeHtml(p.periodo_validita || "periodo non indicato")} &middot; ${(p.allegati || []).length} allegati`
+        : `${nSez} sezioni &middot; ${(p.galleria || []).length} foto &middot; ${(p.allegati || []).length} allegati`;
+      return `
       <div class="redazione-riga" data-id="${escapeHtml(p.id)}">
         <div>
-          <span class="badge-categoria">${escapeHtml(p.categoria)}</span>
+          ${badge}
           <span class="badge-stato">${escapeHtml(p.stato)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(p.titolo)}</p>
-          <p class="redazione-riga__meta">${(p.sezioni || []).filter(b => b && (!b.tipo || b.tipo === "sezione")).length} sezioni &middot; ${(p.galleria || []).length} foto &middot; ${(p.allegati || []).length} allegati</p>
+          <p class="redazione-riga__meta">${meta}</p>
         </div>
         <div class="redazione-riga__azioni">
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-modifica="${escapeHtml(p.id)}">Modifica</button>
           <button type="button" class="redazione-btn redazione-btn--piccolo redazione-btn--pericolo" data-elimina="${escapeHtml(p.id)}">Elimina</button>
         </div>
-      </div>`).join("");
+      </div>`;
+    }).join("");
 
+    const nome = eiPiano ? "piano esistente" : "progetto esistente";
     return `
-      <p class="breadcrumb"><a href="ctsu.html">Home</a> &rsaquo; <a href="redazione-ctsu.html">Redazione</a> &rsaquo; Carica progetto esistente</p>
-      <h1>Carica progetto esistente</h1>
-      <input type="text" id="redazione-filtro" placeholder="Filtra per titolo o categoria&hellip;" style="width:100%; max-width:420px; padding:10px 14px; border:1px solid var(--bordo); border-radius:var(--radius); font-family:var(--font-chrome); margin-bottom:16px;" />
-      <div id="redazione-elenco-carica">${righe || "<p>Nessun progetto presente.</p>"}</div>
+      <p class="breadcrumb"><a href="ctsu.html">Home</a> &rsaquo; <a href="redazione-ctsu.html">Redazione</a> &rsaquo; Carica ${nome}</p>
+      <h1>Carica ${nome}</h1>
+      <input type="text" id="redazione-filtro" placeholder="Filtra per titolo${eiPiano ? " o ambito" : " o categoria"}&hellip;" style="width:100%; max-width:420px; padding:10px 14px; border:1px solid var(--bordo); border-radius:var(--radius); font-family:var(--font-chrome); margin-bottom:16px;" />
+      <div id="redazione-elenco-carica">${righe || `<p>Nessun ${eiPiano ? "piano" : "progetto"} presente.</p>`}</div>
       <p style="margin-top:20px;"><button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">&larr; Torna al menu</button></p>`;
   }
 
@@ -432,7 +469,7 @@
     `<span style="font-size:.75rem;color:var(--inchiostro-tenue);font-family:var(--font-testo);text-transform:none;letter-spacing:0;font-weight:400;">` +
     `Si salva l'ID del luogo: il progetto comparirà su CA.html sotto l'organo che usa questo luogo.</span>`;
 
-  function campoLuogo(valore) {
+  function campoLuogo(valore, suggerimento, nomeCampo) {
     valore = (valore || "").toString().trim();
 
     // Elenco dei luoghi non raggiungibile: si può scrivere l'ID a mano.
@@ -463,8 +500,54 @@
           <option value="">— nessun luogo —</option>
           ${vecchio}${opzioni}
         </select>
-        ${SUGGERIMENTO_LUOGO}
+        ${suggerimento || SUGGERIMENTO_LUOGO}
       </div>`;
+  }
+
+  /* ---------- CAMPI GENERALI DI UN PIANO ECONOMICO ---------- */
+
+  const SUGGERIMENTO_LUOGO_PIANO =
+    `<span style="font-size:.75rem;color:var(--inchiostro-tenue);font-family:var(--font-testo);text-transform:none;letter-spacing:0;font-weight:400;">` +
+    `Facoltativo: lo Stato o l'area a cui si riferisce il piano. Non collega il piano a CA.html.</span>`;
+
+  function campiPiano(p) {
+    const ambito = p && p.ambito === "unitario" ? "unitario" : "statale";
+    const stato = p && p.stato ? p.stato : "In elaborazione";
+    const opzAmbito = Object.entries(AMBITI_PIANO)
+      .map(([k, v]) => `<option value="${k}" ${k === ambito ? "selected" : ""}>${v}</option>`).join("");
+    const opzStato = STATI_PIANO
+      .map(x => `<option value="${escapeHtml(x)}" ${x === stato ? "selected" : ""}>${escapeHtml(x)}</option>`).join("");
+    const v = k => (p ? escapeHtml(p[k]) : "");
+    return `
+        <div class="redazione-campo">
+          <label for="f-titolo">Titolo del piano</label>
+          <input type="text" id="f-titolo" required value="${v("titolo")}" placeholder="es. Piano economico quinquennale 2026-2030" />
+        </div>
+
+        <div class="redazione-riga-campi">
+          <div class="redazione-campo">
+            <label for="f-ambito">Ambito</label>
+            <select id="f-ambito">${opzAmbito}</select>
+          </div>
+          <div class="redazione-campo">
+            <label for="f-stato">Stato del piano</label>
+            <select id="f-stato">${opzStato}</select>
+          </div>
+        </div>
+
+        <div class="redazione-riga-campi">
+          <div class="redazione-campo"><label for="f-organo">Ente redattore</label><input type="text" id="f-organo" value="${v("organo_responsabile")}" /></div>
+          ${campoLuogo(p ? p.luogo_piano : "", SUGGERIMENTO_LUOGO_PIANO)}
+          <div class="redazione-campo"><label for="f-responsabile">Responsabile del piano</label><input type="text" id="f-responsabile" value="${v("responsabile")}" /></div>
+        </div>
+
+        <div class="redazione-riga-campi">
+          <div class="redazione-campo"><label for="f-periodo">Periodo di validità</label><input type="text" id="f-periodo" placeholder="es. 2026-2030" value="${v("periodo_validita")}" /></div>
+          <div class="redazione-campo"><label for="f-data-approvazione">Data di approvazione</label><input type="text" id="f-data-approvazione" placeholder="es. 12 agosto 2026" value="${v("data_approvazione")}" /></div>
+          <div class="redazione-campo"><label for="f-risorse">Risorse totali</label><input type="text" id="f-risorse" placeholder='es. "€ 2.400.000"' value="${v("risorse_totali")}" /></div>
+        </div>
+
+        `;
   }
 
   /* ---------- EDITOR COMPLETO ---------- */
@@ -485,12 +568,12 @@
       .map(s => `<option value="${escapeHtml(s)}" ${s === stato ? "selected" : ""}>${escapeHtml(s)}</option>`).join("");
 
     return `
-      <p class="breadcrumb"><a href="ctsu.html">Home</a> &rsaquo; <a href="redazione-ctsu.html">Redazione</a> &rsaquo; ${progetto ? "Modifica progetto" : "Nuovo progetto"}</p>
-      <h1>${progetto ? "Modifica progetto" : "Nuovo progetto"}</h1>
+      <p class="breadcrumb"><a href="ctsu.html">Home</a> &rsaquo; <a href="redazione-ctsu.html">Redazione</a> &rsaquo; ${(progetto ? "Modifica " : "Nuovo ") + (modo === "piano" ? "piano economico" : "progetto")}</p>
+      <h1>${(progetto ? "Modifica " : "Nuovo ") + (modo === "piano" ? "piano economico" : "progetto")}</h1>
       <p id="redazione-messaggio" class="redazione-messaggio" style="display:none;"></p>
       <form id="redazione-form" class="redazione-form" novalidate>
 
-        <div class="redazione-campo">
+${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo">
           <label for="f-titolo">Titolo del progetto</label>
           <input type="text" id="f-titolo" required value="${progetto ? escapeHtml(progetto.titolo) : ""}" />
         </div>
@@ -526,6 +609,8 @@
           <div class="redazione-campo"><label for="f-budget">Budget previsto</label><input type="text" id="f-budget" placeholder='es. "€ 240.000"' value="${progetto ? escapeHtml(progetto.budget_previsto) : ""}" /></div>
           <div class="redazione-campo"><label for="f-costo">Costo effettivo</label><input type="text" id="f-costo" value="${progetto ? escapeHtml(progetto.costo_effettivo) : ""}" /></div>
         </div>
+
+`}
 
         <div class="redazione-campo">
           <label for="f-sommario">Sommario (mostrato nell'elenco)</label>
@@ -568,7 +653,7 @@
         <div class="redazione-azioni-form" style="margin-top:28px;">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva sul database</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">Annulla</button>
-          ${progetto ? `<button type="button" class="redazione-btn redazione-btn--pericolo" id="redazione-elimina-corrente">Elimina questo progetto</button>` : ""}
+          ${progetto ? `<button type="button" class="redazione-btn redazione-btn--pericolo" id="redazione-elimina-corrente">Elimina ${modo === "piano" ? "questo piano" : "questo progetto"}</button>` : ""}
         </div>
       </form>`;
   }
@@ -636,9 +721,33 @@
 
   function raccogliProgetto() {
     const titolo = document.getElementById("f-titolo").value.trim();
-    const catNuova = document.getElementById("f-categoria-nuova").value.trim();
-    const categoria = catNuova || document.getElementById("f-categoria").value;
+    const catNuova = modo === "piano" ? "" : document.getElementById("f-categoria-nuova").value.trim();
+    const categoria = catNuova || (modo === "piano" ? "" : document.getElementById("f-categoria").value);
     const idBase = slugify(document.getElementById("f-id").value.trim() || titolo);
+    const val = id => document.getElementById(id).value.trim();
+
+    if (modo === "piano") {
+      const ambito = val("f-ambito") === "unitario" ? "unitario" : "statale";
+      return {
+        id: idUnivoco(idBase || "piano", idInModifica),
+        tipo_documento: "piano_economico",   // è ciò che separa i piani dai progetti nell'archivio
+        ambito,
+        titolo,
+        categoria: "Piano economico " + ambito,
+        stato: val("f-stato"),
+        organo_responsabile: val("f-organo"),
+        luogo_piano: val("f-luogo"),
+        responsabile: val("f-responsabile"),
+        periodo_validita: val("f-periodo"),
+        data_approvazione: val("f-data-approvazione"),
+        risorse_totali: val("f-risorse"),
+        sommario: val("f-sommario"),
+        copertina: val("f-copertina"),
+        sezioni: leggiSezioni(),
+        galleria: leggiGalleria(),
+        allegati: leggiAllegati(),
+      };
+    }
     return {
       id: idUnivoco(idBase, idInModifica),
       titolo,
@@ -660,12 +769,16 @@
     };
   }
 
+  async function scrivi(lista) {
+    if (modo === "piano") { await APICtsu.savePiani(lista); piani = lista; }
+    else { await APICtsu.saveProgetti(lista); progetti = lista; }
+  }
+
   async function salvaProgetto(progetto) {
-    const copia = progetti.filter(p => p.id !== idInModifica && p.id !== progetto.id);
+    const copia = listaCorrente().filter(p => p.id !== idInModifica && p.id !== progetto.id);
     copia.push(progetto);
     try {
-      await APICtsu.saveProgetti(copia);
-      progetti = copia;
+      await scrivi(copia);
       return true;
     } catch (e) {
       mostraMessaggio("Errore salvataggio: " + e.message);
@@ -674,10 +787,9 @@
   }
 
   async function eliminaProgetto(id) {
-    const copia = progetti.filter(p => p.id !== id);
+    const copia = listaCorrente().filter(p => p.id !== id);
     try {
-      await APICtsu.saveProgetti(copia);
-      progetti = copia;
+      await scrivi(copia);
       return true;
     } catch (e) {
       mostraMessaggio("Errore eliminazione: " + e.message);
@@ -705,15 +817,17 @@
       const azione = e.target.closest("[data-azione]");
       if (azione) {
         const a = azione.getAttribute("data-azione");
-        if (a === "nuovo") vai("editor", null);
-        else if (a === "carica") vai("carica");
+        if (a === "nuovo") { modo = "progetto"; vai("editor", null); }
+        else if (a === "carica") { modo = "progetto"; vai("carica"); }
+        else if (a === "nuovo-piano") { modo = "piano"; vai("editor", null); }
+        else if (a === "carica-piani") { modo = "piano"; vai("carica"); }
         else if (a === "menu") vai("menu");
         return;
       }
 
       const mod = e.target.closest("[data-modifica]");
       if (mod) {
-        const progetto = progetti.find(p => p.id === mod.getAttribute("data-modifica"));
+        const progetto = listaCorrente().find(p => p.id === mod.getAttribute("data-modifica"));
         if (progetto) vai("editor", progetto);
         return;
       }
@@ -721,7 +835,7 @@
       const del = e.target.closest("[data-elimina]");
       if (del) {
         const id = del.getAttribute("data-elimina");
-        const progetto = progetti.find(p => p.id === id);
+        const progetto = listaCorrente().find(p => p.id === id);
         if (progetto && confirm(`Eliminare "${progetto.titolo}"?`)) {
           if (await eliminaProgetto(id)) vai("carica");
         }
@@ -840,7 +954,7 @@
       }
 
       if (e.target.id === "redazione-elimina-corrente" && idInModifica) {
-        const progetto = progetti.find(p => p.id === idInModifica);
+        const progetto = listaCorrente().find(p => p.id === idInModifica);
         if (progetto && confirm(`Eliminare "${progetto.titolo}"?`)) {
           if (await eliminaProgetto(idInModifica)) vai("menu");
         }
@@ -862,7 +976,9 @@
       btn.disabled = false; btn.textContent = "💾 Salva sul database";
       if (ok) {
         vai("editor", progetto);
-        mostraMessaggio("✅ Salvato sul database. Sarà visibile a tutti gli utenti del sito.");
+        mostraMessaggio(modo === "piano"
+          ? "✅ Piano salvato. È pubblicato su CP.html, nella sezione dei piani " + (progetto.ambito === "unitario" ? "unitari." : "statali.")
+          : "✅ Salvato sul database. Sarà visibile a tutti gli utenti del sito.");
       }
     });
 
@@ -882,10 +998,13 @@
   async function avviaRedazione() {
     initEventi();
     try {
-      progetti = await APICtsu.loadProgetti();
+      const tutti = await APICtsu.loadTutti();
+      progetti = tutti.progetti;
+      piani = tutti.piani;
     } catch (e) {
-      alert("Errore nel caricamento dei progetti: " + e.message);
+      alert("Errore nel caricamento dei dati: " + e.message);
       progetti = [];
+      piani = [];
     }
     try {
       luoghi = await APICtsu.loadLuoghi();
