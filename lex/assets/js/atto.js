@@ -93,7 +93,7 @@
         { font: "helvetica", size: 10, colore: C.tenue, dopo: 3 });
     }
 
-    // immagine facoltativa dell'atto
+    // immagine facoltativa dell'atto (in intestazione, a tutta larghezza)
     if (atto.immagine) await pdf.immagine(atto.immagine, atto.didascalia, { maxH: 60 });
 
     pdf.linea();
