@@ -767,6 +767,22 @@
           </div>
           <div class="line-meta"><span class="freq">Aperta</span>24/7</div>
         </article>   
+        <article class="line-row" style="--line-color:#d47f08">
+          <span class="line-chip">d</span>
+          <div class="line-info">
+            <h3>RER D</h3>
+            <p>Taleen ↔ Bakeneko ↔ Parigette</p>
+          </div>
+          <div class="line-meta"><span class="freq">Aperta</span>24/7</div>
+        </article>   
+        <article class="line-row" style="--line-color:#99059c">
+          <span class="line-chip">e</span>
+          <div class="line-info">
+            <h3>RER E</h3>
+            <p>Alinesjia</p>
+          </div>
+          <div class="line-meta"><span class="freq">Aperta</span>24/7</div>
+        </article>   
       </div>
     </div>
 
@@ -1012,6 +1028,8 @@
     ra: { name: "RERa", color: "#8a060c", system: "rer", icon: "Ra" },
     rb: { name: "RERb", color: "#068a20", system: "rer", icon: "Rb" },
     rc: { name: "RERc", color: "#063d8a", system: "rer", icon: "Rc" },
+    rd: { name: "RERd", color: "#d47f08", system: "rer", icon: "Rd" },
+    re: { name: "RERe", color: "#99059c", system: "rer", icon: "Re" },
     s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
     s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
     s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" },
@@ -1039,9 +1057,11 @@
    m7: ["ecles","ostiense","port_d_expo","tegelg","oberdan","thalè","alexander_platz","lufte","gallier","chatillon"],
    m8: ["estji_viter","estji_kaßache","suomenlapsi","prolet","fsd","unionplz","goberdan"],
    ma: ["fluvia","pernety","ankita_nord","viktorplatz","ostiense","estjilinn","tegelg","1_le","hopera_cyrcula","alina","colcot","sars_f","fluvia"],
-   ra: ["noviforum","a_t_c","sars_f","estji_viter","sarsovg","1_le","newpenn","thalè","hotspot","lufte","gallier","colonia"],
-   rb: ["ikebukuro","s_fulcrea","sars_f","monparnass","portmailotte","port_d_expo","ostiense","lybica"],
+   ra: ["noviforum","a_t_c","sars_f","estji_viter","sarsovg","1_le","isca","tallin_akuna","isca","newpenn","thalè","hotspot","lufte","gallier","colonia"],
+   rb: ["ikebukuro","s_fulcrea","sars_f","monparnass","portmailotte","port_d_expo","oberdan","kyrosh","isca","tallin_akuna","isca","kyrosh","oberdan","port_d_expo","ostiense","lybica"],
    rc: ["n_t_c","newshinguku","nationes","lufte","hotspot","iketal","oberdan","tegelg","1_le","hopera_cyrcula","colcot","sars_f"],
+   re: ["tegelg","vik","oberdan","thalè","alexander_platz","lufte"],
+   rd: [],
    s1: ["lampugnano","alx_der","goberdan","bennon","port","anarkios","webariik","regiomurer","termini","marshut","toer","colossia","fluvia","pernety","bovaes","1_le"],
    s3: ["port_d_expo","bovaes","pernety","ankita_nord","ankita_feld","ecles"],
    s6: ["dakisula","bennon","t_littoria","alx_der","unionplz","wolkseplz","fsd","prolet","Eind","s_fulcrea"],
@@ -1089,10 +1109,12 @@
         { id: "natio", name: "Natio", x: 403, y: 347, lines: ["m3"] },
         { id: "toer", name: "Toer", x: 453, y: 297, lines: ["m4","s1"] },
         { id: "marshut", name: "Marshut", x: 453, y: 367, lines: ["s1"] },
-        { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["rc","ma","m7","t1"] },
+        { id: "tegelg", name: "TegelG.", x: 597, y: 361, lines: ["rc","ma","m7","t1","re"] },
+        { id: "vik", name: "Vik", x: 610, y: 381, lines: ["m6","rc","re"] },
         { id: "1_le", name: "1 Île", x: 500, y: 316, lines: ["ra","rc","ma","s1"] },
         { id: "portmailotte", name: "PortMailotte", x: 600, y: 300, lines: ["rb","m1"] },
         { id: "embas", name: "Embas", x: 540, y: 370, lines: ["t1"],details: "Da Espandere [Rc]." },
+        { id: "isca", name: "", x: 500, y: 376, lines: ["ra"],details: "Da Espandere [Ra]." },
         { id: "port_d_expo", name: "Port d'Expo", x: 739, y: 300, lines: ["t1","s3","m7","m5","rb","m1"] },
         { id: "ostiense", name: "Ostiense", x: 815, y: 300, lines: ["rb","m7","ma"] },
         { id: "lybica", name: "Lybica", x: 950, y: 300, lines: ["rb"] },
@@ -1111,16 +1133,17 @@
         { id: "unionplz", name: "UnionPlz", x: 306, y: 451, lines: ["m3","m8","s6"] },
         { id: "wolkseplz", name: "WolksePlz", x: 250, y: 451, lines: ["s6"] },
         { id: "alx_der", name: "Alx.der", x: 306, y: 498, lines: ["m3","s1","s6"] },
-        { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, lines: ["t1","t3","t2","m3","m4","m6"] },
+        { id: "tallin_akuna", name: "Tallin Akuna", x: 351, y: 376, lines: ["t1","t3","t2","m3","m4","m6","ra","rb"] },
         { id: "outlx", name: "Outlx", x: 306, y: 406, lines: ["m3"] },
         { id: "kompasse", name: "Kompasse", x: 425, y: 376, lines: ["m4","m6"] },
         { id: "termini", name: "Termini", x: 402, y: 425, lines: ["t2","m4","m6","t1","t2","t3"] },
         { id: "newpenn", name: "NewPenn", x: 580, y: 430, lines: ["m6","ra","m1"] },
-        { id: "oberdan", name: "Oberdan", x: 632, y: 394, lines: ["m7","rc"] },
-        { id: "thalè", name: "Thalè", x: 675, y: 430, lines: ["ra","m7","m1"] },
+        { id: "oberdan", name: "Oberdan", x: 632, y: 394, lines: ["m7","rc","rb","re"] },
+        { id: "kyrosh", name: "Kyrosh", x: 572, y: 394, lines: ["rb"] },
+        { id: "thalè", name: "Thalè", x: 675, y: 430, lines: ["ra","m7","m1","re"] },
         { id: "iketal", name: "IkeTal", x: 744, y: 430, lines: ["m1","rc"] },
         { id: "hotspot", name: "Hotspot", x: 781, y: 451, lines: ["ra"] },
-        { id: "alexander_platz", name: "Alexander Platz", x: 712, y: 484, lines: ["m7"] },
+        { id: "alexander_platz", name: "Alexander Platz", x: 712, y: 484, lines: ["m7","re"] },
         { id: "goberdan", name: "Goberdan", x: 371, y: 510, lines: ["m8","s1"] },
         { id: "webariik", name: "WebaRiik", x: 508, y: 463, lines: ["m1","s1"] },
         { id: "regiomurer", name: "Regio-Murer", x: 508, y: 425, lines: ["s1","t1"] },
@@ -1132,7 +1155,7 @@
         { id: "n_t_c", name: "N.T.C.", x: 486, y: 545, lines: ["m2","rc"] },
         { id: "newshinguku", name: "NewShinguku", x: 550, y: 545, lines: ["m2","rc"] },
         { id: "nationes", name: "Nationes", x: 634, y: 545, lines: ["m2","rc","m6","m7"] },
-        { id: "lufte", name: "Lufte", x: 710, y: 506, lines: ["ra","m7","rc"] },
+        { id: "lufte", name: "Lufte", x: 710, y: 506, lines: ["ra","m7","re"] },
         { id: "gallier", name: "Gallier", x: 710, y: 545, lines: ["m2","m7","ra"] },
         { id: "colonia", name: "Colonia", x: 710, y: 650, lines: ["ra"] },
         { id: "chatillon", name: "Chatillon", x: 727, y: 569, lines: ["m7"] },
