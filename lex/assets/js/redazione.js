@@ -431,6 +431,7 @@
             <select id="f-stato">
               <option value="vigente" ${!atto || atto.stato === "vigente" ? "selected" : ""}>vigente</option>
               <option value="abrogato" ${atto && atto.stato === "abrogato" ? "selected" : ""}>abrogato</option>
+              <option value="stesura" ${atto && atto.stato === "stesura" ? "selected" : ""}>stesura</option>
             </select>
           </div>
         </div>
