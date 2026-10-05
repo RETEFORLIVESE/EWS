@@ -19,11 +19,9 @@
   }
 
   function scheda(atto) {
-    const badge = atto.stato === "stesura"
-      ? `<span class="badge-stato stesura">stesura</span>`
-      : atto.stato === "vigente"
-        ? `<span class="badge-stato">vigente</span>`
-        : `<span class="badge-stato abrogato">abrogato</span>`;
+    const badge = atto.stato === "vigente"
+      ? `<span class="badge-stato">vigente</span>`
+      : `<span class="badge-stato abrogato">abrogato</span>`;
     return `
       <a class="scheda-atto" href="atto.html?id=${encodeURIComponent(atto.id)}">
         <div class="scheda-atto__meta">

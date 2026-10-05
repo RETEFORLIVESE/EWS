@@ -388,7 +388,7 @@
       <section class="intestazione-atto">
         <div class="intestazione-atto__meta">
           <span class="badge-categoria">${escAttr(progetto.categoria)}</span>
-          <span class="badge-stato${/^stesura$/i.test(progetto.stato||"")?" stesura":""}">${escAttr(progetto.stato)}</span>
+          <span class="badge-stato">${escAttr(progetto.stato)}</span>
         </div>
         <h1>${escAttr(progetto.titolo)}</h1>
         <p>${escAttr(progetto.sommario)}</p>

@@ -81,7 +81,7 @@
       marca: { nome: "NormAktiv", sottotitolo: "Raccolta ufficiale degli atti normativi", logo: "NormAktiv.png" }
     });
 
-    const stato = atto.stato === "vigente" ? "VIGENTE" : atto.stato === "stesura" ? "IN STESURA" : "ABROGATO";
+    const stato = atto.stato === "vigente" ? "VIGENTE" : "ABROGATO";
     pdf.scrivi(`${(atto.categoria || "").toString().toUpperCase()}  |  ${stato}`,
       { font: "helvetica", stile: "bold", size: 9, colore: C.blu, dopo: 3 });
     pdf.scrivi(atto.titolo, { font: "helvetica", stile: "bold", size: 20, colore: C.scuro, dopo: 3, interlinea: 1.25 });
@@ -195,11 +195,9 @@
       ? await caricaMappaLuoghi()
       : {};
 
-    const badgeStato = atto.stato === "stesura"
-      ? `<span class="badge-stato stesura">stesura</span>`
-      : atto.stato === "vigente"
-        ? `<span class="badge-stato">vigente</span>`
-        : `<span class="badge-stato abrogato">abrogato</span>`;
+    const badgeStato = atto.stato === "vigente"
+      ? `<span class="badge-stato">vigente</span>`
+      : `<span class="badge-stato abrogato">abrogato</span>`;
 
     // Indice: per ogni articolo mostriamo il link principale e, quando
     // l'articolo ha più di un comma, un sotto-elenco con i link ai singoli commi.

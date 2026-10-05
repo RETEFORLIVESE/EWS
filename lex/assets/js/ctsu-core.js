@@ -84,7 +84,6 @@ function iniettaStiliCtsu() {
 .indice-titolo-gruppo a:hover{background:none;text-decoration:underline;}
 
 /* Consiglio di Pianificazione: etichetta dell'ambito del piano */
-.badge-stato.stesura{color:#7a5a00;background:#fff3bf;}
 .badge-ambito{display:inline-block;font-family:var(--font-chrome);font-size:.68rem;font-weight:700;letter-spacing:.03em;color:var(--blu-900);background:var(--carta-scura-mid);border-radius:999px;padding:3px 10px;}
 .badge-ambito--unitario{color:#6b5000;background:#f6ecc7;}
 .scheda-atto__dati{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;list-style:none;font-family:var(--font-chrome);font-size:.8rem;color:var(--inchiostro-tenue);}
