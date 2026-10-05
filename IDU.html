@@ -1030,13 +1030,15 @@
     rc: { name: "RERc", color: "#063d8a", system: "rer", icon: "Rc" },
     rd: { name: "RERd", color: "#d47f08", system: "rer", icon: "Rd" },
     re: { name: "RERe", color: "#99059c", system: "rer", icon: "Re" },
-    s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
-    s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
-    s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" },
-    s7: { name: "S7", color: "#FFD700", system: "shutle", icon: "S7" },
+  //  s1: { name: "S1", color: "#FFD700", system: "shutle", icon: "S1" },
+  //  s3: { name: "S3", color: "#FFD700", system: "shutle", icon: "S3" },
+  //  s6: { name: "S6", color: "#FFD700", system: "shutle", icon: "S6" },
+  //  s7: { name: "S7", color: "#FFD700", system: "shutle", icon: "S7" },
     t1: { name: "T1", color: "#0967eb", system: "tram", icon: "T1" },
     t2: { name: "T2", color: "#84060c", system: "tram", icon: "T2" },
-    t3: { name: "T3", color: "#2f8f4e" , system: "tram", icon: "T3" }
+    t3: { name: "T3", color: "#2f8f4e" , system: "tram", icon: "T3" },
+    t4: { name: "T4", color: "#570c70" , system: "tram", icon: "T4" },
+    t5: { name: "T5", color: "#c9971f" , system: "tram", icon: "T5" }
   };
 
   var SYSTEM_LABELS = { metro: "Metropolitana", rer: "RER", tram: "Tram", shutle: "Shùtle" };
@@ -1051,14 +1053,14 @@
    m1: ["talindam","dakisula","bennon","port","anarkios","webariik","newpenn","thalè","iketal","estjilinn","port_d_expo","portmailotte","monparnass","a_t_c"],
    m2: ["baterina","royale", "p_littoria", "t_littoria","port","n_t_c","newshinguku","nationes","gallier"],
    m3: ["lampugnano","t_littoria","alx_der","unionplz","outlx","tallin_akuna","natio","sarsovg","sars_f"],
-   m4: ["s_fulcrea","kaßazion","estji_viter","tamperan_tassavalta","tallin_akuna","kompasse","toer","colossia","alina","monparnass","mariotte","viktorplatz"],
+   m4: ["s_fulcrea","kaßazion","estji_viter","tamperan_tassavalta","tallin_akuna","termini","kompasse","toer","colcot","alina","monparnass","mariotte","viktorplatz"],
    m5: ["pernety","mariotte","monparnass","alina","colcot","alina","monparnass","mariotte","port_d_expo","estjilinn","bobigny"],
    m6: ["samar","s_fulcrea","estji_kaßache","suomentaku","tallin_akuna","kompasse","tegelg","newpenn","nationes"],
    m7: ["ecles","ostiense","port_d_expo","tegelg","oberdan","thalè","alexander_platz","lufte","gallier","chatillon"],
    m8: ["estji_viter","estji_kaßache","suomenlapsi","prolet","fsd","unionplz","goberdan"],
    ma: ["fluvia","pernety","ankita_nord","viktorplatz","ostiense","estjilinn","tegelg","1_le","hopera_cyrcula","alina","colcot","sars_f","fluvia"],
    ra: ["a_t_c","sars_f","estji_viter","sarsovg","1_le","isca","tallin_akuna","isca","newpenn","thalè","hotspot","lufte","gallier","colonia"],
-   rb: ["ikebukuro","mikitaregio","mikita","s_fulcrea","sars_f","fluvia","monparnass","portmailotte","port_d_expo","oberdan","kyrosh","isca","tallin_akuna","isca","kyrosh","oberdan","port_d_expo","ostiense","ecles","lybica"],
+   rb: ["ikebukuro","mikitaregio","mikita","renault","s_fulcrea","sars_f","fluvia","monparnass","portmailotte","port_d_expo","oberdan","kyrosh","isca","tallin_akuna","isca","kyrosh","oberdan","port_d_expo","ostiense","ecles","lybica"],
    rc: ["n_t_c","newshinguku","nationes","lufte","hotspot","iketal","oberdan","tegelg","1_le","hopera_cyrcula","colcot","sars_f"],
    re: ["tegelg","oberdan","thalè","alexander_platz","lufte"],
    rd: [],
@@ -1068,7 +1070,9 @@
    //s7: ["a_t_c","sars_f","makor","s_fulcrea","mikita"],
    t1: ["tallin_akuna","termini","regiomurer","embas","tegelg","port_d_expo","estjilinn"],
    t2: ["tallin_akuna","termini","anaekios","port","bennon","dakisula","talindam"],
-   t3: ["tallin_akuna","11kunta","suomenlapsi"]
+   t3: ["tallin_akuna","11kunta","suomenlapsi"],
+   t4: ["tallin_akuna","suomenlapsi","zodak","baterese","flop","tartar","jamahiriyya","plot"],
+   t5: ["hichibate","turkye","plot","ginza","ginza-ant","prefektur","renault","suomenlapsi","tallin_akuna"]
   };
 
   // Ogni stazione puo' avere due campi facoltativi, oltre a id/name/x/y/lines:
@@ -1090,7 +1094,7 @@
          { id: "kaßazion", name: "Kaßazion", x: 350, y: 130, lines: ["m4"] },
          { id: "sars_f", name: "Sars F.", x: 403, y: 40, lines: ["m3","ma","rb","ra","rc","s7"] },
          { id: "fluvia", name: "Fluvia", x:550, y: 40, lines: ["ma","s1"] },
-         { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 500, y: 170, lines: ["rc","ma"] },
+         { id: "hopera_cyrcula", name: "Hopera Cyrcula", x: 520, y: 120, lines: ["rc","ma"] },
          { id: "a_t_c", name: "TradeCenter", x: 600, y: 0, lines: ["m1","ra","s7"] ,
            details: "Trade Cener, Athenon.",
            links: [{ label: "Sito Ufficiale", url: "https://ews-rose.vercel.app/TradeCenterATH.html" }] },
@@ -1105,9 +1109,9 @@
          { id: "sarsovg", name: "SarsOVG", x: 403, y: 140, lines: ["m3","ra"] },
          { id: "alina", name: "Alina", x: 547, y: 90, lines: ["ma","m4","m5"] },
          { id: "natio", name: "Natio", x: 403, y: 220, lines: ["m3"] },
-         { id: "toer", name: "Toer", x: 510, y: 135, lines: ["m4","s1"] },
+         { id: "toer", name: "Toer", x: 470, y: 125, lines: ["m4","s1"] },
      //    { id: "marshut", name: "Marshut", x: 470, y: 190, lines: ["s1"] },
-         { id: "tegelg", name: "TegelG.", x: 600, y: 210, lines: ["rc","ma","m7","t1","re","m6"] },
+         { id: "tegelg", name: "TegelG.", x: 600, y: 200, lines: ["rc","ma","m7","t1","re","m6"] },
          { id: "1_le", name: "1 Île", x: 550, y: 140, lines: ["ra","rc","ma","s1"] },
          { id: "portmailotte", name: "PortMailotte", x: 600, y: 170, lines: ["rb","m1"] },
          { id: "embas", name: "Embas", x: 560, y: 250, lines: ["t1"],details: "Da Espandere [Rc]." },
@@ -1119,7 +1123,7 @@
          { id: "bobigny", name: "Bobigny", x: 740, y: 200, lines: ["m5"] },
          { id: "estjilinn", name: "EstjiLinn", x: 685, y: 200, lines: ["t1","m5","m1","ma"] },
          { id: "monparnass", name: "MonParnass", x: 600, y: 120, lines: ["m4","rb","m5","m1"] },
-         { id: "suomenlapsi", name: "SuomenLapsi", x: 294, y: 200, lines: ["m8","t3","s6"] },
+         { id: "suomenlapsi", name: "SuomenLapsi-E.ind", x: 294, y: 200, lines: ["m8","","t4","t3","s6"] },
          { id: "suomentaku", name: "SuomenTaku", x: 320, y: 230, lines: ["m6"] },
          { id: "tamperan_tassavalta", name: "Tamperan Tassavalta", x: 380, y: 190, lines: ["m4"] },
          { id: "11kunta", name: "11 Kunta", x: 310, y: 230, lines: ["t3"] },
@@ -1130,10 +1134,10 @@
          { id: "unionplz", name: "UnionPlz", x: 380, y: 290, lines: ["m3","m8","s6"] },
   //       { id: "wolkseplz", name: "WolksePlz", x: 350, y: 310, lines: ["s6"] },
          { id: "alx_der", name: "Alx.der", x: 380, y: 370, lines: ["m3","s1","s6"] },
-         { id: "tallin_akuna", name: "Tallin Akuna", x: 390, y: 230, lines: ["t1","t3","t2","m3","m4","m6","ra","rb"] },
+         { id: "tallin_akuna", name: "Tallin Akuna", x: 390, y: 230, lines: ["t1","t3","t2","t4","m3","m4","m6","ra","rb"] },
          { id: "outlx", name: "Outlx", x: 380, y: 250, lines: ["m3"] },
-         { id: "kompasse", name: "Kompasse", x: 450, y: 210, lines: ["m4","m6"] },
-         { id: "termini", name: "Termini", x: 470, y: 270, lines: ["t2","m4","m6","t1","t2"] },
+         { id: "kompasse", name: "Kompasse", x: 470, y: 200, lines: ["m4","m6"] },
+         { id: "termini", name: "Termini", x: 470, y: 250, lines: ["t2","m4","m6","t1","t2"] },
          { id: "newpenn", name: "NewPenn", x: 600, y: 290, lines: ["m6","ra","m1"] },
          { id: "oberdan", name: "Oberdan", x: 632, y: 240, lines: ["m7","rc","rb","re"] },
          { id: "kyrosh", name: "Kyrosh", x: 580, y: 240, lines: ["rb"] },
@@ -1160,8 +1164,19 @@
         { id: "dakisula", name: "DakIsula", x: 470, y: 490, lines: ["m1","t2","s6"] },
         { id: "talindam", name: "TalinDam", x: 503, y: 520, lines: ["m1","t2"] },
         { id: "baterina", name: "Baterina", x: 200, y: 450, lines: ["m2"] },
-        { id: "lampugnano", name: "Lampugnano", x: 380, y: 455, lines: ["s1","m3"] }
-  ];
+        { id: "lampugnano", name: "Lampugnano", x: 380, y: 455, lines: ["s1","m3"] },
+        { id: "zodak", name: "Zodak", x:250, y: 160, lines: ["t4"] },
+        { id: "baterese", name: "Baterese", x: 200, y: 160, lines: ["t4"] },
+        { id: "flop", name: "Flop", x: 150, y: 160, lines: ["t4"] },
+        { id: "tartar", name: "TarTar", x: 100, y: 160, lines: ["t4"] },
+        { id: "jamahiriyya", name: "Jamahiriyya", x: 100, y: 180, lines: ["t4"] },
+        { id: "plot", name: "Plot", x: 120, y: 220, lines: ["t4","t5"] },
+        { id: "turkye", name: "Turkye", x: 90, y: 240, lines: ["t5"] },
+        { id: "hichibate", name: "Hichibate", x: 90, y: 280, lines: ["t5"] },
+        { id: "ginza", name: "Ginza", x: 160, y: 220, lines: ["t5"] },
+        { id: "ginza-ant", name: "Ginza-Ant", x: 200, y: 210, lines: ["t5"] },
+        { id: "prefektur", name: "Prefektur", x: 230, y: 200, lines: ["t5"] },
+        { id: "renault", name: "Renault", x: 270, y: 220, lines: ["t5","rd"] }  ];
 
   var svgNS = "http://www.w3.org/2000/svg";
   function el(tag, attrs) {
