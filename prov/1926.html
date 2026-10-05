@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TALEN — Glavni grad Banovine · www.zagreb.shs · 1926</title>
+<style>
+:root{--ink:#0c1b2b;--navy:#10253a;--gold:#c9a24b;--gold2:#f0d78c;--cream:#f2e8d0;--paper:#ede0c2;--red:#8b1a1a;--green:#17483a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);background-image:repeating-linear-gradient(45deg,rgba(201,162,75,.07) 0 2px,transparent 2px 14px),repeating-linear-gradient(-45deg,rgba(201,162,75,.07) 0 2px,transparent 2px 14px);color:var(--cream);font:16px/1.55 Georgia,"Times New Roman",serif}
+a{color:var(--gold2)}a:hover{color:#fff}
+.sc{font-family:"Century Gothic","Futura","Trebuchet MS",sans-serif;text-transform:uppercase;letter-spacing:.22em}
+#page{max-width:960px;margin:10px auto;border:3px solid var(--gold);outline:1px solid var(--gold);outline-offset:5px;background:var(--navy)}
+.date{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:6px 14px;font-size:11px;color:var(--gold);border-bottom:1px solid var(--gold)}
+.mast{position:relative;text-align:center;padding:92px 10px 18px;background:linear-gradient(var(--ink),var(--navy));overflow:hidden;border-bottom:3px double var(--gold)}
+.fan{position:absolute;left:50%;top:-110px;width:420px;height:420px;margin-left:-210px;border-radius:50%;background:repeating-conic-gradient(from 0deg,var(--gold) 0 4deg,transparent 4deg 10deg);opacity:.9;-webkit-mask:radial-gradient(circle,transparent 18%,#000 19% 100%);mask:radial-gradient(circle,transparent 18%,#000 19% 100%)}
+.fan:after{content:"";position:absolute;inset:48%;border-radius:50%;background:var(--gold2)}
+.mast .top{position:relative;font-size:12px;color:var(--gold2)}
+.mast h1{position:relative;margin:8px 0 2px;font:400 clamp(44px,12vw,92px)/1 "Century Gothic","Futura","Trebuchet MS",sans-serif;letter-spacing:.35em;text-indent:.35em;color:var(--gold2);text-shadow:3px 3px 0 var(--red)}
+.mast .sub{position:relative;font-size:12px;color:var(--cream)}
+.mast .sub:before,.mast .sub:after{content:"◆";color:var(--gold);margin:0 10px}
+nav{display:flex;flex-wrap:wrap;justify-content:center;background:var(--green);border-bottom:2px solid var(--gold)}
+nav a{padding:9px 16px;text-decoration:none;color:var(--gold2);font-size:12px;border-right:1px solid rgba(201,162,75,.4)}
+nav a:hover{background:var(--gold);color:var(--ink)}
+.sky{position:relative;height:150px;background:linear-gradient(#10253a 0,#3d5a7a 40%,#e0b86a 100%);overflow:hidden;border-bottom:3px solid var(--gold)}
+.sky .sun{position:absolute;left:50%;bottom:-40px;width:200px;height:200px;margin-left:-100px;border-radius:50%;background:repeating-conic-gradient(from 0deg,#f6e3a1 0 6deg,#e6bf60 6deg 12deg)}
+.sky i{position:absolute;bottom:0;display:block;background:#0a1624}
+.b1{left:5%;width:50px;height:90px;clip-path:polygon(0 100%,0 30%,20% 30%,20% 14%,40% 14%,40% 0,60% 0,60% 14%,80% 14%,80% 30%,100% 30%,100% 100%)}
+.b2{left:16%;width:70px;height:60px;clip-path:polygon(0 100%,0 25%,25% 25%,25% 0,75% 0,75% 25%,100% 25%,100% 100%)}
+.b3{left:30%;width:20px;height:128px;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.b4{left:34%;width:20px;height:112px;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.b5{left:42%;width:64px;height:76px;clip-path:polygon(0 100%,0 40%,18% 40%,18% 20%,36% 20%,36% 0,64% 0,64% 20%,82% 20%,82% 40%,100% 40%,100% 100%)}
+.b6{left:60%;width:56px;height:96px;clip-path:polygon(0 100%,0 18%,25% 18%,25% 0,75% 0,75% 18%,100% 18%,100% 100%)}
+.b7{left:74%;width:80px;height:58px;clip-path:polygon(0 100%,0 50%,20% 50%,20% 25%,50% 25%,50% 0,80% 0,80% 25%,100% 25%,100% 100%)}
+.b8{left:89%;width:44px;height:84px;clip-path:polygon(0 100%,0 35%,20% 35%,20% 15%,40% 15%,40% 0,60% 0,60% 15%,80% 15%,80% 35%,100% 35%,100% 100%)}
+.ban{position:absolute;left:0;right:0;bottom:6px;text-align:center;z-index:2;font-size:12px;color:#fff;text-shadow:0 1px 3px #000}
+.cols{display:grid;grid-template-columns:1fr 1fr 250px;gap:0}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 16px;border-right:1px solid rgba(201,162,75,.4)}
+.col:last-child{border-right:0}
+@media(max-width:820px){.col{border-right:0;border-bottom:1px solid rgba(201,162,75,.4)}}
+h2{margin:0 0 10px;font:400 15px "Century Gothic","Futura","Trebuchet MS",sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);text-align:center;border-top:2px solid var(--gold);border-bottom:2px solid var(--gold);padding:4px 0}
+h3{margin:12px 0 2px;font-size:20px;line-height:1.15;color:#fff}
+p{margin:4px 0 8px}
+.dc:first-letter{float:left;font-size:44px;line-height:.9;padding:3px 6px 0 0;color:var(--gold2);font-weight:bold}
+.small{font-size:12px;color:#c9bf9f}
+.lead{border:1px solid var(--gold);padding:8px 10px;margin:10px 0;background:rgba(201,162,75,.08)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--gold);color:var(--ink);font:11px "Century Gothic",sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:4px 5px;text-align:left}
+td{padding:4px 5px;border-bottom:1px dotted rgba(201,162,75,.6)}
+.radio{border:2px solid var(--gold);border-radius:60px 60px 10px 10px;background:linear-gradient(#2a3b50,#10253a);padding:14px 12px;text-align:center}
+.dial{height:34px;border-radius:50px 50px 0 0;background:repeating-linear-gradient(90deg,var(--gold2) 0 2px,transparent 2px 10px);opacity:.8;margin:6px 8px 2px}
+input[type=range]{width:90%;accent-color:#c9a24b}
+.scr{min-height:64px;background:#0a1624;border:1px inset var(--gold);padding:6px;font:13px "Courier New",monospace;color:#f0d78c;margin-top:6px}
+.static{animation:st .2s steps(2) infinite}
+@keyframes st{50%{opacity:.4;letter-spacing:.3em}}
+.ad{margin:12px 0;padding:10px;text-align:center;border:3px double var(--gold);background:var(--cream);color:var(--ink)}
+.ad b{display:block;font:400 18px "Century Gothic",sans-serif;letter-spacing:.2em;color:var(--red);text-transform:uppercase}
+.tg input,.tg textarea{width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--gold);font:14px "Courier New",monospace;padding:5px;margin-bottom:4px}
+.btn{background:var(--red);color:var(--gold2);border:2px solid var(--gold);padding:6px 12px;font:12px "Century Gothic",sans-serif;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:var(--gold);color:var(--ink)}
+#tgout{display:none;margin-top:8px;background:#f7ecbd;color:#222;border:1px solid #9a8a50;padding:8px;font:13px "Courier New",monospace;white-space:pre-wrap;transform:rotate(-1deg);box-shadow:3px 3px 0 #000}
+.ctr{display:inline-flex;gap:2px}
+.ctr span{background:#000;color:var(--gold2);font:bold 18px "Courier New";padding:1px 5px;border:1px solid var(--gold)}
+footer{padding:14px;text-align:center;border-top:3px double var(--gold);background:var(--ink);font-size:12px;color:#c9bf9f}
+.orn{text-align:center;color:var(--gold);letter-spacing:.4em;margin:8px 0}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--ink:#2a1c10;--navy:#3b2a18}}
+</style>
+</head>
+<body>
+<div id="page">
+<div class="date sc"><span>Br. 1926 · god. XIII.</span><span id="dt">—</span><span>Cijena: 1 dinar</span></div>
+
+<div class="mast">
+<div class="fan"></div>
+<div class="top sc">★ Gradsko poglavarstvo ★</div>
+<h1>TALEEN</h1>
+<div class="sub sc">Kraljevina Srba, Hrvata i Slovenaca</div>
+</div>
+<nav class="sc"><a href="#vijesti">Vijesti</a><a href="#grad">Grad</a><a href="#promet">Promet</a><a href="#zbor">Zbor</a><a href="#hotel">Hoteli</a><a href="#brzojav">Brzojav</a></nav>
+
+<div class="sky"><div class="sun"></div><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i><i class="b6"></i><i class="b7"></i><i class="b8"></i><div class="ban sc">Pogled na grad s Griča · Foto: Zagreb studio, 1926.</div></div>
+
+<div class="cols">
+<div class="col" id="vijesti">
+<h2>Brzojavne vijesti</h2>
+<h3>Otvoren Hotel Esplanade, dragulj kod kolodvora</h3>
+<p class="dc">Zagreb je dobio hotel kakav imaju samo Pariz i Beč. Na otvorenju je u dvorani svirao orkestar, a gosti Orient Expressa mogu se odmah s vlaka preseliti u svilene sobe s kupaonicom i telefonom. Grad je ponosan.</p>
+<div class="lead"><b class="sc small">Radio</b><br>Radio Zagreb počinje s emitiranjem iz Zagreba! Prvi program sa studija nalazi se na srednjim valovima, a slušalice se mogu naručiti u radnji u Ilici.</div>
+<h3>Električni tramvaj sada do Maksimira</h3>
+<p>Gradski tramvajski promet proširio je mrežu i bolje povezuje centar s istočnim kvartovima. Vozne karte kupuju se od kondukterâ u vozilu.</p>
+<h3>Sportske vijesti</h3>
+<p>Građanski je u nedjelju pobijedio na igralištu na Maksimiru, a publika je pjevala do kasno u noć. Sljedeća utakmica u srijedu u 16 sati.</p>
+</div>
+
+<div class="col" id="grad">
+<h2>Grad i okolica</h2>
+<p class="dc">Zagreb, najveći grad Hrvatske i drugi po veličini u Kraljevini, leži između Medvednice i Save. Ovdje su sveučilište, kazalište, Zbor i mnogo banaka. Središte grada je Jelačićev trg, a trgovački puls kuca u Ilici.</p>
+<table><tr><th>Znamenitost</th><th>Gdje</th></tr><tr><td>Katedrala</td><td>Kaptol</td></tr><tr><td>Mirogoj (gradsko groblje)</td><td>Mirogojska cesta</td></tr><tr><td>Kamenita vrata</td><td>Gornji grad</td></tr><tr><td>Dolac (tržnica)</td><td>iza Jelačićeva trga</td></tr><tr><td>Hrvatsko narodno kazalište</td><td>Kazališni trg</td></tr></table>
+<div class="orn">◆ ◆ ◆</div>
+<h2 id="promet">Promet</h2>
+<table><tr><th>Veza</th><th>Polazak</th></tr><tr><td>Zagreb – Beograd (brzi vlak)</td><td>8:10 · 20:30</td></tr><tr><td>Zagreb – Ljubljana</td><td>7:00 · 15:45</td></tr><tr><td>Zagreb – Sušak/Rijeka</td><td>6:30 · 14:20</td></tr><tr><td>Orient Express</td><td>01:10</td></tr></table>
+<p class="small">Tramvaj: svakih 8 min od 5 do 23 sata. Kočije i automobili čekaju pred kolodvorom.</p>
+<div class="lead" id="zbor"><b class="sc small">Zagrebački zbor</b><br>Međunarodni velesajam u rujnu: paviljoni s izlagačima iz 12 zemalja, strojevi, tekstil i električni aparati. Ulaznica 5 dinara.</div>
+</div>
+
+<div class="col">
+<h2>Radio</h2>
+<div class="radio"><div class="sc small">Radio Zagreb</div><div class="dial"></div><input type="range" id="tune" min="0" max="100" value="0"><div class="scr" id="scr">Ugodite valnu duljinu…</div></div>
+<div class="ad" id="hotel"><b>Esplanade</b>Hotel Prvog Reda<br>Zagreb, kod glavnog kolodvora<br><span class="small" style="color:#4a3a1a">Telefon 5-512 · Kupaonica · Restoran</span></div>
+<h2 id="brzojav">Brzojav</h2>
+<div class="tg"><input id="to" placeholder="Za: (npr. Rodbina u Beogradu)"><textarea id="tx" rows="3" placeholder="Poruka…"></textarea><button class="btn" id="send">Pošalji brzojav</button><div id="tgout"></div></div>
+<div style="text-align:center;margin-top:12px" class="small">Posjetilac br.<br><span class="ctr" id="ctr"></span></div>
+</div>
+</div>
+
+<footer>
+<div class="orn">◆ ◆ ◆</div>
+Gradsko poglavarstvo grada Zagreba · Kraljevina Srba, Hrvata i Slovenaca<br>
+Urednik: Gradski ured za statistiku · Telefon 1-000 · Brzojav: ZAGREB-POGLAVARSTVO<br>
+<span class="sc">Zagreb 1926</span>
+</footer>
+</div>
+<script>
+(function(){
+function e(i){return document.getElementById(i)}
+var mj=["siječnja","veljače","ožujka","travnja","svibnja","lipnja","srpnja","kolovoza","rujna","listopada","studenoga","prosinca"];
+var d=new Date();e("dt").textContent="Zagreb, "+d.getDate()+". "+mj[d.getMonth()]+" 1926.";
+var n=String(20315+Math.floor(Math.random()*50)).padStart(6,"0"),c="";for(var i=0;i<n.length;i++)c+="<span>"+n[i]+"</span>";e("ctr").innerHTML=c;
+var st=[{p:0,t:"Radio Zagreb — Jutarnji koncert. Salonski orkestar svira valcere."},{p:50,t:"Radio Zagreb — Vijesti i vremenska prognoza: sunčano, vjetar sa sjevera."},{p:100,t:"Radio Zagreb — Večernji recital: gudački kvartet."}];
+e("tune").oninput=function(){var v=+this.value,s=e("scr"),best=null,bd=999;for(var i=0;i<st.length;i++){var dd=Math.abs(v-st[i].p);if(dd<bd){bd=dd;best=st[i]}}
+if(bd<=6){s.className="scr";s.textContent=best.t}else{s.className="scr static";s.textContent="░▒▓ šum ▓▒░ …tražim stanicu…"}};
+e("tune").oninput.call(e("tune"));
+e("send").onclick=function(){var to=e("to").value.trim()||"NEPOZNATI PRIMALAC",tx=e("tx").value.trim();if(!tx){return}
+var m=tx.toUpperCase().replace(/[.!?]+/g," STOP").replace(/\s+/g," ");if(!/STOP$/.test(m))m+=" STOP";
+var o=e("tgout");o.style.display="block";o.textContent="★ BRZOJAV ★ ZAGREB\nZA: "+to.toUpperCase()+"\n\n"+m+"\n\nPRIMLJENO "+new Date().toLocaleTimeString("hr-HR",{hour:"2-digit",minute:"2-digit"})+" · POŠTA ZAGREB"};
+})();
+</script>
+</body>
+</html>
