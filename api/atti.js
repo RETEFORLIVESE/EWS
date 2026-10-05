@@ -1,93 +1,81 @@
-// api/atti.js — un solo endpoint per gli atti/norme (NormAktiv: normaktiv.html,
-// atto.html, redazione.html) e per le "norme collegate" di CA.html:
-//   GET                                            -> lettura pubblica di atti.json
-//   POST { azione: "login", username, password }   -> login redazione
-//   POST { azione: "salva", atti: [...] }           -> salvataggio (richiede Authorization: Bearer <token>)
-//
-// Accorpato da atti.js + atti-organi.js + login.js + salva-atti.js per stare
-// sotto al limite di 12 funzioni serverless del piano gratuito di Vercel.
-// ⚠️ Nota: prima CA.html leggeva da /api/atti-organi (rimosso). Aggiorna
-// lex/assets/js/api-organi.js perché ApiOrgani.loadAtti() ora chiami /api/atti.
+// assets/js/api.js
+// Libreria client per normaktiv.html / atto.html / redazione.html.
+// Login e salvataggio ora passano dallo STESSO endpoint della lettura
+// (/api/atti, distinto da un campo "azione" nel corpo della richiesta POST).
 
-import { leggiFileJson, scriviFileJson } from './_github.js';
-import { creaToken, sessioneDaRichiesta } from './_sessione.js';
+const API = {
+  _sessione: { token: null, username: null },
 
-// ⚠️ Stessa nota di sempre: valuta di spostare queste credenziali in
-// REDAZIONE_USER_ATTI / REDAZIONE_PASSWORD_ATTI quando vorrai occupartene.
-const VALID_USERS = { "TandeePetrenka": "TandeePetrenka", "admin": "CambiamiAnche" };
+  setSessione(token, username) {
+    this._sessione = { token, username };
+    try { sessionStorage.setItem('fz_sessione', JSON.stringify(this._sessione)); } catch (e) {}
+  },
 
-function estraiAtti(registro) {
-    if (Array.isArray(registro)) return registro;
-    if (registro && Array.isArray(registro.atti)) return registro.atti;
-    return [];
-}
+  loadCredentials() {
+    try {
+      const raw = sessionStorage.getItem('fz_sessione');
+      if (raw) this._sessione = JSON.parse(raw);
+    } catch (e) {}
+    return this._sessione;
+  },
 
-// File JSON leggibili pubblicamente (senza login) tramite questo endpoint,
-// usando ?risorsa=<chiave>. Servono a far passare dal server anche le letture
-// che prima il browser faceva direttamente su raw.githubusercontent.com: da
-// quando la repo DATA è privata, quelle letture dirette non funzionano più
-// (raw.githubusercontent.com richiede repo pubblica o un token, che non va
-// mai esposto al browser). Aggiungi qui altre voci se in futuro serviranno
-// altri file letti pubblicamente dal sito (es. organi.json).
-const RISORSE_PUBBLICHE = {
-    atti: 'atti.json',
-    organi: 'organi.json'
+  clearCredentials() {
+    this._sessione = { token: null, username: null };
+    try { sessionStorage.removeItem('fz_sessione'); } catch (e) {}
+  },
+
+  isAuthenticated() {
+    return !!this._sessione.token;
+  },
+
+  async loadAtti() {
+    const res = await fetch('/api/atti');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message ? `HTTP ${res.status}: ${data.message}` : `HTTP ${res.status}`);
+    }
+    return Array.isArray(data.atti) ? data.atti : [];
+  },
+
+  async saveAtti(atti) {
+    if (!this.isAuthenticated()) throw new Error("Non autenticato: effettua il login.");
+    const res = await fetch('/api/atti', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + this._sessione.token
+      },
+      body: JSON.stringify({ azione: 'salva', atti })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+    return true;
+  },
+
+  async login(username, password) {
+    const res = await fetch('/api/atti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ azione: 'login', username, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Credenziali errate');
+    }
+    this.setSessione(data.token, username);
+    return data;
+  }
 };
 
-async function gestisciGet(req, res) {
-    const chiave = (req.query && req.query.risorsa) || 'atti';
-    const file = RISORSE_PUBBLICHE[chiave];
-    if (!file) {
-        return res.status(400).json({ message: `Risorsa "${chiave}" non riconosciuta.` });
-    }
-    try {
-        res.setHeader('Cache-Control', 'no-store');
-        if (chiave === 'atti') {
-            const registro = await leggiFileJson(file, { atti: [] });
-            return res.status(200).json({ atti: estraiAtti(registro) });
-        }
-        // Le altre risorse (es. organi.json) vengono restituite così come sono.
-        const dati = await leggiFileJson(file, {});
-        return res.status(200).json(dati);
-    } catch (error) {
-        return res.status(500).json({ message: 'Errore lettura: ' + error.message });
-    }
-}
+API.loadCredentials();
 
-function gestisciLogin(corpo, res) {
-    const { username, password } = corpo || {};
-    if (VALID_USERS[username] && VALID_USERS[username] === password) {
-        return res.status(200).json({ success: true, message: 'Login effettuato', token: creaToken(username) });
-    }
-    return res.status(401).json({ success: false, message: 'Credenziali errate' });
-}
-
-async function gestisciSalva(req, corpo, res) {
-    const sessione = sessioneDaRichiesta(req);
-    if (!sessione) return res.status(401).json({ message: 'Sessione scaduta: effettua di nuovo il login.' });
-    const atti = corpo && Array.isArray(corpo.atti) ? corpo.atti : null;
-    if (!atti) return res.status(400).json({ message: 'Corpo della richiesta non valido: atteso { atti: [...] }.' });
-    try {
-        await scriviFileJson('atti.json', { atti }, `Aggiornamento atti (${sessione.username})`);
-        return res.status(200).json({ success: true });
-    } catch (error) {
-        return res.status(500).json({ message: 'Errore salvataggio: ' + error.message });
-    }
-}
-
-export default async function handler(req, res) {
-    if (req.method === 'GET') return gestisciGet(req, res);
-
-    if (req.method === 'POST') {
-        let corpo = req.body;
-        if (typeof corpo === 'string') {
-            try { corpo = JSON.parse(corpo); } catch (e) { corpo = {}; }
-        }
-        if (corpo && corpo.azione === 'login') return gestisciLogin(corpo, res);
-        if (corpo && corpo.azione === 'salva') return gestisciSalva(req, corpo, res);
-        return res.status(400).json({ message: 'Azione non riconosciuta: atteso "login" o "salva".' });
-    }
-
-    res.setHeader('Allow', 'GET, POST');
-    return res.status(405).json({ message: 'Metodo non consentito' });
-}
+// Stile del badge dello stato "stesura" (giallo), valido per tutte le pagine di NormAktiv.
+(function () {
+  if (typeof document === 'undefined' || document.getElementById('stile-stesura')) return;
+  const st = document.createElement('style');
+  st.id = 'stile-stesura';
+  st.textContent = '.badge-stato.stesura{color:#7a5a00;background:#fff3bf;}';
+  (document.head || document.documentElement).appendChild(st);
+})();

@@ -50,7 +50,7 @@
         ${immagineHtml}
         <div class="scheda-atto__meta">
           <span class="badge-categoria">${escAttr(progetto.categoria)}</span>
-          <span class="badge-stato">${escAttr(progetto.stato)}</span>
+          <span class="badge-stato${/^stesura$/i.test(progetto.stato||"")?" stesura":""}">${escAttr(progetto.stato)}</span>
         </div>
         <h3 class="scheda-atto__titolo">${escAttr(progetto.titolo)}</h3>
         <p class="scheda-atto__sommario">${escAttr(progetto.sommario)}</p>

@@ -19,11 +19,11 @@
   const escapeHtml = t => (t || "").toString().replace(/[&<>"']/g,
     c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const STATI_PIANO = ["In elaborazione", "In consultazione", "Approvato", "In vigore", "Concluso", "Archiviato"];
+  const STATI_PIANO = ["Stesura", "In elaborazione", "In consultazione", "Approvato", "In vigore", "Concluso", "Archiviato"];
   const AMBITI_PIANO = { statale: "Statale", unitario: "Unitario" };
   const listaCorrente = () => (modo === "piano" ? piani : progetti);
 
-  const STATI_PROGETTO = ["In progettazione", "Approvato", "In corso", "Sospeso", "Completato", "Annullato"];
+  const STATI_PROGETTO = ["Stesura", "In progettazione", "Approvato", "In corso", "Sospeso", "Completato", "Annullato"];
 
   function idUnivoco(base, escludi) {
     let c = base || "progetto", n = 2;
@@ -165,7 +165,7 @@
       <div class="redazione-riga" data-id="${escapeHtml(p.id)}">
         <div>
           ${badge}
-          <span class="badge-stato">${escapeHtml(p.stato)}</span>
+          <span class="badge-stato${/^stesura$/i.test(p.stato||"")?" stesura":""}">${escapeHtml(p.stato)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(p.titolo)}</p>
           <p class="redazione-riga__meta">${meta}</p>
         </div>

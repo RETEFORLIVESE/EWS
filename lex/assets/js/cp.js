@@ -444,7 +444,7 @@
       <section class="intestazione-atto">
         <div class="intestazione-atto__meta">
           ${badgeAmbito(piano)}
-          <span class="badge-stato">${esc(piano.stato)}</span>
+          <span class="badge-stato${/^stesura$/i.test(piano.stato||"")?" stesura":""}">${esc(piano.stato)}</span>
         </div>
         <h1>${esc(piano.titolo)}</h1>
         <p>${esc(piano.sommario)}</p>
@@ -490,7 +490,7 @@
     return `
       <a class="scheda-atto" href="CP.html?id=${encodeURIComponent(p.id)}">
         ${src ? `<img class="scheda-atto__immagine" src="${esc(src)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ""}
-        <div class="scheda-atto__meta">${badgeAmbito(p)}<span class="badge-stato">${esc(p.stato)}</span></div>
+        <div class="scheda-atto__meta">${badgeAmbito(p)}<span class="badge-stato${/^stesura$/i.test(p.stato||"")?" stesura":""}">${esc(p.stato)}</span></div>
         <h3 class="scheda-atto__titolo">${esc(p.titolo)}</h3>
         ${p.sommario ? `<p class="scheda-atto__sommario">${esc(p.sommario)}</p>` : ""}
         ${dati ? `<ul class="scheda-atto__dati">${dati}</ul>` : ""}
