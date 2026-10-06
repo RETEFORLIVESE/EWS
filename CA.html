@@ -279,7 +279,7 @@
         .sezione-titolo::before { width: 28px; height: 28px; }
         .sezione-norme::before { background-image: url('Icons/NormAktivW95.png'); }
         .sezione-elezione::before { background-image: url('Icons/ElectionW95.png'); }
-        .sezione-ctsu::before { background-image: url('Icons/ComputersW95.ico'); }
+        .sezione-ctsu::before, .sezione-ccp::before { background-image: url('Icons/ComputersW95.ico'); }
         .sezione-container { margin-top: 2.5rem; border-top: 1px solid var(--ist-line); padding-top: 2rem; }
 
         .norme-msg { color: var(--ist-text); font-style: italic; margin: 0; }
@@ -408,6 +408,11 @@
                 <div class="sezione-container">
                     <h3 class="sezione-titolo sezione-ctsu">Progetti CTSU</h3>
                     <div id="view-progetti"></div>
+                </div>
+
+                <div class="sezione-container">
+                    <h3 class="sezione-titolo sezione-ccp">Progetti CCP</h3>
+                    <div id="view-piani"></div>
                 </div>
 
                 <div class="sezione-container">
@@ -753,7 +758,7 @@
 
             const chiavi = [nodo.luogo, nodo.id_organo].filter(Boolean);
             const progetti = progettiCtsu
-                .filter(p => p && chiavi.includes(p.luogo))
+                .filter(p => p && !eUnPianoCp(p) && chiavi.includes(p.luogo))
                 .sort((a, b) => (rangoStatoProgetto(a) - rangoStatoProgetto(b)) || String(a.titolo || '').localeCompare(String(b.titolo || '')));
 
             if (progetti.length === 0) {
@@ -761,6 +766,91 @@
                 return;
             }
             progetti.forEach(p => box.appendChild(creaProgetto(p)));
+        }
+
+        /* =========================================================
+           PROGETTI CCP (piani economici del Consiglio di Pianificazione)
+        ========================================================= */
+        // I piani stanno nello stesso archivio dei progetti (/api/ctsu): li distingue tipo_documento.
+        function eUnPianoCp(p) {
+            return !!p && typeof p === 'object' && p.tipo_documento === 'piano_economico';
+        }
+
+        // Indirizzo della scheda completa del piano (CP.html?id=...), nella stessa cartella delle pagine CTSU.
+        const CP_PIANO_URL = 'lex/CP.html?id=';
+
+        const ORDINE_STATO_PIANO = ['in vigore', 'approvato', 'in consultazione', 'in elaborazione', 'concluso', 'archiviato'];
+        function rangoStatoPiano(p) {
+            const i = ORDINE_STATO_PIANO.indexOf(String(p.stato || '').toLowerCase());
+            return i === -1 ? ORDINE_STATO_PIANO.length : i;
+        }
+
+        function creaPiano(p) {
+            const d = creaElemento('details', 'norma');
+            const s = document.createElement('summary');
+            s.appendChild(creaElemento('span', 'norma-titolo', p.titolo || '(senza titolo)'));
+            s.appendChild(creaElemento('span', 'norma-meta', p.ambito === 'unitario' ? 'Piano unitario' : 'Piano statale'));
+            if (p.stato) {
+                s.appendChild(creaElemento('span', 'norma-stato' + (String(p.stato).toLowerCase() === 'archiviato' ? ' abrogato' : ''), p.stato));
+            }
+            d.appendChild(s);
+
+            const corpo = creaElemento('div', 'norma-corpo');
+
+            const righe = [
+                ['Ente redattore', p.organo_responsabile],
+                ['Responsabile del piano', p.responsabile],
+                ['Periodo di validità', p.periodo_validita],
+                ['Data di approvazione', p.data_approvazione],
+                ['Risorse totali', p.risorse_totali]
+            ].filter(([, v]) => v && String(v).trim() !== '');
+            if (righe.length) {
+                const dl = creaElemento('dl', 'el-dettagli');
+                dl.innerHTML = righe.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+                corpo.appendChild(dl);
+            }
+
+            const nSez = Array.isArray(p.sezioni) ? p.sezioni.filter(b => b && (!b.tipo || b.tipo === 'sezione')).length : 0;
+            const sunto = (p.sommario || '').toString().trim()
+                || (nSez ? `Piano composto da ${nSez} ${nSez === 1 ? 'sezione' : 'sezioni'}.` : 'Sunto non disponibile.');
+            corpo.appendChild(creaElemento('div', 'norma-etichetta', 'Sunto'));
+            corpo.appendChild(creaElemento('p', 'norma-sunto', sunto));
+
+            const link = creaElemento('a', 'btn-normaktiv', 'Leggi il piano completo su CP');
+            link.href = CP_PIANO_URL + encodeURIComponent(p.id || '');
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            corpo.appendChild(link);
+            d.appendChild(corpo);
+            return d;
+        }
+
+        // Stessa regola dei progetti CTSU: il "luogo" del piano è l'ID del luogo (o dell'organo).
+        async function mostraPiani(nodo) {
+            const box = document.getElementById('view-piani');
+            box.innerHTML = '';
+            box.appendChild(creaElemento('p', 'norme-msg', 'Caricamento dei progetti…'));
+
+            await progettiPronti;
+            if (organoCorrente !== nodo) return; // nel frattempo è stato scelto un altro organo
+
+            box.innerHTML = '';
+            if (erroreProgetti) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Impossibile leggere i progetti (' + (erroreProgetti.message || 'errore sconosciuto') + ').'));
+                return;
+            }
+
+            const chiavi = [nodo.luogo, nodo.id_organo].filter(Boolean);
+            // I piani salvati prima del collegamento con CA hanno il luogo in "luogo_piano".
+            const piani = progettiCtsu
+                .filter(p => eUnPianoCp(p) && chiavi.includes(p.luogo || p.luogo_piano))
+                .sort((a, b) => (rangoStatoPiano(a) - rangoStatoPiano(b)) || String(a.titolo || '').localeCompare(String(b.titolo || '')));
+
+            if (piani.length === 0) {
+                box.appendChild(creaElemento('p', 'norme-msg', 'Nessun progetto CCP collegato a questo organo.'));
+                return;
+            }
+            piani.forEach(p => box.appendChild(creaPiano(p)));
         }
 
         /* =========================================================
@@ -1009,6 +1099,7 @@
             organoCorrente = nodo;
             mostraNorme(nodo);
             mostraProgetti(nodo);
+            mostraPiani(nodo);
             mostraElezione(nodo);
 
             const etichetta = etichettaCategoria(nodo);

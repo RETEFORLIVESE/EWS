@@ -508,7 +508,7 @@
 
   const SUGGERIMENTO_LUOGO_PIANO =
     `<span style="font-size:.75rem;color:var(--inchiostro-tenue);font-family:var(--font-testo);text-transform:none;letter-spacing:0;font-weight:400;">` +
-    `Facoltativo: lo Stato o l'area a cui si riferisce il piano. Non collega il piano a CA.html.</span>`;
+    `Si salva l'ID del luogo: il piano comparirà su CA.html sotto l'organo che usa questo luogo.</span>`;
 
   function campiPiano(p) {
     const ambito = p && p.ambito === "unitario" ? "unitario" : "statale";
@@ -537,7 +537,7 @@
 
         <div class="redazione-riga-campi">
           <div class="redazione-campo"><label for="f-organo">Ente redattore</label><input type="text" id="f-organo" value="${v("organo_responsabile")}" /></div>
-          ${campoLuogo(p ? p.luogo_piano : "", SUGGERIMENTO_LUOGO_PIANO)}
+          ${campoLuogo(p ? (p.luogo || p.luogo_piano) : "", SUGGERIMENTO_LUOGO_PIANO)}
           <div class="redazione-campo"><label for="f-responsabile">Responsabile del piano</label><input type="text" id="f-responsabile" value="${v("responsabile")}" /></div>
         </div>
 
@@ -736,7 +736,7 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
         categoria: "Piano economico " + ambito,
         stato: val("f-stato"),
         organo_responsabile: val("f-organo"),
-        luogo_piano: val("f-luogo"),
+        luogo: val("f-luogo"),             // stesso campo dei progetti: è quello che legge CA.html
         responsabile: val("f-responsabile"),
         periodo_validita: val("f-periodo"),
         data_approvazione: val("f-data-approvazione"),

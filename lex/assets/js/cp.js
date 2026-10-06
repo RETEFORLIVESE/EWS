@@ -3,7 +3,7 @@
 //
 // Un piano è un documento salvato nello stesso archivio dei progetti CTSU (/api/ctsu),
 // riconoscibile da tipo_documento === "piano_economico". Campi propri:
-//   ambito ("statale" | "unitario"), periodo_validita, data_approvazione, risorse_totali, luogo_piano.
+//   ambito ("statale" | "unitario"), periodo_validita, data_approvazione, risorse_totali, luogo (ID della voce di luoghi, come nei progetti; i vecchi piani possono avere luogo_piano).
 // La struttura del testo (titoli, sezioni, commi, sottocommi, immagini) è identica a quella dei progetti.
 //
 // CP.html                    -> elenco, con filtri per ambito e stato
@@ -425,7 +425,7 @@
     document.title = piano.titolo + " — " + CP_CONFIG.nomeSito;
     const amb = ambitoDi(piano);
 
-    let nomeLuogo = piano.luogo_piano || "";
+    let nomeLuogo = piano.luogo || piano.luogo_piano || "";
     if (nomeLuogo) {
       try {
         const voce = cercaLuogo(await caricaLuoghi(), nomeLuogo);
