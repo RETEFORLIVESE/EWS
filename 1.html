@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Andamento Elettorale - RETEFORLIVESE</title>
 
-<!-- Chart.js + adattatore date -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
@@ -91,6 +90,18 @@
 const RAW_JSON_URL = "https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/elezioni.json";
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minuti
 
+// --- FILTRI DI ESCLUSIONE ---
+// Escludi i referendum (non sono partiti politici)
+const ESCLUDI_REFERENDUM = true;
+
+// Escludi la elezione costituzionale del 2023 (data specifica)
+const DATE_ESCLUSE = [
+  "15/08/2023"
+];
+
+// Escludi per tipo (se vuoi escludere TUTTE le costituzionali, metti true)
+const ESCLUDI_TIPO_COSTITUZIONALE = true;
+
 // ============================================================
 // STATO GLOBALE
 // ============================================================
@@ -98,7 +109,7 @@ let chartInstance = null;
 let intervalId = null;
 
 // ============================================================
-// UTILITY: set stato UI
+// UTILITY UI
 // ============================================================
 function setStatus(message, type) {
   const badge = document.getElementById('statusBadge');
@@ -117,7 +128,7 @@ function hideError() {
 }
 
 // ============================================================
-// 1. SCARICA IL JSON DA GITHUB RAW
+// 1. SCARICA IL JSON
 // ============================================================
 async function fetchElezioni() {
   const response = await fetch(RAW_JSON_URL + '?t=' + Date.now(), {
@@ -130,20 +141,32 @@ async function fetchElezioni() {
 }
 
 // ============================================================
-// 2. TRASFORMA I DATI DEL JSON IN DATASET PER CHART.JS
+// 2. FILTRO ELEZIONI
+// ============================================================
+function isElezioneValida(elezione) {
+  // Referendum
+  if (ESCLUDI_REFERENDUM && elezione.tipo_codice === 'R') return false;
+
+  // Costituzionale (tipo K)
+  if (ESCLUDI_TIPO_COSTITUZIONALE && elezione.tipo_codice === 'K') return false;
+
+  // Data specifica
+  if (DATE_ESCLUSE.includes(elezione.data)) return false;
+
+  return true;
+}
+
+// ============================================================
+// 3. TRASFORMA I DATI IN DATASET PER CHART.JS
 // ============================================================
 function buildChartData(json) {
   const elezioni = json.elezioni || [];
-
-  // Mappa: nomePartito -> { colore, punti: [{x: Date, y: percentuale}] }
   const partitiMap = new Map();
   const dateSet = new Set();
 
-  // I referendum (tipo_codice === 'R') non rappresentano partiti politici
-  const elezioniPolitiche = elezioni.filter(e => e.tipo_codice !== 'R');
+  const elezioniPolitiche = elezioni.filter(isElezioneValida);
 
   elezioniPolitiche.forEach(elezione => {
-    // Parsing data gg/mm/aaaa
     const [gg, mm, aaaa] = elezione.data.split('/').map(Number);
     const dataObj = new Date(aaaa, mm - 1, gg);
     if (isNaN(dataObj.getTime())) return;
@@ -152,7 +175,6 @@ function buildChartData(json) {
 
     (elezione.risultati_partiti || []).forEach(p => {
       const nome = p.nome.trim();
-      // Parsing percentuale: "54,4%" -> 54.4
       const perc = parseFloat(
         String(p.percentuale || '').replace('%', '').replace(',', '.')
       );
@@ -166,20 +188,16 @@ function buildChartData(json) {
       }
 
       const partito = partitiMap.get(nome);
-      if (p.colore && partito.colore === randomColor(nome)) {
-        partito.colore = p.colore; // aggiorna con colore reale se disponibile
-      }
+      if (p.colore) partito.colore = p.colore;
 
       partito.punti.push({ x: dataObj.getTime(), y: perc });
     });
   });
 
-  // Ordina i punti di ogni partito per data
   partitiMap.forEach(partito => {
     partito.punti.sort((a, b) => a.x - b.x);
   });
 
-  // Costruisci datasets ordinati per nome
   const datasets = [];
   const sortedPartiti = [...partitiMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -205,7 +223,7 @@ function buildChartData(json) {
 }
 
 // ============================================================
-// UTILITY: colore casuale deterministico basato sul nome
+// UTILITY: colore deterministico dal nome
 // ============================================================
 function randomColor(str) {
   let hash = 0;
@@ -217,16 +235,14 @@ function randomColor(str) {
 }
 
 // ============================================================
-// 3. CREA O AGGIORNA IL GRAFICO
+// 4. RENDER GRAFICO
 // ============================================================
 function renderChart(chartData) {
   const ctx = document.getElementById('elezioniChart').getContext('2d');
 
   const config = {
     type: 'line',
-    data: {
-      datasets: chartData.datasets
-    },
+    data: { datasets: chartData.datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -285,9 +301,7 @@ function renderChart(chartData) {
             font: { size: 13, weight: 'bold' },
             color: '#2c3e50'
           },
-          grid: {
-            color: 'rgba(0,0,0,0.06)'
-          },
+          grid: { color: 'rgba(0,0,0,0.06)' },
           ticks: {
             maxRotation: 45,
             minRotation: 0,
@@ -304,9 +318,7 @@ function renderChart(chartData) {
             font: { size: 13, weight: 'bold' },
             color: '#2c3e50'
           },
-          grid: {
-            color: 'rgba(0,0,0,0.06)'
-          },
+          grid: { color: 'rgba(0,0,0,0.06)' },
           ticks: {
             callback: v => v + '%',
             font: { size: 11 }
@@ -316,14 +328,12 @@ function renderChart(chartData) {
     }
   };
 
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
+  if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, config);
 }
 
 // ============================================================
-// 4. CICLO PRINCIPALE: FETCH + RENDER
+// 5. CICLO PRINCIPALE
 // ============================================================
 async function aggiornaGrafico() {
   try {
@@ -334,7 +344,7 @@ async function aggiornaGrafico() {
     const chartData = buildChartData(json);
 
     if (chartData.datasets.length === 0) {
-      throw new Error('Nessun partito trovato nel JSON');
+      throw new Error('Nessun partito trovato dopo i filtri');
     }
 
     renderChart(chartData);
@@ -346,21 +356,18 @@ async function aggiornaGrafico() {
   } catch (err) {
     console.error(err);
     setStatus('❌ Errore nel caricamento', 'error');
-    showError(err.message + ' — Il grafico mostra gli ultimi dati caricati con successo.');
+    showError(err.message);
   }
 }
 
 // ============================================================
-// 5. AVVIO
+// 6. AVVIO
 // ============================================================
 aggiornaGrafico();
 intervalId = setInterval(aggiornaGrafico, REFRESH_INTERVAL);
 
-// Aggiorna anche quando la scheda torna visibile (risparmia risorse)
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    aggiornaGrafico();
-  }
+  if (document.visibilityState === 'visible') aggiornaGrafico();
 });
 </script>
 
