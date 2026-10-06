@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Andamento Elettorale - RETEFORLIVESE</title>
+<title>Andamento Elettorale (per seggi) - RETEFORLIVESE</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -70,8 +70,8 @@
 <body>
 
 <div class="container">
-  <h1>📊 Andamento Elettorale</h1>
-  <div class="subtitle">Percentuale per partito nel tempo — dati aggiornati automaticamente dalla repository</div>
+  <h1>📊 Andamento Elettorale (per seggi)</h1>
+  <div class="subtitle">Percentuale di seggi per partito nel tempo — calcolata come <em>seggi partito / seggi totali elezione</em></div>
 
   <div id="statusBadge" class="status loading">⏳ Caricamento dati...</div>
 
@@ -91,16 +91,14 @@ const RAW_JSON_URL = "https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minuti
 
 // --- FILTRI DI ESCLUSIONE ---
-// Escludi i referendum (non sono partiti politici)
 const ESCLUDI_REFERENDUM = true;
-
-// Escludi la elezione costituzionale del 2023 (data specifica)
-const DATE_ESCLUSE = [
-  "15/08/2023"
-];
-
-// Escludi per tipo (se vuoi escludere TUTTE le costituzionali, metti true)
+const DATE_ESCLUSE = ["15/08/2023"];
 const ESCLUDI_TIPO_COSTITUZIONALE = true;
+
+// --- MODALITÀ CALCOLO ---
+// 'seggi'      -> percentuale calcolata dai seggi (seggi_partito / seggi_totali * 100)
+// 'percentuale'-> usa il campo "percentuale" del JSON (non più usato)
+const MODALITA = 'seggi';
 
 // ============================================================
 // STATO GLOBALE
@@ -144,24 +142,18 @@ async function fetchElezioni() {
 // 2. FILTRO ELEZIONI
 // ============================================================
 function isElezioneValida(elezione) {
-  // Referendum
   if (ESCLUDI_REFERENDUM && elezione.tipo_codice === 'R') return false;
-
-  // Costituzionale (tipo K)
   if (ESCLUDI_TIPO_COSTITUZIONALE && elezione.tipo_codice === 'K') return false;
-
-  // Data specifica
   if (DATE_ESCLUSE.includes(elezione.data)) return false;
-
   return true;
 }
 
 // ============================================================
-// 3. TRASFORMA I DATI IN DATASET PER CHART.JS
+// 3. COSTRUZIONE DATASET (basata sui SEGGI)
 // ============================================================
 function buildChartData(json) {
   const elezioni = json.elezioni || [];
-  const partitiMap = new Map();
+  const partitiMap = new Map(); // nome -> { colore, punti: [] }
   const dateSet = new Set();
 
   const elezioniPolitiche = elezioni.filter(isElezioneValida);
@@ -171,14 +163,27 @@ function buildChartData(json) {
     const dataObj = new Date(aaaa, mm - 1, gg);
     if (isNaN(dataObj.getTime())) return;
 
+    const risultati = elezione.risultati_partiti || [];
+
+    // --- CALCOLO SEGGI TOTALI DELL'ELEZIONE ---
+    let seggiTotali = 0;
+    risultati.forEach(p => {
+      const s = Number(p.seggi) || 0;
+      seggiTotali += s;
+    });
+
+    // Se non ci sono seggi (es. referendum, dati mancanti), salta
+    if (seggiTotali === 0) return;
+
     dateSet.add(dataObj.getTime());
 
-    (elezione.risultati_partiti || []).forEach(p => {
-      const nome = p.nome.trim();
-      const perc = parseFloat(
-        String(p.percentuale || '').replace('%', '').replace(',', '.')
-      );
-      if (isNaN(perc)) return;
+    risultati.forEach(p => {
+      const nome = (p.nome || '').trim();
+      if (!nome) return;
+
+      const seggiPartito = Number(p.seggi) || 0;
+      // Percentuale basata sui SEGGI
+      const percSeggi = (seggiPartito / seggiTotali) * 100;
 
       if (!partitiMap.has(nome)) {
         partitiMap.set(nome, {
@@ -190,14 +195,21 @@ function buildChartData(json) {
       const partito = partitiMap.get(nome);
       if (p.colore) partito.colore = p.colore;
 
-      partito.punti.push({ x: dataObj.getTime(), y: perc });
+      partito.punti.push({
+        x: dataObj.getTime(),
+        y: percSeggi,
+        seggi: seggiPartito,
+        seggiTotali: seggiTotali
+      });
     });
   });
 
+  // Ordina i punti cronologicamente
   partitiMap.forEach(partito => {
     partito.punti.sort((a, b) => a.x - b.x);
   });
 
+  // Costruisci datasets
   const datasets = [];
   const sortedPartiti = [...partitiMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -279,7 +291,12 @@ function renderChart(chartData) {
               });
             },
             label: function(ctx) {
-              return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`;
+              const raw = ctx.raw || {};
+              const perc = ctx.parsed.y.toFixed(1);
+              if (raw.seggi !== undefined) {
+                return ` ${ctx.dataset.label}: ${perc}%  (${raw.seggi}/${raw.seggiTotali} seggi)`;
+              }
+              return ` ${ctx.dataset.label}: ${perc}%`;
             }
           }
         }
@@ -314,7 +331,7 @@ function renderChart(chartData) {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Percentuale (%)',
+            text: '% seggi sul totale elezione',
             font: { size: 13, weight: 'bold' },
             color: '#2c3e50'
           },
@@ -351,7 +368,7 @@ async function aggiornaGrafico() {
 
     const nPartiti = chartData.datasets.length;
     const nElezioni = chartData.dateSet.length;
-    setStatus(`✅ Aggiornato — ${nPartiti} partiti, ${nElezioni} elezioni`, 'ok');
+    setStatus(`✅ Aggiornato — ${nPartiti} partiti, ${nElezioni} elezioni (basato sui seggi)`, 'ok');
 
   } catch (err) {
     console.error(err);
