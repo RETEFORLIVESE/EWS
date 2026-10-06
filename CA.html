@@ -300,6 +300,9 @@
             padding: 0.2rem 0.6rem; border-radius: 20px; margin-left: auto; background: var(--ist-azure); color: var(--ist-blue); 
         }
         .norma-stato.abrogato { background: #fdf2f2; color: #c81e1e; }
+        /* quadratino di copertina a destra dell'anteprima (norme, progetti CTSU, piani CP) */
+        .norma-copertina { flex: none; width: 56px; height: 56px; object-fit: cover; border: 1px solid var(--ist-line); border-radius: 4px; background: var(--bg-body); }
+        .norma-stato:not(:last-child) { margin-right: 0.2rem; }
         
         .norma-corpo { padding: 1rem 1.2rem 1.2rem; border-top: 1px solid var(--ist-line); background: var(--bg-body); }
         .norma-etichetta { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--ist-blue); margin: 0.8rem 0 0.3rem 0; }
@@ -611,6 +614,22 @@
             return id ? NORMAKTIV_ATTO_URL + encodeURIComponent(id) : NORMAKTIV_HOME_URL;
         }
 
+        // Copertina del documento: piccolo quadrato a destra dell'anteprima. Se il documento non ha
+        // un'immagine (o l'indirizzo non si carica) il quadratino non compare.
+        function aggiungiCopertina(summary, doc) {
+            let u = String((doc && (doc.copertina || doc.immagine)) || '').trim();
+            if (!u) return;
+            // solo indirizzi web o percorsi relativi: niente javascript:, data: e simili
+            if (!/^(https?:)?\/\//i.test(u) && /^[a-z][a-z0-9+.-]*:/i.test(u)) return;
+            const img = document.createElement('img');
+            img.className = 'norma-copertina';
+            img.src = u;
+            img.alt = '';
+            img.loading = 'lazy';
+            img.onerror = () => img.remove();
+            summary.appendChild(img);
+        }
+
         function creaNorma(atto) {
             const d = creaElemento('details', 'norma');
             const s = document.createElement('summary');
@@ -629,6 +648,7 @@
                     s.appendChild(metaSpan);
                 }
             }
+            aggiungiCopertina(s, atto);
             d.appendChild(s);
 
             const corpo = creaElemento('div', 'norma-corpo');
@@ -706,6 +726,7 @@
             if (p.stato) {
                 s.appendChild(creaElemento('span', 'norma-stato' + (String(p.stato).toLowerCase() === 'annullato' ? ' abrogato' : ''), p.stato));
             }
+            aggiungiCopertina(s, p);
             d.appendChild(s);
 
             const corpo = creaElemento('div', 'norma-corpo');
@@ -793,6 +814,7 @@
             if (p.stato) {
                 s.appendChild(creaElemento('span', 'norma-stato' + (String(p.stato).toLowerCase() === 'archiviato' ? ' abrogato' : ''), p.stato));
             }
+            aggiungiCopertina(s, p);
             d.appendChild(s);
 
             const corpo = creaElemento('div', 'norma-corpo');
