@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Andamento Elettorale - RETEFORLIVESE</title>
+
+<!-- Chart.js + adattatore date -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+    color: #2c3e50;
+  }
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 24px;
+  }
+  h1 {
+    font-size: 1.6rem;
+    margin: 0 0 8px 0;
+    color: #1B5FA8;
+  }
+  .subtitle {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 20px;
+  }
+  .status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .status.loading { background: #fff3cd; color: #856404; }
+  .status.ok { background: #d4edda; color: #155724; }
+  .status.error { background: #f8d7da; color: #721c24; }
+  .chart-wrapper {
+    position: relative;
+    height: 600px;
+    width: 100%;
+  }
+  #errorBox {
+    display: none;
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+  }
+  .footer-note {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    color: #95a5a6;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📊 Andamento Elettorale</h1>
+  <div class="subtitle">Percentuale per partito nel tempo — dati aggiornati automaticamente dalla repository</div>
+
+  <div id="statusBadge" class="status loading">⏳ Caricamento dati...</div>
+
+  <div class="chart-wrapper">
+    <canvas id="elezioniChart"></canvas>
+  </div>
+
+  <div id="errorBox"></div>
+  <div class="footer-note">Aggiornamento automatico ogni 5 minuti · Fonte: RETEFORLIVESE/DATA</div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAZIONE
+// ============================================================
+const RAW_JSON_URL = "https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/elezioni.json";
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minuti
+
+// ============================================================
+// STATO GLOBALE
+// ============================================================
+let chartInstance = null;
+let intervalId = null;
+
+// ============================================================
+// UTILITY: set stato UI
+// ============================================================
+function setStatus(message, type) {
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = message;
+  badge.className = 'status ' + type;
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.style.display = 'block';
+  box.textContent = '⚠️ ' + msg;
+}
+
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+// ============================================================
+// 1. SCARICA IL JSON DA GITHUB RAW
+// ============================================================
+async function fetchElezioni() {
+  const response = await fetch(RAW_JSON_URL + '?t=' + Date.now(), {
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!response.ok) {
+    throw new Error('HTTP ' + response.status + ' — impossibile scaricare il JSON');
+  }
+  return await response.json();
+}
+
+// ============================================================
+// 2. TRASFORMA I DATI DEL JSON IN DATASET PER CHART.JS
+// ============================================================
+function buildChartData(json) {
+  const elezioni = json.elezioni || [];
+
+  // Mappa: nomePartito -> { colore, punti: [{x: Date, y: percentuale}] }
+  const partitiMap = new Map();
+  const dateSet = new Set();
+
+  // I referendum (tipo_codice === 'R') non rappresentano partiti politici
+  const elezioniPolitiche = elezioni.filter(e => e.tipo_codice !== 'R');
+
+  elezioniPolitiche.forEach(elezione => {
+    // Parsing data gg/mm/aaaa
+    const [gg, mm, aaaa] = elezione.data.split('/').map(Number);
+    const dataObj = new Date(aaaa, mm - 1, gg);
+    if (isNaN(dataObj.getTime())) return;
+
+    dateSet.add(dataObj.getTime());
+
+    (elezione.risultati_partiti || []).forEach(p => {
+      const nome = p.nome.trim();
+      // Parsing percentuale: "54,4%" -> 54.4
+      const perc = parseFloat(
+        String(p.percentuale || '').replace('%', '').replace(',', '.')
+      );
+      if (isNaN(perc)) return;
+
+      if (!partitiMap.has(nome)) {
+        partitiMap.set(nome, {
+          colore: p.colore || randomColor(nome),
+          punti: []
+        });
+      }
+
+      const partito = partitiMap.get(nome);
+      if (p.colore && partito.colore === randomColor(nome)) {
+        partito.colore = p.colore; // aggiorna con colore reale se disponibile
+      }
+
+      partito.punti.push({ x: dataObj.getTime(), y: perc });
+    });
+  });
+
+  // Ordina i punti di ogni partito per data
+  partitiMap.forEach(partito => {
+    partito.punti.sort((a, b) => a.x - b.x);
+  });
+
+  // Costruisci datasets ordinati per nome
+  const datasets = [];
+  const sortedPartiti = [...partitiMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  sortedPartiti.forEach(([nome, dati]) => {
+    datasets.push({
+      label: nome,
+      data: dati.punti,
+      borderColor: dati.colore,
+      backgroundColor: dati.colore + '33',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      pointBackgroundColor: dati.colore,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      tension: 0.15,
+      spanGaps: true,
+      fill: false
+    });
+  });
+
+  return { datasets, dateSet: [...dateSet].sort((a, b) => a - b) };
+}
+
+// ============================================================
+// UTILITY: colore casuale deterministico basato sul nome
+// ============================================================
+function randomColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 45%)`;
+}
+
+// ============================================================
+// 3. CREA O AGGIORNA IL GRAFICO
+// ============================================================
+function renderChart(chartData) {
+  const ctx = document.getElementById('elezioniChart').getContext('2d');
+
+  const config = {
+    type: 'line',
+    data: {
+      datasets: chartData.datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            boxWidth: 14,
+            padding: 12,
+            font: { size: 12 },
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          titleFont: { size: 13 },
+          bodyFont: { size: 12 },
+          padding: 10,
+          cornerRadius: 6,
+          callbacks: {
+            title: function(items) {
+              if (!items.length) return '';
+              const d = new Date(items[0].parsed.x);
+              return d.toLocaleDateString('it-IT', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+              });
+            },
+            label: function(ctx) {
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'month',
+            tooltipFormat: 'dd MMMM yyyy',
+            displayFormats: {
+              month: 'MMM yyyy',
+              year: 'yyyy'
+            }
+          },
+          title: {
+            display: true,
+            text: 'Data elezione',
+            font: { size: 13, weight: 'bold' },
+            color: '#2c3e50'
+          },
+          grid: {
+            color: 'rgba(0,0,0,0.06)'
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 20,
+            font: { size: 11 }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Percentuale (%)',
+            font: { size: 13, weight: 'bold' },
+            color: '#2c3e50'
+          },
+          grid: {
+            color: 'rgba(0,0,0,0.06)'
+          },
+          ticks: {
+            callback: v => v + '%',
+            font: { size: 11 }
+          }
+        }
+      }
+    }
+  };
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+  chartInstance = new Chart(ctx, config);
+}
+
+// ============================================================
+// 4. CICLO PRINCIPALE: FETCH + RENDER
+// ============================================================
+async function aggiornaGrafico() {
+  try {
+    setStatus('⏳ Aggiornamento dati...', 'loading');
+    hideError();
+
+    const json = await fetchElezioni();
+    const chartData = buildChartData(json);
+
+    if (chartData.datasets.length === 0) {
+      throw new Error('Nessun partito trovato nel JSON');
+    }
+
+    renderChart(chartData);
+
+    const nPartiti = chartData.datasets.length;
+    const nElezioni = chartData.dateSet.length;
+    setStatus(`✅ Aggiornato — ${nPartiti} partiti, ${nElezioni} elezioni`, 'ok');
+
+  } catch (err) {
+    console.error(err);
+    setStatus('❌ Errore nel caricamento', 'error');
+    showError(err.message + ' — Il grafico mostra gli ultimi dati caricati con successo.');
+  }
+}
+
+// ============================================================
+// 5. AVVIO
+// ============================================================
+aggiornaGrafico();
+intervalId = setInterval(aggiornaGrafico, REFRESH_INTERVAL);
+
+// Aggiorna anche quando la scheda torna visibile (risparmia risorse)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    aggiornaGrafico();
+  }
+});
+</script>
+
+</body>
+</html>
