@@ -125,7 +125,7 @@
   /* ---------- PDF (motore comune assets/js/pdf-export.js) ---------- */
 
   // Logo mostrato nella barra blu di ogni pagina del PDF (percorso relativo a unitext.html).
-  const LOGO_UNITA = "/UniText.png";
+  const LOGO_UNITA = "lex/UniText.png";
 
   function caricaPdfExport() {
     if (window.PdfExport) return Promise.resolve(window.PdfExport);
