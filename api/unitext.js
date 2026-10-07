@@ -28,7 +28,7 @@ const TIPI_BLOCCO = ['capitolo', 'sottocapitolo', 'paragrafo', 'citazione', 'imm
 
 // ⚠️ Cambia queste credenziali (o usa UNITEXT_USERS): "nome utente": "password".
 const VALID_USERS_DEFAULT = {
-  "TandeePetrenka": "TandeePetrenka  "
+  "TandeePetrenka": "TandeePetrenka"
 };
 
 function utenti() {
