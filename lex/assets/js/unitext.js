@@ -124,6 +124,9 @@
 
   /* ---------- PDF (motore comune assets/js/pdf-export.js) ---------- */
 
+  // Logo mostrato nella barra blu di ogni pagina del PDF (percorso relativo a unitext.html).
+  const LOGO_UNITA = "assets/img/UniTa.png";
+
   function caricaPdfExport() {
     if (window.PdfExport) return Promise.resolve(window.PdfExport);
     return new Promise((resolve, reject) => {
@@ -138,7 +141,7 @@
   async function scaricaPdf(t) {
     const PE = await caricaPdfExport();
     const C = PE.colori;
-    const pdf = await PE.crea({ marca: { nome: SITE_CONFIG_UNITEXT.nome, sottotitolo: SITE_CONFIG_UNITEXT.motto, logo: SITE_CONFIG_UNITEXT.emblema } });
+    const pdf = await PE.crea({ marca: { nome: SITE_CONFIG_UNITEXT.nome, sottotitolo: SITE_CONFIG_UNITEXT.motto, logo: LOGO_UNITA } });
     const note = U.noteDi(t);
     const conRichiami = s => (s || "").toString().replace(/\[\^(\d+)\]/g, (m, n) => (note[+n - 1] ? "[" + n + "]" : m));
 

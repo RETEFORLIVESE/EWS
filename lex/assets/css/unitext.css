@@ -22,6 +22,10 @@ img,svg{max-width:100%;}
 /* ---- testata e navigazione ---- */
 .testata{background:linear-gradient(180deg,var(--blu-700) 0%,var(--blu-800) 100%);color:#eef3f8;padding:22px 0 24px;}
 .testata__riga{display:flex;align-items:center;gap:20px;}
+/* Logo UniTa accanto all'intestazione (come CTSU.png nello stile di NormAktiv).
+   Se l'intestazione contiene già un .testata__emblema, il logo non viene duplicato. */
+.testata__riga::before{content:"";flex:none;width:64px;height:64px;background:url("../img/UniTa.png") center/contain no-repeat;}
+.testata__riga:has(.testata__emblema)::before{display:none;}
 .testata__emblema{flex:none;width:60px;height:60px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .testata__emblema img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
 .testata__nome{font-family:var(--font-chrome);font-weight:700;font-size:1.6rem;margin:0;letter-spacing:.01em;}
