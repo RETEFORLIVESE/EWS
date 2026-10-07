@@ -306,6 +306,12 @@
     gap: 1.5rem;
   }
 
+  .cards-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
   .service-card {
     background: var(--ist-white);
     border: 1px solid var(--ist-line);
@@ -535,6 +541,7 @@
     .stat-item { border-left: none; border-top: 1px solid rgba(255,255,255,0.14); }
     .stat-item:first-child { border-top: none; }
     .news-item { grid-template-columns: 70px 1fr; }
+    .cards-grid-2 { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -606,6 +613,7 @@
         <h2 class="section-title">Siti istituzionali dell'Unione</h2>
       </div>
 
+      <div class="cards-grid-2">
      
       <article class="service-card">
        <div class="service-icon">
@@ -622,12 +630,21 @@
        <h3><a href="CEPU.html">CEPU</a></h3>
        <p>Portale della Commissione Elettorale Permanente dell'Unione</p>
       </article>
-        <article class="service-card">
+       
+      <article class="service-card">
           <div class="service-icon">
             <img src="lex/CTSU.png" alt="CTSU">
           </div>
           <h3><a href="lex/ctsu.html">CTSU</a></h3>
           <p>Portale del Congresso Tecnico Scentifico dell'Unione</p>
+        </article>
+       
+      <article class="service-card">
+          <div class="service-icon">
+            <img src="lex/assets/js/UniText.png" alt="UniText">
+          </div>
+          <h3><a href="lex/unitext.html">UniText</a></h3>
+          <p>Portale dei Testi dell'Unione</p>
         </article>
 
       <article class="service-card">
@@ -656,6 +673,7 @@
         <p class="section-label">Agenzie</p>
         <h2 class="section-title">Siti delle agenzie dell'Unione</h2>
       </div>
+      <div class="cards-grid-2">
       <article class="service-card">
        <div class="service-icon">
         <img src="TETA.png" alt="TETA">
@@ -695,6 +713,7 @@
        <h3><a href="TradeCenterATH.html">TradeCenter</a></h3>
        <p>Portale dell'Agenzia Unitaria delle Risorse</p>
       </article>
+      </div>
     </div>
   </section>
 
