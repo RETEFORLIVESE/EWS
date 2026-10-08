@@ -2,7 +2,8 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#043a96">
 <title>The Estji Archive</title>
 <style>
 *{box-sizing:border-box}
@@ -20,7 +21,10 @@ body{
     linear-gradient(180deg,#1b8cf0 0%,#0a5fd0 45%,#043a96 100%);
   background-attachment:fixed;
 }
-a{color:inherit}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+a{color:inherit;-webkit-tap-highlight-color:transparent}
+button{-webkit-tap-highlight-color:transparent}
+.only-m,.sheet-head{display:none}
 [hidden]{display:none!important}
 main section{display:block}
 .warn p{margin:0 0 10px}
@@ -121,13 +125,76 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
   background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);text-shadow:0 1px 2px #002;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .nav button:hover{filter:brightness(1.15)}
 
+@media(hover:none){
+  .item:hover,.bigbtn:hover,.nav button:hover{filter:none}
+  .item:active,.bigbtn:active,.nav button:active{filter:brightness(1.35)}
+}
+
 @media(max-width:720px){
-  .layout{grid-template-columns:1fr}
-  aside{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-right:0;border-bottom:1px solid rgba(120,190,255,.2)}
-  .group{margin:0}
+  body{padding:max(10px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 10px max(8px,env(safe-area-inset-left));
+    font-size:16px;background-attachment:scroll}
+  .site{border-radius:28px 28px 16px 16px;min-height:calc(100vh - 20px);min-height:calc(100dvh - 20px)}
+  .site::before{height:80px;border-radius:28px 28px 0 0}
+
+  header{padding:14px 16px 10px;gap:12px}
+  .flag{width:46px;height:42px}
   header h1{font-size:22px}
-  .banner{flex-direction:column;height:auto;padding:14px}
+  header p{margin:1px 0 0;font-size:13px}
+
+  .layout{grid-template-columns:1fr}
+  main{padding:8px 8px 0}
+
+  /* menu: schermata a tutto schermo, apribile dalla barra in basso */
+  .only-m{display:inline-block}
+  aside{
+    position:fixed;inset:0;z-index:50;overflow-y:auto;overscroll-behavior:contain;
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;
+    padding:0 max(12px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+    border:0;background:linear-gradient(180deg,#0b1a33,#030812);
+    visibility:hidden;opacity:0;transform:translateY(12px);
+    transition:opacity .2s,transform .2s,visibility 0s .2s;
+  }
+  body.menu-open{overflow:hidden}
+  body.menu-open aside{visibility:visible;opacity:1;transform:none;transition:opacity .2s,transform .2s}
+  .sheet-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    grid-column:1/-1;position:sticky;top:0;z-index:1;
+    padding:calc(12px + env(safe-area-inset-top)) 0 12px;margin-bottom:2px;
+    background:#0b1a33;border-bottom:1px solid rgba(120,190,255,.25);font-size:18px;text-shadow:0 1px 3px #000
+  }
+  .sheet-head .bigbtn{width:auto;min-height:44px;margin:0;padding:0 18px}
+  .group{margin:0;padding:5px}
+  .gh{font-size:15px;padding:6px 0;margin-bottom:5px}
+  aside .item{min-height:46px;font-size:16px;padding:6px 10px;gap:10px;margin-bottom:5px}
+  aside .item .ic{width:22px}
+  .bigbtn{min-height:46px;font-size:16px;margin-bottom:6px}
+
+  /* contenuto */
+  .bar{padding:8px 10px;font-size:16px}
+  .panel{margin-top:8px}
+  .banner{flex-direction:column;height:auto!important;padding:16px 12px;gap:8px}
   .banner .bub{display:none}
+  .banner .frame{font-size:48px;line-height:0}
+  .banner .frame img{width:72px;height:auto}
+  .banner .txt b{font-size:34px}
+  .warn{font-size:15px;line-height:1.6;padding:10px 8px 4px}
+  .btns .item{min-height:46px;justify-content:center;font-size:15px}
+  .row{padding:4px 6px;gap:12px}
+  .row a{flex:1;min-width:0;padding:11px 0;line-height:1.3;overflow-wrap:anywhere}
+
+  /* barra inferiore compatta */
+  .bottom{margin:auto -8px 0;padding:8px 10px calc(10px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0}
+  .bottom .cur{font-size:13px;padding:3px 8px;margin-bottom:8px;border-radius:16px 16px 6px 6px}
+  .nav{flex-wrap:nowrap;gap:6px}
+  .nav button{flex:1;min-height:44px;padding:0 8px;font-size:15px;border-radius:5px;white-space:nowrap}
+  #bPrev,#bNext{flex:0 0 54px}
+  .lbl{display:none}
+}
+@media(max-width:480px){
+  aside{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  aside,body.menu-open aside{transition:none}
 }
 </style>
 </head>
@@ -142,7 +209,8 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
   </header>
 
   <div class="layout">
-    <aside>
+    <aside id="menu" aria-label="Menu del sito">
+      <div class="sheet-head"><b>Menu</b><button type="button" class="bigbtn" id="bClose">✕ Chiudi</button></div>
       <div class="group">
         <span class="gh">Union Sites</span>
         <a class="item on" href="#intro" data-page="intro"><span class="ic"><img src="USSEcoat.png" alt="" width="16" height="16"></span>General</a>
@@ -278,9 +346,10 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
       <div class="bottom">
         <span class="cur">Pagina attuale: <span id="curName">Introduzione</span></span>
         <div class="nav">
+          <button type="button" id="bMenu" class="only-m" aria-controls="menu" aria-expanded="false"><span aria-hidden="true">☰</span> Menu</button>
           <button id="bHome">Indice 🏠</button>
-          <button id="bPrev">◀ Precedente</button>
-          <button id="bNext">Successivo ▶</button>
+          <button id="bPrev" aria-label="Precedente">◀<span class="lbl"> Precedente</span></button>
+          <button id="bNext" aria-label="Successivo"><span class="lbl">Successivo </span>▶</button>
         </div>
       </div>
     </main>
@@ -296,6 +365,29 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
   // ordine di Precedente/Successivo = ordine delle sezioni reali nella pagina
   var order=secs.map(function(x){return x.getAttribute('data-page')}).filter(function(k){return k!=='altro'});
   var current='intro';   // ultima pagina reale visitata
+  var reduceMotion=window.matchMedia('(prefers-reduced-motion:reduce)');
+
+  // menu a schermo intero (solo mobile)
+  var menuBtn=document.getElementById('bMenu'),closeBtn=document.getElementById('bClose');
+  var mainEl=document.querySelector('.layout main');
+  function openMenu(){
+    document.body.classList.add('menu-open');
+    menuBtn.setAttribute('aria-expanded','true');
+    if('inert' in mainEl)mainEl.inert=true;
+    closeBtn.focus();
+  }
+  function closeMenu(refocus){
+    if(!document.body.classList.contains('menu-open'))return;
+    document.body.classList.remove('menu-open');
+    menuBtn.setAttribute('aria-expanded','false');
+    if('inert' in mainEl)mainEl.inert=false;
+    if(refocus)menuBtn.focus();
+  }
+  menuBtn.addEventListener('click',openMenu);
+  closeBtn.addEventListener('click',function(){closeMenu(true)});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu(true)});
+  window.matchMedia('(min-width:721px)').addEventListener&&
+    window.matchMedia('(min-width:721px)').addEventListener('change',function(m){if(m.matches)closeMenu(false)});
 
   function label(a){
     var c=a.cloneNode(true),ic=c.querySelector('.ic');
@@ -321,7 +413,8 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
       document.getElementById('gName').textContent=name;
     }else current=key;
     document.getElementById('curName').textContent=name;
-    window.scrollTo({top:0,behavior:'smooth'});
+    closeMenu(false);
+    window.scrollTo({top:0,behavior:reduceMotion.matches?'auto':'smooth'});
   }
   function go(key){
     if(location.hash==='#'+key)show(key);else location.hash=key;  // l'hashchange fa il resto
@@ -331,6 +424,7 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
   items.forEach(function(a){
     a.addEventListener('click',function(e){
       var key=a.getAttribute('data-page');
+      closeMenu(false);
       if(key==='altro'){e.preventDefault();show('altro',a)}
     });
   });
