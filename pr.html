@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Blue Aero Archive</title>
+<title>The Estji Archive</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -32,7 +32,8 @@ main section{display:block}
   background:linear-gradient(180deg,#0b1a33 0%,#040a16 30%,#030812 100%);
   border:1px solid rgba(160,215,255,.55);
   box-shadow:0 0 0 3px rgba(0,0,0,.35),0 18px 50px rgba(0,20,70,.7),inset 0 1px 0 rgba(255,255,255,.5);
-  overflow:hidden;
+  overflow:hidden;overflow:clip;
+  display:flex;flex-direction:column;min-height:calc(100vh - 76px);
 }
 .site::before{ /* riflesso lucido in alto */
   content:"";position:absolute;left:0;right:0;top:0;height:120px;pointer-events:none;
@@ -53,7 +54,7 @@ header h1{margin:0;font-weight:400;font-size:32px;text-shadow:0 2px 6px #000}
 header p{margin:2px 0 0 6px;font-size:15px;color:#cfe9ff;text-shadow:0 1px 3px #000}
 
 /* corpo */
-.layout{display:grid;grid-template-columns:148px minmax(0,1fr);gap:0}
+.layout{flex:1;display:grid;grid-template-columns:148px minmax(0,1fr);gap:0}
 aside{padding:10px 8px 14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.25));border-right:1px solid rgba(120,190,255,.2)}
 .group{border:1px solid #000;border-radius:7px;padding:3px;margin-bottom:10px;
   background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
@@ -67,6 +68,9 @@ aside{padding:10px 8px 14px;background:linear-gradient(180deg,rgba(255,255,255,.
 .item:hover{filter:brightness(1.35)}
 .item .ic{width:18px;text-align:center;font-size:14px;flex:none}
 .item.on{background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);border-color:#001a44}
+.btns{display:flex;gap:6px;margin-top:6px}
+.btns .item{flex:1;width:auto;margin:0;justify-content:center}
+.item:focus-visible,.row a:focus-visible,.nav button:focus-visible,.bigbtn:focus-visible{outline:2px solid #9ee6ff;outline-offset:2px}
 .bigbtn{display:block;width:100%;text-align:center;font:inherit;font-size:13px;color:#fff;padding:4px 0;margin-bottom:4px;border-radius:5px;border:1px solid #001a44;cursor:pointer;
   background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);text-shadow:0 1px 2px #002;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .bigbtn:hover{filter:brightness(1.15)}
@@ -108,7 +112,7 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
 .t6{background:linear-gradient(180deg,#d7ffd0,#6fc4ff)}
 
 /* barra inferiore */
-.bottom{margin:10px -12px 0;padding:10px 20px 14px;text-align:center;border-radius:60px 60px 0 0;border-top:1px solid rgba(160,215,255,.5);
+.bottom{position:sticky;bottom:0;z-index:10;margin:auto -12px 0;padding:10px 20px 14px;text-align:center;border-radius:60px 60px 0 0;border-top:1px solid rgba(160,215,255,.5);
   background:linear-gradient(180deg,#14233b,#030811);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
 .bottom .cur{display:block;margin:0 auto 8px;max-width:760px;padding:4px;border:1px solid #000;border-radius:30px 30px 6px 6px;
   background:linear-gradient(180deg,#05080f,#1a2538 55%,#05080f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
@@ -133,29 +137,28 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
     <div class="flag"><i></i><i></i><i></i><i></i></div>
     <div>
       <h1>Estji Archive</h1>
-      <p>Central Estji Web System Portal<p>
+      <p>Central Estji Web System Portal</p>
     </div>
   </header>
 
   <div class="layout">
     <aside>
       <div class="group">
-        <span class="gh">Contenuti</span>
-        <a class="item on" href="#" data-page="intro"><span class="ic"><img src="USSEcoat.png" alt="Normaktiv" width="16" height="16"></span>General</a>
-        <a class="item" href="#" data-page="sfondi"><span class="ic"><img src="NormAktiv.png" alt="Normaktiv" width="16" height="16"></span>NormAktiv</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="lex/CTSU.png" alt="Normaktiv" width="16" height="16"></span>CTSU</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="CEPU.png" alt="Normaktiv" width="16" height="16"></span>CEPU</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="lex/UniText.png" alt="Normaktiv" width="16" height="16"></span>UniText</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="lex/CCP.png" alt="Normaktiv" width="16" height="16"></span>Zentraler Planungsrat</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="Stato.png" alt="Normaktiv" width="16" height="16"></span>Kon.Et</a>
+        <span class="gh">Union Sites</span>
+        <a class="item on" href="#intro" data-page="intro"><span class="ic"><img src="USSEcoat.png" alt="" width="16" height="16"></span>General</a>
+        <a class="item" href="#normaktiv" data-page="normaktiv"><span class="ic"><img src="NormAktiv.png" alt="" width="16" height="16"></span>NormAktiv</a>
+        <a class="item" href="#CTSU" data-page="CTSU"><span class="ic"><img src="lex/CTSU.png" alt="" width="16" height="16"></span>CTSU</a>
+        <a class="item" href="#CEPU" data-page="CEPU"><span class="ic"><img src="CEPU.png" alt="" width="16" height="16"></span>CEPU</a>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="lex/UniText.png" alt="" width="16" height="16"></span>UniText</a>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="lex/CCP.png" alt="" width="16" height="16"></span>Zentraler Planungsrat</a>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="Stato.png" alt="" width="16" height="16"></span>Kon.Et</a>
       </div>
       <div class="group">
-        <span class="gh">Intrattenimento</span>
-        <a class="item" href="#" data-page="altro"><span class="ic">▶️</span>Music Player</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">⚡</span>Flash Media</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">🎮</span>Giochi indie</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">📺</span>Televisori</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">🎞️</span>Video</a>
+        <span class="gh">Agencies</span>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="tc.png" alt="" width="16" height="16"></span>Trade Center</a>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="TETA.png" alt="" width="16" height="16"></span>TETA</a>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="EBR.png" alt="" width="16" height="16"></span>EstjiBundesR.</a>
+        <a class="item" href="#" data-page="altro"><span class="ic"><img src="IDU.png" alt="" width="16" height="16"></span>Ile De USSE</a>
       </div>
       <div class="group">
         <span class="gh">Community</span>
@@ -172,8 +175,8 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
         <a class="item" href="#" data-page="altro"><span class="ic">❤️</span>Dona</a>
       </div>
       <div class="group">
-        <button class="bigbtn">Suoni off</button>
-        <button class="bigbtn" style="margin:0">Temi</button>
+        <button type="button" class="bigbtn">Suoni off</button>
+        <button type="button" class="bigbtn" style="margin:0">Temi</button>
       </div>
     </aside>
 
@@ -186,20 +189,20 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
           <div class="bub"></div>
         </div>
         <div class="warn">
-          <p>Welcome to the Estji Archive, this is the central portal for all che system of USSE faction.</p>
+          <p>Welcome to the Estji Archive, this is the central portal for all the systems of USSE faction.</p>
         </div>
       </div>
       <div class="panel">
         <div class="bar">What is Estji Web System?</div>
         <div class="warn">
-          <p><b>EWS</b>, is the central sysyem used by the USSE faction for the management of all the documents of the entity.</p>
+          <p><b>EWS</b>, is the central system used by the USSE faction for the management of all the documents of the entity.</p>
           <p>This system is public and accessible to all members of the faction and to all the interested people.</p>
           <p>The documentation in the system <b>does not</b> have any juridical value, they are used inside the faction.</p>
         </div>
       </div>
        <div class="panel">
         <div class="bar">Useful Documents </div>
-        <div class="row"></span><span class="th t1"><img src="NormAktiv.png" alt="Normaktiv" width="34" height="34"></span><a href="#">USSE Fondamental Law</a></div>
+        <div class="row"><span class="th t1"><img src="NormAktiv.png" alt="Normaktiv" width="34" height="34"></span><a href="#">USSE Fondamental Law</a></div>
       </div>
       
       <div class="panel">
@@ -207,27 +210,65 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
         <div class="row"><span class="th t1"></span><a href="#">Υbρϵανιϰω Δϵμωϰρατια</a></div>
         <div class="row"><span class="th t4"></span><a href="#">Republika e Xatorit</a></div>
       </div></section>
-      <section data-page="sfondi" hidden><div class="bar">Archivio sfondi - Pacchetto Asadal Vol. 1</div>
+      
+      <section data-page="normaktiv" hidden><div class="bar">Law Archive</div>
 
       <div class="panel">
         <div class="banner">
-          <div class="frame">🖼️</div>
-          <div class="txt"><small>The Blue Aero Archive</small><b>Sfondi</b><em>6000+ immagini gratuite!</em></div>
+          <div class="frame"><img src="NormAktiv.png" alt="Normaktiv" width="96" height="96"></div>
+          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>NormAktiv</b><em>Laws of the faction</em></div>
           <div class="bub"></div>
         </div>
-        <div class="warn"><s>Attenzione:</s> salvo diversa indicazione, tutte le immagini di questo sito sono a scopo documentale e possono essere soggette a copyright. Sono conservate qui per motivi archivistici ed educativi. Uso commerciale non consentito.</div>
+        <div class="btns">
+          <a class="item ext" href="lex/normaktiv.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
+          <a class="item ext" href="lex/redazione.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+        </div>
       </div>
 
       <div class="panel toc">
-        <div class="bar">Indice dei contenuti</div>
-        <div class="row cur"><span class="th t1"></span><a href="#">Pacchetto Asadal Vol. 1</a></div>
-        <div class="row"><span class="th t2"></span><a href="#">Pacchetto Asadal Vol. 2</a></div>
-        <div class="row"><span class="th t3"></span><a href="#">Pacchetto Asadal Vol. 3</a></div>
-        <div class="row"><span class="th t4"></span><a href="#">Pacchetto Asadal Vol. 4</a></div>
-        <div class="row"><span class="th t5"></span><a href="#">Pacchetto Asadal Vol. 5</a></div>
-        <div class="row"><span class="th t6"></span><a href="#">Pacchetto Asadal (Mobile)</a></div>
-        <div class="row" style="border:0"><span class="th t1"></span><a href="#">Perfect Blue Design</a></div>
+        <div class="bar">Last Documents</div>
+        <div class="row cur"><span class="th t4"><img src="CEPU1.png" alt="EstjiLinn" width="34" height="34"></span><a href="https://ews-rose.vercel.app/lex/atto.html?id=costituzione-estjilinn" target="_blank" rel="noopener">EstjiLinn Fondamental Law</a></div>
+        <div class="row"><span class="th t4"><img src="TDRcoat.png" alt="Terlin" width="34" height="34"></span><a href="https://ews-rose.vercel.app/lex/atto.html?id=disposizioni-transitorie-unificazione-di-terlin-pre-normaliz" target="_blank" rel="noopener">Terlin Unification Law</a></div>
+        <div class="row"><span class="th t4"><img src="ikedong.png" alt="Ikedong" width="34" height="34"></span><a href="https://ews-rose.vercel.app/lex/atto.html?id=trattato-di-formazione-della-citta-metropolitana-di-ikedong" target="_blank" rel="noopener">Ikedong Metropolitan City Law</a></div>
+        <div class="row"><span class="th t4"><img src="StemmaTaleen.png" alt="Taleen" width="34" height="34"></span><a href="https://ews-rose.vercel.app/lex/atto.html?id=statuto-della-citta-metropolitana-di-taleen" target="_blank" rel="noopener">Taleen Metropolitan City Law</a></div>
       </div></section>
+
+      <section data-page="CTSU" hidden><div class="bar">Projects Archive</div>
+
+      <div class="panel">
+        <div class="banner">
+          <div class="frame"><img src="lex/CTSU.png" alt="CTSU" width="96" height="96"></div>
+          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>CTSU</b><em>Projects of the faction</em></div>
+          <div class="bub"></div>
+        </div>
+        <div class="btns">
+          <a class="item ext" href="lex/ctsu.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
+          <a class="item ext" href="lex/redazione-ctsu.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+        </div>
+      </div>
+
+      <div class="panel toc">
+        <div class="bar">Last Documents</div>
+        <div class="row cur"><span class="th t4"><img src="tc.png" alt="TradeCenter" width="34" height="34"></span><a href="https://ews-rose.vercel.app/lex/progetto.html?id=riqualificazione-athenon-trade-center" target="_blank" rel="noopener">Trade Center Renewal</a></div>
+      </div></section>
+
+      <section data-page="CEPU" hidden><div class="bar">Elections Archive</div>
+
+      <div class="panel">
+        <div class="banner">
+          <div class="frame"><img src="CEPU.png" alt="CEPU" width="96" height="64"></div>
+          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>CEPU</b><em>Elections</em></div>
+          <div class="bub"></div>
+        </div>
+        <div class="btns">
+          <a class="item ext" href="CEPU.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
+          <a class="item ext" href="redazioneCEPU.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+        </div>
+      </div></section>
+
+
+
+
       <section data-page="altro" hidden><div class="bar" id="gTitle">Sezione</div>
       <div class="panel"><div class="warn" style="text-align:center;padding:40px 10px">
         <div style="font-size:54px">🚧</div>
@@ -248,31 +289,62 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
 
 <script>
 (function(){
-  var items=[].slice.call(document.querySelectorAll('.item'));
+  var items=[].slice.call(document.querySelectorAll('aside .item'));
   var secs=[].slice.call(document.querySelectorAll('main section'));
-  var order=['intro','sfondi'];
-  var titles={intro:'Introduzione',sfondi:'Sfondi'};
-  var current='intro';
-  function label(a){return a.textContent.replace(a.querySelector('.ic').textContent,'').trim()}
-  function show(key,name){
-    var target=order.indexOf(key)>-1?key:'altro';
+  var pages={};
+  secs.forEach(function(x){pages[x.getAttribute('data-page')]=x});
+  // ordine di Precedente/Successivo = ordine delle sezioni reali nella pagina
+  var order=secs.map(function(x){return x.getAttribute('data-page')}).filter(function(k){return k!=='altro'});
+  var current='intro';   // ultima pagina reale visitata
+
+  function label(a){
+    var c=a.cloneNode(true),ic=c.querySelector('.ic');
+    if(ic)ic.remove();
+    return c.textContent.trim();
+  }
+  function itemFor(key){
+    return items.filter(function(i){return i.getAttribute('data-page')===key})[0];
+  }
+  function show(key,item){
+    var real=key!=='altro'&&pages[key];
+    var target=real?key:'altro';
+    var active=item||itemFor(key);
+    var name=active?label(active):key;
     secs.forEach(function(x){x.hidden=x.getAttribute('data-page')!==target});
     items.forEach(function(i){
-      var on=key==='altro'?(i.getAttribute('data-page')==='altro'&&label(i)===name):i.getAttribute('data-page')===key;
+      var on=i===active;
       i.classList.toggle('on',on);
+      if(on)i.setAttribute('aria-current','page');else i.removeAttribute('aria-current');
     });
-    if(target==='altro'){document.getElementById('gTitle').textContent=name;document.getElementById('gName').textContent=name}
-    document.getElementById('curName').textContent=target==='altro'?name:titles[key];
-    current=target==='altro'?null:key;
+    if(!real){
+      document.getElementById('gTitle').textContent=name;
+      document.getElementById('gName').textContent=name;
+    }else current=key;
+    document.getElementById('curName').textContent=name;
     window.scrollTo({top:0,behavior:'smooth'});
   }
+  function go(key){
+    if(location.hash==='#'+key)show(key);else location.hash=key;  // l'hashchange fa il resto
+  }
+
+  // voci della sidebar: le pagine vere usano href="#chiave", gli altri sono segnaposto
   items.forEach(function(a){
-    a.addEventListener('click',function(e){e.preventDefault();show(a.getAttribute('data-page'),label(a))});
+    a.addEventListener('click',function(e){
+      var key=a.getAttribute('data-page');
+      if(key==='altro'){e.preventDefault();show('altro',a)}
+    });
   });
-  document.getElementById('bHome').onclick=function(){show('intro')};
-  document.getElementById('bPrev').onclick=function(){var i=order.indexOf(current);show(order[(i<=0?order.length:i)-1])};
-  document.getElementById('bNext').onclick=function(){var i=order.indexOf(current);show(order[(i+1)%order.length])};
-  show('intro');
+  window.addEventListener('hashchange',function(){
+    var key=location.hash.slice(1);
+    show(pages[key]&&key!=='altro'?key:'intro');
+  });
+
+  document.getElementById('bHome').onclick=function(){go('intro')};
+  document.getElementById('bPrev').onclick=function(){var i=order.indexOf(current);go(order[(i<=0?order.length:i)-1])};
+  document.getElementById('bNext').onclick=function(){var i=order.indexOf(current);go(order[(i+1)%order.length])};
+
+  var start=location.hash.slice(1);
+  show(pages[start]&&start!=='altro'?start:'intro');
 })();
 </script>
 </body>
