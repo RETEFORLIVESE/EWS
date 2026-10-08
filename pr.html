@@ -24,7 +24,7 @@ body{
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 a{color:inherit;-webkit-tap-highlight-color:transparent}
 button{-webkit-tap-highlight-color:transparent}
-.only-m,.sheet-head{display:none}
+.only-m,.sheet-head,.scrim{display:none}
 [hidden]{display:none!important}
 main section{display:block}
 .warn p{margin:0 0 10px}
@@ -144,26 +144,35 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
   .layout{grid-template-columns:1fr}
   main{padding:8px 8px 0}
 
-  /* menu: schermata a tutto schermo, apribile dalla barra in basso */
+  /* menu: drawer laterale da sinistra */
   .only-m{display:inline-block}
   aside{
-    position:fixed;inset:0;z-index:50;overflow-y:auto;overscroll-behavior:contain;
-    display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;
-    padding:0 max(12px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
-    border:0;background:linear-gradient(180deg,#0b1a33,#030812);
-    visibility:hidden;opacity:0;transform:translateY(12px);
-    transition:opacity .2s,transform .2s,visibility 0s .2s;
+    position:fixed;top:0;bottom:0;left:0;z-index:50;
+    width:min(86vw,320px);overflow-y:auto;overscroll-behavior:contain;
+    padding:0 12px calc(16px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+    border:0;border-right:1px solid rgba(160,215,255,.45);border-radius:0 28px 28px 0;
+    background:linear-gradient(180deg,#0b1a33,#030812);
+    box-shadow:10px 0 40px rgba(0,0,0,.65);
+    transform:translateX(-105%);visibility:hidden;touch-action:pan-y;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s;
   }
+  aside.drag{transition:none}
   body.menu-open{overflow:hidden}
-  body.menu-open aside{visibility:visible;opacity:1;transform:none;transition:opacity .2s,transform .2s}
+  body.menu-open aside{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+  .scrim{
+    display:block;position:fixed;inset:0;z-index:40;background:rgba(0,10,30,.6);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    opacity:0;visibility:hidden;transition:opacity .28s,visibility 0s .28s;
+  }
+  body.menu-open .scrim{opacity:1;visibility:visible;transition:opacity .28s}
   .sheet-head{
     display:flex;align-items:center;justify-content:space-between;gap:12px;
-    grid-column:1/-1;position:sticky;top:0;z-index:1;
-    padding:calc(12px + env(safe-area-inset-top)) 0 12px;margin-bottom:2px;
+    position:sticky;top:0;z-index:1;margin:0 -12px 10px;
+    padding:calc(10px + env(safe-area-inset-top)) 12px 10px max(12px,env(safe-area-inset-left));
     background:#0b1a33;border-bottom:1px solid rgba(120,190,255,.25);font-size:18px;text-shadow:0 1px 3px #000
   }
-  .sheet-head .bigbtn{width:auto;min-height:44px;margin:0;padding:0 18px}
-  .group{margin:0;padding:5px}
+  .sheet-head .bigbtn{width:46px;min-height:46px;margin:0;padding:0;font-size:18px}
+  .group{margin:0 0 10px;padding:5px}
   .gh{font-size:15px;padding:6px 0;margin-bottom:5px}
   aside .item{min-height:46px;font-size:16px;padding:6px 10px;gap:10px;margin-bottom:5px}
   aside .item .ic{width:22px}
@@ -190,11 +199,8 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
   #bPrev,#bNext{flex:0 0 54px}
   .lbl{display:none}
 }
-@media(max-width:480px){
-  aside{grid-template-columns:1fr}
-}
 @media(prefers-reduced-motion:reduce){
-  aside,body.menu-open aside{transition:none}
+  aside,body.menu-open aside,.scrim,body.menu-open .scrim{transition:none}
 }
 </style>
 </head>
@@ -210,7 +216,7 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
 
   <div class="layout">
     <aside id="menu" aria-label="Menu del sito">
-      <div class="sheet-head"><b>Menu</b><button type="button" class="bigbtn" id="bClose">✕ Chiudi</button></div>
+      <div class="sheet-head"><b>Menu</b><button type="button" class="bigbtn" id="bClose" aria-label="Chiudi menu">✕</button></div>
       <div class="group">
         <span class="gh">Union Sites</span>
         <a class="item on" href="#intro" data-page="intro"><span class="ic"><img src="USSEcoat.png" alt="" width="16" height="16"></span>General</a>
@@ -354,6 +360,7 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
       </div>
     </main>
   </div>
+  <div class="scrim" id="scrim"></div>
 </div>
 
 <script>
@@ -374,7 +381,9 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
     document.body.classList.add('menu-open');
     menuBtn.setAttribute('aria-expanded','true');
     if('inert' in mainEl)mainEl.inert=true;
-    closeBtn.focus();
+    var on=drawer.querySelector('.item.on');
+    if(on)on.scrollIntoView({block:'center'});
+    closeBtn.focus({preventScroll:true});
   }
   function closeMenu(refocus){
     if(!document.body.classList.contains('menu-open'))return;
@@ -383,6 +392,25 @@ main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
     if('inert' in mainEl)mainEl.inert=false;
     if(refocus)menuBtn.focus();
   }
+  var drawer=document.getElementById('menu'),scrim=document.getElementById('scrim');
+  scrim.addEventListener('click',function(){closeMenu(true)});
+  // scorri verso sinistra sul menu per chiuderlo
+  var sx=0,sy=0,dx=0,dragging=false;
+  drawer.addEventListener('touchstart',function(e){
+    var t=e.touches[0];sx=t.clientX;sy=t.clientY;dx=0;dragging=false;
+  },{passive:true});
+  drawer.addEventListener('touchmove',function(e){
+    var t=e.touches[0],mx=t.clientX-sx,my=t.clientY-sy;
+    if(!dragging&&Math.abs(mx)>10&&Math.abs(mx)>Math.abs(my)*1.5&&mx<0){dragging=true;drawer.classList.add('drag')}
+    if(dragging){dx=Math.min(0,mx);drawer.style.transform='translateX('+dx+'px)'}
+  },{passive:true});
+  function endDrag(){
+    if(!dragging)return;
+    dragging=false;drawer.classList.remove('drag');drawer.style.transform='';
+    if(dx<-70)closeMenu(false);
+  }
+  drawer.addEventListener('touchend',endDrag);
+  drawer.addEventListener('touchcancel',endDrag);
   menuBtn.addEventListener('click',openMenu);
   closeBtn.addEventListener('click',function(){closeMenu(true)});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu(true)});
