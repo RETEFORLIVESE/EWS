@@ -42,3 +42,24 @@ mark{background:#ffd84a;color:#000;border-radius:2px;padding:0 1px}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid rgba(160,200,255,.3)}
 @media(max-width:720px){body{padding:10px 8px;background-attachment:scroll}.site{border-radius:28px 28px 16px 16px}header{padding:14px 16px 10px}header h1{font-size:22px}.cols{grid-template-columns:1fr}.btn,.chip{min-height:40px}}
+
+/* barra laterale (come pr.html) */
+.site:has(.layout){display:flex;flex-direction:column}
+.layout{flex:1;display:grid;grid-template-columns:172px minmax(0,1fr)}
+aside{padding:10px 8px 14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.25));border-right:1px solid rgba(120,190,255,.2)}
+.sb-group{border:1px solid #000;border-radius:7px;padding:3px;margin-bottom:10px;background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
+.sb-head{display:block;text-align:center;font-size:14px;padding:3px 0;margin-bottom:3px;border-radius:5px;border:1px solid #000;
+background:linear-gradient(180deg,#46566f 0%,#1e2b42 48%,#070d18 52%,#111b2c 100%);text-shadow:0 1px 2px #000}
+.sb-item{display:flex;align-items:center;gap:6px;width:100%;font-size:13px;color:#e8f4ff;padding:3px 6px;margin-bottom:3px;border-radius:5px;border:1px solid #000;text-decoration:none;
+background:linear-gradient(180deg,#3d4d66 0%,#1c2840 48%,#080f1c 52%,#121d30 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);text-shadow:0 1px 2px #000;transition:filter .15s}
+.sb-item:last-child{margin-bottom:0}.sb-item:hover{filter:brightness(1.35);color:#fff}
+.sb-item .ic{width:18px;text-align:center;font-size:14px;flex:none}.sb-item .ic img{width:16px;height:16px;vertical-align:middle}
+.sb-item.on{background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);border-color:#001a44;color:#fff}
+.sb-item.nopage{opacity:.6}
+@media(max-width:720px){
+  .layout{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid rgba(120,190,255,.2);padding:8px 8px 4px}
+  #principali{display:flex;flex-wrap:wrap;gap:5px}
+  .sb-item{width:auto;margin:0;min-height:40px;padding:3px 12px;font-size:14px}
+}
+@media(hover:none){.sb-item:hover{filter:none}.sb-item:active{filter:brightness(1.35)}}

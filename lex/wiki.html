@@ -14,6 +14,10 @@
     <div><h1>Estji Wiki</h1><p>L'enciclopedia della fazione</p></div>
     <nav><a class="btn" href="../pr.html">Estji Archive</a><a class="btn" href="redazione-wiki.html">✍️ Redazione</a></nav>
   </header>
+  <div class="layout">
+  <aside aria-label="Articoli principali">
+    <div class="sb-group"><span class="sb-head">Articoli principali</span><div id="principali"></div></div>
+  </aside>
   <main>
     <div id="vCerca">
       <div class="bar">Cerca nella wiki</div>
@@ -34,12 +38,35 @@
       </div>
     </article>
   </main>
+  </div>
 </div>
 <script src="assets/js/wiki-core.js"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
   let pagine = [], cat = '';
+
+  // ARTICOLI PRINCIPALI della barra laterale: modifica solo questo elenco.
+  //   id     = id della pagina wiki (quello dopo "#" nell'indirizzo)
+  //   titolo = testo mostrato nella barra
+  //   ic     = emoji (facoltativo)      img = indirizzo di un'immagine al posto dell'emoji (facoltativo)
+  const PRINCIPALI = [
+    { id: 'usse',               titolo: 'USSE',               ic: '🌐' },
+    { id: 'estjilinn',          titolo: 'EstjiLinn',          ic: '🏛️' },
+    { id: 'costituzione',       titolo: 'Costituzione',       ic: '📜' },
+    { id: 'congresso-unitario', titolo: 'Congresso Unitario', ic: '🗳️' },
+    { id: 'sistema-lant',       titolo: 'Sistema Lant',       ic: '🗺️' },
+    { id: 'ctsu',               titolo: 'CTSU',               ic: '🛠️' },
+    { id: 'taleen',             titolo: 'Taleen',             ic: '🏙️' }
+  ];
+  function sidebar() {
+    const corrente = decodeURIComponent(location.hash.slice(1));
+    $('principali').innerHTML = PRINCIPALI.map(a => {
+      const manca = pagine.length && !pagine.some(p => p.id === a.id);   // pagina non ancora scritta
+      const icona = a.img ? `<img src="${E(a.img)}" alt="">` : E(a.ic || '📄');
+      return `<a class="sb-item${a.id === corrente ? ' on' : ''}${manca ? ' nopage' : ''}" href="#${E(a.id)}"${manca ? ' title="Pagina non ancora scritta"' : ''}><span class="ic">${icona}</span>${E(a.titolo)}</a>`;
+    }).join('');
+  }
 
   // punteggio: titolo pesa più dei tag, che pesano più del sommario e del contenuto
   function punteggio(p, parole) {
@@ -82,6 +109,7 @@
 
   function route() {
     const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id);
+    sidebar();
     $('vCerca').hidden = !!p; $('vPagina').hidden = !p;
     if (!p) { document.title = 'Estji Wiki'; return; }
     document.title = p.titolo + ' — Estji Wiki';
@@ -101,6 +129,7 @@
   window.addEventListener('hashchange', route);
 
   $('q').value = new URLSearchParams(location.search).get('q') || '';
+  sidebar();
   Wiki.load().then(d => { pagine = d; chips(); cerca(); route(); })
     .catch(e => { $('count').textContent = ''; $('lista').innerHTML = `<div class="err">Impossibile caricare la wiki (${E(e.message)}).</div>`; });
 })();
