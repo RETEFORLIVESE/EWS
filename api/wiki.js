@@ -6,7 +6,7 @@
 // Usa gli stessi helper già presenti: ./_github.js e ./_sessione.js.
 //
 // Variabili d'ambiente: AUTH_SECRET, GITHUB_TOKEN, GITHUB_DATA_REPO, GITHUB_DATA_BRANCH (come per gli atti)
-//   + WIKI_USERS  JSON { "nome": "password", ... }   <- vedi verificaCredenziali()
+// Login: stessi utenti di api/atti.js (vedi VALID_USERS qui sotto).
 
 import { timingSafeEqual } from 'crypto';
 import { leggiFileJson, scriviFileJson } from './_github.js';
@@ -14,12 +14,13 @@ import { creaToken, sessioneDaRichiesta } from './_sessione.js';
 
 const FILE = 'wiki.json';
 
-// ⚠️ SOSTITUIRE con lo stesso controllo usato in api/atti.js, così gli account sono i medesimi.
+// Stessi account della redazione degli atti (copia di VALID_USERS in api/atti.js).
+// Se cambi gli utenti in atti.js, aggiornali anche qui.
+const VALID_USERS = { "TandeePetrenka": "TandeePetrenka", "admin": "CambiamiAnche" };
+
 function verificaCredenziali(username, password) {
-    let utenti = {};
-    try { utenti = JSON.parse(process.env.WIKI_USERS || process.env.ADMIN_USERS || '{}'); } catch (e) {}
-    if (!Object.prototype.hasOwnProperty.call(utenti, username)) return false;
-    const a = Buffer.from(String(utenti[username])), b = Buffer.from(String(password));
+    if (!Object.prototype.hasOwnProperty.call(VALID_USERS, username)) return false;
+    const a = Buffer.from(String(VALID_USERS[username])), b = Buffer.from(String(password));
     return a.length === b.length && timingSafeEqual(a, b);
 }
 
