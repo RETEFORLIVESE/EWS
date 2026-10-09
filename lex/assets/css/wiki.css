@@ -1,65 +1,148 @@
-/* Stile Aero/Estji Archive condiviso da wiki.html e redazione-wiki.html (derivato da pr.html) */
-*{box-sizing:border-box}html,body{margin:0}[hidden]{display:none!important}
-body{min-height:100vh;color:#e8f4ff;padding:36px 12px 40px;font:15px "Segoe UI","Trebuchet MS",Verdana,Arial,sans-serif;
-background:radial-gradient(circle at 12% 18%,rgba(255,255,255,.5) 0 3%,transparent 3.4%),radial-gradient(circle at 82% 12%,rgba(255,255,255,.4) 0 5%,transparent 5.4%),
-radial-gradient(circle at 70% 70%,rgba(160,230,255,.35) 0 7%,transparent 7.4%),radial-gradient(ellipse 90% 50% at 50% 0,#bff0ff 0%,transparent 70%),
-linear-gradient(180deg,#1b8cf0 0%,#0a5fd0 45%,#043a96 100%);background-attachment:fixed}
-a{color:#4fd0ff}a:hover{color:#9ee6ff}
-.site{max-width:980px;margin:0 auto;position:relative;border-radius:60px 60px 24px 24px;background:linear-gradient(180deg,#0b1a33,#040a16 30%,#030812);
-border:1px solid rgba(160,215,255,.55);box-shadow:0 0 0 3px rgba(0,0,0,.35),0 18px 50px rgba(0,20,70,.7),inset 0 1px 0 rgba(255,255,255,.5);overflow:hidden;min-height:calc(100vh - 76px)}
-.site::before{content:"";position:absolute;inset:0 0 auto;height:120px;pointer-events:none;background:linear-gradient(180deg,rgba(130,200,255,.28),transparent)}
-header{display:flex;align-items:center;gap:16px;padding:20px 30px 14px;position:relative;border-bottom:1px solid rgba(120,190,255,.25);background:linear-gradient(180deg,rgba(40,90,160,.25),rgba(0,0,0,.35))}
-.flag{width:56px;height:52px;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:3px;transform:perspective(200px) rotateY(-18deg) rotateZ(-4deg);filter:drop-shadow(0 4px 6px #000a)}
-.flag i{border-radius:6px 2px 6px 2px;background:linear-gradient(135deg,#d9f6ff,#3fb4ff 45%,#0a58c8);border:1px solid rgba(255,255,255,.7)}
-header h1{margin:0;font-weight:400;font-size:30px;text-shadow:0 2px 6px #000}header p{margin:2px 0 0 4px;color:#cfe9ff}
-header nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-main{padding:12px 14px 24px;position:relative}
-.bar{text-align:center;padding:5px 10px;border:1px solid #000;border-radius:3px;background:linear-gradient(180deg,#05080f,#1a2538 50%,#05080f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.2)}
-.panel{margin-top:10px;padding:8px;border-radius:7px;border:1px solid #000;background:linear-gradient(180deg,#16233a,#070d18);box-shadow:inset 0 0 0 1px rgba(150,200,255,.35)}
-.btn,.chip{font:inherit;font-size:13px;color:#e8f4ff;padding:4px 12px;border-radius:5px;border:1px solid #000;cursor:pointer;text-decoration:none;display:inline-block;
-background:linear-gradient(180deg,#3d4d66,#1c2840 48%,#080f1c 52%,#121d30);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);text-shadow:0 1px 2px #000}
-.chip{border-radius:14px}.btn:hover,.chip:hover{filter:brightness(1.3);color:#fff}
-.btn.on,.chip.on,.btn.pri{background:linear-gradient(180deg,#7fd8ff,#2b9cf2 48%,#0a58c8 52%,#2db5ff);border-color:#001a44;color:#fff}
-.btn.del{background:linear-gradient(180deg,#ff9a9a,#d23 48%,#800 52%,#c33);border-color:#400;color:#fff}
-.btn:disabled{opacity:.5;cursor:wait}
-:focus-visible{outline:2px solid #9ee6ff;outline-offset:2px}
-input,select,textarea{width:100%;font:inherit;color:#e8f4ff;padding:7px 10px;border:1px solid #000;border-radius:5px;background:#050b17;box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
-textarea{font-family:Consolas,monospace;font-size:14px;line-height:1.5;resize:vertical}
-label{display:block;font-size:13px;color:#9cc4ea;margin:10px 0 3px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px}
-.note{font-size:13px;color:#9cc4ea;padding:4px 2px}.err{color:#ff9a9a;font-size:14px;min-height:20px}.ok{color:#8bf2b8}
-.card{display:block;margin:8px 0;padding:9px 14px 10px;border:1px solid #000;border-left:4px solid #2b9cf2;border-radius:5px;text-decoration:none;color:inherit;
-background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.22)}
-a.card:hover{filter:brightness(1.25)}.card h3{margin:5px 0 2px;font-size:17px;font-weight:600;color:#4fd0ff}.card p{margin:0;font-size:13px;color:#cfe0f5;line-height:1.45}
-.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:#b9d6f2}
-.tag{padding:1px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#9ee6ff;background:rgba(79,208,255,.16);border:1px solid rgba(160,215,255,.4)}
-mark{background:#ffd84a;color:#000;border-radius:2px;padding:0 1px}
-/* testo di una pagina wiki */
-.wk{line-height:1.65;max-width:78ch;padding:4px 8px}.wk h2,.wk h3{font-weight:400;color:#bfe9ff;border-bottom:1px solid rgba(160,200,255,.3);padding-bottom:3px;margin:22px 0 8px}
-.wk img{max-width:100%;border:1px solid #cfe6ff;border-radius:3px;margin:6px 0}.wk blockquote{margin:10px 0;padding:4px 14px;border-left:3px solid #2b9cf2;background:rgba(79,208,255,.08)}
-.wk code{background:#000;padding:1px 5px;border-radius:3px}.wk a.red{color:#ff8a8a}.wk hr{border:0;border-top:1px solid rgba(160,200,255,.3)}
-.wk .tw{overflow-x:auto}.wk table{border-collapse:collapse;margin:10px 0}.wk th,.wk td{border:1px solid rgba(160,200,255,.4);padding:5px 10px}.wk th{background:rgba(79,208,255,.15)}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid rgba(160,200,255,.3)}
-@media(max-width:720px){body{padding:10px 8px;background-attachment:scroll}.site{border-radius:28px 28px 16px 16px}header{padding:14px 16px 10px}header h1{font-size:22px}.cols{grid-template-columns:1fr}.btn,.chip{min-height:40px}}
+// assets/js/wiki-core.js — libreria condivisa da wiki.html e redazione-wiki.html
+// (stessa logica di sessione di api.js: token firmato in sessionStorage, header Authorization: Bearer)
+const Wiki = {
+  esc: t => (t == null ? '' : String(t)).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+  norm: t => (t || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+  slug: t => Wiki.norm(t).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60),
+  data: it => { const d = new Date(it); return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); },
 
-/* barra laterale (come pr.html) */
-.site:has(.layout){display:flex;flex-direction:column}
-.layout{flex:1;display:grid;grid-template-columns:172px minmax(0,1fr)}
-aside{padding:10px 8px 14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.25));border-right:1px solid rgba(120,190,255,.2)}
-.sb-group{border:1px solid #000;border-radius:7px;padding:3px;margin-bottom:10px;background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
-.sb-head{display:block;text-align:center;font-size:14px;padding:3px 0;margin-bottom:3px;border-radius:5px;border:1px solid #000;
-background:linear-gradient(180deg,#46566f 0%,#1e2b42 48%,#070d18 52%,#111b2c 100%);text-shadow:0 1px 2px #000}
-.sb-item{display:flex;align-items:center;gap:6px;width:100%;font-size:13px;color:#e8f4ff;padding:3px 6px;margin-bottom:3px;border-radius:5px;border:1px solid #000;text-decoration:none;
-background:linear-gradient(180deg,#3d4d66 0%,#1c2840 48%,#080f1c 52%,#121d30 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);text-shadow:0 1px 2px #000;transition:filter .15s}
-.sb-item:last-child{margin-bottom:0}.sb-item:hover{filter:brightness(1.35);color:#fff}
-.sb-item .ic{width:18px;text-align:center;font-size:14px;flex:none}.sb-item .ic img{width:16px;height:16px;vertical-align:middle}
-.sb-item.on{background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);border-color:#001a44;color:#fff}
-.sb-item.nopage{opacity:.6}
-@media(max-width:720px){
-  .layout{grid-template-columns:1fr}
-  aside{border-right:0;border-bottom:1px solid rgba(120,190,255,.2);padding:8px 8px 4px}
-  #principali{display:flex;flex-wrap:wrap;gap:5px}
-  .sb-item{width:auto;margin:0;min-height:40px;padding:3px 12px;font-size:14px}
-}
-@media(hover:none){.sb-item:hover{filter:none}.sb-item:active{filter:brightness(1.35)}}
+  /* ---------- immagini ----------
+     Sintassi:  ![didascalia](https://indirizzo){w=300 h=200 pos=dx fit=cover did=no bordo=no tondo=si ombra=si}
+       w     larghezza: 300 (px) oppure 50%          h     altezza in px (ritaglia con fit)
+       pos   blocco (default) | centro | sx | dx | intera   → sx/dx = immagine a lato, il testo scorre attorno
+       fit   cover (default, ritaglia) | contain          did=no  nasconde la didascalia
+       bordo=no  toglie il bordo     tondo=si  angoli arrotondati     ombra=si  aggiunge l'ombra
+     Su una riga da sola diventa una figura; dentro un paragrafo resta in linea (pos e did non si applicano). */
+  IMG_POS: ['blocco', 'centro', 'sx', 'dx', 'intera'],
+  imgRe: () => /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)(?:\{([^}]*)\})?/g,
+  imgSolo: /^!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)(?:\{([^}]*)\})?$/,
+  imgOpt(s) {
+    const o = {};
+    String(s || '').split(/\s+/).forEach(kv => {
+      const i = kv.indexOf('='); if (i < 1) return;
+      const k = kv.slice(0, i), v = kv.slice(i + 1);
+      if (k === 'w' && /^\d{1,4}(px|%)?$/.test(v)) o.w = /%$/.test(v) ? v : parseInt(v, 10) + 'px';
+      else if (k === 'h' && /^\d{1,4}(px)?$/.test(v)) o.h = parseInt(v, 10) + 'px';
+      else if (k === 'pos' && Wiki.IMG_POS.includes(v)) o.pos = v;
+      else if (k === 'fit' && (v === 'cover' || v === 'contain')) o.fit = v;
+      else if (['did', 'bordo', 'tondo', 'ombra'].includes(k) && (v === 'si' || v === 'no')) o[k] = v;
+    });
+    return o;
+  },
+  imgBuild(alt, url, o) {
+    const k = [];
+    if (o.w) k.push('w=' + o.w.replace(/px$/, ''));
+    if (o.h) { k.push('h=' + o.h.replace(/px$/, '')); if (o.fit === 'contain') k.push('fit=contain'); }
+    if (o.pos && o.pos !== 'blocco') k.push('pos=' + o.pos);
+    if (o.did === 'no') k.push('did=no');
+    if (o.bordo === 'no') k.push('bordo=no');
+    if (o.tondo === 'si') k.push('tondo=si');
+    if (o.ombra === 'si') k.push('ombra=si');
+    return `![${alt}](${url})` + (k.length ? `{${k.join(' ')}}` : '');
+  },
+  // alt e url arrivano già "escapati"; le opzioni sono validate da imgOpt, quindi lo stile generato è sicuro
+  imgHtml(alt, url, opz, blocco, n) {
+    const o = Wiki.imgOpt(opz), cls = [], st = [];
+    if (o.h) { st.push('height:' + o.h, 'object-fit:' + (o.fit || 'cover')); }
+    if (o.bordo === 'no') cls.push('nb'); if (o.tondo === 'si') cls.push('rd'); if (o.ombra === 'si') cls.push('sh');
+    if (!blocco) {
+      if (o.w) st.push('width:' + o.w);
+      return `<img src="${url}" alt="${alt}" loading="lazy" data-img="${n}"${cls.length ? ` class="${cls.join(' ')}"` : ''}${st.length ? ` style="${st.join(';')}"` : ''}>`;
+    }
+    const pos = o.pos || 'blocco', fig = ['im', 'im-' + pos], fs = [];
+    if (o.w && pos !== 'intera') { fs.push('width:' + o.w); fig.push('fw'); }
+    const did = alt && o.did !== 'no' ? `<figcaption>${alt}</figcaption>` : '';
+    return `<figure class="${fig.join(' ')}"${fs.length ? ` style="${fs.join(';')}"` : ''}><img src="${url}" alt="${alt}" loading="lazy" data-img="${n}"${cls.length ? ` class="${cls.join(' ')}"` : ''}${st.length ? ` style="${st.join(';')}"` : ''}>${did}</figure>`;
+  },
+
+  /* ---------- titoli e indice ---------- */
+  // testo "pulito" di un titolo (senza immagini, link, grassetti)
+  plain: t => String(t || '').replace(/!\[[^\]]*\]\([^)]*\)(\{[^}]*\})?/g, '').replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2').replace(/\[\[([^\]]+)\]\]/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`]/g, '').replace(/\s+/g, ' ').trim(),
+  // elenco dei titoli ## e ### con identificativi univoci (usato sia da render sia da indice)
+  titoli(src) {
+    const usati = {}, out = [];
+    String(src || '').replace(/\r/g, '').split('\n').forEach(l => {
+      const m = /^(#{2,3})\s+(.*)/.exec(l.trim()); if (!m) return;
+      const testo = Wiki.plain(m[2]) || 'Sezione'; let id = Wiki.slug(testo) || 'sezione';
+      usati[id] = (usati[id] || 0) + 1; if (usati[id] > 1) id += '-' + usati[id];
+      out.push({ liv: m[1].length, raw: m[2], testo, id: 's-' + id });
+    });
+    return out;
+  },
+  // indice in HTML: ## = voci principali, ### = sotto-voci (vuoto se la pagina ha meno di 2 titoli)
+  indice(src) {
+    const t = Wiki.titoli(src); if (t.length < 2) return '';
+    let h = '', aperto = false, sub = false;
+    const voce = x => `<li><a href="#${x.id}" data-s="${x.id}">${Wiki.esc(x.testo)}</a>`;
+    t.forEach(x => {
+      if (x.liv === 3 && aperto) { if (!sub) { h += '<ol>'; sub = true; } h += voce(x) + '</li>'; }
+      else { if (sub) { h += '</ol>'; sub = false; } if (aperto) h += '</li>'; h += voce(x); aperto = true; }
+    });
+    if (sub) h += '</ol>'; if (aperto) h += '</li>';
+    return `<details class="toc" open><summary>Indice <span>${t.length} sezioni</span></summary><ol>${h}</ol></details>`;
+  },
+
+  /* ---------- rendering sicuro del testo (mini-markdown) ----------
+     ## Titolo · ### Sottotitolo · **grassetto** · *corsivo* · `codice` · - elenco · 1. elenco numerato
+     > citazione · --- linea · [testo](https://...) · ![didascalia](https://immagine){opzioni} · [[Altra pagina]] · [[Altra pagina|testo]]
+     | a | b | tabelle (la 2ª riga |---|---| separa l'intestazione) */
+  render(src, pagine) {
+    const e = Wiki.esc, trova = n => (pagine || []).find(p => Wiki.norm(p.titolo) === Wiki.norm(n) || p.id === Wiki.slug(n));
+    let n = 0; // numero progressivo delle immagini (la redazione lo usa per collegare anteprima e testo)
+    const titoli = Wiki.titoli(src); let ti = 0;
+    const inl = t => e(t)
+      .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)(?:\{([^}]*)\})?/g, (m, a, u, o) => Wiki.imgHtml(a, u, o, false, n++))
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, a, b) => { a = a.replace(/&amp;/g, '&'); const p = trova(a); return p ? `<a href="wiki.html#${p.id}">${b || e(a)}</a>` : `<a class="red" href="redazione-wiki.html?nuova=${encodeURIComponent(a.replace(/&quot;|&#39;|&lt;|&gt;/g, ''))}" title="Pagina non ancora scritta">${b || e(a)}</a>`; })
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+    const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
+    const STOP = /^(#{2,3}\s|>|\||---+$|([-*]|\d+\.)\s|!\[[^\]]*\]\(https?:\/\/[^)\s]+\)(\{[^}]*\})?$)/;
+    for (let i = 0; i < L.length; i++) {
+      const r = L[i].trim(); let m;
+      if (!r) continue;
+      if ((m = /^(#{2,3})\s+(.*)/.exec(r))) { const t = titoli[ti++]; out.push(`<h${m[1].length} id="${t ? t.id : 's-' + Wiki.slug(m[2])}">${inl(m[2])}</h${m[1].length}>`); }
+      else if (/^---+$/.test(r)) out.push('<hr>');
+      else if ((m = Wiki.imgSolo.exec(r))) out.push(Wiki.imgHtml(e(m[1]), e(m[2]), m[3], true, n++));
+      else if (r[0] === '>') { const q = []; while (i < L.length && L[i].trim()[0] === '>') q.push(inl(L[i++].trim().replace(/^>\s?/, ''))); i--; out.push(`<blockquote>${q.join('<br>')}</blockquote>`); }
+      else if (r[0] === '|') {
+        const rows = []; while (i < L.length && L[i].trim()[0] === '|') rows.push(L[i++].trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim())); i--;
+        const head = rows[1] && rows[1].every(c => /^:?-+:?$/.test(c)); const body = rows.slice(head ? 2 : 0);
+        out.push(`<div class="tw"><table>${head ? `<thead><tr>${rows[0].map(c => `<th>${inl(c)}</th>`).join('')}</tr></thead>` : ''}<tbody>${body.map(x => `<tr>${x.map(c => `<td>${inl(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      } else if (/^([-*]|\d+\.)\s/.test(r)) {
+        const ol = /^\d/.test(r), it = []; while (i < L.length && /^([-*]|\d+\.)\s/.test(L[i].trim())) it.push(`<li>${inl(L[i++].trim().replace(/^([-*]|\d+\.)\s+/, ''))}</li>`); i--;
+        out.push(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
+      } else { const p = []; while (i < L.length && L[i].trim() && !STOP.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; out.push(`<p>${p.join('<br>')}</p>`); }
+    }
+    return out.join('\n');
+  },
+
+  /* ---------- client API (stesso schema di api.js, endpoint /api/wiki) ---------- */
+  _s: { token: null, username: null },
+  loadCredentials() { try { const r = sessionStorage.getItem('wiki_sessione'); if (r) this._s = JSON.parse(r); } catch (e) {} return this._s; },
+  clearCredentials() { this._s = { token: null, username: null }; try { sessionStorage.removeItem('wiki_sessione'); } catch (e) {} },
+  isAuthenticated() { return !!this._s.token; },
+  async _post(corpo) {
+    const h = { 'Content-Type': 'application/json' };
+    if (this._s.token) h.Authorization = 'Bearer ' + this._s.token;
+    const res = await fetch('/api/wiki', { method: 'POST', headers: h, body: JSON.stringify(corpo) });
+    const d = await res.json().catch(() => ({}));
+    if (res.status === 401 && corpo.azione !== 'login') this.clearCredentials();
+    if (!res.ok) throw new Error(d.message || 'HTTP ' + res.status);
+    return d;
+  },
+  async load() {
+    const res = await fetch('/api/wiki'); const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.message ? `HTTP ${res.status}: ${d.message}` : 'HTTP ' + res.status);
+    return Array.isArray(d.pagine) ? d.pagine : [];
+  },
+  async login(username, password) {
+    const d = await this._post({ azione: 'login', username, password });
+    if (!d.success) throw new Error(d.message || 'Credenziali errate');
+    this._s = { token: d.token, username }; try { sessionStorage.setItem('wiki_sessione', JSON.stringify(this._s)); } catch (e) {}
+    return d;
+  },
+  salvaPagina(pagina, idPrecedente) { return this._post({ azione: 'salva', pagina, idPrecedente }); },
+  eliminaPagina(id) { return this._post({ azione: 'elimina', id }); }
+};
+Wiki.loadCredentials();
