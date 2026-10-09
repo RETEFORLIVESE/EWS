@@ -59,9 +59,55 @@
             <button type="button" class="btn" data-w="**|grassetto|**"><b>B</b></button><button type="button" class="btn" data-w="*|corsivo|*"><i>I</i></button>
             <button type="button" class="btn" data-w="- |elemento">• Elenco</button><button type="button" class="btn" data-w="> |citazione">❝</button>
             <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
-            <button type="button" class="btn" data-w="![|didascalia|](https://)">🖼 Immagine</button>
+            <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
             <button type="button" class="btn" data-w="|\n| Colonna 1 | Colonna 2 |\n|---|---|\n| Cella | Cella |\n|">📊 Tabella</button>
           </div>
+          <details class="imgm" id="imgm">
+            <summary>🖼 Gestione immagini <span id="imgN">nessuna</span></summary>
+            <div class="in">
+              <p class="note">Scegli un’immagine (anche cliccandola nell’anteprima o mettendo il cursore sulla sua riga): le modifiche si applicano subito al testo.</p>
+              <div class="chips" id="imgLista"></div>
+              <div id="imgForm" hidden>
+                <label for="iUrl">Indirizzo web dell’immagine</label><input id="iUrl" placeholder="https://...">
+                <label for="iAlt">Didascalia</label><input id="iAlt" maxlength="200">
+                <p id="imgMsg" class="err"></p>
+                <fieldset><legend>Dimensione</legend>
+                  <div class="g2">
+                    <div><label for="iW">Larghezza</label><div class="un"><input id="iW" type="number" min="1" max="9999"><select id="iWu" aria-label="Unità larghezza"><option value="">auto</option><option value="px">px</option><option value="%">%</option></select></div>
+                      <input id="iWr" type="range" aria-label="Larghezza (cursore)"></div>
+                    <div><label for="iH">Altezza (px, vuoto = proporzionale)</label><input id="iH" type="number" min="1" max="9999">
+                      <label for="iFit">Se l’altezza è fissa</label><select id="iFit"><option value="cover">Ritaglia per riempire</option><option value="contain">Mostra intera</option></select></div>
+                  </div>
+                  <div class="seg" id="iPreset"><button type="button" class="chip" data-wp="25%">25%</button><button type="button" class="chip" data-wp="33%">33%</button><button type="button" class="chip" data-wp="50%">50%</button><button type="button" class="chip" data-wp="75%">75%</button><button type="button" class="chip" data-wp="100%">100%</button><button type="button" class="chip" data-wp="">Originale</button></div>
+                </fieldset>
+                <fieldset><legend>Posizione</legend>
+                  <div class="seg" id="iPos">
+                    <button type="button" class="btn" data-pos="blocco" title="Da sola, a sinistra">Blocco</button>
+                    <button type="button" class="btn" data-pos="centro" title="Da sola, centrata">Centro</button>
+                    <button type="button" class="btn" data-pos="sx" title="Immagine a sinistra, il testo scorre a destra">◧ Sinistra + testo</button>
+                    <button type="button" class="btn" data-pos="dx" title="Immagine a destra, il testo scorre a sinistra">Destra + testo ◨</button>
+                    <button type="button" class="btn" data-pos="intera" title="Tutta la larghezza della pagina">Larghezza piena</button>
+                  </div>
+                  <p class="note" id="iPosNota"></p>
+                </fieldset>
+                <fieldset><legend>Aspetto</legend>
+                  <div class="chk">
+                    <label><input type="checkbox" id="iDid" checked> Mostra didascalia</label>
+                    <label><input type="checkbox" id="iBordo" checked> Bordo</label>
+                    <label><input type="checkbox" id="iTondo"> Angoli arrotondati</label>
+                    <label><input type="checkbox" id="iOmbra"> Ombra</label>
+                  </div>
+                </fieldset>
+                <div class="acts">
+                  <button type="button" class="btn" id="iSu">↑ Sposta su</button>
+                  <button type="button" class="btn" id="iGiu">↓ Sposta giù</button>
+                  <button type="button" class="btn del" id="iDel">Rimuovi immagine</button>
+                </div>
+                <p class="note">Nel testo diventa: <code id="iCodice"></code></p>
+              </div>
+              <div class="acts"><button type="button" class="btn pri" id="iNuova">+ Inserisci nuova immagine</button></div>
+            </div>
+          </details>
           <div class="cols"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p id="msg" class="err"></p>
@@ -79,7 +125,7 @@
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
-  let pagine = [], idMod = null;
+  let pagine = [], idMod = null, sel = -1; // sel = immagine selezionata nel gestore (posizione nel testo)
 
   const mostra = ok => { $('login-area').style.display = ok ? 'none' : 'block'; $('admin-content').style.display = ok ? 'block' : 'none'; };
   const vista = ed => { $('vElenco').hidden = ed; $('vEditor').hidden = !ed; window.scrollTo(0, 0); };
@@ -111,7 +157,7 @@
 
   /* ---------- editor ---------- */
   function apri(p, titoloNuovo) {
-    idMod = p ? p.id : null; msg('');
+    idMod = p ? p.id : null; msg(''); sel = -1; imgForm();
     $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
     $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
     $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
@@ -119,7 +165,81 @@
     $('elimina').hidden = !p; anteprima(); vista(true);
     (p ? $('fTesto') : $('fTitolo')).focus();
   }
-  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; };
+  const anteprima = () => {
+    $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>';
+    const n = IMG().length, old = sel; if (sel >= n) sel = n - 1;
+    imgLista(); if (sel !== old) imgForm();
+  };
+
+  /* ---------- gestione immagini ----------
+     Ogni immagine nel testo è  ![didascalia](url){w=… h=… pos=… …}  — il pannello legge e riscrive proprio quella riga. */
+  const IMG = () => [...$('fTesto').value.matchAll(Wiki.imgRe())];
+  const imgErr = t => { $('imgMsg').textContent = t || ''; };
+  function riga(m) { // dove sta l'immagine nella sua riga, e se è da sola (→ figura) o dentro un paragrafo
+    const v = $('fTesto').value, a = v.lastIndexOf('\n', m.index - 1) + 1; let b = v.indexOf('\n', m.index + m[0].length); if (b < 0) b = v.length;
+    return { a, b, solo: v.slice(a, b).trim() === m[0] };
+  }
+  function imgLista() {
+    const m = IMG();
+    $('imgN').textContent = m.length ? m.length + (m.length === 1 ? ' immagine' : ' immagini') : 'nessuna';
+    $('imgLista').innerHTML = m.map((x, i) => `<button type="button" class="chip${i === sel ? ' on' : ''}" data-i="${i}">${i + 1} · ${E((x[1] || x[2].split('/').pop() || 'immagine').slice(0, 28))}</button>`).join('') || '<span class="note">Nessuna immagine nel testo.</span>';
+    $('anteprima').querySelectorAll('img.sel').forEach(i => i.classList.remove('sel'));
+    const im = sel >= 0 && $('anteprima').querySelector(`img[data-img="${sel}"]`); if (im) im.classList.add('sel');
+  }
+  function rangeSync() {
+    const u = $('iWu').value, r = $('iWr');
+    r.min = u === '%' ? 5 : 40; r.max = u === '%' ? 100 : 960; r.step = u === '%' ? 5 : 10;
+    r.disabled = $('iW').disabled = !u; r.value = $('iW').value || (u === '%' ? 100 : 400);
+  }
+  function posCorrente() { const b = $('iPos').querySelector('.on'); return b ? b.dataset.pos : 'blocco'; }
+  function imgForm() { // riempie il modulo con i valori dell'immagine selezionata
+    const m = IMG()[sel]; $('imgForm').hidden = !m; if (!m) return;
+    const o = Wiki.imgOpt(m[3]), solo = riga(m).solo; imgErr('');
+    $('iUrl').value = m[2]; $('iAlt').value = m[1];
+    $('iWu').value = o.w ? (/%$/.test(o.w) ? '%' : 'px') : ''; $('iW').value = o.w ? parseInt(o.w, 10) : ''; rangeSync();
+    $('iH').value = o.h ? parseInt(o.h, 10) : ''; $('iFit').value = o.fit || 'cover';
+    const pos = o.pos || 'blocco'; $('iPos').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.pos === pos); b.disabled = !solo; });
+    $('iDid').checked = o.did !== 'no'; $('iBordo').checked = o.bordo !== 'no'; $('iTondo').checked = o.tondo === 'si'; $('iOmbra').checked = o.ombra === 'si';
+    $('iDid').disabled = $('iSu').disabled = $('iGiu').disabled = !solo;
+    $('iPosNota').textContent = solo ? '' : 'Questa immagine è dentro un paragrafo: posizione, didascalia e spostamento valgono solo per immagini su una riga da sola.';
+    $('iCodice').textContent = m[0];
+  }
+  function imgApplica() { // riscrive la riga dell'immagine con i valori del modulo
+    const m = IMG()[sel]; if (!m) return;
+    const url = $('iUrl').value.trim();
+    if (!/^https?:\/\/[^)\s]+$/.test(url)) { imgErr('Indirizzo non valido: deve iniziare con https:// e non contenere spazi o parentesi.'); return; }
+    imgErr('');
+    const u = $('iWu').value, wv = parseInt($('iW').value, 10), hv = parseInt($('iH').value, 10), solo = riga(m).solo;
+    const o = { w: u && wv > 0 ? (u === '%' ? Math.min(wv, 100) + '%' : wv + 'px') : '', h: hv > 0 ? hv + 'px' : '', fit: $('iFit').value,
+      bordo: $('iBordo').checked ? 'si' : 'no', tondo: $('iTondo').checked ? 'si' : 'no', ombra: $('iOmbra').checked ? 'si' : 'no' };
+    if (solo) { o.pos = posCorrente(); o.did = $('iDid').checked ? 'si' : 'no'; }
+    const nuovo = Wiki.imgBuild($('iAlt').value.replace(/[\]\r\n]/g, '').trim(), url, o), t = $('fTesto'), v = t.value;
+    t.value = v.slice(0, m.index) + nuovo + v.slice(m.index + m[0].length);
+    $('iCodice').textContent = nuovo; anteprima();
+  }
+  function imgSposta(dir) { // sposta la riga dell'immagine prima/dopo il blocco di testo vicino
+    const m = IMG()[sel]; if (!m) return;
+    if (!riga(m).solo) { imgErr('Per spostarla l’immagine deve stare su una riga da sola.'); return; }
+    const t = $('fTesto'), lines = t.value.split('\n'), li = t.value.slice(0, m.index).split('\n').length - 1, line = lines[li];
+    lines.splice(li, 1);
+    if (li > 0 && !lines[li - 1].trim()) while (li < lines.length && !lines[li].trim()) lines.splice(li, 1);
+    let j, at;
+    if (dir < 0) { j = li - 1; while (j >= 0 && !lines[j].trim()) j--; if (j < 0) return; while (j >= 0 && lines[j].trim()) j--; at = j + 1; lines.splice(at, 0, line, ''); }
+    else { j = li; while (j < lines.length && !lines[j].trim()) j++; if (j >= lines.length) return; while (j < lines.length && lines[j].trim()) j++; lines.splice(j, 0, '', line); at = j + 1; }
+    const off = lines.slice(0, at).join('\n').length + (at > 0 ? 1 : 0);
+    t.value = lines.join('\n'); sel = IMG().findIndex(x => x.index === off); anteprima();
+  }
+  function imgNuova() { // inserisce un'immagine d'esempio nel punto del cursore, su una riga da sola
+    const t = $('fTesto'), v = t.value, i = t.selectionEnd, pre = v.slice(0, i), post = v.slice(i), code = '![didascalia](https://esempio.it/immagine.jpg)';
+    const a = pre ? (/\n\n$/.test(pre) ? '' : /\n$/.test(pre) ? '\n' : '\n\n') : '', b = post ? (/^\n\n/.test(post) ? '' : /^\n/.test(post) ? '\n' : '\n\n') : '';
+    t.value = pre + a + code + b + post;
+    sel = IMG().findIndex(m => m.index === pre.length + a.length); anteprima(); imgForm();
+    $('imgm').open = true; $('iUrl').focus(); $('iUrl').select();
+  }
+  function imgSegui() { // se il cursore entra nella riga di un'immagine, seleziona quella nel pannello
+    const p = $('fTesto').selectionStart, i = IMG().findIndex(m => p >= m.index && p <= m.index + m[0].length);
+    if (i >= 0 && i !== sel) { sel = i; imgLista(); imgForm(); }
+  }
 
   function inserisci(modello) { // "prima|selezione o segnaposto|dopo"
     const t = $('fTesto'), [a, m, d = ''] = modello.replace(/\\n/g, '\n').split('|'), i = t.selectionStart, f = t.selectionEnd;
@@ -168,6 +288,31 @@
   $('fTesto').addEventListener('input', anteprima);
   $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w]')) e.preventDefault(); });
   $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
+  /* gestore immagini: ogni modifica si applica subito al testo */
+  $('btnImg').addEventListener('click', imgNuova);
+  $('iNuova').addEventListener('click', imgNuova);
+  $('imgLista').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) { sel = +b.dataset.i; imgLista(); imgForm(); } });
+  $('anteprima').addEventListener('click', e => { const im = e.target.closest('img[data-img]'); if (im) { sel = +im.dataset.img; $('imgm').open = true; imgLista(); imgForm(); } });
+  $('fTesto').addEventListener('click', imgSegui); $('fTesto').addEventListener('keyup', imgSegui);
+  ['iUrl', 'iAlt', 'iW', 'iH'].forEach(i => $(i).addEventListener('input', () => { if (i === 'iW') rangeSync(); imgApplica(); }));
+  ['iFit', 'iDid', 'iBordo', 'iTondo', 'iOmbra'].forEach(i => $(i).addEventListener('change', imgApplica));
+  $('iWu').addEventListener('change', () => { $('iW').value = $('iWu').value === '%' ? 50 : $('iWu').value === 'px' ? 400 : ''; rangeSync(); imgApplica(); });
+  $('iWr').addEventListener('input', () => { $('iW').value = $('iWr').value; imgApplica(); });
+  $('iPreset').addEventListener('click', e => {
+    const b = e.target.closest('[data-wp]'); if (!b) return;
+    const w = b.dataset.wp; $('iWu').value = w ? '%' : ''; $('iW').value = w ? parseInt(w, 10) : ''; rangeSync(); imgApplica();
+  });
+  $('iPos').addEventListener('click', e => {
+    const b = e.target.closest('[data-pos]'); if (!b || b.disabled) return;
+    $('iPos').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); imgApplica();
+  });
+  $('iSu').addEventListener('click', () => imgSposta(-1));
+  $('iGiu').addEventListener('click', () => imgSposta(1));
+  $('iDel').addEventListener('click', () => {
+    const m = IMG()[sel]; if (!m) return; const r = riga(m), t = $('fTesto'), v = t.value;
+    t.value = r.solo ? (v.slice(0, r.a) + v.slice(r.b + 1)).replace(/\n{3,}/g, '\n\n') : v.slice(0, m.index) + v.slice(m.index + m[0].length);
+    sel = -1; anteprima(); imgForm();
+  });
   window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
 
   setupLogin();
