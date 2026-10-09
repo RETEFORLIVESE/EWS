@@ -574,7 +574,7 @@ var FEEDS={
         titolo:s(o.titolo),sunto:clean(o.sommario||o.organo_responsabile,240),
         img:s(o.copertina),id:s(o.id),_t:ts(o.data_completamento||o.data_inizio)}});
     }},
-  planungsrat:{label:'Elenco dei piani',file:'ctsu.json',site:'lex/CP.html',detail:'lex/progetto.html?id=',   // i piani usano la stessa pagina dei progetti; se ne hanno una propria, cambia solo questo indirizzo
+  planungsrat:{label:'Elenco dei piani',file:'ctsu.json',site:'lex/CP.html',detail:'lex/CP.html?id=',   // il piano si apre nel portale CP
     load:function(raw){
       return (raw.progetti||[]).filter(isPlan).map(function(o,i){return{_i:i,
         cat:s(o.categoria),stato:s(o.stato),num:'',
