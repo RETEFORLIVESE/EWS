@@ -540,7 +540,16 @@ function clean(v,max){
   return t;
 }
 function isoIt(v){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s(v));return m?m[3]+' '+MESI[+m[2]-1]+' '+m[1]:s(v)}
-function dmy(v){var m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s(v));return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0}
+// data -> numero (0 se assente/non riconosciuta). Accetta 06/10/2026, 2026-10-06, "06 ottobre 2026"
+function ts(v){
+  var t=s(v).toLowerCase(),m;
+  if(m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t))return new Date(+m[3],+m[2]-1,+m[1]).getTime();
+  if(m=/^(\d{4})-(\d{2})-(\d{2})/.exec(t))return new Date(+m[1],+m[2]-1,+m[3]).getTime();
+  if(m=/^(\d{1,2})\s+([a-z\u00e0-\u00f9]+)\s+(\d{4})$/.exec(t)){var i=MESI.indexOf(m[2]);if(i>=0)return new Date(+m[3],i,+m[1]).getTime()}
+  return 0;
+}
+// dal piu' recente al piu' vecchio; senza data in fondo, nell'ordine originale
+function recent(items){return items.sort(function(a,b){return (b._t||0)-(a._t||0)||a._i-b._i})}
 function isPlan(o){return !!o.tipo_documento||/piano|pianific/i.test(s(o.categoria)+' '+s(o.organo_responsabile))}
 
 // per ogni sito: file, pagina del sito, base del link al dettaglio, e load(raw) -> schede
@@ -551,8 +560,7 @@ var FEEDS={
         cat:s(o.categoria),stato:s(o.stato),
         num:o.numero?'n. '+s(o.numero)+(o.anno?'/'+s(o.anno):''):'',
         data:s(o.dataEmanazione),titolo:s(o.titolo),sunto:clean(o.sommario,240),
-        img:s(o.immagine),id:s(o.id),_n:+o.numero||0,_y:+o.anno||0}})
-        .sort(function(a,b){return a._n-b._n||a._y-b._y});
+        img:s(o.immagine),id:s(o.id),_t:ts(o.dataEmanazione)}});
     }},
   CTSU:{label:'Elenco dei progetti',file:'ctsu.json',site:'lex/ctsu.html',detail:'lex/progetto.html?id=',
     load:function(raw){
@@ -560,7 +568,7 @@ var FEEDS={
         cat:s(o.categoria),stato:s(o.stato),num:'',
         data:o.data_completamento?'Completato: '+s(o.data_completamento):(o.data_inizio?'Inizio: '+s(o.data_inizio):''),
         titolo:s(o.titolo),sunto:clean(o.sommario||o.organo_responsabile,240),
-        img:s(o.copertina),id:s(o.id)}});
+        img:s(o.copertina),id:s(o.id),_t:ts(o.data_completamento||o.data_inizio)}});
     }},
   planungsrat:{label:'Elenco dei piani',file:'ctsu.json',site:'lex/CP.html',detail:'',   // pagina di dettaglio dei piani: da confermare
     load:function(raw){
@@ -568,7 +576,7 @@ var FEEDS={
         cat:s(o.categoria),stato:s(o.stato),num:'',
         data:o.data_approvazione?'Approvato: '+s(o.data_approvazione):s(o.periodo_validita),
         titolo:s(o.titolo),sunto:clean(o.sommario||o.organo_responsabile,240),
-        img:s(o.copertina),id:s(o.id)}});
+        img:s(o.copertina),id:s(o.id),_t:ts(o.data_approvazione)}});
     }},
   CEPU:{label:'Elenco delle consultazioni',file:'elezioni.json',site:'CEPU.html',detail:'',
     load:function(raw){
@@ -578,17 +586,17 @@ var FEEDS={
         var info=o.tipo_codice==='R'
           ? clean(o.area)+(o.candidato_vincente?' \u2014 Esito: '+s(o.candidato_vincente):'')
           : [clean(o.area),o.affluenza?'Affluenza '+s(o.affluenza):'',o.candidato_vincente?'Eletto: '+s(o.candidato_vincente):''].filter(Boolean).join(' \u00b7 ');
-        return{_i:i,_t:dmy(o.data),cat:s(o.tipo),stato:'',num:'',data:s(o.data),
+        return{_i:i,_t:ts(o.data),cat:s(o.tipo),stato:'',num:'',data:s(o.data),
           titolo:[s(o.tipo),s(o.comune)].filter(Boolean).join(' \u2013 '),sunto:info,img:'',
           url:'CEPU.html?'+q};
-      }).sort(function(a,b){return b._t-a._t});
+      });
     }},
   unitext:{label:'Elenco dei testi',file:'unitext.json',site:'lex/unitext.html',detail:'lex/unitext.html?id=',   // dettaglio: da confermare
     load:function(raw){
       return (raw.testi||[]).map(function(o,i){return{_i:i,
         cat:s(o.categoria),stato:s(o.stato),num:s(o.autore),data:isoIt(o.data),
         titolo:s(o.titolo),sunto:clean(o.sottotitolo||o.abstract,240),
-        img:s(o.copertina),id:s(o.id)}});
+        img:s(o.copertina),id:s(o.id),_t:ts(o.data)}});
     }},
   konet:{label:'Elenco dei congressi e delle assemblee',file:null,site:'CA.html',detail:'CA.html',load:function(){return[]}}
 };
@@ -662,7 +670,7 @@ function initFeeds(){
     var key=box.getAttribute('data-feed'),cfg=FEEDS[key];
     if(!cfg.file){renderFeed(box,key,[]);return}
     renderFeed(box,key,[],'Caricamento\u2026');
-    getJSON(cfg.file).then(function(raw){renderFeed(box,key,cfg.load(raw))})
+    getJSON(cfg.file).then(function(raw){renderFeed(box,key,recent(cfg.load(raw)))})
       .catch(function(){renderFeed(box,key,[],'Impossibile caricare i dati ('+cfg.file+'). Riprova pi\u00f9 tardi.')});
   });
 }
