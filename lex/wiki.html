@@ -35,6 +35,7 @@
       <div class="panel">
         <p><a href="#" id="indietro">&larr; Torna alla ricerca</a></p>
         <div class="meta" id="pMeta"></div>
+        <div id="pIndice"></div>
         <div class="wk" id="pTesto"></div>
         <div id="pLink"></div>
       </div>
@@ -118,6 +119,7 @@
     $('pTitolo').textContent = p.titolo;
     $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
       `<span>Ultima modifica: ${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</span>`;
+    $('pIndice').innerHTML = Wiki.indice(p.contenuto);
     $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
     const rif = pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
     $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
@@ -128,6 +130,11 @@
   $('cats').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { cat = b.dataset.c; chips(); cerca(); } });
   $('indietro').addEventListener('click', e => { e.preventDefault(); history.pushState(null, '', location.pathname + location.search); route(); });
   $('pMeta').addEventListener('click', e => { const a = e.target.closest('[data-t]'); if (a) { e.preventDefault(); history.pushState(null, '', location.pathname); $('q').value = a.dataset.t; route(); cerca(); } });
+  $('pIndice').addEventListener('click', e => {
+    const a = e.target.closest('[data-s]'); if (!a) return;
+    e.preventDefault(); const t = document.getElementById(a.dataset.s);
+    if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  });
   window.addEventListener('hashchange', route);
 
   $('q').value = new URLSearchParams(location.search).get('q') || '';
