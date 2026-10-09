@@ -376,6 +376,27 @@ a.card:hover{filter:brightness(1.25)}
 
       <div class="panel feed" data-feed="unitext"></div></section>
 
+      <section data-page="bundeswiki" hidden><div class="bar">Estji Bundes Wiki</div>
+
+      <div class="panel">
+        <div class="banner">
+          <div class="frame"><img src="Strnghld.png" alt="Estji Bundes Wiki" width="96" height="96"></div>
+          <div class="txt"><small></small><b>BundesWiki</b><em>StrongHold</em></div>
+          <div class="bub"></div>
+        </div>
+        <div class="btns">
+          <a class="item ext" href="#" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
+          <a class="item ext" href="#" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="bar">Wiki Pages</div>
+        <div class="row"><span class="th t1"></span><a href="#">Pagina di prova 1</a></div>
+        <div class="row"><span class="th t4"></span><a href="#">Pagina di prova 2</a></div>
+        <div class="row"><span class="th t6"></span><a href="#">Pagina di prova 3</a></div>
+      </div></section>
+
       <section data-page="planungsrat" hidden><div class="bar">Planning Archive</div>
 
       <div class="panel">
@@ -389,22 +410,7 @@ a.card:hover{filter:brightness(1.25)}
           <a class="item ext" href="redazioneCEPU.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
         </div>
       </div>
-      
-      <div class="panel feed" data-feed="bundeswiki"></div></section>
-      <section data-page="bundeswiki" hidden><div class="bar">Estji Bundes Wiki</div>
 
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="Strnghld.png" alt="Estji Bundes Wiki" width="96" height="96"></div>
-          <div class="txt"><small></small><b>BundesWiki</b><em>StrongHold</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="lex/CP.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="redazioneCEPU.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
-        </div>
-      </div>
-      
       <div class="panel feed" data-feed="planungsrat"></div></section>
 
       <section data-page="konet" hidden><div class="bar">Congress Archive</div>
@@ -611,7 +617,6 @@ var FEEDS={
           url:'CEPU.html?'+q};
       });
     }},
-  bundeswiki:{},
   unitext:{label:'Elenco dei testi',file:'unitext.json',site:'lex/unitext.html',detail:'lex/unitext.html?id=',   // dettaglio: da confermare
     load:function(raw){
       return (raw.testi||[]).map(function(o,i){return{_i:i,
