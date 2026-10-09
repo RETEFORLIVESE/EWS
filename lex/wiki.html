@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#043a96">
+<meta name="theme-color" content="#3a1a8a">
 <title>Estji Wiki</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
@@ -19,6 +19,7 @@
   <div class="layout">
   <aside aria-label="Articoli principali">
     <div class="sb-group"><span class="sb-head">Articoli principali</span><div id="principali"></div></div>
+    <div class="sb-group" id="sbIndice" hidden><span class="sb-head">Indice</span><div id="pIndice"></div></div>
   </aside>
   <main>
     <div id="vCerca">
@@ -35,7 +36,6 @@
       <div class="panel">
         <p><a href="#" id="indietro">&larr; Torna alla ricerca</a></p>
         <div class="meta" id="pMeta"></div>
-        <div id="pIndice"></div>
         <div class="wk" id="pTesto"></div>
         <div id="pLink"></div>
       </div>
@@ -112,14 +112,14 @@
 
   function route() {
     const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id);
-    sidebar();
+    sidebar(); $('sbIndice').hidden = true;
     $('vCerca').hidden = !!p; $('vPagina').hidden = !p;
     if (!p) { document.title = 'Estji Wiki'; return; }
     document.title = p.titolo + ' — Estji Wiki';
     $('pTitolo').textContent = p.titolo;
     $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
       `<span>Ultima modifica: ${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</span>`;
-    $('pIndice').innerHTML = Wiki.indice(p.contenuto);
+    $('pIndice').innerHTML = Wiki.indice(p.contenuto); $('sbIndice').hidden = !$('pIndice').innerHTML;
     $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
     const rif = pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
     $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
