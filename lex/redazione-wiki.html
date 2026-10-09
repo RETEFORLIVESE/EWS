@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#043a96">
+<title>Estji Wiki — Redazione</title>
+<link rel="stylesheet" href="assets/css/wiki.css">
+</head>
+<body>
+<div class="site">
+  <header>
+    <div class="flag"><i></i><i></i><i></i><i></i></div>
+    <div><h1>Redazione Wiki</h1><p>Scrivi e modifica le pagine</p></div>
+    <nav><a class="btn" href="wiki.html">📖 Wiki</a></nav>
+  </header>
+  <main>
+    <section id="login-area">
+      <div class="bar">🔐 Accesso redazione</div>
+      <div class="panel" style="max-width:420px;margin-inline:auto">
+        <p class="note">Inserisci il tuo nome e la password per modificare la wiki.</p>
+        <label for="adminUsername">Nome</label><input id="adminUsername" autocomplete="username">
+        <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password">
+        <p id="loginError" class="err"></p>
+        <button type="button" class="btn pri" id="loginBtn">Accedi</button>
+      </div>
+    </section>
+
+    <section id="admin-content" style="display:none">
+      <div class="row"><span>👤 Connesso come <b id="adminUsernameLabel">—</b></span><button type="button" class="btn" id="logoutBtn">Esci</button></div>
+
+      <div id="vElenco">
+        <div class="bar">Pagine della wiki</div>
+        <div class="panel">
+          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></div>
+          <p id="msgElenco" class="note"></p>
+          <div id="elenco"></div>
+        </div>
+      </div>
+
+      <form id="vEditor" hidden novalidate>
+        <div class="bar" id="eTitolo">Nuova pagina</div>
+        <div class="panel">
+          <label for="fTitolo">Titolo</label><input id="fTitolo" required maxlength="150">
+          <div class="cols">
+            <div><label for="fCat">Categoria</label><input id="fCat" list="cats" maxlength="60"><datalist id="cats"></datalist></div>
+            <div><label for="fTag">Tag (separati da virgola)</label><input id="fTag" placeholder="storia, leggi, luoghi"></div>
+          </div>
+          <label for="fSomm">Sommario (mostrato nei risultati di ricerca)</label><textarea id="fSomm" rows="2" maxlength="400" style="font-family:inherit"></textarea>
+          <div class="cols">
+            <div><label for="fImg">Immagine in testa (indirizzo web)</label><input id="fImg" placeholder="https://..."></div>
+            <div><label for="fId">Identificativo URL (id)</label><input id="fId" placeholder="generato dal titolo se vuoto"></div>
+          </div>
+          <label for="fTesto">Testo</label>
+          <div class="chips" id="tools" style="padding-top:0">
+            <button type="button" class="btn" data-w="## |Titolo sezione">H2</button><button type="button" class="btn" data-w="### |Sottotitolo">H3</button>
+            <button type="button" class="btn" data-w="**|grassetto|**"><b>B</b></button><button type="button" class="btn" data-w="*|corsivo|*"><i>I</i></button>
+            <button type="button" class="btn" data-w="- |elemento">• Elenco</button><button type="button" class="btn" data-w="> |citazione">❝</button>
+            <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
+            <button type="button" class="btn" data-w="![|didascalia|](https://)">🖼 Immagine</button>
+            <button type="button" class="btn" data-w="|\n| Colonna 1 | Colonna 2 |\n|---|---|\n| Cella | Cella |\n|">📊 Tabella</button>
+          </div>
+          <div class="cols"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
+          <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
+          <p id="msg" class="err"></p>
+          <div class="chips">
+            <button type="submit" class="btn pri" id="salva">💾 Salva sul database</button>
+            <button type="button" class="btn" id="annulla">Annulla</button>
+            <button type="button" class="btn del" id="elimina" hidden>Elimina pagina</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+<script src="../assets/js/wiki-core.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id), E = Wiki.esc;
+  let pagine = [], idMod = null;
+
+  const mostra = ok => { $('login-area').style.display = ok ? 'none' : 'block'; $('admin-content').style.display = ok ? 'block' : 'none'; };
+  const vista = ed => { $('vElenco').hidden = ed; $('vEditor').hidden = !ed; window.scrollTo(0, 0); };
+  const msg = (t, ok) => { $('msg').textContent = t || ''; $('msg').className = ok ? 'ok' : 'err'; };
+
+  /* ---------- login / logout (stesso schema della redazione CTSU) ---------- */
+  function setupLogin() {
+    const btn = $('loginBtn'), err = $('loginError');
+    btn.addEventListener('click', async () => {
+      err.textContent = ''; btn.disabled = true; btn.textContent = 'Accesso…';
+      const u = $('adminUsername').value.trim();
+      try { await Wiki.login(u, $('adminPassword').value); $('adminUsernameLabel').textContent = u; mostra(true); await avvia(); }
+      catch (e) { err.textContent = '❌ ' + (e.message || 'Errore di accesso'); }
+      finally { btn.disabled = false; btn.textContent = 'Accedi'; }
+    });
+    ['adminUsername', 'adminPassword'].forEach(i => $(i).addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); } }));
+    $('logoutBtn').addEventListener('click', () => { Wiki.clearCredentials(); location.reload(); });
+  }
+
+  /* ---------- elenco ---------- */
+  function elenco() {
+    const q = Wiki.norm($('filtro').value);
+    const l = [...pagine].sort((a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo))).filter(p => Wiki.norm(p.titolo + ' ' + p.categoria).includes(q));
+    $('elenco').innerHTML = l.map(p => `<div class="row"><div>${p.categoria ? `<span class="tag">${E(p.categoria)}</span> ` : ''}<b>${E(p.titolo)}</b>
+      <div class="note">${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</div></div>
+      <div><a class="btn" href="wiki.html#${E(p.id)}" target="_blank" rel="noopener">Apri</a> <button type="button" class="btn" data-mod="${E(p.id)}">Modifica</button></div></div>`).join('') || '<p class="note">Nessuna pagina.</p>';
+    $('cats').innerHTML = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].map(c => `<option value="${E(c)}">`).join('');
+  }
+
+  /* ---------- editor ---------- */
+  function apri(p, titoloNuovo) {
+    idMod = p ? p.id : null; msg('');
+    $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
+    $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
+    $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
+    $('fImg').value = p ? p.immagine : ''; $('fId').value = p ? p.id : ''; $('fTesto').value = p ? p.contenuto : '';
+    $('elimina').hidden = !p; anteprima(); vista(true);
+    (p ? $('fTesto') : $('fTitolo')).focus();
+  }
+  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; };
+
+  function inserisci(modello) { // "prima|selezione o segnaposto|dopo"
+    const t = $('fTesto'), [a, m, d = ''] = modello.replace(/\\n/g, '\n').split('|'), i = t.selectionStart, f = t.selectionEnd;
+    const sel = t.value.slice(i, f) || m || '';
+    t.value = t.value.slice(0, i) + a + sel + d + t.value.slice(f);
+    t.focus(); t.setSelectionRange(i + a.length, i + a.length + sel.length); anteprima();
+  }
+
+  async function salva(e) {
+    e.preventDefault();
+    if (!$('fTitolo').value.trim()) { msg('Inserisci almeno il titolo.'); return; }
+    const pagina = { titolo: $('fTitolo').value, categoria: $('fCat').value, tag: $('fTag').value.split(','), sommario: $('fSomm').value,
+      immagine: $('fImg').value, id: $('fId').value, contenuto: $('fTesto').value };
+    const b = $('salva'); b.disabled = true; b.textContent = 'Salvataggio…'; msg('');
+    try {
+      const d = await Wiki.salvaPagina(pagina, idMod);
+      pagine = pagine.filter(p => p.id !== idMod && p.id !== d.pagina.id); pagine.push(d.pagina);
+      idMod = d.pagina.id; $('fId').value = idMod; $('elimina').hidden = false; elenco();
+      msg('✅ Salvato sul database. La pagina è visibile a tutti.', true);
+    } catch (er) {
+      msg('Errore salvataggio: ' + er.message);
+      if (!Wiki.isAuthenticated()) { alert('Sessione scaduta: effettua di nuovo il login. Il testo non è stato perso, copialo prima di ricaricare.'); }
+    } finally { b.disabled = false; b.textContent = '💾 Salva sul database'; }
+  }
+
+  async function elimina() {
+    const p = pagine.find(x => x.id === idMod);
+    if (!p || !confirm(`Eliminare "${p.titolo}"?`)) return;
+    try { await Wiki.eliminaPagina(p.id); pagine = pagine.filter(x => x.id !== p.id); elenco(); vista(false); }
+    catch (er) { msg('Errore eliminazione: ' + er.message); }
+  }
+
+  async function avvia() {
+    try { pagine = await Wiki.load(); } catch (e) { $('msgElenco').textContent = 'Errore nel caricamento: ' + e.message; pagine = []; }
+    elenco(); vista(false);
+    const n = new URLSearchParams(location.search).get('nuova'); // dal link rosso [[...]] della wiki
+    if (n != null) apri(null, n);
+  }
+
+  $('filtro').addEventListener('input', elenco);
+  $('nuova').addEventListener('click', () => apri(null));
+  $('elenco').addEventListener('click', e => { const b = e.target.closest('[data-mod]'); if (b) apri(pagine.find(p => p.id === b.dataset.mod)); });
+  $('annulla').addEventListener('click', () => vista(false));
+  $('elimina').addEventListener('click', elimina);
+  $('vEditor').addEventListener('submit', salva);
+  $('fTesto').addEventListener('input', anteprima);
+  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w]')) e.preventDefault(); });
+  $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
+  window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
+
+  setupLogin();
+  if (Wiki.isAuthenticated()) { $('adminUsernameLabel').textContent = Wiki._s.username || ''; mostra(true); avvia(); } else mostra(false);
+})();
+</script>
+</body>
+</html>

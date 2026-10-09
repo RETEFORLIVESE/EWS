@@ -1,0 +1,44 @@
+/* Stile Aero/Estji Archive condiviso da wiki.html e redazione-wiki.html (derivato da pr.html) */
+*{box-sizing:border-box}html,body{margin:0}[hidden]{display:none!important}
+body{min-height:100vh;color:#e8f4ff;padding:36px 12px 40px;font:15px "Segoe UI","Trebuchet MS",Verdana,Arial,sans-serif;
+background:radial-gradient(circle at 12% 18%,rgba(255,255,255,.5) 0 3%,transparent 3.4%),radial-gradient(circle at 82% 12%,rgba(255,255,255,.4) 0 5%,transparent 5.4%),
+radial-gradient(circle at 70% 70%,rgba(160,230,255,.35) 0 7%,transparent 7.4%),radial-gradient(ellipse 90% 50% at 50% 0,#bff0ff 0%,transparent 70%),
+linear-gradient(180deg,#1b8cf0 0%,#0a5fd0 45%,#043a96 100%);background-attachment:fixed}
+a{color:#4fd0ff}a:hover{color:#9ee6ff}
+.site{max-width:980px;margin:0 auto;position:relative;border-radius:60px 60px 24px 24px;background:linear-gradient(180deg,#0b1a33,#040a16 30%,#030812);
+border:1px solid rgba(160,215,255,.55);box-shadow:0 0 0 3px rgba(0,0,0,.35),0 18px 50px rgba(0,20,70,.7),inset 0 1px 0 rgba(255,255,255,.5);overflow:hidden;min-height:calc(100vh - 76px)}
+.site::before{content:"";position:absolute;inset:0 0 auto;height:120px;pointer-events:none;background:linear-gradient(180deg,rgba(130,200,255,.28),transparent)}
+header{display:flex;align-items:center;gap:16px;padding:20px 30px 14px;position:relative;border-bottom:1px solid rgba(120,190,255,.25);background:linear-gradient(180deg,rgba(40,90,160,.25),rgba(0,0,0,.35))}
+.flag{width:56px;height:52px;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:3px;transform:perspective(200px) rotateY(-18deg) rotateZ(-4deg);filter:drop-shadow(0 4px 6px #000a)}
+.flag i{border-radius:6px 2px 6px 2px;background:linear-gradient(135deg,#d9f6ff,#3fb4ff 45%,#0a58c8);border:1px solid rgba(255,255,255,.7)}
+header h1{margin:0;font-weight:400;font-size:30px;text-shadow:0 2px 6px #000}header p{margin:2px 0 0 4px;color:#cfe9ff}
+header nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+main{padding:12px 14px 24px;position:relative}
+.bar{text-align:center;padding:5px 10px;border:1px solid #000;border-radius:3px;background:linear-gradient(180deg,#05080f,#1a2538 50%,#05080f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.2)}
+.panel{margin-top:10px;padding:8px;border-radius:7px;border:1px solid #000;background:linear-gradient(180deg,#16233a,#070d18);box-shadow:inset 0 0 0 1px rgba(150,200,255,.35)}
+.btn,.chip{font:inherit;font-size:13px;color:#e8f4ff;padding:4px 12px;border-radius:5px;border:1px solid #000;cursor:pointer;text-decoration:none;display:inline-block;
+background:linear-gradient(180deg,#3d4d66,#1c2840 48%,#080f1c 52%,#121d30);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);text-shadow:0 1px 2px #000}
+.chip{border-radius:14px}.btn:hover,.chip:hover{filter:brightness(1.3);color:#fff}
+.btn.on,.chip.on,.btn.pri{background:linear-gradient(180deg,#7fd8ff,#2b9cf2 48%,#0a58c8 52%,#2db5ff);border-color:#001a44;color:#fff}
+.btn.del{background:linear-gradient(180deg,#ff9a9a,#d23 48%,#800 52%,#c33);border-color:#400;color:#fff}
+.btn:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:2px solid #9ee6ff;outline-offset:2px}
+input,select,textarea{width:100%;font:inherit;color:#e8f4ff;padding:7px 10px;border:1px solid #000;border-radius:5px;background:#050b17;box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
+textarea{font-family:Consolas,monospace;font-size:14px;line-height:1.5;resize:vertical}
+label{display:block;font-size:13px;color:#9cc4ea;margin:10px 0 3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px}
+.note{font-size:13px;color:#9cc4ea;padding:4px 2px}.err{color:#ff9a9a;font-size:14px;min-height:20px}.ok{color:#8bf2b8}
+.card{display:block;margin:8px 0;padding:9px 14px 10px;border:1px solid #000;border-left:4px solid #2b9cf2;border-radius:5px;text-decoration:none;color:inherit;
+background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.22)}
+a.card:hover{filter:brightness(1.25)}.card h3{margin:5px 0 2px;font-size:17px;font-weight:600;color:#4fd0ff}.card p{margin:0;font-size:13px;color:#cfe0f5;line-height:1.45}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:#b9d6f2}
+.tag{padding:1px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#9ee6ff;background:rgba(79,208,255,.16);border:1px solid rgba(160,215,255,.4)}
+mark{background:#ffd84a;color:#000;border-radius:2px;padding:0 1px}
+/* testo di una pagina wiki */
+.wk{line-height:1.65;max-width:78ch;padding:4px 8px}.wk h2,.wk h3{font-weight:400;color:#bfe9ff;border-bottom:1px solid rgba(160,200,255,.3);padding-bottom:3px;margin:22px 0 8px}
+.wk img{max-width:100%;border:1px solid #cfe6ff;border-radius:3px;margin:6px 0}.wk blockquote{margin:10px 0;padding:4px 14px;border-left:3px solid #2b9cf2;background:rgba(79,208,255,.08)}
+.wk code{background:#000;padding:1px 5px;border-radius:3px}.wk a.red{color:#ff8a8a}.wk hr{border:0;border-top:1px solid rgba(160,200,255,.3)}
+.wk .tw{overflow-x:auto}.wk table{border-collapse:collapse;margin:10px 0}.wk th,.wk td{border:1px solid rgba(160,200,255,.4);padding:5px 10px}.wk th{background:rgba(79,208,255,.15)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid rgba(160,200,255,.3)}
+@media(max-width:720px){body{padding:10px 8px;background-attachment:scroll}.site{border-radius:28px 28px 16px 16px}header{padding:14px 16px 10px}header h1{font-size:22px}.cols{grid-template-columns:1fr}.btn,.chip{min-height:40px}}

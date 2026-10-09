@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#043a96">
+<title>Estji Wiki</title>
+<link rel="stylesheet" href="assets/css/wiki.css">
+</head>
+<body>
+<div class="site">
+  <header>
+    <div class="flag"><i></i><i></i><i></i><i></i></div>
+    <div><h1>Estji Wiki</h1><p>L'enciclopedia della fazione</p></div>
+    <nav><a class="btn" href="../pr.html">Estji Archive</a><a class="btn" href="redazione-wiki.html">✍️ Redazione</a></nav>
+  </header>
+  <main>
+    <div id="vCerca">
+      <div class="bar">Cerca nella wiki</div>
+      <div class="panel">
+        <input type="search" id="q" placeholder="Cerca per titolo, tag o contenuto…" autocomplete="off" aria-label="Cerca nella wiki">
+        <div class="chips" id="cats"></div>
+        <div class="note" id="count">Caricamento…</div>
+        <div id="lista"></div>
+      </div>
+    </div>
+    <article id="vPagina" hidden>
+      <div class="bar" id="pTitolo"></div>
+      <div class="panel">
+        <p><a href="#" id="indietro">&larr; Torna alla ricerca</a></p>
+        <div class="meta" id="pMeta"></div>
+        <div class="wk" id="pTesto"></div>
+        <div id="pLink"></div>
+      </div>
+    </article>
+  </main>
+</div>
+<script src="../assets/js/wiki-core.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id), E = Wiki.esc;
+  let pagine = [], cat = '';
+
+  // punteggio: titolo pesa più dei tag, che pesano più del sommario e del contenuto
+  function punteggio(p, parole) {
+    const t = Wiki.norm(p.titolo), g = Wiki.norm((p.tag || []).join(' ') + ' ' + p.categoria), s = Wiki.norm(p.sommario), c = Wiki.norm(p.contenuto);
+    let tot = 0;
+    for (const w of parole) {
+      const x = (t.startsWith(w) ? 12 : 0) + (t.includes(w) ? 8 : 0) + (g.includes(w) ? 5 : 0) + (s.includes(w) ? 3 : 0) + (c.includes(w) ? 1 : 0);
+      if (!x) return 0; // tutte le parole devono comparire
+      tot += x;
+    }
+    return tot;
+  }
+  function evidenzia(testo, parole) {
+    let h = E(testo);
+    parole.forEach(w => { if (w.length > 1) h = h.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i'), '<mark>$1</mark>'); });
+    return h;
+  }
+  function estratto(p, parole) {
+    if (p.sommario) return p.sommario;
+    const c = String(p.contenuto || '').replace(/[#>*`|\[\]]/g, ' ').replace(/\s+/g, ' '), i = parole.length ? Wiki.norm(c).indexOf(parole[0]) : 0;
+    return (i > 60 ? '…' : '') + c.slice(Math.max(0, i - 60), Math.max(0, i - 60) + 180) + '…';
+  }
+
+  function cerca() {
+    const q = $('q').value.trim(), parole = Wiki.norm(q).split(/\s+/).filter(Boolean);
+    let ris = pagine.filter(p => !cat || p.categoria === cat).map(p => ({ p, s: parole.length ? punteggio(p, parole) : 1 })).filter(r => r.s > 0);
+    ris.sort((a, b) => parole.length ? b.s - a.s : Wiki.norm(a.p.titolo).localeCompare(Wiki.norm(b.p.titolo)));
+    $('count').textContent = ris.length + (ris.length === 1 ? ' pagina' : ' pagine') + (q ? ` per “${q}”` : ' nella wiki');
+    $('lista').innerHTML = ris.length ? ris.map(({ p }) => `
+      <a class="card" href="#${E(p.id)}"><div class="meta">${p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : ''}${(p.tag || []).slice(0, 4).map(t => `<span>#${E(t)}</span>`).join('')}</div>
+      <h3>${evidenzia(p.titolo, parole)}</h3><p>${evidenzia(estratto(p, parole), parole)}</p></a>`).join('')
+      : `<div class="note" style="text-align:center;padding:18px">Nessun risultato. <a href="redazione-wiki.html?nuova=${encodeURIComponent(q)}">Scrivi la pagina “${E(q || 'nuova')}”</a></div>`;
+    const u = new URL(location.href); q ? u.searchParams.set('q', q) : u.searchParams.delete('q'); history.replaceState(null, '', u);
+  }
+
+  function chips() {
+    const cs = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].sort();
+    $('cats').innerHTML = cs.length > 1 ? ['Tutte', ...cs].map((c, i) => `<button type="button" class="chip${(i ? c : '') === cat ? ' on' : ''}" data-c="${i ? E(c) : ''}">${E(c)}</button>`).join('') : '';
+  }
+
+  function route() {
+    const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id);
+    $('vCerca').hidden = !!p; $('vPagina').hidden = !p;
+    if (!p) { document.title = 'Estji Wiki'; return; }
+    document.title = p.titolo + ' — Estji Wiki';
+    $('pTitolo').textContent = p.titolo;
+    $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
+      `<span>Ultima modifica: ${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</span>`;
+    $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
+    const rif = pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
+    $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
+    window.scrollTo(0, 0);
+  }
+
+  $('q').addEventListener('input', cerca);
+  $('cats').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { cat = b.dataset.c; chips(); cerca(); } });
+  $('indietro').addEventListener('click', e => { e.preventDefault(); history.pushState(null, '', location.pathname + location.search); route(); });
+  $('pMeta').addEventListener('click', e => { const a = e.target.closest('[data-t]'); if (a) { e.preventDefault(); history.pushState(null, '', location.pathname); $('q').value = a.dataset.t; route(); cerca(); } });
+  window.addEventListener('hashchange', route);
+
+  $('q').value = new URLSearchParams(location.search).get('q') || '';
+  Wiki.load().then(d => { pagine = d; chips(); cerca(); route(); })
+    .catch(e => { $('count').textContent = ''; $('lista').innerHTML = `<div class="err">Impossibile caricare la wiki (${E(e.message)}).</div>`; });
+})();
+</script>
+</body>
+</html>
