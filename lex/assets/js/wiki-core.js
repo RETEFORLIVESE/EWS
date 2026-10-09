@@ -80,7 +80,7 @@ const Wiki = {
       else { if (sub) { h += '</ol>'; sub = false; } if (aperto) h += '</li>'; h += voce(x); aperto = true; }
     });
     if (sub) h += '</ol>'; if (aperto) h += '</li>';
-    return `<details class="toc" open><summary>Indice <span>${t.length} sezioni</span></summary><ol>${h}</ol></details>`;
+    return `<ol>${h}</ol>`;
   },
 
   /* ---------- rendering sicuro del testo (mini-markdown) ----------
