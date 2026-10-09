@@ -1,148 +1,180 @@
-// assets/js/wiki-core.js — libreria condivisa da wiki.html e redazione-wiki.html
-// (stessa logica di sessione di api.js: token firmato in sessionStorage, header Authorization: Bearer)
-const Wiki = {
-  esc: t => (t == null ? '' : String(t)).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
-  norm: t => (t || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
-  slug: t => Wiki.norm(t).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60),
-  data: it => { const d = new Date(it); return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); },
+/* Estji Wiki — stile Frutiger Aero (cielo, vetro, lucido) condiviso da wiki.html e redazione-wiki.html */
+:root{
+  --ink:#eaf5ff; --mut:#9cc4ea; --acc:#52d6ff; --acc2:#a6ecff; --ok:#8bf2b8; --bad:#ff9a9a; --red:#ff8a8a;
+  --glass:rgba(10,30,64,.62); --glass-d:rgba(4,12,28,.72);
+  --line:rgba(160,215,255,.26); --line2:rgba(190,232,255,.55);
+  --r:14px; --r-s:9px; --r-p:999px;
+  --lucido:linear-gradient(180deg,rgba(255,255,255,.34) 0,rgba(255,255,255,.08) 49%,rgba(0,0,0,.14) 50%,rgba(120,200,255,.16) 100%);
+  --font:"Segoe UI Variable","Segoe UI","Trebuchet MS",system-ui,Verdana,Arial,sans-serif;
+}
+*{box-sizing:border-box}html,body{margin:0}[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh;color:var(--ink);padding:34px 12px 40px;font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(ellipse 130% 38% at 50% 112%,rgba(120,225,130,.5),rgba(60,170,110,.18) 55%,transparent 72%),
+    radial-gradient(ellipse 90% 50% at 50% 0,#c9f3ff 0%,transparent 70%),
+    linear-gradient(180deg,#2a9bf5 0%,#0a5fd0 48%,#043a96 100%);
+  background-attachment:fixed}
+/* bolle di vetro sullo sfondo */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(circle at 12% 20%,rgba(255,255,255,.55) 0 2.2%,rgba(255,255,255,.12) 2.4% 3.4%,transparent 3.6%),
+    radial-gradient(circle at 86% 14%,rgba(255,255,255,.4) 0 4.4%,rgba(255,255,255,.1) 4.6% 5.6%,transparent 5.8%),
+    radial-gradient(circle at 74% 72%,rgba(170,235,255,.35) 0 6%,rgba(255,255,255,.08) 6.2% 7.2%,transparent 7.4%),
+    radial-gradient(circle at 4% 78%,rgba(255,255,255,.3) 0 3%,transparent 3.3%)}
+a{color:var(--acc);text-underline-offset:2px}a:hover{color:var(--acc2)}
+::selection{background:rgba(82,214,255,.45)}
 
-  /* ---------- immagini ----------
-     Sintassi:  ![didascalia](https://indirizzo){w=300 h=200 pos=dx fit=cover did=no bordo=no tondo=si ombra=si}
-       w     larghezza: 300 (px) oppure 50%          h     altezza in px (ritaglia con fit)
-       pos   blocco (default) | centro | sx | dx | intera   → sx/dx = immagine a lato, il testo scorre attorno
-       fit   cover (default, ritaglia) | contain          did=no  nasconde la didascalia
-       bordo=no  toglie il bordo     tondo=si  angoli arrotondati     ombra=si  aggiunge l'ombra
-     Su una riga da sola diventa una figura; dentro un paragrafo resta in linea (pos e did non si applicano). */
-  IMG_POS: ['blocco', 'centro', 'sx', 'dx', 'intera'],
-  imgRe: () => /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)(?:\{([^}]*)\})?/g,
-  imgSolo: /^!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)(?:\{([^}]*)\})?$/,
-  imgOpt(s) {
-    const o = {};
-    String(s || '').split(/\s+/).forEach(kv => {
-      const i = kv.indexOf('='); if (i < 1) return;
-      const k = kv.slice(0, i), v = kv.slice(i + 1);
-      if (k === 'w' && /^\d{1,4}(px|%)?$/.test(v)) o.w = /%$/.test(v) ? v : parseInt(v, 10) + 'px';
-      else if (k === 'h' && /^\d{1,4}(px)?$/.test(v)) o.h = parseInt(v, 10) + 'px';
-      else if (k === 'pos' && Wiki.IMG_POS.includes(v)) o.pos = v;
-      else if (k === 'fit' && (v === 'cover' || v === 'contain')) o.fit = v;
-      else if (['did', 'bordo', 'tondo', 'ombra'].includes(k) && (v === 'si' || v === 'no')) o[k] = v;
-    });
-    return o;
-  },
-  imgBuild(alt, url, o) {
-    const k = [];
-    if (o.w) k.push('w=' + o.w.replace(/px$/, ''));
-    if (o.h) { k.push('h=' + o.h.replace(/px$/, '')); if (o.fit === 'contain') k.push('fit=contain'); }
-    if (o.pos && o.pos !== 'blocco') k.push('pos=' + o.pos);
-    if (o.did === 'no') k.push('did=no');
-    if (o.bordo === 'no') k.push('bordo=no');
-    if (o.tondo === 'si') k.push('tondo=si');
-    if (o.ombra === 'si') k.push('ombra=si');
-    return `![${alt}](${url})` + (k.length ? `{${k.join(' ')}}` : '');
-  },
-  // alt e url arrivano già "escapati"; le opzioni sono validate da imgOpt, quindi lo stile generato è sicuro
-  imgHtml(alt, url, opz, blocco, n) {
-    const o = Wiki.imgOpt(opz), cls = [], st = [];
-    if (o.h) { st.push('height:' + o.h, 'object-fit:' + (o.fit || 'cover')); }
-    if (o.bordo === 'no') cls.push('nb'); if (o.tondo === 'si') cls.push('rd'); if (o.ombra === 'si') cls.push('sh');
-    if (!blocco) {
-      if (o.w) st.push('width:' + o.w);
-      return `<img src="${url}" alt="${alt}" loading="lazy" data-img="${n}"${cls.length ? ` class="${cls.join(' ')}"` : ''}${st.length ? ` style="${st.join(';')}"` : ''}>`;
-    }
-    const pos = o.pos || 'blocco', fig = ['im', 'im-' + pos], fs = [];
-    if (o.w && pos !== 'intera') { fs.push('width:' + o.w); fig.push('fw'); }
-    const did = alt && o.did !== 'no' ? `<figcaption>${alt}</figcaption>` : '';
-    return `<figure class="${fig.join(' ')}"${fs.length ? ` style="${fs.join(';')}"` : ''}><img src="${url}" alt="${alt}" loading="lazy" data-img="${n}"${cls.length ? ` class="${cls.join(' ')}"` : ''}${st.length ? ` style="${st.join(';')}"` : ''}>${did}</figure>`;
-  },
+/* ---------- guscio del sito ---------- */
+.site{max-width:1000px;margin:0 auto;position:relative;border-radius:44px 44px 22px 22px;
+  background:linear-gradient(180deg,rgba(14,34,70,.9),rgba(4,10,22,.94) 32%,rgba(3,8,18,.96));
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);
+  border:1px solid var(--line2);
+  box-shadow:0 0 0 3px rgba(0,0,0,.28),0 24px 60px rgba(0,25,80,.65),inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 40px rgba(80,170,255,.07);
+  overflow:hidden;overflow:clip;min-height:calc(100vh - 74px)}
+.site::before{content:"";position:absolute;inset:0 0 auto;height:130px;pointer-events:none;background:linear-gradient(180deg,rgba(140,210,255,.3),transparent)}
+header{display:flex;align-items:center;gap:16px;padding:20px 28px 16px;position:relative;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(60,120,200,.28),rgba(0,0,0,.3))}
+.flag{width:54px;height:50px;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:3px;transform:perspective(200px) rotateY(-18deg) rotateZ(-4deg);filter:drop-shadow(0 4px 6px #000a)}
+.flag i{border-radius:8px 2px 8px 2px;background:linear-gradient(135deg,#e6faff,#3fb4ff 45%,#0a58c8);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 6px 6px rgba(255,255,255,.35)}
+header h1{margin:0;font-weight:300;font-size:31px;letter-spacing:.2px;line-height:1.15;text-shadow:0 2px 8px rgba(0,0,0,.8),0 0 18px rgba(82,214,255,.25)}
+header p{margin:2px 0 0 2px;color:#cfe9ff;font-size:14px}
+header nav{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+main{padding:14px 16px 28px;position:relative;min-width:0}
 
-  /* ---------- titoli e indice ---------- */
-  // testo "pulito" di un titolo (senza immagini, link, grassetti)
-  plain: t => String(t || '').replace(/!\[[^\]]*\]\([^)]*\)(\{[^}]*\})?/g, '').replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2').replace(/\[\[([^\]]+)\]\]/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`]/g, '').replace(/\s+/g, ' ').trim(),
-  // elenco dei titoli ## e ### con identificativi univoci (usato sia da render sia da indice)
-  titoli(src) {
-    const usati = {}, out = [];
-    String(src || '').replace(/\r/g, '').split('\n').forEach(l => {
-      const m = /^(#{2,3})\s+(.*)/.exec(l.trim()); if (!m) return;
-      const testo = Wiki.plain(m[2]) || 'Sezione'; let id = Wiki.slug(testo) || 'sezione';
-      usati[id] = (usati[id] || 0) + 1; if (usati[id] > 1) id += '-' + usati[id];
-      out.push({ liv: m[1].length, raw: m[2], testo, id: 's-' + id });
-    });
-    return out;
-  },
-  // indice in HTML: ## = voci principali, ### = sotto-voci (vuoto se la pagina ha meno di 2 titoli)
-  indice(src) {
-    const t = Wiki.titoli(src); if (t.length < 2) return '';
-    let h = '', aperto = false, sub = false;
-    const voce = x => `<li><a href="#${x.id}" data-s="${x.id}">${Wiki.esc(x.testo)}</a>`;
-    t.forEach(x => {
-      if (x.liv === 3 && aperto) { if (!sub) { h += '<ol>'; sub = true; } h += voce(x) + '</li>'; }
-      else { if (sub) { h += '</ol>'; sub = false; } if (aperto) h += '</li>'; h += voce(x); aperto = true; }
-    });
-    if (sub) h += '</ol>'; if (aperto) h += '</li>';
-    return `<details class="toc" open><summary>Indice <span>${t.length} sezioni</span></summary><ol>${h}</ol></details>`;
-  },
+/* ---------- pannelli di vetro ---------- */
+.bar{text-align:center;padding:7px 12px;border:1px solid rgba(0,0,0,.7);border-radius:var(--r-s);font-weight:500;letter-spacing:.2px;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 50%),linear-gradient(180deg,#0a111f,#1d2a42 50%,#070c17);
+  box-shadow:inset 0 0 0 1px rgba(160,210,255,.22),0 2px 8px rgba(0,0,0,.35)}
+.panel{margin-top:10px;padding:12px;border-radius:var(--r);border:1px solid rgba(0,0,0,.7);
+  background:linear-gradient(180deg,rgba(32,52,88,.88),rgba(8,15,30,.92));
+  box-shadow:inset 0 0 0 1px rgba(160,210,255,.28),inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.3)}
 
-  /* ---------- rendering sicuro del testo (mini-markdown) ----------
-     ## Titolo · ### Sottotitolo · **grassetto** · *corsivo* · `codice` · - elenco · 1. elenco numerato
-     > citazione · --- linea · [testo](https://...) · ![didascalia](https://immagine){opzioni} · [[Altra pagina]] · [[Altra pagina|testo]]
-     | a | b | tabelle (la 2ª riga |---|---| separa l'intestazione) */
-  render(src, pagine) {
-    const e = Wiki.esc, trova = n => (pagine || []).find(p => Wiki.norm(p.titolo) === Wiki.norm(n) || p.id === Wiki.slug(n));
-    let n = 0; // numero progressivo delle immagini (la redazione lo usa per collegare anteprima e testo)
-    const titoli = Wiki.titoli(src); let ti = 0;
-    const inl = t => e(t)
-      .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)(?:\{([^}]*)\})?/g, (m, a, u, o) => Wiki.imgHtml(a, u, o, false, n++))
-      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, a, b) => { a = a.replace(/&amp;/g, '&'); const p = trova(a); return p ? `<a href="wiki.html#${p.id}">${b || e(a)}</a>` : `<a class="red" href="redazione-wiki.html?nuova=${encodeURIComponent(a.replace(/&quot;|&#39;|&lt;|&gt;/g, ''))}" title="Pagina non ancora scritta">${b || e(a)}</a>`; })
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
-    const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
-    const STOP = /^(#{2,3}\s|>|\||---+$|([-*]|\d+\.)\s|!\[[^\]]*\]\(https?:\/\/[^)\s]+\)(\{[^}]*\})?$)/;
-    for (let i = 0; i < L.length; i++) {
-      const r = L[i].trim(); let m;
-      if (!r) continue;
-      if ((m = /^(#{2,3})\s+(.*)/.exec(r))) { const t = titoli[ti++]; out.push(`<h${m[1].length} id="${t ? t.id : 's-' + Wiki.slug(m[2])}">${inl(m[2])}</h${m[1].length}>`); }
-      else if (/^---+$/.test(r)) out.push('<hr>');
-      else if ((m = Wiki.imgSolo.exec(r))) out.push(Wiki.imgHtml(e(m[1]), e(m[2]), m[3], true, n++));
-      else if (r[0] === '>') { const q = []; while (i < L.length && L[i].trim()[0] === '>') q.push(inl(L[i++].trim().replace(/^>\s?/, ''))); i--; out.push(`<blockquote>${q.join('<br>')}</blockquote>`); }
-      else if (r[0] === '|') {
-        const rows = []; while (i < L.length && L[i].trim()[0] === '|') rows.push(L[i++].trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim())); i--;
-        const head = rows[1] && rows[1].every(c => /^:?-+:?$/.test(c)); const body = rows.slice(head ? 2 : 0);
-        out.push(`<div class="tw"><table>${head ? `<thead><tr>${rows[0].map(c => `<th>${inl(c)}</th>`).join('')}</tr></thead>` : ''}<tbody>${body.map(x => `<tr>${x.map(c => `<td>${inl(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
-      } else if (/^([-*]|\d+\.)\s/.test(r)) {
-        const ol = /^\d/.test(r), it = []; while (i < L.length && /^([-*]|\d+\.)\s/.test(L[i].trim())) it.push(`<li>${inl(L[i++].trim().replace(/^([-*]|\d+\.)\s+/, ''))}</li>`); i--;
-        out.push(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
-      } else { const p = []; while (i < L.length && L[i].trim() && !STOP.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; out.push(`<p>${p.join('<br>')}</p>`); }
-    }
-    return out.join('\n');
-  },
+/* ---------- pulsanti lucidi ---------- */
+.btn,.chip{font:inherit;font-size:13px;color:var(--ink);padding:5px 14px;border-radius:var(--r-s);border:1px solid rgba(0,0,0,.75);cursor:pointer;text-decoration:none;display:inline-block;line-height:1.35;
+  background:var(--lucido),#223a60;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 5px rgba(0,0,0,.35);text-shadow:0 1px 2px #000;
+  transition:filter .15s,transform .15s,box-shadow .15s}
+.chip{border-radius:var(--r-p)}
+.btn:hover,.chip:hover{filter:brightness(1.25);color:#fff}
+.btn:active,.chip:active{transform:translateY(1px);box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
+.btn.on,.chip.on,.btn.pri{background:linear-gradient(180deg,#a4e8ff,#3aa8f5 48%,#0b5fd1 52%,#37c4ff);border-color:#001a44;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 8px rgba(40,160,255,.45)}
+.btn.del{background:linear-gradient(180deg,#ffb0b0,#e03a3a 48%,#900 52%,#d44);border-color:#400;color:#fff}
+.btn:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
 
-  /* ---------- client API (stesso schema di api.js, endpoint /api/wiki) ---------- */
-  _s: { token: null, username: null },
-  loadCredentials() { try { const r = sessionStorage.getItem('wiki_sessione'); if (r) this._s = JSON.parse(r); } catch (e) {} return this._s; },
-  clearCredentials() { this._s = { token: null, username: null }; try { sessionStorage.removeItem('wiki_sessione'); } catch (e) {} },
-  isAuthenticated() { return !!this._s.token; },
-  async _post(corpo) {
-    const h = { 'Content-Type': 'application/json' };
-    if (this._s.token) h.Authorization = 'Bearer ' + this._s.token;
-    const res = await fetch('/api/wiki', { method: 'POST', headers: h, body: JSON.stringify(corpo) });
-    const d = await res.json().catch(() => ({}));
-    if (res.status === 401 && corpo.azione !== 'login') this.clearCredentials();
-    if (!res.ok) throw new Error(d.message || 'HTTP ' + res.status);
-    return d;
-  },
-  async load() {
-    const res = await fetch('/api/wiki'); const d = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(d.message ? `HTTP ${res.status}: ${d.message}` : 'HTTP ' + res.status);
-    return Array.isArray(d.pagine) ? d.pagine : [];
-  },
-  async login(username, password) {
-    const d = await this._post({ azione: 'login', username, password });
-    if (!d.success) throw new Error(d.message || 'Credenziali errate');
-    this._s = { token: d.token, username }; try { sessionStorage.setItem('wiki_sessione', JSON.stringify(this._s)); } catch (e) {}
-    return d;
-  },
-  salvaPagina(pagina, idPrecedente) { return this._post({ azione: 'salva', pagina, idPrecedente }); },
-  eliminaPagina(id) { return this._post({ azione: 'elimina', id }); }
-};
-Wiki.loadCredentials();
+/* ---------- campi ---------- */
+input,select,textarea{width:100%;font:inherit;color:var(--ink);padding:8px 11px;border:1px solid rgba(0,0,0,.8);border-radius:var(--r-s);background:rgba(3,9,20,.85);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.45),0 0 0 1px rgba(150,200,255,.2);transition:box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:0;box-shadow:inset 0 2px 5px rgba(0,0,0,.45),0 0 0 2px rgba(82,214,255,.7),0 0 14px rgba(82,214,255,.35)}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:#2b9cf2}
+input[type=range]{padding:0;box-shadow:none;background:none;accent-color:#2b9cf2}
+textarea{font-family:Consolas,"Cascadia Mono",monospace;font-size:14px;line-height:1.5;resize:vertical}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px}
+.note{font-size:13px;color:var(--mut);padding:4px 2px}.err{color:var(--bad);font-size:14px;min-height:20px}.ok{color:var(--ok)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line)}
+
+/* ---------- risultati di ricerca ---------- */
+.card{display:block;margin:9px 0;padding:10px 15px 11px;border:1px solid rgba(0,0,0,.7);border-left:4px solid #2b9cf2;border-radius:var(--r-s);text-decoration:none;color:inherit;
+  background:linear-gradient(180deg,rgba(40,62,100,.85),rgba(10,17,31,.95));box-shadow:inset 0 0 0 1px rgba(160,210,255,.2);transition:filter .15s,transform .15s,border-color .15s}
+a.card:hover{filter:brightness(1.2);transform:translateX(2px);border-left-color:var(--acc)}
+.card h3{margin:5px 0 2px;font-size:17px;font-weight:600;color:var(--acc)}.card p{margin:0;font-size:13px;color:#cfe0f5;line-height:1.5}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:#b9d6f2}
+.tag{padding:1px 10px;border-radius:var(--r-p);font-size:11px;font-weight:700;color:var(--acc2);background:rgba(82,214,255,.16);border:1px solid rgba(160,215,255,.45)}
+mark{background:#ffd84a;color:#000;border-radius:3px;padding:0 2px}
+
+/* ---------- testo di una pagina ---------- */
+.wk{line-height:1.7;max-width:80ch;padding:4px 8px;display:flow-root;overflow-wrap:anywhere}
+.wk h2,.wk h3{font-weight:400;color:#c4ecff;border-bottom:1px solid var(--line);padding-bottom:4px;margin:26px 0 10px;clear:both;scroll-margin-top:14px;line-height:1.3}
+.wk h2{font-size:22px}.wk h3{font-size:18px;border-bottom-style:dashed}
+.wk h2 img,.wk h3 img{vertical-align:middle;margin:0 8px 0 0}
+.wk p{margin:.7em 0}
+.wk blockquote{margin:12px 0;padding:6px 16px;border-left:3px solid #2b9cf2;border-radius:0 var(--r-s) var(--r-s) 0;background:rgba(82,214,255,.09)}
+.wk code{background:rgba(0,0,0,.7);padding:1px 6px;border-radius:5px;font-size:.92em}
+.wk a.red{color:var(--red)}.wk hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.wk .tw{overflow-x:auto}.wk table{border-collapse:collapse;margin:12px 0}.wk th,.wk td{border:1px solid rgba(160,200,255,.4);padding:6px 11px}.wk th{background:rgba(82,214,255,.16)}
+.wk ul,.wk ol{padding-left:1.4em}
+
+/* immagini: base + opzioni {bordo=no tondo=si ombra=si} */
+.wk img{max-width:100%;border:1px solid rgba(207,230,255,.75);border-radius:6px;margin:6px 0}
+.wk img.nb{border:0}.wk img.rd{border-radius:20px}.wk img.sh{box-shadow:0 10px 26px rgba(0,0,0,.55)}
+.wk h2 img,.wk h3 img,.wk td img,.wk th img{margin:0}
+/* figure: {pos=blocco|centro|sx|dx|intera} {w=…} */
+.wk figure.im{display:table;max-width:100%;margin:14px 0}
+.wk figure.im img{display:block;max-width:100%;margin:0}
+.wk figure.im.fw img{width:100%}
+.wk figure.im figcaption{display:table-caption;caption-side:bottom;padding:7px 4px 0;font-size:12.5px;line-height:1.4;color:var(--mut);text-align:center}
+.wk .im-centro{margin-inline:auto}
+.wk .im-sx{float:left;margin:6px 20px 12px 0;max-width:55%}
+.wk .im-dx{float:right;margin:6px 0 12px 20px;max-width:55%}
+.wk .im-intera{display:block;width:100%}.wk .im-intera img{width:100%}
+.wk img.sel{outline:2px dashed #ffd84a;outline-offset:2px;cursor:pointer}
+
+/* indice della pagina */
+.toc{display:block;width:fit-content;min-width:min(280px,100%);max-width:100%;margin:6px 0 16px;border:1px solid var(--line);border-radius:var(--r);
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.28));box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.toc summary{cursor:pointer;padding:8px 14px;font-weight:600;color:#c4ecff;list-style:none;display:flex;align-items:center;gap:8px;user-select:none}
+.toc summary::-webkit-details-marker{display:none}
+.toc summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(-45deg);transition:transform .2s}
+.toc[open] summary::before{transform:rotate(45deg)}
+.toc summary span{margin-left:auto;font-size:12px;font-weight:400;color:var(--mut)}
+.toc ol{list-style:none;margin:0;padding:0 16px 10px;counter-reset:t}
+.toc ol ol{padding:0 0 0 20px;margin:2px 0 4px}
+.toc li{counter-increment:t;margin:3px 0;font-size:14px;line-height:1.4}
+.toc li>a{text-decoration:none}.toc li>a:hover{text-decoration:underline}
+.toc li>a::before{content:counters(t,".") ".";color:var(--mut);margin-right:7px;font-variant-numeric:tabular-nums}
+.toc ol ol li{font-size:13.5px}
+
+/* ---------- barra laterale ---------- */
+.site:has(.layout){display:flex;flex-direction:column}
+.layout{flex:1;display:grid;grid-template-columns:190px minmax(0,1fr)}
+aside{padding:12px 10px 16px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.25));border-right:1px solid var(--line)}
+.sb-group{border:1px solid rgba(0,0,0,.7);border-radius:var(--r);padding:4px;margin-bottom:10px;position:sticky;top:12px;
+  background:linear-gradient(180deg,rgba(40,62,100,.85),rgba(10,17,31,.95));box-shadow:inset 0 0 0 1px rgba(160,210,255,.25)}
+.sb-head{display:block;text-align:center;font-size:14px;padding:4px 0;margin-bottom:4px;border-radius:var(--r-s);border:1px solid rgba(0,0,0,.8);
+  background:var(--lucido),#26364f;text-shadow:0 1px 2px #000}
+.sb-item{display:flex;align-items:center;gap:7px;width:100%;font-size:13px;color:var(--ink);padding:4px 8px;margin-bottom:3px;border-radius:var(--r-s);border:1px solid rgba(0,0,0,.8);text-decoration:none;
+  background:var(--lucido),#223a60;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);text-shadow:0 1px 2px #000;transition:filter .15s}
+.sb-item:last-child{margin-bottom:0}.sb-item:hover{filter:brightness(1.3);color:#fff}
+.sb-item .ic{width:18px;text-align:center;font-size:14px;flex:none}.sb-item .ic img{width:16px;height:16px;vertical-align:middle}
+.sb-item.on{background:linear-gradient(180deg,#a4e8ff,#3aa8f5 48%,#0b5fd1 52%,#37c4ff);border-color:#001a44;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 0 10px rgba(82,214,255,.4)}
+.sb-item.nopage{opacity:.6}
+
+/* ---------- gestione immagini (redazione) ---------- */
+.imgm{margin:12px 0 6px;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.25))}
+.imgm>summary{cursor:pointer;padding:8px 14px;font-weight:600;color:#c4ecff;list-style:none;display:flex;align-items:center;gap:8px;user-select:none}
+.imgm>summary::-webkit-details-marker{display:none}
+.imgm>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(-45deg);transition:transform .2s}
+.imgm[open]>summary::before{transform:rotate(45deg)}
+.imgm>summary span{margin-left:auto;font-size:12px;font-weight:400;color:var(--mut)}
+.imgm .in{padding:0 14px 12px}
+.imgm .chips{padding-top:2px}
+.imgm fieldset{border:1px solid var(--line);border-radius:var(--r-s);margin:10px 0 0;padding:6px 12px 10px;min-width:0}
+.imgm legend{padding:0 6px;font-size:12.5px;color:var(--mut)}
+.imgm .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.imgm .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.imgm .un{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:6px}
+.imgm .seg{display:flex;flex-wrap:wrap;gap:6px;padding-top:2px}
+.imgm .chk{display:flex;flex-wrap:wrap;gap:6px 18px;padding-top:4px}
+.imgm .chk label{display:flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-size:13.5px}
+.imgm .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.imgm :disabled{opacity:.45}
+
+/* ---------- mobile ---------- */
+@media(max-width:720px){
+  body{padding:10px 8px;background-attachment:scroll}
+  .site{border-radius:28px 28px 16px 16px}
+  header{padding:14px 16px 12px}header h1{font-size:23px}
+  .cols,.imgm .g2,.imgm .g3{grid-template-columns:1fr}
+  .btn,.chip{min-height:40px}
+  main{padding:12px 10px 24px}
+  .layout{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid var(--line);padding:8px 8px 4px}
+  .sb-group{position:static}
+  #principali{display:flex;flex-wrap:wrap;gap:5px}
+  .sb-item{width:auto;margin:0;min-height:40px;padding:3px 12px;font-size:14px}
+}
+@media(max-width:560px){.wk .im-sx,.wk .im-dx{float:none;max-width:100%;margin:12px auto}}
+@media(hover:none){.sb-item:hover,.btn:hover,.chip:hover{filter:none}.sb-item:active{filter:brightness(1.35)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
