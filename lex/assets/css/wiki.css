@@ -129,16 +129,17 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cu
 @media(max-width:720px){.cols3{grid-template-columns:1fr}input[type=checkbox]{width:20px;height:20px}}
 
 
-/* ===== Indice della pagina (colonna laterale della wiki) ===== */
-#toc .sb-item{align-items:flex-start}
+/* ===== Indice della pagina (colonna laterale della wiki): voci come testo normale dentro la "bolla" ===== */
+#toc{padding:2px 2px 4px}
+#toc .sb-item{align-items:flex-start;width:100%;margin:0 0 1px;padding:3px 6px;font-size:13px;line-height:1.35;color:#cfe9ff;
+  background:none;border:0;border-radius:3px;box-shadow:none;text-shadow:none}
 #toc .sb-item span{min-width:0;overflow-wrap:anywhere}
-#toc .sb-item.t3{margin-left:12px;width:calc(100% - 12px);font-size:12px}
-@media(max-width:720px){#toc{display:flex;flex-wrap:wrap;gap:5px}#toc .sb-item.t3{margin:0;width:auto;font-size:14px}}
+#toc .sb-item:hover{filter:none;color:#fff;background:rgba(79,208,255,.12)}
+#toc .sb-item.t3{width:calc(100% - 12px);margin-left:12px;font-size:12px;color:#9cc4ea}
+@media(max-width:720px){#toc .sb-item,#toc .sb-item.t3{width:100%;margin:0 0 1px;min-height:0;padding:4px 6px;font-size:14px}#toc .sb-item.t3{width:calc(100% - 12px);margin-left:12px;font-size:13px}}
 
 /* ===== Albero immagini (redazione) ===== */
-.cols.ed{grid-template-columns:minmax(0,1fr) 230px minmax(0,1fr);align-items:start}
-.tree .panel{margin-top:6px}
-#tree{max-height:420px;overflow:auto;font-size:13px;margin-top:4px}
+#tree{max-height:320px;overflow:auto;font-size:13px;margin-top:4px}
 #tree details details,#tree details>.tf{margin-left:12px}
 #tree summary{cursor:pointer;padding:3px 2px;color:#bfe9ff}
 #tree summary small{color:#9cc4ea}
@@ -148,4 +149,4 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cu
 .tf .tcp img{width:24px;height:24px;object-fit:cover;flex:none;border-radius:2px;background:#000;margin:0}
 .tf .tcp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tf .tadd{flex:none;font-size:12px;padding:2px 6px}
-@media(max-width:720px){.cols.ed{grid-template-columns:1fr}#tree{max-height:260px}}
+@media(max-width:720px){#tree{max-height:260px}}
