@@ -4,706 +4,306 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#043a96">
-<title>The Estji Archive</title>
-<link rel="icon" type="image/png" href="Archive.png" />
-<link rel="apple-touch-icon" href="Archive.png" />
-<style>
-*{box-sizing:border-box}
-html,body{margin:0}
-body{
-  min-height:100vh;color:#e8f4ff;padding:36px 12px 40px;
-  font-family:"Segoe UI","Frutiger","Trebuchet MS",Verdana,Arial,sans-serif;font-size:15px;
-  background:
-    radial-gradient(circle at 12% 18%,rgba(255,255,255,.55) 0 3%,transparent 3.4%),
-    radial-gradient(circle at 82% 12%,rgba(255,255,255,.4) 0 5%,transparent 5.4%),
-    radial-gradient(circle at 70% 70%,rgba(160,230,255,.35) 0 7%,transparent 7.4%),
-    radial-gradient(circle at 25% 80%,rgba(160,230,255,.3) 0 9%,transparent 9.4%),
-    repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 14px,rgba(120,220,255,.14) 15px 18px,rgba(0,60,160,.18) 19px 24px),
-    radial-gradient(ellipse 90% 50% at 50% 0%,#bff0ff 0%,transparent 70%),
-    linear-gradient(180deg,#1b8cf0 0%,#0a5fd0 45%,#043a96 100%);
-  background-attachment:fixed;
-}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-a{color:inherit;-webkit-tap-highlight-color:transparent}
-button{-webkit-tap-highlight-color:transparent}
-.only-m,.sheet-head,.scrim{display:none}
-[hidden]{display:none!important}
-main section{display:block}
-.warn p{margin:0 0 10px}
-
-/* contenitore vetro scuro */
-.site{
-  max-width:980px;margin:0 auto;position:relative;
-  border-radius:60px 60px 24px 24px;
-  background:linear-gradient(180deg,#0b1a33 0%,#040a16 30%,#030812 100%);
-  border:1px solid rgba(160,215,255,.55);
-  box-shadow:0 0 0 3px rgba(0,0,0,.35),0 18px 50px rgba(0,20,70,.7),inset 0 1px 0 rgba(255,255,255,.5);
-  overflow:hidden;overflow:clip;
-  display:flex;flex-direction:column;min-height:calc(100vh - 76px);
-}
-.site::before{ /* riflesso lucido in alto */
-  content:"";position:absolute;left:0;right:0;top:0;height:120px;pointer-events:none;
-  background:linear-gradient(180deg,rgba(130,200,255,.28),rgba(130,200,255,0));
-  border-radius:60px 60px 0 0;
-}
-
-/* header */
-header{display:flex;align-items:center;gap:16px;padding:20px 30px 14px;position:relative;
-  border-bottom:1px solid rgba(120,190,255,.25);background:linear-gradient(180deg,rgba(40,90,160,.25),rgba(0,0,0,.35))}
-.flag{width:68px;height:62px;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:3px;
-  transform:perspective(200px) rotateY(-18deg) rotateZ(-4deg);filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
-.flag i{border-radius:6px 2px 6px 2px;background:linear-gradient(135deg,#d9f6ff,#3fb4ff 45%,#0a58c8);border:1px solid rgba(255,255,255,.7)}
-.flag i:nth-child(2){background:linear-gradient(135deg,#bfeaff,#1f8cf0 50%,#063d9c)}
-.flag i:nth-child(3){background:linear-gradient(135deg,#e7fbff,#5fcaff 45%,#0d66d6)}
-.flag i:nth-child(4){background:linear-gradient(135deg,#c9f0ff,#2aa0f8 50%,#0a4fb3)}
-header h1{margin:0;font-weight:400;font-size:32px;text-shadow:0 2px 6px #000}
-header p{margin:2px 0 0 6px;font-size:15px;color:#cfe9ff;text-shadow:0 1px 3px #000}
-
-/* corpo */
-.layout{flex:1;display:grid;grid-template-columns:148px minmax(0,1fr);gap:0}
-aside{padding:10px 8px 14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.25));border-right:1px solid rgba(120,190,255,.2)}
-.group{border:1px solid #000;border-radius:7px;padding:3px;margin-bottom:10px;
-  background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
-.gh{display:block;text-align:center;font-size:14px;padding:3px 0;margin-bottom:3px;border-radius:5px;border:1px solid #000;
-  background:linear-gradient(180deg,#46566f 0%,#1e2b42 48%,#070d18 52%,#111b2c 100%);text-shadow:0 1px 2px #000}
-.item{display:flex;align-items:center;gap:6px;width:100%;text-align:left;font:inherit;font-size:13px;color:#e8f4ff;
-  padding:3px 6px;margin-bottom:3px;border-radius:5px;border:1px solid #000;cursor:pointer;text-decoration:none;
-  background:linear-gradient(180deg,#3d4d66 0%,#1c2840 48%,#080f1c 52%,#121d30 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22);text-shadow:0 1px 2px #000;transition:filter .15s}
-.item:last-child{margin-bottom:0}
-.item:hover{filter:brightness(1.35)}
-.item .ic{width:18px;text-align:center;font-size:14px;flex:none}
-.item.on{background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);border-color:#001a44}
-.btns{display:flex;gap:6px;margin-top:6px}
-.btns .item{flex:1;width:auto;margin:0;justify-content:center}
-.item:focus-visible,.row a:focus-visible,.nav button:focus-visible,.bigbtn:focus-visible{outline:2px solid #9ee6ff;outline-offset:2px}
-.bigbtn{display:block;width:100%;text-align:center;font:inherit;font-size:13px;color:#fff;padding:4px 0;margin-bottom:4px;border-radius:5px;border:1px solid #001a44;cursor:pointer;
-  background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);text-shadow:0 1px 2px #002;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
-.bigbtn:hover{filter:brightness(1.15)}
-
-/* contenuto */
-main{padding:10px 12px 0;display:flex;flex-direction:column;min-width:0}
-.bar{text-align:center;padding:5px 10px;border:1px solid #000;border-radius:3px;
-  background:linear-gradient(180deg,#05080f,#1a2538 50%,#05080f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.2)}
-.panel{margin-top:10px;padding:5px;border-radius:7px;border:1px solid #000;
-  background:linear-gradient(180deg,#16233a,#070d18);box-shadow:inset 0 0 0 1px rgba(150,200,255,.35),0 0 0 1px rgba(0,0,0,.6)}
-.banner{height:160px;border:1px solid #000;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:22px;
-  background:
-    radial-gradient(circle at 18% 30%,rgba(255,255,255,.7) 0 3%,transparent 3.5%),
-    radial-gradient(ellipse 60% 60% at 50% 110%,#7ffaff,transparent 70%),
-    linear-gradient(135deg,#052a78,#1b86e8 55%,#6fd6ff)}
-.banner .frame{font-size:64px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
-.banner .txt{text-align:center;text-shadow:0 2px 6px #001a55}
-.banner .txt small{display:block;font-size:12px}
-.banner .txt b{display:block;font-size:44px;font-style:italic;line-height:1}
-.banner .txt em{font-size:20px;font-weight:700}
-.banner .bub{width:110px;height:110px;border-radius:50%;
-  background:radial-gradient(circle at 32% 28%,#fff 0 7%,rgba(255,255,255,.2) 25%,rgba(90,200,255,.35) 70%,rgba(255,255,255,.7));
-  box-shadow:inset 0 0 18px rgba(255,255,255,.8),0 0 18px rgba(80,200,255,.6)}
-.warn{padding:10px 10px 6px;font-size:14px;line-height:1.5;color:#dcecff}
-.warn s{text-decoration:none;color:#ff4a4a}
-
-.toc{margin-top:10px}
-.toc .bar{margin:4px 4px 0}
-.row{display:flex;align-items:center;gap:8px;padding:6px 6px;margin:0 4px;border-bottom:1px solid rgba(160,200,255,.35);font-size:16px}
-.row a{color:#4fd0ff;text-decoration:none}
-.row a:hover{text-decoration:underline;color:#9ee6ff}
-.row.cur a{text-decoration:underline}
-.th{width:36px;height:36px;flex:none;border:1px solid #cfe6ff;border-radius:2px}
-.t1{background:linear-gradient(180deg,#bfe9ff,#6fb6ff 60%,#3b8a5a)}
-.t2{background:radial-gradient(circle at 50% 50%,#ffd84a 0 22%,#2a1a00 24% 30%,transparent 31%),linear-gradient(180deg,#8fd0ff,#3b9a3b)}
-.t3{background:linear-gradient(180deg,#1a60d0,#6fc0ff 55%,#c33 56% 70%,#444 71%)}
-.t4{background:linear-gradient(135deg,#d8f6ff,#4ab8ff 50%,#2e6e4a)}
-.t5{background:linear-gradient(135deg,#ffc9f0,#9c7bff 60%,#4a3aa0)}
-.t6{background:linear-gradient(180deg,#d7ffd0,#6fc4ff)}
-
-
-/* elenco atti (feed) */
-.feed .bar{margin:4px 4px 0}
-.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 6px 4px;margin:0 4px}
-.chip{font:inherit;font-size:13px;color:#e8f4ff;padding:3px 12px;border-radius:14px;border:1px solid #000;cursor:pointer;
-  background:linear-gradient(180deg,#3d4d66 0%,#1c2840 48%,#080f1c 52%,#121d30 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);text-shadow:0 1px 2px #000}
-.chip:hover{filter:brightness(1.3)}
-.chip.on{background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);border-color:#001a44;color:#fff}
-.chip:focus-visible,.card:focus-visible{outline:2px solid #9ee6ff;outline-offset:2px}
-.fcount{font-size:13px;color:#9cc4ea;padding:4px 10px 6px;margin:0 4px}
-.card{display:flex;align-items:flex-start;gap:12px;margin:6px 4px;padding:9px 14px 10px;border:1px solid #000;border-left:4px solid #2b9cf2;border-radius:5px;text-decoration:none;color:inherit;
-  background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.22)}
-a.card:hover{filter:brightness(1.25)}
-.card .th{width:44px;height:44px;margin-top:2px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.card .th img{max-width:100%;max-height:100%;object-fit:contain}
-.cbody{flex:1;min-width:0}
-.card .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:#b9d6f2}
-.tag{padding:1px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#9ee6ff;background:rgba(79,208,255,.16);border:1px solid rgba(160,215,255,.4)}
-.tag.ok{color:#8bf2b8;background:rgba(80,220,140,.14);border-color:rgba(120,230,170,.4)}
-.tag.no{color:#ff9a9a;background:rgba(255,90,90,.14);border-color:rgba(255,130,130,.4)}
-.card h3{margin:5px 0 2px;font-size:16px;font-weight:600;color:#4fd0ff;line-height:1.3;overflow-wrap:anywhere}
-.card p{margin:0;font-size:13px;color:#cfe0f5;line-height:1.45}
-.fempty{padding:18px 10px;text-align:center;color:#9cc4ea;font-size:14px}
-
-/* barra inferiore */
-.bottom{position:sticky;bottom:0;z-index:10;margin:auto -12px 0;padding:10px 20px 14px;text-align:center;border-radius:60px 60px 0 0;border-top:1px solid rgba(160,215,255,.5);
-  background:linear-gradient(180deg,#14233b,#030811);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-.bottom .cur{display:block;margin:0 auto 8px;max-width:760px;padding:4px;border:1px solid #000;border-radius:30px 30px 6px 6px;
-  background:linear-gradient(180deg,#05080f,#1a2538 55%,#05080f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
-.nav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-.nav button{font:inherit;color:#fff;padding:3px 14px;border-radius:3px;border:1px solid #001a44;cursor:pointer;
-  background:linear-gradient(180deg,#7fd8ff 0%,#2b9cf2 48%,#0a58c8 52%,#2db5ff 100%);text-shadow:0 1px 2px #002;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
-.nav button:hover{filter:brightness(1.15)}
-
-@media(hover:none){
-  .item:hover,.bigbtn:hover,.nav button:hover{filter:none}
-  .item:active,.bigbtn:active,.nav button:active{filter:brightness(1.35)}
-}
-
-@media(max-width:720px){
-  body{padding:max(10px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 10px max(8px,env(safe-area-inset-left));
-    font-size:16px;background-attachment:scroll}
-  .site{border-radius:28px 28px 16px 16px;min-height:calc(100vh - 20px);min-height:calc(100dvh - 20px)}
-  .site::before{height:80px;border-radius:28px 28px 0 0}
-
-  header{padding:14px 16px 10px;gap:12px}
-  .flag{width:46px;height:42px}
-  header h1{font-size:22px}
-  header p{margin:1px 0 0;font-size:13px}
-
-  .layout{grid-template-columns:1fr}
-  main{padding:8px 8px 0}
-
-  /* menu: drawer laterale da sinistra */
-  .only-m{display:inline-block}
-  aside{
-    position:fixed;top:0;bottom:0;left:0;z-index:50;
-    width:min(86vw,320px);overflow-y:auto;overscroll-behavior:contain;
-    padding:0 12px calc(16px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
-    border:0;border-right:1px solid rgba(160,215,255,.45);border-radius:0 28px 28px 0;
-    background:linear-gradient(180deg,#0b1a33,#030812);
-    box-shadow:10px 0 40px rgba(0,0,0,.65);
-    transform:translateX(-105%);visibility:hidden;touch-action:pan-y;
-    transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s;
-  }
-  aside.drag{transition:none}
-  body.menu-open{overflow:hidden}
-  body.menu-open aside{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
-  .scrim{
-    display:block;position:fixed;inset:0;z-index:40;background:rgba(0,10,30,.6);
-    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
-    opacity:0;visibility:hidden;transition:opacity .28s,visibility 0s .28s;
-  }
-  body.menu-open .scrim{opacity:1;visibility:visible;transition:opacity .28s}
-  .sheet-head{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    position:sticky;top:0;z-index:1;margin:0 -12px 10px;
-    padding:calc(10px + env(safe-area-inset-top)) 12px 10px max(12px,env(safe-area-inset-left));
-    background:#0b1a33;border-bottom:1px solid rgba(120,190,255,.25);font-size:18px;text-shadow:0 1px 3px #000
-  }
-  .sheet-head .bigbtn{width:46px;min-height:46px;margin:0;padding:0;font-size:18px}
-  .group{margin:0 0 10px;padding:5px}
-  .gh{font-size:15px;padding:6px 0;margin-bottom:5px}
-  aside .item{min-height:46px;font-size:16px;padding:6px 10px;gap:10px;margin-bottom:5px}
-  aside .item .ic{width:22px}
-  .bigbtn{min-height:46px;font-size:16px;margin-bottom:6px}
-
-  /* contenuto */
-  .bar{padding:8px 10px;font-size:16px}
-  .panel{margin-top:8px}
-  .banner{flex-direction:column;height:auto!important;padding:16px 12px;gap:8px}
-  .banner .bub{display:none}
-  .banner .frame{font-size:48px;line-height:0}
-  .banner .frame img{width:72px;height:auto}
-  .banner .txt b{font-size:34px}
-  .warn{font-size:15px;line-height:1.6;padding:10px 8px 4px}
-  .btns .item{min-height:46px;justify-content:center;font-size:15px}
-  .row{padding:4px 6px;gap:12px}
-  .row a{flex:1;min-width:0;padding:11px 0;line-height:1.3;overflow-wrap:anywhere}
-
-  /* barra inferiore compatta */
-  .bottom{margin:auto -8px 0;padding:8px 10px calc(10px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0}
-  .bottom .cur{font-size:13px;padding:3px 8px;margin-bottom:8px;border-radius:16px 16px 6px 6px}
-  .nav{flex-wrap:nowrap;gap:6px}
-  .nav button{flex:1;min-height:44px;padding:0 8px;font-size:15px;border-radius:5px;white-space:nowrap}
-  #bPrev,#bNext{flex:0 0 54px}
-  .lbl{display:none}
-}
-@media(prefers-reduced-motion:reduce){
-  aside,body.menu-open aside,.scrim,body.menu-open .scrim{transition:none}
-}
-</style>
+<title>Estji Wiki — Redazione</title>
+<link rel="icon" type="image/png" href="/Strnghld.png" />
+<link rel="apple-touch-icon" href="/Strnghld.png" />
+<link rel="stylesheet" href="assets/css/wiki.css">
+<style>.site{max-width:1280px}</style>
 </head>
 <body>
 <div class="site">
   <header>
     <div class="flag"><i></i><i></i><i></i><i></i></div>
-    <div>
-      <h1>Estji Archive</h1>
-      <p>Central Estji Web System Portal</p>
-    </div>
+    <div><h1>Redazione Wiki</h1><p>Scrivi e modifica le pagine</p></div>
+    <nav><a class="btn" href="wiki.html">📖 Wiki</a></nav>
   </header>
+  <main>
+    <section id="login-area">
+      <div class="bar">🔐 Accesso redazione</div>
+      <div class="panel" style="max-width:420px;margin-inline:auto">
+        <p class="note">Inserisci il tuo nome e la password per modificare la wiki.</p>
+        <label for="adminUsername">Nome</label><input id="adminUsername" autocomplete="username">
+        <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password">
+        <p id="loginError" class="err"></p>
+        <button type="button" class="btn pri" id="loginBtn">Accedi</button>
+      </div>
+    </section>
 
-  <div class="layout">
-    <aside id="menu" aria-label="Menu del sito">
-      <div class="sheet-head"><b>Menu</b><button type="button" class="bigbtn" id="bClose" aria-label="Chiudi menu">✕</button></div>
-      <div class="group">
-        <span class="gh">Union Sites</span>
-        <a class="item on" href="#intro" data-page="intro"><span class="ic"><img src="USSEcoat.png" alt="" width="16" height="16"></span>General</a>
-        <a class="item" href="#normaktiv" data-page="normaktiv"><span class="ic"><img src="NormAktiv.png" alt="" width="16" height="16"></span>NormAktiv</a>
-        <a class="item" href="#CTSU" data-page="CTSU"><span class="ic"><img src="lex/CTSU.png" alt="CTSU" width="16" height="16"></span>CTSU</a>
-        <a class="item" href="#CEPU" data-page="CEPU"><span class="ic"><img src="CEPU.png" alt="CEPU" width="16" height="16"></span>CEPU</a>
-        <a class="item" href="#unitext" data-page="unitext"><span class="ic"><img src="lex/UniText.png" alt="UniText" width="16" height="16"></span>UniText</a>
-        <a class="item" href="#bundeswiki" data-page="bundeswiki"><span class="ic"><img src="Strnghld.png" alt="BundesWiki" width="16" height="16"></span>BundesWiki</a>
-        <a class="item" href="#planungsrat" data-page="planungsrat"><span class="ic"><img src="lex/CCP.png" alt="CCP" width="16" height="16"></span>Zentraler Planungsrat</a>
-        <a class="item" href="#konet" data-page="konet"><span class="ic"><img src="Stato.png" alt="KonEt" width="16" height="16"></span>Kon.Et</a>
-      </div>
-      <div class="group">
-        <span class="gh">Agencies</span>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="tc.png" alt="" width="16" height="16"></span>Trade Center</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="TETA.png" alt="" width="16" height="16"></span>TETA</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="EBR.png" alt="" width="16" height="16"></span>EstjiBundesR.</a>
-        <a class="item" href="#" data-page="altro"><span class="ic"><img src="IDU.png" alt="" width="16" height="16"></span>Ile De USSE</a>
-      </div>
-      <div class="group">
-        <span class="gh">Community</span>
-        <a class="item" href="#" data-page="altro"><span class="ic">👥</span>Forum</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">🌐</span>Aero Webring</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">✏️</span>Sketchbook</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">🔗</span>Altri link</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">📖</span>Guestbook</a>
-      </div>
-      <div class="group">
-        <span class="gh">Informazioni</span>
-        <a class="item" href="#" data-page="altro"><span class="ic">🫧</span>Mascotte</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">ℹ️</span>Info sito</a>
-        <a class="item" href="#" data-page="altro"><span class="ic">❤️</span>Dona</a>
-      </div>
-      <div class="group">
-        <button type="button" class="bigbtn">Suoni off</button>
-        <button type="button" class="bigbtn" style="margin:0">Temi</button>
-      </div>
-    </aside>
+    <section id="admin-content" style="display:none">
+      <div class="row"><span>👤 Connesso come <b id="adminUsernameLabel">—</b></span><button type="button" class="btn" id="logoutBtn">Esci</button></div>
 
-    <main>
-      <section data-page="intro"><div class="bar">Introduzione</div>
-      <div class="panel">
-        <div class="banner" style="height:130px">
-          <div class="bub"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union </small><b>Estji Archive</b><em>[estjibundes.me.ei]</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="warn">
-          <p>Welcome to the Estji Archive, this is the central portal for all the systems of USSE faction.</p>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="bar">What is Estji Web System?</div>
-        <div class="warn">
-          <p><b>EWS</b>, is the central system used by the USSE faction for the management of all the documents of the entity.</p>
-          <p>This system is public and accessible to all members of the faction and to all the interested people.</p>
-          <p>The documentation in the system <b>does not</b> have any juridical value, they are used inside the faction.</p>
-        </div>
-      </div>
-       <div class="panel">
-        <div class="bar">Useful Documents </div>
-        <div class="row"><span class="th t1"><img src="NormAktiv.png" alt="Normaktiv" width="34" height="34"></span><a href="#">USSE Fondamental Law</a></div>
-      </div>
-      
-      <div class="panel">
-        <div class="bar">Useful Links [Other Factions]</div>
-        <div class="row"><span class="th t1"><img src="Ybrean.png" alt="Ybrean" width="34" height="34"></span><a href="#">Υbρϵανιϰω Δϵμωϰρατια</a></div>
-        <div class="row"><span class="th t4"></span><a href="#">Republika e Xatorit</a></div>
-      </div></section>
-      
-      <section data-page="normaktiv" hidden><div class="bar">Law Archive</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="NormAktiv.png" alt="Normaktiv" width="96" height="96"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>NormAktiv</b><em>Laws of the faction</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="lex/normaktiv.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="lex/redazione.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+      <div id="vElenco">
+        <div class="bar">Pagine della wiki</div>
+        <div class="panel">
+          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></div>
+          <p id="msgElenco" class="note"></p>
+          <div id="elenco"></div>
         </div>
       </div>
 
-      <div class="panel feed" data-feed="normaktiv"></div></section>
-
-      <section data-page="CTSU" hidden><div class="bar">Projects Archive</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="lex/CTSU.png" alt="CTSU" width="96" height="96"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>CTSU</b><em>Projects of the faction</em></div>
-          <div class="bub"></div>
+      <form id="vEditor" hidden novalidate>
+        <div class="bar" id="eTitolo">Nuova pagina</div>
+        <div class="panel">
+          <label for="fTitolo">Titolo</label><input id="fTitolo" required maxlength="150">
+          <div class="cols">
+            <div><label for="fCat">Categoria</label><input id="fCat" list="cats" maxlength="60"><datalist id="cats"></datalist></div>
+            <div><label for="fTag">Tag (separati da virgola)</label><input id="fTag" placeholder="storia, leggi, luoghi"></div>
+          </div>
+          <label for="fSomm">Sommario (mostrato nei risultati di ricerca)</label><textarea id="fSomm" rows="2" maxlength="400" style="font-family:inherit"></textarea>
+          <div class="cols">
+            <div><label for="fImg">Immagine in testa (indirizzo web)</label><input id="fImg" placeholder="https://..."></div>
+            <div><label for="fId">Identificativo URL (id)</label><input id="fId" placeholder="generato dal titolo se vuoto"></div>
+          </div>
+          <label for="fTesto">Testo</label>
+          <div class="chips" id="tools" style="padding-top:0">
+            <button type="button" class="btn" data-w="## |Titolo sezione">H2</button><button type="button" class="btn" data-w="### |Sottotitolo">H3</button>
+            <button type="button" class="btn" data-w="**|grassetto|**"><b>B</b></button><button type="button" class="btn" data-w="*|corsivo|*"><i>I</i></button>
+            <button type="button" class="btn" data-w="- |elemento">• Elenco</button><button type="button" class="btn" data-w="> |citazione">❝</button>
+            <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
+            <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
+            <button type="button" class="btn" data-w="|\n| Colonna 1 | Colonna 2 |\n|---|---|\n| Cella | Cella |\n|">📊 Tabella</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
+          </div>
+          <div class="panel" id="imgPanel" hidden style="margin:6px 0 10px">
+            <div class="bar" id="imgTit">Nuova immagine</div>
+            <div class="cols">
+              <div><label for="iUrl">Indirizzo dell'immagine</label><input id="iUrl" placeholder="https://..." autocomplete="off"></div>
+              <div><label for="iDid">Didascalia / testo alternativo</label><input id="iDid" maxlength="150"></div>
+            </div>
+            <div class="cols3">
+              <div><label for="iW">Larghezza</label><div style="display:flex;gap:6px"><input id="iW" type="number" min="1" max="2000" placeholder="auto"><select id="iWu" style="width:84px"><option value="px">px</option><option value="%">%</option></select></div></div>
+              <div><label for="iH">Altezza (px)</label><input id="iH" type="number" min="1" max="2000" placeholder="auto"></div>
+              <div><label for="iFit">Se larghezza e altezza sono fisse</label><select id="iFit"><option value="">Stira</option><option value="adatta">Adatta (senza ritagliare)</option><option value="riempi">Riempi (ritaglia)</option></select></div>
+              <div><label for="iPos">Posizione</label><select id="iPos"><option value="">In riga, in mezzo alle parole</option><option value="sx">A sinistra, testo intorno</option><option value="dx">A destra, testo intorno</option><option value="c">Centrata, su riga propria</option></select></div>
+              <div><label for="iVa">Altezza rispetto alle parole (in riga)</label><select id="iVa"><option value="">Sulla linea di base</option><option value="alto">In alto</option><option value="medio">Al centro</option><option value="basso">In basso</option></select></div>
+              <div><label for="iY">Sposta in verticale (px: − su, + giù)</label><input id="iY" type="number" min="-500" max="500" placeholder="0"></div>
+            </div>
+            <label class="chk"><input type="checkbox" id="iCap"> Mostra la didascalia sotto</label><label class="chk"><input type="checkbox" id="iNob"> Senza bordo</label>
+            <p class="note">Codice: <code id="iCode"></code></p>
+            <div class="chips"><button type="button" class="btn pri" id="iChiudi">Fatto</button><button type="button" class="btn del" id="iDel" hidden>Rimuovi immagine</button></div>
+          </div>
+          <div class="cols ed"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea>
+            <div class="tree" id="albero" aria-label="Immagini disponibili">
+              <div class="bar">🖼 Immagini</div>
+              <div class="panel">
+                <div style="display:flex;gap:6px"><input id="tFiltro" type="search" placeholder="Cerca immagine…" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn" id="tRicarica" title="Ricarica l'elenco da GitHub">↻</button></div>
+                <p class="note" id="tNote"></p>
+                <div id="tree"></div>
+              </div>
+            </div>
+            <div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
+          <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
+          <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
+          <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
+          <p id="msg" class="err"></p>
+          <div class="chips">
+            <button type="submit" class="btn pri" id="salva">💾 Salva sul database</button>
+            <button type="button" class="btn" id="annulla">Annulla</button>
+            <button type="button" class="btn del" id="elimina" hidden>Elimina pagina</button>
+          </div>
         </div>
-        <div class="btns">
-          <a class="item ext" href="lex/ctsu.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="lex/redazione-ctsu.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
-        </div>
-      </div>
-
-      <div class="panel feed" data-feed="CTSU"></div></section>
-
-      <section data-page="CEPU" hidden><div class="bar">Elections Archive</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="CEPU.png" alt="CEPU" width="96" height="64"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>CEPU</b><em>Elections</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="CEPU.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="redazioneCEPU.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
-        </div>
-      </div>
-
-      <div class="panel feed" data-feed="CEPU"></div></section>
-
-      <section data-page="unitext" hidden><div class="bar">Texts Archive</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="lex/UniText.png" alt="UniText" width="96" height="96"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>UniText</b><em>Texts of the Union</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="lex/unitext.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="lex/unitext-redazione.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
-        </div>
-      </div>
-
-      <div class="panel feed" data-feed="unitext"></div></section>
-
-      <section data-page="bundeswiki" hidden><div class="bar">Estji Bundes Wiki</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="Strnghld.png" alt="Estji Bundes Wiki" width="96" height="96"></div>
-          <div class="txt"><small></small><b>BundesWiki</b><em>StrongHold</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="https://ews-rose.vercel.app/lex/wiki.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="https://ews-rose.vercel.app/lex/redazione-wiki.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="bar">Wiki Pages</div>
-        <div class="row"><span class="th t1"></span><a href="#">Pagina di prova 1</a></div>
-        <div class="row"><span class="th t4"></span><a href="#">Pagina di prova 2</a></div>
-        <div class="row"><span class="th t6"></span><a href="#">Pagina di prova 3</a></div>
-      </div></section>
-
-      <section data-page="planungsrat" hidden><div class="bar">Planning Archive</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="lex/CCP.png" alt="Con.Ce.Pi." width="96" height="96"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>Con.Ce.Pi.</b><em>Zentraler Planungsrat</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="lex/CP.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-          <a class="item ext" href="redazioneCEPU.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
-        </div>
-      </div>
-
-      <div class="panel feed" data-feed="planungsrat"></div></section>
-
-      <section data-page="konet" hidden><div class="bar">Congress Archive</div>
-
-      <div class="panel">
-        <div class="banner">
-          <div class="frame"><img src="Stato.png" alt="Kon.Et" width="96" height="96"></div>
-          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>Kon.Et</b><em>Congresses and Assemblies</em></div>
-          <div class="bub"></div>
-        </div>
-        <div class="btns">
-          <a class="item ext" href="CA.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
-        </div>
-      </div>
-
-      <div class="panel feed" data-feed="konet"></div></section>
-
-      <section data-page="altro" hidden><div class="bar" id="gTitle">Sezione</div>
-      <div class="panel"><div class="warn" style="text-align:center;padding:40px 10px">
-        <div style="font-size:54px">🚧</div>
-        <p>La sezione <b id="gName"></b> è in costruzione.<br>Torna presto!</p>
-      </div></div></section>
-
-      <div class="bottom">
-        <span class="cur">Pagina attuale: <span id="curName">Introduzione</span></span>
-        <div class="nav">
-          <button type="button" id="bMenu" class="only-m" aria-controls="menu" aria-expanded="false"><span aria-hidden="true">☰</span> Menu</button>
-          <button id="bHome">Indice 🏠</button>
-          <button id="bPrev" aria-label="Precedente">◀<span class="lbl"> Precedente</span></button>
-          <button id="bNext" aria-label="Successivo"><span class="lbl">Successivo </span>▶</button>
-        </div>
-      </div>
-    </main>
-  </div>
-  <div class="scrim" id="scrim"></div>
+      </form>
+    </section>
+  </main>
 </div>
-
+<script src="assets/js/wiki-core.js"></script>
 <script>
-(function(){
-  var items=[].slice.call(document.querySelectorAll('aside .item'));
-  var secs=[].slice.call(document.querySelectorAll('main section'));
-  var pages={};
-  secs.forEach(function(x){pages[x.getAttribute('data-page')]=x});
-  // ordine di Precedente/Successivo = ordine delle sezioni reali nella pagina
-  var order=secs.map(function(x){return x.getAttribute('data-page')}).filter(function(k){return k!=='altro'});
-  var current='intro';   // ultima pagina reale visitata
-  var reduceMotion=window.matchMedia('(prefers-reduced-motion:reduce)');
+(function () {
+  const $ = id => document.getElementById(id), E = Wiki.esc;
+  let pagine = [], idMod = null;
 
-  // menu a schermo intero (solo mobile)
-  var menuBtn=document.getElementById('bMenu'),closeBtn=document.getElementById('bClose');
-  var mainEl=document.querySelector('.layout main');
-  function openMenu(){
-    document.body.classList.add('menu-open');
-    menuBtn.setAttribute('aria-expanded','true');
-    if('inert' in mainEl)mainEl.inert=true;
-    var on=drawer.querySelector('.item.on');
-    if(on)on.scrollIntoView({block:'center'});
-    closeBtn.focus({preventScroll:true});
-  }
-  function closeMenu(refocus){
-    if(!document.body.classList.contains('menu-open'))return;
-    document.body.classList.remove('menu-open');
-    menuBtn.setAttribute('aria-expanded','false');
-    if('inert' in mainEl)mainEl.inert=false;
-    if(refocus)menuBtn.focus();
-  }
-  var drawer=document.getElementById('menu'),scrim=document.getElementById('scrim');
-  scrim.addEventListener('click',function(){closeMenu(true)});
-  // scorri verso sinistra sul menu per chiuderlo
-  var sx=0,sy=0,dx=0,dragging=false;
-  drawer.addEventListener('touchstart',function(e){
-    var t=e.touches[0];sx=t.clientX;sy=t.clientY;dx=0;dragging=false;
-  },{passive:true});
-  drawer.addEventListener('touchmove',function(e){
-    var t=e.touches[0],mx=t.clientX-sx,my=t.clientY-sy;
-    if(!dragging&&Math.abs(mx)>10&&Math.abs(mx)>Math.abs(my)*1.5&&mx<0){dragging=true;drawer.classList.add('drag')}
-    if(dragging){dx=Math.min(0,mx);drawer.style.transform='translateX('+dx+'px)'}
-  },{passive:true});
-  function endDrag(){
-    if(!dragging)return;
-    dragging=false;drawer.classList.remove('drag');drawer.style.transform='';
-    if(dx<-70)closeMenu(false);
-  }
-  drawer.addEventListener('touchend',endDrag);
-  drawer.addEventListener('touchcancel',endDrag);
-  menuBtn.addEventListener('click',openMenu);
-  closeBtn.addEventListener('click',function(){closeMenu(true)});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu(true)});
-  window.matchMedia('(min-width:721px)').addEventListener&&
-    window.matchMedia('(min-width:721px)').addEventListener('change',function(m){if(m.matches)closeMenu(false)});
+  const mostra = ok => { $('login-area').style.display = ok ? 'none' : 'block'; $('admin-content').style.display = ok ? 'block' : 'none'; };
+  const vista = ed => { $('vElenco').hidden = ed; $('vEditor').hidden = !ed; window.scrollTo(0, 0); if (ed) caricaAlbero(); };
+  const msg = (t, ok) => { $('msg').textContent = t || ''; $('msg').className = ok ? 'ok' : 'err'; };
 
-  function label(a){
-    var c=a.cloneNode(true),ic=c.querySelector('.ic');
-    if(ic)ic.remove();
-    return c.textContent.trim();
-  }
-  function itemFor(key){
-    return items.filter(function(i){return i.getAttribute('data-page')===key})[0];
-  }
-  function show(key,item){
-    var real=key!=='altro'&&pages[key];
-    var target=real?key:'altro';
-    var active=item||itemFor(key);
-    var name=active?label(active):key;
-    secs.forEach(function(x){x.hidden=x.getAttribute('data-page')!==target});
-    items.forEach(function(i){
-      var on=i===active;
-      i.classList.toggle('on',on);
-      if(on)i.setAttribute('aria-current','page');else i.removeAttribute('aria-current');
+  /* ---------- login / logout (stesso schema della redazione CTSU) ---------- */
+  function setupLogin() {
+    const btn = $('loginBtn'), err = $('loginError');
+    btn.addEventListener('click', async () => {
+      err.textContent = ''; btn.disabled = true; btn.textContent = 'Accesso…';
+      const u = $('adminUsername').value.trim();
+      try { await Wiki.login(u, $('adminPassword').value); $('adminUsernameLabel').textContent = u; mostra(true); await avvia(); }
+      catch (e) { err.textContent = '❌ ' + (e.message || 'Errore di accesso'); }
+      finally { btn.disabled = false; btn.textContent = 'Accedi'; }
     });
-    if(!real){
-      document.getElementById('gTitle').textContent=name;
-      document.getElementById('gName').textContent=name;
-    }else current=key;
-    document.getElementById('curName').textContent=name;
-    closeMenu(false);
-    window.scrollTo({top:0,behavior:reduceMotion.matches?'auto':'smooth'});
-  }
-  function go(key){
-    if(location.hash==='#'+key)show(key);else location.hash=key;  // l'hashchange fa il resto
+    ['adminUsername', 'adminPassword'].forEach(i => $(i).addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); } }));
+    $('logoutBtn').addEventListener('click', () => { Wiki.clearCredentials(); location.reload(); });
   }
 
-  // voci della sidebar: le pagine vere usano href="#chiave", gli altri sono segnaposto
-  items.forEach(function(a){
-    a.addEventListener('click',function(e){
-      var key=a.getAttribute('data-page');
-      closeMenu(false);
-      if(key==='altro'){e.preventDefault();show('altro',a)}
-    });
+  /* ---------- elenco ---------- */
+  function elenco() {
+    const q = Wiki.norm($('filtro').value);
+    const l = [...pagine].sort((a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo))).filter(p => Wiki.norm(p.titolo + ' ' + p.categoria).includes(q));
+    $('elenco').innerHTML = l.map(p => `<div class="row"><div>${p.categoria ? `<span class="tag">${E(p.categoria)}</span> ` : ''}<b>${E(p.titolo)}</b>
+      <div class="note">${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</div></div>
+      <div><a class="btn" href="wiki.html#${E(p.id)}" target="_blank" rel="noopener">Apri</a> <button type="button" class="btn" data-mod="${E(p.id)}">Modifica</button></div></div>`).join('') || '<p class="note">Nessuna pagina.</p>';
+    $('cats').innerHTML = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].map(c => `<option value="${E(c)}">`).join('');
+  }
+
+  /* ---------- editor ---------- */
+  function apri(p, titoloNuovo) {
+    idMod = p ? p.id : null; msg(''); chiudiImg();
+    $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
+    $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
+    $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
+    $('fImg').value = p ? p.immagine : ''; $('fId').value = p ? p.id : ''; $('fTesto').value = p ? p.contenuto : '';
+    $('elimina').hidden = !p; anteprima(); vista(true);
+    (p ? $('fTesto') : $('fTitolo')).focus();
+  }
+  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; };
+
+  function inserisci(modello) { // "prima|selezione o segnaposto|dopo"
+    const t = $('fTesto'), [a, m, d = ''] = modello.replace(/\\n/g, '\n').split('|'), i = t.selectionStart, f = t.selectionEnd;
+    const sel = t.value.slice(i, f) || m || '';
+    t.value = t.value.slice(0, i) + a + sel + d + t.value.slice(f);
+    t.focus(); t.setSelectionRange(i + a.length, i + a.length + sel.length); anteprima();
+  }
+
+  /* ---------- immagini: pannello di controllo (dimensione, posizione, altezza rispetto alle parole) ---------- */
+  const RE_IMG = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
+  let imgSel = null, tImg = null;   // imgSel = posizione {i,f} dell'immagine in modifica dentro il testo
+  const tutteImg = () => { const t = $('fTesto').value, r = []; let m; RE_IMG.lastIndex = 0; while ((m = RE_IMG.exec(t))) r.push({ i: m.index, f: m.index + m[0].length, alt: m[1], url: m[2] }); return r; };
+  const chiudiImg = () => { $('imgPanel').hidden = true; imgSel = null; clearTimeout(tImg); };
+
+  function leggiCampi() {
+    const o = { didas: $('iDid').value.replace(/[|\[\]]/g, ' ').trim(), w: '', h: '', pos: $('iPos').value, va: $('iVa').value,
+      y: parseInt($('iY').value, 10) || 0, cap: $('iCap').checked, nob: $('iNob').checked, fit: $('iFit').value };
+    const w = parseInt($('iW').value, 10); if (w > 0) o.w = w + $('iWu').value;
+    const h = parseInt($('iH').value, 10); if (h > 0) o.h = String(h);
+    if (o.pos) o.va = '';                      // l'allineamento verticale vale solo per le immagini in riga
+    $('iVa').disabled = !!o.pos;
+    return o;
+  }
+  function apriImg(sel) {
+    imgSel = sel ? { i: sel.i, f: sel.f } : null;
+    const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '' };
+    $('iUrl').value = sel ? sel.url : ''; $('iDid').value = o.didas;
+    $('iW').value = o.w ? parseInt(o.w, 10) : ''; $('iWu').value = /%$/.test(o.w) ? '%' : 'px'; $('iH').value = o.h;
+    $('iFit').value = o.fit; $('iPos').value = o.pos === 'in' ? '' : o.pos; $('iVa').value = o.va; $('iY').value = o.y || '';
+    $('iCap').checked = o.cap; $('iNob').checked = o.nob;
+    $('imgTit').textContent = sel ? 'Modifica immagine' : 'Nuova immagine'; $('iDel').hidden = !sel;
+    $('imgPanel').hidden = false; leggiCampi();
+    $('iCode').textContent = sel ? Wiki.imgSintassi(o, sel.url) : 'Inserisci un indirizzo che inizi con https://';
+    if (!sel) $('iUrl').focus();
+  }
+  function applica() {          // scrive subito nel testo: l'anteprima si aggiorna mentre cambi i valori
+    const url = $('iUrl').value.trim(), o = leggiCampi();
+    if (!/^https?:\/\/[^\s)]+$/.test(url)) { $('iCode').textContent = 'Inserisci un indirizzo che inizi con https://'; return; }
+    const code = Wiki.imgSintassi(o, url), t = $('fTesto');
+    if (imgSel) { t.value = t.value.slice(0, imgSel.i) + code + t.value.slice(imgSel.f); imgSel.f = imgSel.i + code.length; }
+    else { const p = t.selectionEnd; t.value = t.value.slice(0, p) + code + t.value.slice(p); imgSel = { i: p, f: p + code.length }; $('iDel').hidden = false; $('imgTit').textContent = 'Modifica immagine'; }
+    $('iCode').textContent = code; anteprima();
+  }
+  const rinvia = () => { leggiCampi(); clearTimeout(tImg); tImg = setTimeout(applica, 300); };
+
+  $('btnImg').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriImg(tutteImg().find(x => p >= x.i && p <= x.f) || null); });
+  $('imgPanel').addEventListener('input', rinvia); $('imgPanel').addEventListener('change', rinvia);
+  $('iChiudi').addEventListener('click', chiudiImg);
+  $('iDel').addEventListener('click', () => { if (imgSel) { const t = $('fTesto'); t.value = t.value.slice(0, imgSel.i) + t.value.slice(imgSel.f); anteprima(); } chiudiImg(); });
+  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); });   // se torni a scrivere, le posizioni nel testo cambiano: chiude il pannello
+  $('anteprima').addEventListener('click', e => {           // clic su un'immagine dell'anteprima = modificala
+    const el = e.target.closest('[data-im]'); if (!el) return;
+    const s = tutteImg()[+el.dataset.im]; if (s) { e.preventDefault(); apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   });
-  window.addEventListener('hashchange',function(){
-    var key=location.hash.slice(1);
-    show(pages[key]&&key!=='altro'?key:'intro');
-  });
 
-  document.getElementById('bHome').onclick=function(){go('intro')};
-  document.getElementById('bPrev').onclick=function(){var i=order.indexOf(current);go(order[(i<=0?order.length:i)-1])};
-  document.getElementById('bNext').onclick=function(){var i=order.indexOf(current);go(order[(i+1)%order.length])};
+  /* ---------- albero delle immagini: repo pubblica GitHub RETEFORLIVESE/IMG ----------
+     clic sul nome = copia il link · ➕ = inserisce l'immagine nel testo (o ne cambia l'indirizzo se il pannello immagine è aperto) */
+  const REPO_IMG = 'RETEFORLIVESE/IMG', EST_IMG = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
+  let imgFiles = null, imgRamo = 'main', riep = '', tNota = 0;
+  const urlImg = p => `https://raw.githubusercontent.com/${REPO_IMG}/${imgRamo}/` + p.split('/').map(s => encodeURIComponent(s).replace(/[()']/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
+  const nota = (t, ok) => { const n = $('tNote'); n.textContent = t; n.className = 'note' + (ok ? ' ok' : ''); };
 
+  async function caricaAlbero(forza) {
+    if (imgFiles && !forza) return;
+    if (!forza) { try { const c = JSON.parse(sessionStorage.getItem('wiki_img_albero') || 'null'); if (c && c.f) { imgFiles = c.f; imgRamo = c.b; disegna(); return; } } catch (e) {} }
+    nota('Carico le immagini da GitHub…');
+    try {
+      const gh = async u => { const r = await fetch('https://api.github.com/repos/' + REPO_IMG + u, { headers: { Accept: 'application/vnd.github+json' } }); if (!r.ok) throw new Error('GitHub HTTP ' + r.status + (r.status === 403 ? " (limite di richieste, riprova tra un po')" : '')); return r.json(); };
+      imgRamo = (await gh('')).default_branch || 'main';
+      const t = await gh('/git/trees/' + encodeURIComponent(imgRamo) + '?recursive=1');
+      imgFiles = t.tree.filter(x => x.type === 'blob' && EST_IMG.test(x.path)).map(x => x.path);
+      try { sessionStorage.setItem('wiki_img_albero', JSON.stringify({ b: imgRamo, f: imgFiles })); } catch (e) {}
+      disegna(); if (t.truncated) nota('Attenzione: GitHub ha troncato l\'elenco (repo molto grande).');
+    } catch (e) { nota('Errore: ' + e.message); }
+  }
 
-// ============ ELENCO ATTI (feed) ============
-// I dati stanno nel repo privato RETEFORLIVESE/DATA. Il browser li chiede alla funzione
-// Vercel /api/data (che usa il token lato server); finche' il repo e' pubblico, se la
-// funzione non esiste, li legge direttamente da raw.githubusercontent.com.
-var DATA_API='/api/data?file=';
-var RAW='https://raw.githubusercontent.com/RETEFORLIVESE/DATA/';
-var MESI=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
-
-function s(v){return v==null?'':String(v).trim()}
-function clean(v,max){
-  var t=s(v).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-  if(max&&t.length>max)t=t.slice(0,max).replace(/\s+\S*$/,'')+'\u2026';
-  return t;
-}
-function isoIt(v){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s(v));return m?m[3]+' '+MESI[+m[2]-1]+' '+m[1]:s(v)}
-// data -> numero (0 se assente/non riconosciuta). Accetta 06/10/2026, 2026-10-06, "06 ottobre 2026"
-function ts(v){
-  var t=s(v).toLowerCase(),m;
-  if(m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t))return new Date(+m[3],+m[2]-1,+m[1]).getTime();
-  if(m=/^(\d{4})-(\d{2})-(\d{2})/.exec(t))return new Date(+m[1],+m[2]-1,+m[3]).getTime();
-  if(m=/^(\d{1,2})\s+([a-z\u00e0-\u00f9]+)\s+(\d{4})$/.exec(t)){var i=MESI.indexOf(m[2]);if(i>=0)return new Date(+m[3],i,+m[1]).getTime()}
-  return 0;
-}
-// dal piu' recente al piu' vecchio; senza data in fondo, nell'ordine originale
-function recent(items){return items.sort(function(a,b){return (b._t||0)-(a._t||0)||a._i-b._i})}
-function isPlan(o){return !!o.tipo_documento||/piano|pianific/i.test(s(o.categoria)+' '+s(o.organo_responsabile))}
-
-// per ogni sito: file, pagina del sito, base del link al dettaglio, e load(raw) -> schede
-var FEEDS={
-  normaktiv:{label:'Elenco degli atti',file:'atti.json',site:'lex/normaktiv.html',detail:'lex/atto.html?id=',
-    load:function(raw){
-      return (raw.atti||[]).map(function(o,i){return{_i:i,
-        cat:s(o.categoria),stato:s(o.stato),
-        num:o.numero?'n. '+s(o.numero)+(o.anno?'/'+s(o.anno):''):'',
-        data:s(o.dataEmanazione),titolo:s(o.titolo),sunto:clean(o.sommario,240),
-        img:s(o.immagine),id:s(o.id),_t:ts(o.dataEmanazione)}});
-    }},
-  CTSU:{label:'Elenco dei progetti',file:'ctsu.json',site:'lex/ctsu.html',detail:'lex/progetto.html?id=',
-    load:function(raw){
-      return (raw.progetti||[]).filter(function(o){return !isPlan(o)}).map(function(o,i){return{_i:i,
-        cat:s(o.categoria),stato:s(o.stato),num:'',
-        data:o.data_completamento?'Completato: '+s(o.data_completamento):(o.data_inizio?'Inizio: '+s(o.data_inizio):''),
-        titolo:s(o.titolo),sunto:clean(o.sommario||o.organo_responsabile,240),
-        img:s(o.copertina),id:s(o.id),_t:ts(o.data_completamento||o.data_inizio)}});
-    }},
-  planungsrat:{label:'Elenco dei piani',file:'ctsu.json',site:'lex/CP.html',detail:'lex/CP.html?id=',   // il piano si apre nel portale CP
-    load:function(raw){
-      return (raw.progetti||[]).filter(isPlan).map(function(o,i){return{_i:i,
-        cat:s(o.categoria),stato:s(o.stato),num:'',
-        data:o.data_approvazione?'Approvato: '+s(o.data_approvazione):s(o.periodo_validita),
-        titolo:s(o.titolo),sunto:clean(o.sommario||o.organo_responsabile,240),
-        img:s(o.copertina),id:s(o.id),_t:ts(o.data_approvazione)}});
-    }},
-  CEPU:{label:'Elenco delle consultazioni',file:'elezioni.json',site:'CEPU.html',detail:'',
-    load:function(raw){
-      return (raw.elezioni||[]).map(function(o,i){
-        var q='tipo='+encodeURIComponent(s(o.tipo_codice))+'&data='+encodeURIComponent(s(o.data))+
-              '&comune='+encodeURIComponent(s(o.comune)).replace(/%20/g,'+');
-        var info=o.tipo_codice==='R'
-          ? clean(o.area)+(o.candidato_vincente?' \u2014 Esito: '+s(o.candidato_vincente):'')
-          : [clean(o.area),o.affluenza?'Affluenza '+s(o.affluenza):'',o.candidato_vincente?'Eletto: '+s(o.candidato_vincente):''].filter(Boolean).join(' \u00b7 ');
-        return{_i:i,_t:ts(o.data),cat:s(o.tipo),stato:'',num:'',data:s(o.data),
-          titolo:[s(o.tipo),s(o.comune)].filter(Boolean).join(' \u2013 '),sunto:info,img:'',
-          url:'CEPU.html?'+q};
+  function disegna() {
+    const q = $('tFiltro').value.trim().toLowerCase(), radice = { d: {}, f: [] };
+    imgFiles.forEach(p => { const s = p.split('/'); let n = radice; s.slice(0, -1).forEach(k => { n = n.d[k] || (n.d[k] = { d: {}, f: [] }); }); n.f.push({ nome: s[s.length - 1], path: p }); });
+    const cmp = (a, b) => a.localeCompare(b, 'it', { numeric: true });
+    const nodo = n => {
+      let h = '', tot = 0;
+      Object.keys(n.d).sort(cmp).forEach(k => { const r = nodo(n.d[k]); if (r.tot) { tot += r.tot; h += `<details${q ? ' open' : ''}><summary>📁 ${E(k)} <small>(${r.tot})</small></summary>${r.h}</details>`; } });
+      n.f.filter(f => !q || f.nome.toLowerCase().includes(q)).sort((a, b) => cmp(a.nome, b.nome)).forEach(f => {
+        tot++; h += `<div class="tf"><button type="button" class="tcp" data-p="${E(f.path)}" title="Copia il link"><img loading="lazy" alt="" src="${E(urlImg(f.path))}"><span>${E(f.nome)}</span></button><button type="button" class="btn tadd" data-p="${E(f.path)}" title="Inserisci nel testo">➕</button></div>`;
       });
-    }},
-  unitext:{label:'Elenco dei testi',file:'unitext.json',site:'lex/unitext.html',detail:'lex/unitext.html?id=',   // dettaglio: da confermare
-    load:function(raw){
-      return (raw.testi||[]).map(function(o,i){return{_i:i,
-        cat:s(o.categoria),stato:s(o.stato),num:s(o.autore),data:isoIt(o.data),
-        titolo:s(o.titolo),sunto:clean(o.sottotitolo||o.abstract,240),
-        img:s(o.copertina),id:s(o.id),_t:ts(o.data)}});
-    }},
-  konet:{label:'Elenco dei congressi e delle assemblee',file:null,site:'CA.html',detail:'CA.html',load:function(){return[]}}
-};
+      return { h, tot };
+    };
+    const r = nodo(radice);
+    $('tree').innerHTML = r.h || '<p class="note">Nessuna immagine trovata.</p>';
+    riep = (q ? r.tot + ' risultati' : imgFiles.length + ' immagini') + ' · clic sul nome per copiare il link'; nota(riep);
+  }
 
-// ---- lettura dei file (una volta sola per file) ----
-var cache={};
-function tryFetch(urls){
-  return urls.reduce(function(p,u){
-    return p.catch(function(){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()})});
-  },Promise.reject());
-}
-function getJSON(file){
-  if(!cache[file]){
-    var cap=file.charAt(0).toUpperCase()+file.slice(1),urls=[DATA_API+encodeURIComponent(file)];
-    ['main','master'].forEach(function(b){urls.push(RAW+b+'/'+file);urls.push(RAW+b+'/'+cap)});
-    cache[file]=tryFetch(urls);
+  async function copia(testo) {
+    try { await navigator.clipboard.writeText(testo); return true; } catch (e) {}
+    const t = document.createElement('textarea'); t.value = testo; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} t.remove(); return ok;
   }
-  return cache[file];
-}
 
-// ---- disegno ----
-function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
-function renderFeed(box,key,items,note){
-  var cfg=FEEDS[key];
-  box.textContent='';
-  box.appendChild(el('div','bar',cfg.label));
-  if(!items.length){box.appendChild(el('div','fempty',note||'Nessun elemento pubblicato al momento.'));return}
-  // categorie nell'ordine in cui compaiono nei dati
-  var cats=[];items.slice().sort(function(a,b){return a._i-b._i}).forEach(function(it){if(it.cat&&cats.indexOf(it.cat)<0)cats.push(it.cat)});
-  var chips=el('div','chips'),count=el('div','fcount'),list=el('div','flist');
-  var active='';
-  function draw(){
-    var shown=items.filter(function(it){return !active||it.cat===active});
-    count.textContent=shown.length+(shown.length===1?' elemento pubblicato':' elementi pubblicati');
-    list.textContent='';
-    shown.forEach(function(it){
-      var href=it.url||((it.id&&cfg.detail)?cfg.detail+encodeURIComponent(it.id):cfg.site);
-      var a=el('a','card');a.href=href;a.target='_blank';a.rel='noopener';
-      if(it.img){
-        var th=el('span','th'),im=document.createElement('img');
-        im.src=it.img;im.alt='';im.addEventListener('error',function(){th.remove()});
-        th.appendChild(im);a.appendChild(th);
-      }
-      var body=el('div','cbody'),m=el('div','meta');
-      if(it.cat)m.appendChild(el('span','tag',it.cat));
-      if(it.stato)m.appendChild(el('span','tag '+(/vigente|attivo|in corso|pubblicat|approvat/i.test(it.stato)?'ok':(/abrog|annull|sospes/i.test(it.stato)?'no':'')),it.stato));
-      var nd=[it.num,it.data].filter(Boolean).join(' \u00b7 ');
-      if(nd)m.appendChild(el('span','',nd));
-      body.appendChild(m);
-      body.appendChild(el('h3','',it.titolo));
-      if(it.sunto)body.appendChild(el('p','',it.sunto));
-      a.appendChild(body);list.appendChild(a);
-    });
-  }
-  if(cats.length>1){
-    ['Tutti'].concat(cats).forEach(function(c,i){
-      var b=el('button','chip'+(i===0?' on':''),c);b.type='button';
-      b.addEventListener('click',function(){
-        active=i===0?'':c;
-        [].forEach.call(chips.children,function(x){x.classList.toggle('on',x===b)});
-        draw();
-      });
-      chips.appendChild(b);
-    });
-    box.appendChild(chips);
-  }
-  box.appendChild(count);box.appendChild(list);draw();
-}
-function initFeeds(){
-  [].forEach.call(document.querySelectorAll('.feed[data-feed]'),function(box){
-    var key=box.getAttribute('data-feed'),cfg=FEEDS[key];
-    if(!cfg.file){renderFeed(box,key,[]);return}
-    renderFeed(box,key,[],'Caricamento\u2026');
-    getJSON(cfg.file).then(function(raw){renderFeed(box,key,recent(cfg.load(raw)))})
-      .catch(function(){renderFeed(box,key,[],'Impossibile caricare i dati ('+cfg.file+'). Riprova pi\u00f9 tardi.')});
+  $('tree').addEventListener('click', async e => {
+    const b = e.target.closest('[data-p]'); if (!b) return;
+    const url = urlImg(b.dataset.p), nome = b.dataset.p.split('/').pop();
+    if (b.classList.contains('tadd')) { if ($('imgPanel').hidden) apriImg(null); $('iUrl').value = url; applica(); nota('➕ Inserita nel testo: ' + nome, true); }
+    else { const ok = await copia(url); nota(ok ? '✅ Link copiato: ' + nome : 'Copia non riuscita, riprova', ok); }
+    clearTimeout(tNota); tNota = setTimeout(() => nota(riep), 2500);
   });
-}
-initFeeds();
+  $('tFiltro').addEventListener('input', () => { if (imgFiles) disegna(); });
+  $('tFiltro').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });   // Invio non deve salvare la pagina
+  $('tRicarica').addEventListener('click', () => { try { sessionStorage.removeItem('wiki_img_albero'); } catch (e) {} caricaAlbero(true); });
 
-  var start=location.hash.slice(1);
-  show(pages[start]&&start!=='altro'?start:'intro');
+  async function salva(e) {
+    e.preventDefault();
+    if (!$('fTitolo').value.trim()) { msg('Inserisci almeno il titolo.'); return; }
+    const pagina = { titolo: $('fTitolo').value, categoria: $('fCat').value, tag: $('fTag').value.split(','), sommario: $('fSomm').value,
+      immagine: $('fImg').value, id: $('fId').value, contenuto: $('fTesto').value };
+    const b = $('salva'); b.disabled = true; b.textContent = 'Salvataggio…'; msg('');
+    try {
+      const d = await Wiki.salvaPagina(pagina, idMod);
+      pagine = pagine.filter(p => p.id !== idMod && p.id !== d.pagina.id); pagine.push(d.pagina);
+      idMod = d.pagina.id; $('fId').value = idMod; $('elimina').hidden = false; elenco();
+      msg('✅ Salvato sul database. La pagina è visibile a tutti.', true);
+    } catch (er) {
+      msg('Errore salvataggio: ' + er.message);
+      if (!Wiki.isAuthenticated()) { alert('Sessione scaduta: effettua di nuovo il login. Il testo non è stato perso, copialo prima di ricaricare.'); }
+    } finally { b.disabled = false; b.textContent = '💾 Salva sul database'; }
+  }
+
+  async function elimina() {
+    const p = pagine.find(x => x.id === idMod);
+    if (!p || !confirm(`Eliminare "${p.titolo}"?`)) return;
+    try { await Wiki.eliminaPagina(p.id); pagine = pagine.filter(x => x.id !== p.id); elenco(); vista(false); }
+    catch (er) { msg('Errore eliminazione: ' + er.message); }
+  }
+
+  async function avvia() {
+    try { pagine = await Wiki.load(); } catch (e) { $('msgElenco').textContent = 'Errore nel caricamento: ' + e.message; pagine = []; }
+    elenco(); vista(false);
+    const n = new URLSearchParams(location.search).get('nuova'); // dal link rosso [[...]] della wiki
+    if (n != null) apri(null, n);
+  }
+
+  $('filtro').addEventListener('input', elenco);
+  $('nuova').addEventListener('click', () => apri(null));
+  $('elenco').addEventListener('click', e => { const b = e.target.closest('[data-mod]'); if (b) apri(pagine.find(p => p.id === b.dataset.mod)); });
+  $('annulla').addEventListener('click', () => vista(false));
+  $('elimina').addEventListener('click', elimina);
+  $('vEditor').addEventListener('submit', salva);
+  $('fTesto').addEventListener('input', anteprima);
+  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg')) e.preventDefault(); });
+  $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
+  window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
+
+  setupLogin();
+  if (Wiki.isAuthenticated()) { $('adminUsernameLabel').textContent = Wiki._s.username || ''; mostra(true); avvia(); } else mostra(false);
 })();
 </script>
 </body>

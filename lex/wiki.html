@@ -19,6 +19,7 @@
   <div class="layout">
   <aside aria-label="Articoli principali">
     <div class="sb-group"><span class="sb-head">Articoli principali</span><div id="principali"></div></div>
+    <div class="sb-group" id="sbToc" hidden><span class="sb-head">In questa pagina</span><div id="toc"></div></div>
   </aside>
   <main>
     <div id="vCerca">
@@ -108,11 +109,19 @@
     $('cats').innerHTML = cs.length > 1 ? ['Tutte', ...cs].map((c, i) => `<button type="button" class="chip${(i ? c : '') === cat ? ' on' : ''}" data-c="${i ? E(c) : ''}">${E(c)}</button>`).join('') : '';
   }
 
+  // INDICE della pagina aperta: costruito dai titoli ## e ### del testo, mostrato nella colonna laterale
+  function indice() {
+    const hs = [...$('pTesto').querySelectorAll('h2, h3')], usati = {};
+    hs.forEach(h => { const b = h.id || 'sezione'; usati[b] = (usati[b] || 0) + 1; if (usati[b] > 1) h.id = b + '-' + usati[b]; });
+    $('toc').innerHTML = hs.map(h => `<a class="sb-item t${h.tagName[1]}" href="#" data-s="${E(h.id)}"><span>${E(h.textContent)}</span></a>`).join('');
+    $('sbToc').hidden = !hs.length;
+  }
+
   function route() {
     const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id);
     sidebar();
     $('vCerca').hidden = !!p; $('vPagina').hidden = !p;
-    if (!p) { document.title = 'Estji Wiki'; return; }
+    if (!p) { document.title = 'Estji Wiki'; $('sbToc').hidden = true; return; }
     document.title = p.titolo + ' — Estji Wiki';
     $('pTitolo').textContent = p.titolo;
     $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
@@ -120,13 +129,17 @@
     $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
     const rif = pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
     $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
-    window.scrollTo(0, 0);
+    indice(); window.scrollTo(0, 0);
   }
 
   $('q').addEventListener('input', cerca);
   $('cats').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { cat = b.dataset.c; chips(); cerca(); } });
   $('indietro').addEventListener('click', e => { e.preventDefault(); history.pushState(null, '', location.pathname + location.search); route(); });
   $('pMeta').addEventListener('click', e => { const a = e.target.closest('[data-t]'); if (a) { e.preventDefault(); history.pushState(null, '', location.pathname); $('q').value = a.dataset.t; route(); cerca(); } });
+  $('toc').addEventListener('click', e => {   // niente "#id" nell'indirizzo: l'hash serve a scegliere la pagina
+    const a = e.target.closest('[data-s]'); if (!a) return; e.preventDefault();
+    const h = document.getElementById(a.dataset.s); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   window.addEventListener('hashchange', route);
 
   $('q').value = new URLSearchParams(location.search).get('q') || '';

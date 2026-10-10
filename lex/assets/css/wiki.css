@@ -127,3 +127,25 @@ input[type=checkbox]{width:auto;min-height:0}
 label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cursor:pointer}
 #iCode{word-break:break-all;user-select:all}
 @media(max-width:720px){.cols3{grid-template-columns:1fr}input[type=checkbox]{width:20px;height:20px}}
+
+
+/* ===== Indice della pagina (colonna laterale della wiki) ===== */
+#toc .sb-item{align-items:flex-start}
+#toc .sb-item span{min-width:0;overflow-wrap:anywhere}
+#toc .sb-item.t3{margin-left:12px;width:calc(100% - 12px);font-size:12px}
+@media(max-width:720px){#toc{display:flex;flex-wrap:wrap;gap:5px}#toc .sb-item.t3{margin:0;width:auto;font-size:14px}}
+
+/* ===== Albero immagini (redazione) ===== */
+.cols.ed{grid-template-columns:minmax(0,1fr) 230px minmax(0,1fr);align-items:start}
+.tree .panel{margin-top:6px}
+#tree{max-height:420px;overflow:auto;font-size:13px;margin-top:4px}
+#tree details details,#tree details>.tf{margin-left:12px}
+#tree summary{cursor:pointer;padding:3px 2px;color:#bfe9ff}
+#tree summary small{color:#9cc4ea}
+.tf{display:flex;gap:4px;align-items:center;margin:2px 0}
+.tf .tcp{flex:1;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;font:inherit;font-size:12px;color:#e8f4ff;background:rgba(255,255,255,.05);border:1px solid rgba(160,200,255,.25);border-radius:4px;padding:2px 4px;cursor:pointer}
+.tf .tcp:hover{background:rgba(79,208,255,.2)}
+.tf .tcp img{width:24px;height:24px;object-fit:cover;flex:none;border-radius:2px;background:#000;margin:0}
+.tf .tcp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tf .tadd{flex:none;font-size:12px;padding:2px 6px}
+@media(max-width:720px){.cols.ed{grid-template-columns:1fr}#tree{max-height:260px}}
