@@ -35,7 +35,7 @@ a.card:hover{filter:brightness(1.25)}.card h3{margin:5px 0 2px;font-size:17px;fo
 .tag{padding:1px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#9ee6ff;background:rgba(79,208,255,.16);border:1px solid rgba(160,215,255,.4)}
 mark{background:#ffd84a;color:#000;border-radius:2px;padding:0 1px}
 /* testo di una pagina wiki */
-.wk{line-height:1.65;max-width:78ch;padding:4px 8px}.wk h2,.wk h3{font-weight:400;color:#bfe9ff;border-bottom:1px solid rgba(160,200,255,.3);padding-bottom:3px;margin:22px 0 8px}
+.wk{line-height:1.65;max-width:none;padding:4px 8px}.wk h2,.wk h3{font-weight:400;color:#bfe9ff;border-bottom:1px solid rgba(160,200,255,.3);padding-bottom:3px;margin:22px 0 8px}
 .wk img{max-width:100%;border:1px solid #cfe6ff;border-radius:3px;margin:6px 0}.wk blockquote{margin:10px 0;padding:4px 14px;border-left:3px solid #2b9cf2;background:rgba(79,208,255,.08)}
 .wk code{background:#000;padding:1px 5px;border-radius:3px}.wk a.red{color:#ff8a8a}.wk hr{border:0;border-top:1px solid rgba(160,200,255,.3)}
 .wk .tw{overflow-x:auto}.wk table{border-collapse:collapse;margin:10px 0}.wk th,.wk td{border:1px solid rgba(160,200,255,.4);padding:5px 10px}.wk th{background:rgba(79,208,255,.15)}
@@ -107,3 +107,23 @@ img{max-width:100%}
   .site::before{height:80px}
 }
 @media(max-width:380px){header h1{font-size:19px}.btn,.chip{padding:4px 9px}}
+
+
+/* ===== Immagini con controllo di dimensione/posizione ===== */
+.wk .im{display:block;margin:6px 0;max-width:100%}
+.wk .im img{display:block;margin:0;max-width:100%}
+.wk .im-sx{float:left;margin:6px 16px 8px 0}
+.wk .im-dx{float:right;margin:6px 0 8px 16px}
+.wk .im-c{width:fit-content;margin:8px auto;text-align:center}
+.wk .cap{display:block;font-size:12px;line-height:1.4;color:#b9d6f2;padding:3px 4px;text-align:center}
+.wk .nb img,.wk img.nb{border:0;border-radius:0}
+.wk img.nb{margin:0}
+@container (max-width:560px){.wk .im-sx,.wk .im-dx{max-width:50%}}
+#anteprima [data-im]{cursor:pointer}
+#anteprima [data-im]:hover{outline:2px dashed #ffd84a;outline-offset:2px}
+/* pannello immagine nella redazione */
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+input[type=checkbox]{width:auto;min-height:0}
+label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cursor:pointer}
+#iCode{word-break:break-all;user-select:all}
+@media(max-width:720px){.cols3{grid-template-columns:1fr}input[type=checkbox]{width:20px;height:20px}}
