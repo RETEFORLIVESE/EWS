@@ -59,12 +59,31 @@
             <button type="button" class="btn" data-w="**|grassetto|**"><b>B</b></button><button type="button" class="btn" data-w="*|corsivo|*"><i>I</i></button>
             <button type="button" class="btn" data-w="- |elemento">• Elenco</button><button type="button" class="btn" data-w="> |citazione">❝</button>
             <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
-            <button type="button" class="btn" data-w="![|didascalia|](https://)">🖼 Immagine</button>
+            <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
             <button type="button" class="btn" data-w="|\n| Colonna 1 | Colonna 2 |\n|---|---|\n| Cella | Cella |\n|">📊 Tabella</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
+          </div>
+          <div class="panel" id="imgPanel" hidden style="margin:6px 0 10px">
+            <div class="bar" id="imgTit">Nuova immagine</div>
+            <div class="cols">
+              <div><label for="iUrl">Indirizzo dell'immagine</label><input id="iUrl" placeholder="https://..." autocomplete="off"></div>
+              <div><label for="iDid">Didascalia / testo alternativo</label><input id="iDid" maxlength="150"></div>
+            </div>
+            <div class="cols3">
+              <div><label for="iW">Larghezza</label><div style="display:flex;gap:6px"><input id="iW" type="number" min="1" max="2000" placeholder="auto"><select id="iWu" style="width:84px"><option value="px">px</option><option value="%">%</option></select></div></div>
+              <div><label for="iH">Altezza (px)</label><input id="iH" type="number" min="1" max="2000" placeholder="auto"></div>
+              <div><label for="iFit">Se larghezza e altezza sono fisse</label><select id="iFit"><option value="">Stira</option><option value="adatta">Adatta (senza ritagliare)</option><option value="riempi">Riempi (ritaglia)</option></select></div>
+              <div><label for="iPos">Posizione</label><select id="iPos"><option value="">In riga, in mezzo alle parole</option><option value="sx">A sinistra, testo intorno</option><option value="dx">A destra, testo intorno</option><option value="c">Centrata, su riga propria</option></select></div>
+              <div><label for="iVa">Altezza rispetto alle parole (in riga)</label><select id="iVa"><option value="">Sulla linea di base</option><option value="alto">In alto</option><option value="medio">Al centro</option><option value="basso">In basso</option></select></div>
+              <div><label for="iY">Sposta in verticale (px: − su, + giù)</label><input id="iY" type="number" min="-500" max="500" placeholder="0"></div>
+            </div>
+            <label class="chk"><input type="checkbox" id="iCap"> Mostra la didascalia sotto</label><label class="chk"><input type="checkbox" id="iNob"> Senza bordo</label>
+            <p class="note">Codice: <code id="iCode"></code></p>
+            <div class="chips"><button type="button" class="btn pri" id="iChiudi">Fatto</button><button type="button" class="btn del" id="iDel" hidden>Rimuovi immagine</button></div>
           </div>
           <div class="cols"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
+          <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
           <p id="msg" class="err"></p>
           <div class="chips">
             <button type="submit" class="btn pri" id="salva">💾 Salva sul database</button>
@@ -112,7 +131,7 @@
 
   /* ---------- editor ---------- */
   function apri(p, titoloNuovo) {
-    idMod = p ? p.id : null; msg('');
+    idMod = p ? p.id : null; msg(''); chiudiImg();
     $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
     $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
     $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
@@ -128,6 +147,53 @@
     t.value = t.value.slice(0, i) + a + sel + d + t.value.slice(f);
     t.focus(); t.setSelectionRange(i + a.length, i + a.length + sel.length); anteprima();
   }
+
+  /* ---------- immagini: pannello di controllo (dimensione, posizione, altezza rispetto alle parole) ---------- */
+  const RE_IMG = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
+  let imgSel = null, tImg = null;   // imgSel = posizione {i,f} dell'immagine in modifica dentro il testo
+  const tutteImg = () => { const t = $('fTesto').value, r = []; let m; RE_IMG.lastIndex = 0; while ((m = RE_IMG.exec(t))) r.push({ i: m.index, f: m.index + m[0].length, alt: m[1], url: m[2] }); return r; };
+  const chiudiImg = () => { $('imgPanel').hidden = true; imgSel = null; clearTimeout(tImg); };
+
+  function leggiCampi() {
+    const o = { didas: $('iDid').value.replace(/[|\[\]]/g, ' ').trim(), w: '', h: '', pos: $('iPos').value, va: $('iVa').value,
+      y: parseInt($('iY').value, 10) || 0, cap: $('iCap').checked, nob: $('iNob').checked, fit: $('iFit').value };
+    const w = parseInt($('iW').value, 10); if (w > 0) o.w = w + $('iWu').value;
+    const h = parseInt($('iH').value, 10); if (h > 0) o.h = String(h);
+    if (o.pos) o.va = '';                      // l'allineamento verticale vale solo per le immagini in riga
+    $('iVa').disabled = !!o.pos;
+    return o;
+  }
+  function apriImg(sel) {
+    imgSel = sel ? { i: sel.i, f: sel.f } : null;
+    const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '' };
+    $('iUrl').value = sel ? sel.url : ''; $('iDid').value = o.didas;
+    $('iW').value = o.w ? parseInt(o.w, 10) : ''; $('iWu').value = /%$/.test(o.w) ? '%' : 'px'; $('iH').value = o.h;
+    $('iFit').value = o.fit; $('iPos').value = o.pos === 'in' ? '' : o.pos; $('iVa').value = o.va; $('iY').value = o.y || '';
+    $('iCap').checked = o.cap; $('iNob').checked = o.nob;
+    $('imgTit').textContent = sel ? 'Modifica immagine' : 'Nuova immagine'; $('iDel').hidden = !sel;
+    $('imgPanel').hidden = false; leggiCampi();
+    $('iCode').textContent = sel ? Wiki.imgSintassi(o, sel.url) : 'Inserisci un indirizzo che inizi con https://';
+    if (!sel) $('iUrl').focus();
+  }
+  function applica() {          // scrive subito nel testo: l'anteprima si aggiorna mentre cambi i valori
+    const url = $('iUrl').value.trim(), o = leggiCampi();
+    if (!/^https?:\/\/[^\s)]+$/.test(url)) { $('iCode').textContent = 'Inserisci un indirizzo che inizi con https://'; return; }
+    const code = Wiki.imgSintassi(o, url), t = $('fTesto');
+    if (imgSel) { t.value = t.value.slice(0, imgSel.i) + code + t.value.slice(imgSel.f); imgSel.f = imgSel.i + code.length; }
+    else { const p = t.selectionEnd; t.value = t.value.slice(0, p) + code + t.value.slice(p); imgSel = { i: p, f: p + code.length }; $('iDel').hidden = false; $('imgTit').textContent = 'Modifica immagine'; }
+    $('iCode').textContent = code; anteprima();
+  }
+  const rinvia = () => { leggiCampi(); clearTimeout(tImg); tImg = setTimeout(applica, 300); };
+
+  $('btnImg').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriImg(tutteImg().find(x => p >= x.i && p <= x.f) || null); });
+  $('imgPanel').addEventListener('input', rinvia); $('imgPanel').addEventListener('change', rinvia);
+  $('iChiudi').addEventListener('click', chiudiImg);
+  $('iDel').addEventListener('click', () => { if (imgSel) { const t = $('fTesto'); t.value = t.value.slice(0, imgSel.i) + t.value.slice(imgSel.f); anteprima(); } chiudiImg(); });
+  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); });   // se torni a scrivere, le posizioni nel testo cambiano: chiude il pannello
+  $('anteprima').addEventListener('click', e => {           // clic su un'immagine dell'anteprima = modificala
+    const el = e.target.closest('[data-im]'); if (!el) return;
+    const s = tutteImg()[+el.dataset.im]; if (s) { e.preventDefault(); apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
 
   async function salva(e) {
     e.preventDefault();
@@ -167,7 +233,7 @@
   $('elimina').addEventListener('click', elimina);
   $('vEditor').addEventListener('submit', salva);
   $('fTesto').addEventListener('input', anteprima);
-  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w]')) e.preventDefault(); });
+  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg')) e.preventDefault(); });
   $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
   window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
 
