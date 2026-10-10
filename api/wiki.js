@@ -16,7 +16,7 @@ const FILE = 'wiki.json';
 
 // Stessi account della redazione degli atti (copia di VALID_USERS in api/atti.js).
 // Se cambi gli utenti in atti.js, aggiornali anche qui.
-const VALID_USERS = { "TandeePetrenka": "TandeePetrenka", "admin": "CambiamiAnche" };
+const VALID_USERS = { "TandeePetrenka": "TandeePetrenka", "PyrreHankonen": "PyrreHankonen" };
 
 function verificaCredenziali(username, password) {
     if (!Object.prototype.hasOwnProperty.call(VALID_USERS, username)) return false;
