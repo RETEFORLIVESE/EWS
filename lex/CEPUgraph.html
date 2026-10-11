@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andamento elezioni per tipo</title>
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1d1f23; --muted:#6a6f78; --line:#e3e1db; --grid:#ecebe6; --accent:#1B5FA8;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14161a; --card:#1d2025; --ink:#eceef1; --muted:#9aa1ab; --line:#2d3138; --grid:#262a30; --accent:#6aa5e8; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:28px 20px 8px;max-width:1000px;margin:0 auto}
+h1{margin:0 0 4px;font-size:24px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted)}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-top:16px}
+nav .in{max-width:1000px;margin:0 auto;padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap}
+nav a{padding:5px 12px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-size:13px;background:var(--card)}
+nav a:hover{border-color:var(--accent);color:var(--accent)}
+main{max-width:1000px;margin:0 auto;padding:8px 20px 60px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:22px;scroll-margin-top:64px}
+section h2{margin:0;font-size:19px}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 12px}
+.bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.chart{width:100%;position:relative}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{fill:var(--muted);font-size:11px;font-family:inherit}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 2px}
+.legend button{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--ink);font:inherit;font-size:13px;cursor:pointer;padding:2px 0}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legend button.off{opacity:.35;text-decoration:line-through}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:7px 10px;border-radius:8px;font-size:12px;line-height:1.4;white-space:nowrap;opacity:0;transition:opacity .1s;z-index:3}
+.note{font-size:12.5px;color:var(--muted);margin:8px 0 0;padding:8px 10px;border-left:3px solid #d9a441;background:rgba(217,164,65,.08);border-radius:0 6px 6px 0}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+footer{max-width:1000px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Andamento elettorale per tipo di consultazione</h1>
+  <p>Una sezione per ogni tipo di elezione: l'asse orizzontale elenca le consultazioni in ordine di data, ogni linea è una parte (partito, lista o opzione).</p>
+</header>
+<nav><div class="in" id="nav"></div></nav>
+<main id="main"></main>
+<footer>Dati: <code>elezioni.json</code> dal repository RETEFORLIVESE/DATA. I nomi dei partiti scritti in modo leggermente diverso (es. "VolksPartei" / "VolksePartei", "SI" / "Sì") sono stati unificati nello stesso gruppo.</footer>
+
+<script>
+const DATA = {"elezioni": [{"tipo": "Assemblea di Sezione", "tipo_codice": "G", "data": "06/06/2026", "comune": "Taleen", "area": "EstjiLinn", "affluenza": "64,2%", "candidato_vincente": "Khloe Straub", "risultati_partiti": [{"nome": "Straub Für Koln!", "voti": 8200, "percentuale": "54,4%", "seggi": 32, "colore": "#1B5FA8"}, {"nome": "Progressives", "voti": 5100, "percentuale": "33,8%", "seggi": 20, "colore": "#C0392B"}, {"nome": "Les Indipendaces", "voti": 1780, "percentuale": "11,8%", "seggi": 8, "colore": "#2E9E5B"}], "id_organo": "EBHAN-KLN"}, {"tipo": "Congresso Unitario", "tipo_codice": "S", "data": "14/09/2026", "comune": "Circoscrizione Unica dell'Unione", "area": "Territorio dell'Unione", "affluenza": "79,2%", "candidato_vincente": "", "risultati_partiti": [{"nome": "PCE", "voti": 16, "percentuale": "2,4%", "seggi": 30, "colore": "#6f0000", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/pce.avif"}, {"nome": "Grosse Linke Koalizion", "voti": 323, "percentuale": "48,0%", "seggi": 96, "colore": "#a71b1b", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/GLK.png"}, {"nome": "Democratisher Partei", "voti": 153, "percentuale": "20,4%", "seggi": 51, "colore": "#2b49bf", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/DP2.png"}, {"nome": "FAJP", "voti": 8, "percentuale": "1,2%", "seggi": 40, "colore": "#ffcc02", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/fajp.avif"}, {"nome": "Partito Popolare", "voti": 138, "percentuale": "18,4%", "seggi": 46, "colore": "#C9A227", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/VPK.png"}, {"nome": "Estji Ecologise les Vert", "voti": 72, "percentuale": "9,6%", "seggi": 24, "colore": "#2E9E5B", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/EElV.png"}], "id_organo": "Unione"}, {"tipo": "Referendum", "tipo_codice": "R", "data": "05/05/2025", "comune": "Circoscrizione Unica", "area": "Approvate la modifica \"Kitoko\" del sistema Costituzionale Hankonen a seguito del DCCU n.03/2025?", "affluenza": "98,6%", "candidato_vincente": "Approvato", "risultati_partiti": [{"nome": "SI", "voti": 954, "percentuale": "84,9%", "seggi": 0}, {"nome": "NO", "voti": 172, "percentuale": "15,1%", "seggi": 0}], "consultazione_unitaria": true, "sezioni_scrutinate": 152, "sezioni_totali": 152, "elettori": 1163, "votanti": 1128, "schede_nulle": 0, "schede_bianche": 2}, {"tipo": "Congresso Statale", "tipo_codice": "C", "data": "17/09/2026", "comune": "Estjilinn", "area": "Circoscrizione Unica", "affluenza": "72,9%", "candidato_vincente": "", "risultati_partiti": [{"nome": "PCS", "voti": 40, "percentuale": "25,0%", "seggi": 25, "colore": "#6b0000", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/pcs.avif"}, {"nome": "PCE", "voti": 7, "percentuale": "40,0%", "seggi": 65, "colore": "#8a0000", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/pce.avif"}, {"nome": "FAJP", "voti": 24, "percentuale": "15,0%", "seggi": 15, "colore": "#ffcc02", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/fajp.avif"}, {"nome": "VolksPartei", "voti": 32, "percentuale": "20,0%", "seggi": 20, "colore": "#1B5FA8", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/VPK.png"}], "id_organo": "ELIN"}, {"tipo": "Assemblea di Sezione", "tipo_codice": "G", "data": "06/06/2026", "comune": "Habara", "area": "Terlin Demokratic Republik", "affluenza": "98,0%", "candidato_vincente": "Uwe Nielse", "risultati_partiti": [{"nome": "PCE", "voti": 32, "percentuale": "16,0%", "seggi": 4, "colore": "#ff3a30", "logo": "https://user33424.na.imgto.link/public/20260918/pce.avif"}, {"nome": "FAJP", "voti": 120, "percentuale": "60,0%", "seggi": 15, "colore": "#f89a16", "logo": "https://user33424.na.imgto.link/public/20260918/fajp.avif"}, {"nome": "VolksPartei", "voti": 48, "percentuale": "24,0%", "seggi": 6, "colore": "#0161fd", "logo": "https://www.image2url.com/r2/default/files/1789681307568-1702d8b5-d7bf-409d-b42c-5d4f00478d91.png"}], "id_organo": "TDR-HBR"}, {"tipo": "Referendum", "tipo_codice": "R", "data": "18/08/2026", "comune": "Trade Center", "area": "Approvate l'esproprio del complesso \"Athenon Trade Center\", in favore del piano economico unitario per la riconversione produttiva [N.7d/2026]?", "affluenza": "100,0%", "candidato_vincente": "Approvato", "risultati_partiti": [{"nome": "Sì", "voti": 36, "percentuale": "72,0%", "seggi": 0}, {"nome": "No", "voti": 14, "percentuale": "28,0%", "seggi": 0}], "id_organo": "ENOR-PTL-ATC", "sezioni_scrutinate": 1, "sezioni_totali": 1, "elettori": 50, "votanti": 50, "schede_nulle": 0, "schede_bianche": 0}, {"tipo": "Referendum", "tipo_codice": "R", "data": "26/04/2026", "comune": "TDR, Territori di Transizione", "area": "Approvate il seguente testo \"Disposizioni Transitorie per l'Unificazione della Repubblica Democratica di Terlin\" in favore dell'Unificazione con la TDR?", "affluenza": "91,4%", "candidato_vincente": "", "risultati_partiti": [{"nome": "Sì", "voti": 28, "percentuale": "87,5%", "seggi": 0}, {"nome": "No", "voti": 4, "percentuale": "12,5%", "seggi": 0}], "id_organo": "TDR", "sezioni_scrutinate": 15, "sezioni_totali": 15, "elettori": 35}, {"tipo": "Congresso Metropolitano", "tipo_codice": "M", "data": "30/09/2026", "comune": "Taleen", "area": "EstjiLinn", "affluenza": "1000,0%", "candidato_vincente": "", "risultati_partiti": [{"nome": "Estji les Ecologie Verts", "voti": 50, "percentuale": "75,0%", "seggi": 36, "colore": "#1da71b", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/EElV.png"}, {"nome": "PCE", "voti": 16, "percentuale": "20,0%", "seggi": 14, "colore": "#a71b1b", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/pce.avif"}, {"nome": "VolksePartei", "voti": 3, "percentuale": "5,0%", "seggi": 5, "colore": "#1B5FA8", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/VPK.png"}], "id_organo": "ELIN-TLN"}, {"tipo": "Costituzionale", "tipo_codice": "K", "data": "12/09/2023", "comune": "Circoscrizione Unica", "area": "USSE", "affluenza": "96,0%", "candidato_vincente": "", "risultati_partiti": [{"nome": "PCE", "voti": 310, "percentuale": "21,2%", "seggi": 106, "colore": "#a51d2d", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/PCE.ico"}, {"nome": "DEMOS", "voti": 93, "percentuale": "6,4%", "seggi": 32, "colore": "#e01b24", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/DEMOS.ico"}, {"nome": "ALPH", "voti": 105, "percentuale": "7,2%", "seggi": 36, "colore": "#f66151", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/alpha.ico"}, {"nome": "Estji Ecologistes les Verts", "voti": 117, "percentuale": "8,0%", "seggi": 40, "colore": "#33d17a", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/EElV.png"}, {"nome": "FAJP", "voti": 91, "percentuale": "6,2%", "seggi": 31, "colore": "#f5c211", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/fajp.avif"}, {"nome": "FachesSocialDemokratic", "voti": 149, "percentuale": "10,2%", "seggi": 51, "colore": "#f8e45c", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/FSD.png"}, {"nome": "AgAnAt", "voti": 269, "percentuale": "18,4%", "seggi": 92, "colore": "#62a0ea", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/AgAnAt.png"}, {"nome": "ChristianAlliance", "voti": 251, "percentuale": "17,2%", "seggi": 86, "colore": "#1a5fb4", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/CA.ico"}, {"nome": "PerusE", "voti": 58, "percentuale": "4,0%", "seggi": 20, "colore": "#5e5c64", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/PerusE.png"}, {"nome": "5°Republika", "voti": 17, "percentuale": "1,2%", "seggi": 6, "colore": "#000000", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/5RE.ico"}], "consultazione_unitaria": true, "id_organo": "Unione"}, {"tipo": "Congresso Metropolitano", "tipo_codice": "M", "data": "19/09/2026", "comune": "Ikedong", "area": "Città Metropolitana di Ikedong", "affluenza": "89,0%", "candidato_vincente": "", "risultati_partiti": [{"nome": "PCE", "voti": 1, "percentuale": "1,0%", "seggi": 5, "colore": "#bc0234", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/pce.avif"}, {"nome": "ALPH", "voti": 1, "percentuale": "1,0%", "seggi": 21, "colore": "#ff1430", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/alpha.ico"}, {"nome": "VolksePartei", "voti": 1, "percentuale": "1,0%", "seggi": 4, "colore": "#1b80a8", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/VPK.png"}, {"nome": "CA", "voti": 1, "percentuale": "1,0%", "seggi": 22, "colore": "#1B5FA8", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/OPAR/CA.ico"}, {"nome": "DP", "voti": 1, "percentuale": "1,0%", "seggi": 3, "colore": "#1b35a8", "logo": "https://raw.githubusercontent.com/RETEFORLIVESE/IMG/refs/heads/main/CEPU/POL/PAR/DP2.png"}], "id_organo": "EFAL-IKD"}, {"tipo": "Referendum", "tipo_codice": "R", "data": "05/09/2023", "comune": "Circoscrizione Unica", "area": "Sostenete la formazione basata su uguaglianza, redistribuzione e autodifesa collettiva, seguendo il volere popolare?", "affluenza": "96,0%", "candidato_vincente": "", "risultati_partiti": [{"nome": "Sì", "voti": 445, "percentuale": "89,0%", "seggi": 0}, {"nome": "No", "voti": 55, "percentuale": "11,0%", "seggi": 0}], "consultazione_unitaria": true, "id_organo": "Unione", "sezioni_scrutinate": 230, "sezioni_totali": 240, "elettori": 512, "votanti": 500}]};
+
+// ---- normalizzazione nomi ----
+const ALIAS = {
+  "VolksePartei":"VolksPartei",
+  "Estji les Ecologie Verts":"Estji Ecologistes les Verts",
+  "Estji Ecologise les Vert":"Estji Ecologistes les Verts",
+  "SI":"Sì","Si":"Sì","NO":"No"
+};
+const canon = n => ALIAS[n] || n;
+const pct = s => parseFloat(String(s).replace('%','').replace(',','.'));
+const parseDate = s => { const [d,m,y]=s.split('/').map(Number); return new Date(y,m-1,d); };
+const fmtDate = s => s; // gg/mm/aaaa
+const nf = new Intl.NumberFormat('it-IT',{maximumFractionDigits:1});
+
+// ---- colori: prima quelli del file, poi fallback ----
+const FALLBACK = ["#1B5FA8","#C0392B","#2E9E5B","#C9A227","#8E44AD","#E67E22","#16A085","#7F8C8D","#D35400","#2C3E50","#B03A75","#5D6D7E"];
+const colorMap = {};
+DATA.elezioni.forEach(e=>e.risultati_partiti.forEach(p=>{
+  const n=canon(p.nome); if(p.colore && !colorMap[n]) colorMap[n]=p.colore;
+}));
+colorMap["Sì"]=colorMap["Sì"]||"#2E9E5B"; colorMap["No"]=colorMap["No"]||"#C0392B";
+let fi=0;
+const colorOf = n => colorMap[n] || (colorMap[n]=FALLBACK[fi++%FALLBACK.length]);
+
+// ---- raggruppa per tipo ----
+const groups = new Map();
+DATA.elezioni.forEach((e,i)=>{
+  if(!groups.has(e.tipo)) groups.set(e.tipo,[]);
+  groups.get(e.tipo).push({...e,_i:i});
+});
+groups.forEach(list=>list.sort((a,b)=>parseDate(a.data)-parseDate(b.data)||a._i-b._i));
+
+const slug = t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-');
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clip = (s,n)=> s.length>n ? s.slice(0,n-1)+'…' : s;
+
+const METRICS = {
+  perc:{label:'Percentuale', get:p=>pct(p.percentuale), fmt:v=>nf.format(v)+'%', unit:'%'},
+  seggi:{label:'Seggi', get:p=>p.seggi, fmt:v=>String(v), unit:''},
+  voti:{label:'Voti', get:p=>p.voti, fmt:v=>String(v), unit:''}
+};
+
+const main = document.getElementById('main');
+const nav = document.getElementById('nav');
+
+groups.forEach((list,tipo)=>{
+  const id = slug(tipo);
+  const a = document.createElement('a'); a.href='#'+id; a.textContent=tipo+' ('+list.length+')'; nav.appendChild(a);
+
+  const sec = document.createElement('section'); sec.id=id;
+  const hasSeggi = list.some(e=>e.risultati_partiti.some(p=>p.seggi>0));
+  const hasVoti = list.some(e=>e.risultati_partiti.some(p=>p.voti>0));
+  sec.innerHTML = `
+    <div class="bar">
+      <div><h2>${esc(tipo)}</h2>
+      <div class="sub">${list.length} ${list.length===1?'consultazione':'consultazioni'} · dal ${list[0].data} al ${list[list.length-1].data}</div></div>
+      <div class="seg" role="group" aria-label="Misura">
+        <button data-m="perc" class="on">% voti</button>
+        <button data-m="seggi" ${hasSeggi?'':'disabled'}>Seggi</button>
+        <button data-m="voti" ${hasVoti?'':'disabled'}>Voti</button>
+      </div>
+    </div>
+    <div class="chart"><div class="tip"></div></div>
+    <div class="legend"></div>
+    <div class="notes"></div>
+    <details><summary>Dettaglio delle consultazioni</summary><div class="detail"></div></details>`;
+  main.appendChild(sec);
+
+  const parties = [];
+  list.forEach(e=>e.risultati_partiti.forEach(p=>{ const n=canon(p.nome); if(!parties.includes(n)) parties.push(n); }));
+  const hidden = new Set();
+  let metric = 'perc';
+
+  const chartEl = sec.querySelector('.chart');
+  const tip = sec.querySelector('.tip');
+  const legend = sec.querySelector('.legend');
+
+  function drawLegend(){
+    legend.innerHTML='';
+    parties.forEach(n=>{
+      const b=document.createElement('button');
+      b.className = hidden.has(n)?'off':'';
+      b.innerHTML = `<i style="background:${colorOf(n)}"></i>${esc(n)}`;
+      b.onclick=()=>{ hidden.has(n)?hidden.delete(n):hidden.add(n); drawLegend(); draw(); };
+      legend.appendChild(b);
+    });
+  }
+
+  function draw(){
+    const M = METRICS[metric];
+    const W=760, H=340, L=48, R=24, T=16, B=62;
+    const n = list.length;
+    const xs = i => n===1 ? (L+(W-R))/2 : L + (W-L-R) * i/(n-1);
+    // valori
+    let max = 0;
+    list.forEach(e=>e.risultati_partiti.forEach(p=>{ if(!hidden.has(canon(p.nome))) max=Math.max(max,M.get(p)); }));
+    if(max<=0) max=1;
+    const step = niceStep(max/5);
+    const top = Math.ceil(max/step)*step;
+    const ys = v => T + (H-T-B) * (1 - v/top);
+
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Andamento ${esc(tipo)}">`;
+    for(let v=0; v<=top+1e-9; v+=step){
+      s += `<line x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--grid)"/>`;
+      s += `<text x="${L-8}" y="${ys(v)+4}" text-anchor="end">${nf.format(v)}${M.unit}</text>`;
+    }
+    // etichette x
+    list.forEach((e,i)=>{
+      const x=xs(i);
+      s += `<line x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+5}" stroke="var(--line)"/>`;
+      s += `<text x="${x}" y="${H-B+19}" text-anchor="middle">${esc(e.data)}</text>`;
+      s += `<text x="${x}" y="${H-B+33}" text-anchor="middle">${esc(clip(e.comune,n>5?14:22))}</text>`;
+    });
+    // linee
+    parties.forEach(name=>{
+      if(hidden.has(name)) return;
+      const col = colorOf(name);
+      const pts = list.map((e,i)=>{
+        const p = e.risultati_partiti.find(q=>canon(q.nome)===name);
+        return p ? {x:xs(i), y:ys(M.get(p)), v:M.get(p), e, p} : null;
+      });
+      // segmenti continui (si interrompe dove la parte non si è presentata)
+      let seg=[];
+      const flush=()=>{ if(seg.length>1) s += `<polyline fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${seg.map(q=>q.x+','+q.y).join(' ')}"/>`; seg=[]; };
+      pts.forEach(q=>{ if(q) seg.push(q); else flush(); });
+      flush();
+      pts.forEach((q,i)=>{
+        if(!q) return;
+        s += `<circle cx="${q.x}" cy="${q.y}" r="4.5" fill="${col}" stroke="var(--card)" stroke-width="1.5" class="pt" data-name="${esc(name)}" data-i="${i}" data-m="${metric}"/>`;
+      });
+    });
+    s += `</svg>`;
+    const old = chartEl.querySelector('svg'); if(old) old.remove();
+    chartEl.insertAdjacentHTML('afterbegin', s);
+
+    chartEl.querySelectorAll('.pt').forEach(c=>{
+      const show = ev=>{
+        const e = list[+c.dataset.i], name=c.dataset.name;
+        const p = e.risultati_partiti.find(q=>canon(q.nome)===name);
+        const r = chartEl.getBoundingClientRect();
+        tip.innerHTML = `<b>${esc(name)}</b><br>${esc(e.comune)} · ${esc(e.data)}<br>${p.percentuale} · ${p.voti} voti · ${p.seggi} seggi`;
+        tip.style.opacity=1;
+        const cr = c.getBoundingClientRect();
+        let left = cr.left - r.left + 12, topPx = cr.top - r.top - 56;
+        tip.style.left = Math.min(left, r.width - tip.offsetWidth - 4) + 'px';
+        tip.style.top = Math.max(topPx, 0) + 'px';
+      };
+      c.addEventListener('mouseenter',show); c.addEventListener('focus',show);
+      c.addEventListener('click',show);
+      c.addEventListener('mouseleave',()=>tip.style.opacity=0);
+    });
+  }
+
+  function niceStep(raw){
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw/p;
+    return (f<=1?1:f<=2?2:f<=5?5:10)*p;
+  }
+
+  // note automatiche
+  const notes = sec.querySelector('.notes');
+  if(list.length===1){
+    notes.innerHTML = `<p class="note">Per questo tipo esiste una sola consultazione nel file: il grafico mostra un punto per parte, senza ancora un andamento.</p>`;
+  }
+  list.forEach(e=>{
+    const ps = e.risultati_partiti;
+    if(ps.length>2 && ps.every(p=>pct(p.percentuale)===pct(ps[0].percentuale)) && new Set(ps.map(p=>p.seggi)).size>1){
+      notes.innerHTML += `<p class="note">${esc(e.comune)} (${esc(e.data)}): nel file tutte le parti hanno la stessa percentuale (${ps[0].percentuale}) pur avendo seggi diversi; passa a "Seggi" per vedere la differenza.</p>`;
+    }
+  });
+  const dates = list.map(e=>e.data);
+  if(new Set(dates).size<dates.length && list.length>1){
+    notes.innerHTML += `<p class="note">Alcune consultazioni hanno la stessa data ma si svolgono in luoghi diversi: sono mostrate come punti separati in ordine di file.</p>`;
+  }
+  if(tipo==='Referendum'){
+    notes.innerHTML += `<p class="note">Ogni referendum ha un quesito diverso (vedi dettaglio): il grafico confronta le quote di Sì e No tra consultazioni distinte.</p>`;
+  }
+
+  // dettaglio
+  sec.querySelector('.detail').innerHTML = list.map(e=>`
+    <table><thead><tr><th colspan="4">${esc(e.data)} · ${esc(e.comune)}${e.area?' — '+esc(e.area):''} <span style="font-weight:400">· affluenza ${esc(e.affluenza)}${e.candidato_vincente?' · esito: '+esc(e.candidato_vincente):''}</span></th></tr>
+    <tr><th>Parte</th><th class="n">Voti</th><th class="n">%</th><th class="n">Seggi</th></tr></thead>
+    <tbody>${e.risultati_partiti.map(p=>`<tr><td><span class="dot" style="background:${colorOf(canon(p.nome))}"></span>${esc(p.nome)}</td><td class="n">${p.voti}</td><td class="n">${esc(p.percentuale)}</td><td class="n">${p.seggi}</td></tr>`).join('')}</tbody></table>`).join('');
+
+  sec.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+    if(b.disabled) return;
+    metric=b.dataset.m;
+    sec.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x===b));
+    draw();
+  });
+
+  drawLegend(); draw();
+});
+</script>
+</body>
+</html>
