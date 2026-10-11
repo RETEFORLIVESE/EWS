@@ -50,12 +50,7 @@ main section{display:block}
 /* header */
 header{display:flex;align-items:center;gap:16px;padding:20px 30px 14px;position:relative;
   border-bottom:1px solid rgba(120,190,255,.25);background:linear-gradient(180deg,rgba(40,90,160,.25),rgba(0,0,0,.35))}
-.flag{width:68px;height:62px;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:3px;
-  transform:perspective(200px) rotateY(-18deg) rotateZ(-4deg);filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
-.flag i{border-radius:6px 2px 6px 2px;background:linear-gradient(135deg,#d9f6ff,#3fb4ff 45%,#0a58c8);border:1px solid rgba(255,255,255,.7)}
-.flag i:nth-child(2){background:linear-gradient(135deg,#bfeaff,#1f8cf0 50%,#063d9c)}
-.flag i:nth-child(3){background:linear-gradient(135deg,#e7fbff,#5fcaff 45%,#0d66d6)}
-.flag i:nth-child(4){background:linear-gradient(135deg,#c9f0ff,#2aa0f8 50%,#0a4fb3)}
+.logo{width:68px;height:68px;flex:none;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 header h1{margin:0;font-weight:400;font-size:32px;text-shadow:0 2px 6px #000}
 header p{margin:2px 0 0 6px;font-size:15px;color:#cfe9ff;text-shadow:0 1px 3px #000}
 
@@ -163,7 +158,7 @@ a.card:hover{filter:brightness(1.25)}
   .site::before{height:80px;border-radius:28px 28px 0 0}
 
   header{padding:14px 16px 10px;gap:12px}
-  .flag{width:46px;height:42px}
+  .logo{width:46px;height:46px}
   header h1{font-size:22px}
   header p{margin:1px 0 0;font-size:13px}
 
@@ -233,7 +228,7 @@ a.card:hover{filter:brightness(1.25)}
 <body>
 <div class="site">
 <header>
-<div class="flag"><i></i><i></i><i></i><i></i></div>
+<img class="logo" src="Archive.png" alt="Estji Archive" width="68" height="68">
     <div>
       <h1>Estji Archive</h1>
       <p>Central Estji Web System Portal</p>
