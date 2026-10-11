@@ -38,7 +38,6 @@ mark{background:#ffd84a;color:#000;border-radius:2px;padding:0 1px}
 .wk{line-height:1.65;max-width:none;padding:4px 8px}.wk h2,.wk h3{font-weight:400;color:#bfe9ff;border-bottom:1px solid rgba(160,200,255,.3);padding-bottom:3px;margin:22px 0 8px}
 .wk img{max-width:100%;border:1px solid #cfe6ff;border-radius:3px;margin:6px 0}.wk blockquote{margin:10px 0;padding:4px 14px;border-left:3px solid #2b9cf2;background:rgba(79,208,255,.08)}
 .wk code{background:#000;padding:1px 5px;border-radius:3px}.wk a.red{color:#ff8a8a}.wk hr{border:0;border-top:1px solid rgba(160,200,255,.3)}
-.wk .tw{overflow-x:auto}.wk table{border-collapse:collapse;margin:10px 0}.wk th,.wk td{border:1px solid rgba(160,200,255,.4);padding:5px 10px}.wk th{background:rgba(79,208,255,.15)}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 4px;border-bottom:1px solid rgba(160,200,255,.3)}
 @media(max-width:720px){body{padding:10px 8px;background-attachment:scroll}.site{border-radius:28px 28px 16px 16px}header{padding:14px 16px 10px}header h1{font-size:22px}.cols{grid-template-columns:1fr}.btn,.chip{min-height:40px}}
@@ -63,9 +62,24 @@ background:linear-gradient(180deg,#3d4d66 0%,#1c2840 48%,#080f1c 52%,#121d30 100
   .sb-item{width:auto;margin:0;min-height:40px;padding:3px 12px;font-size:14px}
 }
 @media(hover:none){.sb-item:hover{filter:none}.sb-item:active{filter:brightness(1.35)}}
-/* ===== Infobox (scheda laterale stile Wikipedia) ===== */
+
+/* =====================================================================
+   TABELLE  (tutte le regole delle tabelle sono qui)
+   .wk table        tabella normale del testo
+   .wk table.ib     infobox / scheda laterale
+   .wk table.tbl    {{tabella}} con celle unite e colorate
+   .tw              contenitore scorrevole (se la pagina lo genera)
+   ===================================================================== */
 .wk{container-type:inline-size}
 .wk::after{content:"";display:block;clear:both}
+
+/* --- tabella normale --- */
+.wk table{border-collapse:collapse;margin:10px 0}
+.wk th,.wk td{border:1px solid rgba(160,200,255,.4);padding:5px 10px}
+.wk th{background:rgba(79,208,255,.15)}
+.wk .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+
+/* --- infobox --- */
 .wk table.ib{table-layout:fixed;float:right;clear:right;width:300px;max-width:100%;margin:4px 0 12px 18px;border-collapse:separate;border-spacing:0;border:1px solid #000;border-radius:6px;overflow:hidden;
 background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rgba(150,200,255,.25);font-size:14px;line-height:1.4}
 .wk table.ib .ib-t{display:table-caption;caption-side:top;padding:7px 9px;text-align:center;font-size:17px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000;background:linear-gradient(180deg,#7fd8ff,#2b9cf2 48%,#0a58c8 52%,#2db5ff)}
@@ -78,6 +92,29 @@ background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rg
 .ib-imgs{display:flex;gap:8px;justify-content:center;align-items:center}
 .wk .ib-imgs img{flex:1 1 0;min-width:0;max-width:100%;max-height:280px;object-fit:contain;margin:0;border:0;border-radius:0}
 @container (max-width:560px){.wk table.ib{float:none;width:100%;margin:6px 0 14px}}
+
+/* --- {{tabella}}: celle unite e colorate --- */
+.wk table.tbl{margin:10px 0}
+.wk table.tbl.tfull{width:100%}
+.wk table.tbl caption{caption-side:top;padding:6px 8px;font-size:17px;font-weight:700;color:#fff;text-align:center}
+.wk table.tbl th{text-align:center;font-weight:700}
+.wk table.tbl img{margin:2px 0;vertical-align:middle}
+.wk table.tbl .cb a{color:inherit;text-decoration:underline}
+.wk table.tbl .cb img{border-color:rgba(0,0,0,.35)}
+[data-tb]{cursor:default}
+#anteprima table[data-tb]{cursor:pointer}
+
+/* --- tabelle su mobile --- */
+@media(max-width:720px){
+  /* scorrimento orizzontale: funziona anche senza il contenitore .tw (l'infobox resta a parte) */
+  .wk table:not(.ib){display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .wk .tw{margin:0 -4px}
+  .wk .tw table:not(.ib){display:table;max-width:none;overflow:visible}
+  /* .wk su mobile ha overflow-wrap:anywhere: nelle celle spezzerebbe le parole lettera per lettera */
+  .wk th,.wk td{overflow-wrap:break-word;word-break:normal;padding:4px 7px;font-size:14px;line-height:1.45}
+  .wk table.tbl caption{font-size:16px;padding:5px 6px}
+  .wk table:not(.ib) img{max-width:100%;height:auto}
+}
 
 /* ===== Mobile ===== */
 img{max-width:100%}
@@ -102,12 +139,10 @@ img{max-width:100%}
   #tools .btn{flex:none}
   .wk{padding:4px 2px;overflow-wrap:anywhere}
   .wk h2{font-size:21px}.wk h3{font-size:18px}
-  .wk .tw{margin:0 -4px}
   .card{padding:9px 11px}.card h3{font-size:16px}
   .site::before{height:80px}
 }
 @media(max-width:380px){header h1{font-size:19px}.btn,.chip{padding:4px 9px}}
-
 
 /* ===== Immagini con controllo di dimensione/posizione ===== */
 .wk .im{display:block;margin:6px 0;max-width:100%}
@@ -127,7 +162,6 @@ input[type=checkbox]{width:auto;min-height:0}
 label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cursor:pointer}
 #iCode{word-break:break-all;user-select:all}
 @media(max-width:720px){.cols3{grid-template-columns:1fr}input[type=checkbox]{width:20px;height:20px}}
-
 
 /* ===== Indice della pagina (colonna laterale della wiki): voci come testo normale dentro la "bolla" ===== */
 #toc{padding:2px 2px 4px}
@@ -150,7 +184,6 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cu
 .tf .tcp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tf .tadd{flex:none;font-size:12px;padding:2px 6px}
 @media(max-width:720px){#tree{max-height:260px}}
-
 
 /* ===== Grafici delle elezioni (link CEPU nel testo: ![|centro|420|cap|scuro](…CEPU.html?tipo=…&data=…)) ===== */
 main,.panel,.wk{min-width:0}
@@ -241,17 +274,6 @@ body.red .site{max-width:1500px}
 #hl .h-ib{color:#c084fc;font-weight:700}  /* {{infobox ... }} */
 #hl .h-lab{color:#f9a8d4}                 /* Etichetta: dentro la scheda */
 
-/* ===== Tabelle ({{tabella}}): celle unite e colorate ===== */
-.wk table.tbl{margin:10px 0}
-.wk table.tbl.tfull{width:100%}
-.wk table.tbl caption{caption-side:top;padding:6px 8px;font-size:17px;font-weight:700;color:#fff;text-align:center}
-.wk table.tbl th{text-align:center;font-weight:700}
-.wk table.tbl img{margin:2px 0;vertical-align:middle}
-.wk table.tbl .cb a{color:inherit;text-decoration:underline}
-.wk table.tbl .cb img{border-color:rgba(0,0,0,.35)}
-[data-tb]{cursor:default}
-#anteprima table[data-tb]{cursor:pointer}
-
 /* ===== Editor delle tabelle (redazione) ===== */
 .tb-bar{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
 .tb-grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px 6px;border:1px solid rgba(160,200,255,.25);border-radius:6px;background:rgba(255,255,255,.04)}
@@ -270,4 +292,4 @@ body.red .site{max-width:1500px}
 #tbGrid textarea{display:block;width:100%;min-height:34px;box-sizing:border-box;margin:0;padding:6px 7px;border:0;border-radius:0;resize:none;overflow:hidden;
   background:transparent;box-shadow:none;color:inherit;caret-color:currentColor;font-family:inherit;font-size:13px;line-height:1.35;font-weight:inherit;font-style:inherit;text-align:inherit;-webkit-user-select:text;user-select:text}
 #tbGrid textarea:focus,#tbGrid textarea:focus-visible{outline:0}
-@media(max-width:720px){#tbGrid textarea{font-size:16px}.tb-grp .btn{min-height:36px}}
+@media(max-width:720px){#tbGrid textarea{font-size:16px}#tbGrid td{min-width:96px}.tb-grp .btn{min-height:36px}}
