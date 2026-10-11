@@ -60,6 +60,7 @@
             <button type="button" class="btn" data-w="- |elemento">• Elenco</button><button type="button" class="btn" data-w="> |citazione">❝</button>
             <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
             <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
+            <button type="button" class="btn" id="btnGraf" title="Inserisce il grafico di un'elezione CEPU a partire dal suo link">📈 Grafico</button>
             <button type="button" class="btn" data-w="|\n| Colonna 1 | Colonna 2 |\n|---|---|\n| Cella | Cella |\n|">📊 Tabella</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
           </div>
           <div class="panel" id="imgPanel" hidden style="margin:6px 0 10px">
@@ -87,6 +88,7 @@
           <div class="cols"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
+          <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
           <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
           <p id="msg" class="err"></p>
           <div class="chips">
@@ -190,6 +192,11 @@
   const rinvia = () => { leggiCampi(); clearTimeout(tImg); tImg = setTimeout(applica, 300); };
 
   $('btnImg').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriImg(tutteImg().find(x => p >= x.i && p <= x.f) || null); });
+  $('btnGraf').addEventListener('click', async () => {      // grafico di un'elezione CEPU: si comporta come un'immagine (stesso pannello)
+    const r = await Wiki.inserisciGrafico($('fTesto')); if (!r) return;
+    const s = tutteImg().find(x => x.i >= r.i && x.url === r.url);
+    if (s) { apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
   $('imgPanel').addEventListener('input', rinvia); $('imgPanel').addEventListener('change', rinvia);
   $('iChiudi').addEventListener('click', chiudiImg);
   $('iDel').addEventListener('click', () => { if (imgSel) { const t = $('fTesto'); t.value = t.value.slice(0, imgSel.i) + t.value.slice(imgSel.f); anteprima(); } chiudiImg(); });
@@ -292,7 +299,7 @@
   $('elimina').addEventListener('click', elimina);
   $('vEditor').addEventListener('submit', salva);
   $('fTesto').addEventListener('input', anteprima);
-  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg')) e.preventDefault(); });
+  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg,#btnGraf')) e.preventDefault(); });
   $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
   window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
 
