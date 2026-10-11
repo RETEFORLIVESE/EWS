@@ -7,7 +7,7 @@
 <title>Estji Wiki — Redazione</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=5">
+<link rel="stylesheet" href="assets/css/wiki.css?v=6">
 </head>
 <body>
 <div class="site">
@@ -86,7 +86,7 @@
             </div>
             <div class="chips"><button type="button" class="btn pri" id="iChiudi">Fatto</button><button type="button" class="btn del" id="iDel" hidden>Rimuovi immagine</button></div>
           </div>
-          <div class="cols"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
+          <div class="cols"><div class="ed"><pre id="hl" aria-hidden="true"></pre><textarea id="fTesto" rows="20" aria-label="Testo della pagina" spellcheck="false"></textarea></div><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
           <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Barre %</i> (<code>barre</code>), <i>Grafico scuro</i> (<code>scuro</code>) e <i>Solo emiciclo</i> (<code>noseggi</code>: niente legenda né seggi per partito, il totale sta al centro). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
@@ -146,7 +146,40 @@
     $('elimina').hidden = !p; anteprima(); vista(true);
     (p ? $('fTesto') : $('fTitolo')).focus();
   }
-  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; };
+  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; evidenzia(); };
+
+  /* ---------- colori nell'editor: un livello colorato dietro la casella di testo (testo normale = bianco) ---------- */
+  const RX = /(!\[[^\]\n]*\]\([^)\s\n]*\))|(\[\[[^\]\n]*\]\])|(\[[^\]\n]*\]\([^)\s\n]*\))|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(`[^`\n]+`)/g;
+  const RXT = new RegExp(RX.source + '|(\\|)', 'g');
+  const CL = ['', 'h-img', 'h-wk', 'h-url', 'h-b', 'h-i', 'h-c', 'h-p'];
+  const tok = (s, tab) => {
+    const re = tab ? RXT : RX; re.lastIndex = 0; let o = '', k = 0, m;
+    while ((m = re.exec(s))) {
+      o += E(s.slice(k, m.index));
+      o += `<span class="${CL[m.findIndex((x, i) => i > 0 && x !== undefined)]}">${E(m[0])}</span>`;
+      k = m.index + m[0].length;
+    }
+    return o + E(s.slice(k));
+  };
+  function evidenzia() {
+    let ib = false, m;
+    const out = $('fTesto').value.replace(/\r/g, '').split('\n').map(l => {
+      const r = l.trim();
+      if (/^\{\{\s*infobox\b/i.test(r)) { ib = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
+      if (ib && r === '}}') { ib = false; return `<span class="h-ib">${E(l)}</span>`; }
+      if (/^#{2,3}\s/.test(r)) return `<span class="${r[2] === '#' ? 'h-h3' : 'h-h2'}">${tok(l)}</span>`;
+      if (ib && (m = /^(\s*[^:!\[\s][^:]*:)(\s.*)?$/.exec(l))) return `<span class="h-lab">${E(m[1])}</span>` + tok(m[2] || '');
+      if (/^---+$/.test(r)) return `<span class="h-hr">${E(l)}</span>`;
+      if (r[0] === '>') return `<span class="h-q">${tok(l)}</span>`;
+      if (r[0] === '|') return tok(l, true);
+      if ((m = /^(\s*(?:[-*]|\d+\.))(\s.*)$/.exec(l))) return `<span class="h-li">${E(m[1])}</span>` + tok(m[2]);
+      return tok(l);
+    });
+    const h = $('hl'); h.innerHTML = out.join('\n') + '\n ';
+    h.scrollTop = $('fTesto').scrollTop; h.scrollLeft = $('fTesto').scrollLeft;
+  }
+  $('fTesto').addEventListener('scroll', () => { $('hl').scrollTop = $('fTesto').scrollTop; $('hl').scrollLeft = $('fTesto').scrollLeft; });
+  if (window.ResizeObserver) new ResizeObserver(evidenzia).observe($('fTesto'));
 
   function inserisci(modello) { // "prima|selezione o segnaposto|dopo"
     const t = $('fTesto'), [a, m, d = ''] = modello.replace(/\\n/g, '\n').split('|'), i = t.selectionStart, f = t.selectionEnd;

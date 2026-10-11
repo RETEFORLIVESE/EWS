@@ -205,3 +205,27 @@ main,.panel,.wk{min-width:0}
 }
 @media(max-width:720px){.wg-card{font-size:14px}.wg-leg{font-size:13px}}
 #gOpz{display:flex;flex-wrap:wrap;gap:0 18px}#gOpz .chk{margin-right:0}
+
+/* ===== Editor con colori (redazione): <pre> colorato dietro a una textarea trasparente ===== */
+.ed{position:relative;min-width:0;border:1px solid #000;border-radius:5px;background:#050b17;box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
+.ed #hl,.ed #fTesto{margin:0;padding:7px 10px;border:0;border-radius:5px;font:14px/1.5 Consolas,monospace;letter-spacing:normal;tab-size:4;
+  white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;overflow-y:scroll;overflow-x:hidden}
+.ed #hl{position:absolute;inset:0;color:#fff;pointer-events:none;background:none;box-shadow:none}
+.ed #fTesto{position:relative;display:block;width:100%;background:transparent;box-shadow:none;color:transparent;caret-color:#fff;resize:vertical}
+.ed #fTesto::selection{background:rgba(79,208,255,.35);color:transparent}
+.ed #fTesto::placeholder{color:#6b86a8}
+@media(max-width:720px){.ed #hl,.ed #fTesto{font-size:16px}}
+#hl .h-img{color:#6ee7a0}                 /* immagini e grafici: verde */
+#hl .h-url{color:#5aa9ff}                 /* link a siti: blu */
+#hl .h-wk{color:#2dd4bf}                  /* [[pagine wiki]]: turchese */
+#hl .h-h2{color:#ff9f43;font-weight:700}  /* ## titoli */
+#hl .h-h3{color:#ffd166;font-weight:700}  /* ### sottotitoli */
+#hl .h-q{color:#b79cff}                   /* > citazioni */
+#hl .h-p{color:#f472b6}                   /* | tabelle */
+#hl .h-li{color:#facc15}                  /* - elenchi */
+#hl .h-b{color:#ff7b7b;font-weight:700}   /* **grassetto** */
+#hl .h-i{color:#f0abfc}                   /* *corsivo* */
+#hl .h-c{color:#ffd84a;background:rgba(255,216,74,.12)}  /* `codice` */
+#hl .h-hr{color:#7d8fa8}
+#hl .h-ib{color:#c084fc;font-weight:700}  /* {{infobox ... }} */
+#hl .h-lab{color:#f9a8d4}                 /* Etichetta: dentro la scheda */
