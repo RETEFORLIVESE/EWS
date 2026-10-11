@@ -204,3 +204,4 @@ main,.panel,.wk{min-width:0}
   .wg-ref .o{font-size:1.05em}
 }
 @media(max-width:720px){.wg-card{font-size:14px}.wg-leg{font-size:13px}}
+#gOpz{display:flex;flex-wrap:wrap;gap:0 18px}#gOpz .chk{margin-right:0}

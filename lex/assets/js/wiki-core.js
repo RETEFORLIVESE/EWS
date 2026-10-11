@@ -9,12 +9,12 @@ const Wiki = {
   /* ---------- immagini: ![didascalia|opzioni](https://...) ----------
      opzioni (in qualsiasi ordine, separate da |):  300 = larghezza px · 40% = larghezza % · h120 = altezza px
      sx / dx = a sinistra/destra con il testo intorno · centro = centrata su riga propria · riga = in mezzo alle parole (predefinito)
-     grafici CEPU: scuro = sfondo scuro · noseggi = niente pallini né seggi per partito (resta il totale)
+     grafici CEPU: barre = barre % al posto dell'emiciclo · scuro = sfondo scuro · noseggi = solo l'emiciclo (niente legenda, totale al centro)
      alto / medio / basso / base = allineamento verticale rispetto alle parole (in riga) · y-10 / y15 = sposta su/giù di N px
      cap = mostra la didascalia sotto · nobordo = senza bordo · adatta / riempi = come riempire il riquadro se larghezza e altezza sono fisse */
   imgOpz(alt) {
     const [d, ...r] = String(alt || '').split('|').map(s => s.trim());
-    const o = { didas: d || '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '', dark: false, ns: false };
+    const o = { didas: d || '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '', dark: false, ns: false, br: false };
     r.forEach(x => {
       x = x.toLowerCase(); let m;
       if ((m = /^(\d{1,4})(px|%)?$/.exec(x))) o.w = m[1] + (m[2] || 'px');
@@ -29,6 +29,7 @@ const Wiki = {
       else if (x === 'nobordo') o.nob = true;
       else if (x === 'scuro') o.dark = true;
       else if (x === 'noseggi') o.ns = true;
+      else if (x === 'barre') o.br = true;
       else if (x === 'adatta' || x === 'riempi') o.fit = x;
     });
     return o;
@@ -45,6 +46,7 @@ const Wiki = {
     if (o.nob) p.push('nobordo');
     if (o.dark) p.push('scuro');
     if (o.ns) p.push('noseggi');
+    if (o.br) p.push('barre');
     return '![' + p.join('|') + '](' + url + ')';
   },
 
@@ -52,13 +54,13 @@ const Wiki = {
      Si scrivono come un'immagine il cui indirizzo è il link dell'elezione:
         ![didascalia|sx|300|cap](https://ews-rose.vercel.app/CEPU.html?tipo=K&data=12%2F09%2F2023)
      Accetta le stesse opzioni delle immagini (sx / dx / centro / riga (predefinito), larghezza, h…, y…, cap, nobordo) più due solo per i grafici:
-     scuro = sfondo scuro · noseggi = niente pallini né seggi per partito, resta il totale.
+     scuro = sfondo scuro · noseggi = solo l'emiciclo, senza legenda (il totale va al centro).
      Lo stile è in wiki.css (sezione «Grafici delle elezioni»).
      Senza didascalia, con "cap" compare "tipo — data" in automatico. Parametro facoltativo: &comune=… */
   _MAPPA_TIPO: { K: 'costituzionale', G: 'assemblea di sezione', C: 'congresso statale', S: 'congresso unitario', D: 'congresso distrettuale', M: 'congresso metropolitano', T: 'congresso regionale', R: 'referendum' },
   _PALETTE: ['#1B5FA8', '#C0392B', '#C9A227', '#2E9E5B', '#7A4FA3', '#E07B39', '#2E77C9', '#8A8F98', '#0B3D6E', '#B85C9E'],
   _gr: {}, _el: {},
-  _k: (u, ns) => u + (ns ? '|noseggi' : ''),   // chiave della cache: il testo del grafico cambia solo con noseggi
+  _k: (u, ns, br) => u + (ns ? '|noseggi' : '') + (br ? '|barre' : ''),   // chiave della cache: il testo del grafico cambia solo con noseggi
   eGrafico: url => /\/CEPU\.html\?/i.test(url) && /[?&;]tipo=/i.test(url),
   _dataEl: e => e.data ?? e.Data ?? e.data_elezione ?? e.dataElezione ?? e.date ?? e.anno ?? '',
   _ymd(v) {   // data -> "AAAA-MM-GG" (oppure il solo valore, se è un anno)
@@ -116,18 +118,18 @@ const Wiki = {
     }
     punti.sort((a, b) => b.ang - a.ang);
     const spazio = righe > 1 ? (rEst - rInt) / (righe - 1) : (rEst - rInt), rp = Math.max(2.5, Math.min(9, spazio / 2.4));
-    if (ns) {   // «niente seggi»: nessun pallino e nessun numero per partito, solo il totale (e i nomi dei partiti con il loro colore)
-      const nomi = cs.map(x => `<span><i style="background:${Wiki.esc(Wiki._col(x.p, x.i))}"></i>${Wiki.esc(x.p.nome)}</span>`).join('');
-      return `<span class="wg-tot wg-big">${n} seggi</span><span class="wg-leg">${nomi}</span>`;
-    }
     let k = 0, cerchi = '';
     cs.forEach(x => { for (let j = 0; j < x.seggi && k < punti.length; j++, k++) cerchi += `<circle cx="${punti[k].x.toFixed(1)}" cy="${punti[k].y.toFixed(1)}" r="${rp.toFixed(1)}" fill="${Wiki.esc(Wiki._col(x.p, x.i))}"><title>${Wiki.esc(x.p.nome)}${ns ? '' : ' (' + x.seggi + ' seggi)'}</title></circle>`; });
     const leg = cs.map(x => `<span><i style="background:${Wiki.esc(Wiki._col(x.p, x.i))}"></i>${Wiki.esc(x.p.nome)}${ns ? '' : ' — ' + x.seggi}</span>`).join('');
-    return `<span class="wg-g"><svg viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Composizione dell'assemblea">${cerchi}</svg></span><span class="wg-tot">${n} seggi</span><span class="wg-leg">${leg}</span>`;
+    // «solo emiciclo» (noseggi): niente legenda né numeri per partito; il totale va al centro del semicerchio
+    const centro = ns ? `<text x="250" y="208" text-anchor="middle" font-size="38" font-weight="900" fill="currentColor">${n}</text><text x="250" y="232" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor">seggi</text>` : '';
+    return `<span class="wg-g"><svg viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Composizione dell'assemblea">${cerchi}${centro}</svg></span>` + (ns ? '' : `<span class="wg-tot">${n} seggi</span><span class="wg-leg">${leg}</span>`);
   },
-  _gBarre(partiti) {
-    const r = partiti.map((p, i) => ({ p, i, perc: Wiki._perc(p.percentuale) })).sort((a, b) => b.perc - a.perc).slice(0, 8)
-      .map(x => `<span class="r"><span class="n">${Wiki.esc(x.p.nome)}</span><span class="t"><b style="width:${Math.min(100, x.perc).toFixed(2)}%;background:${Wiki.esc(Wiki._col(x.p, x.i))}"></b></span><span class="p">${Wiki.esc(x.p.percentuale != null && x.p.percentuale !== '' ? x.p.percentuale : Wiki._fp(x.perc))}</span></span>`).join('');
+  _gBarre(partiti, tutti) {   // barre %: usa "percentuale"; se manca, la ricava da voti o seggi
+    const haPerc = partiti.some(p => Wiki._perc(p.percentuale) > 0), valore = p => Wiki._int(p.voti) || (parseInt(p.seggi, 10) || 0);
+    const base = haPerc ? 0 : (partiti.some(p => Wiki._int(p.voti) > 0) ? 1 : 2), tot = partiti.reduce((a, p) => a + (base === 1 ? Wiki._int(p.voti) : (parseInt(p.seggi, 10) || 0)), 0);
+    const r = partiti.map((p, i) => ({ p, i, perc: haPerc ? Wiki._perc(p.percentuale) : (tot ? (base === 1 ? Wiki._int(p.voti) : (parseInt(p.seggi, 10) || 0)) / tot * 100 : 0) })).sort((a, b) => b.perc - a.perc).slice(0, tutti ? 20 : 8)
+      .map(x => `<span class="r"><span class="n">${Wiki.esc(x.p.nome)}</span><span class="t"><b style="width:${Math.min(100, x.perc).toFixed(2)}%;background:${Wiki.esc(Wiki._col(x.p, x.i))}"></b></span><span class="p">${Wiki.esc(haPerc && x.p.percentuale != null && x.p.percentuale !== '' ? x.p.percentuale : Wiki._fp(x.perc))}</span></span>`).join('');
     return `<span class="wg-g"><span class="wg-barre">${r}</span></span>`;
   },
   _gReferendum(partiti) {
@@ -141,22 +143,22 @@ const Wiki = {
     return `<span class="wg-g"><span class="wg-ref"><span class="o s">${Wiki.esc(si.nome)}</span><span class="b"><b style="width:${quota.toFixed(2)}%"></b></span><span class="o n">${Wiki.esc(no.nome)}</span>` +
       `<span class="v">${vSi.toLocaleString('it-IT')}</span><span></span><span class="v">${vNo.toLocaleString('it-IT')}</span><span class="c">${Wiki._fp(pSi)}</span><span></span><span class="c">${Wiki._fp(pNo)}</span></span></span>`;
   },
-  graficoElezione(e, ns) {
+  graficoElezione(e, ns, br) {
     const cod = Wiki._cod(e), partiti = Array.isArray(e.risultati_partiti) ? e.risultati_partiti : [];
     if (!partiti.length) throw new Error('nessun risultato registrato');
     const conSeggi = partiti.filter(p => (parseInt(p.seggi, 10) || 0) > 0);
-    const g = cod === 'R' ? Wiki._gReferendum(partiti) : (conSeggi.length > 1 ? Wiki._gEmiciclo(partiti, ns) : Wiki._gBarre(partiti));
+    const g = cod === 'R' ? Wiki._gReferendum(partiti) : (conSeggi.length > 1 && !br ? Wiki._gEmiciclo(partiti, ns) : Wiki._gBarre(partiti, br));
     const cap = Wiki.esc(e.tipo || Wiki._MAPPA_TIPO[cod] || 'Elezione') + ' — ' + Wiki.esc(Wiki._fmtData(Wiki._dataEl(e))) + (e.comune && cod !== 'S' && cod !== 'R' ? ' · ' + Wiki.esc(e.comune) : '');
     return { html: `<span class="wg-card">${g}</span>`, cap };
   },
   graficoHtml(o, n, url) {   // segnaposto del grafico: i dati arrivano da Wiki.hydrate()
-    const u = url.replace(/&amp;/g, '&'), pos = o.pos || 'in', c = Wiki._gr[Wiki._k(u, o.ns)];
+    const u = url.replace(/&amp;/g, '&'), pos = o.pos || 'in', c = Wiki._gr[Wiki._k(u, o.ns, o.br)];
     const va = { alto: 'text-top', medio: 'middle', basso: 'text-bottom', base: 'baseline' };
     let st = 'width:' + (o.w || '420px') + ';';
     if (pos === 'in') st += (o.va ? 'vertical-align:' + va[o.va] + ';' : '') + (o.y ? 'position:relative;top:' + o.y + 'px;' : '');
     else if (o.y) st += 'margin-top:' + o.y + 'px;';
     const auto = o.cap && !o.didas;
-    return `<span class="im im-${pos} wg${o.nob ? ' nb' : ''}${o.dark ? ' wg-d' : ''}${o.h ? ' wg-h' : ''}" style="${st}" data-im="${n}" data-gr="${url}"${c ? ' data-ok="1"' : ''}${auto ? ' data-ac="1"' : ''}${o.ns ? ' data-ns="1"' : ''}>` +
+    return `<span class="im im-${pos} wg${o.nob ? ' nb' : ''}${o.dark ? ' wg-d' : ''}${o.h ? ' wg-h' : ''}" style="${st}" data-im="${n}" data-gr="${url}"${c ? ' data-ok="1"' : ''}${auto ? ' data-ac="1"' : ''}${o.ns ? ' data-ns="1"' : ''}${o.br ? ' data-br="1"' : ''}>` +
       `<span class="wg-body"${o.h ? ` style="height:${o.h}px"` : ''}>${c ? c.html : '<span class="wg-msg">Caricamento grafico…</span>'}</span>` +
       (o.cap ? `<span class="cap">${o.didas || (c ? c.cap : '')}</span>` : '') + '</span>';
   },
@@ -166,8 +168,8 @@ const Wiki = {
       el.setAttribute('data-ok', '1');
       const u = el.getAttribute('data-gr'), body = el.querySelector('.wg-body'), cap = el.querySelector('.cap');
       try {
-        const ns = el.hasAttribute('data-ns'), r = Wiki.graficoElezione(await Wiki.trovaElezione(u), ns);
-        Wiki._gr[Wiki._k(u, ns)] = r; body.innerHTML = r.html;
+        const ns = el.hasAttribute('data-ns'), br = el.hasAttribute('data-br'), r = Wiki.graficoElezione(await Wiki.trovaElezione(u), ns, br);
+        Wiki._gr[Wiki._k(u, ns, br)] = r; body.innerHTML = r.html;
         if (cap && el.hasAttribute('data-ac')) cap.innerHTML = r.cap;
       } catch (err) { body.innerHTML = `<span class="wg-msg wg-err">Grafico non disponibile (${Wiki.esc(err.message)})</span>`; }
     }
