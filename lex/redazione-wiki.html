@@ -78,6 +78,7 @@
               <div><label for="iY">Sposta in verticale (px: − su, + giù)</label><input id="iY" type="number" min="-500" max="500" placeholder="0"></div>
             </div>
             <label class="chk"><input type="checkbox" id="iCap"> Mostra la didascalia sotto</label><label class="chk"><input type="checkbox" id="iNob"> Senza bordo</label>
+            <span id="gOpz" hidden><label class="chk"><input type="checkbox" id="iScuro"> Grafico scuro (sfondo scuro)</label><label class="chk"><input type="checkbox" id="iNoS"> Nascondi i seggi per partito (resta il totale)</label></span>
             <div id="albero">
               <div style="display:flex;gap:6px;margin-top:12px"><input id="tFiltro" type="search" placeholder="Cerca nelle immagini della repo…" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn" id="tRicarica" title="Ricarica l'elenco da GitHub">↻</button></div>
               <p class="note" id="tNote"></p>
@@ -88,7 +89,7 @@
           <div class="cols"><textarea id="fTesto" rows="20" aria-label="Testo della pagina"></textarea><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
-          <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
+          <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Grafico scuro</i> (<code>scuro</code>) e <i>Nascondi i seggi per partito</i> (<code>noseggi</code>: resta solo il totale). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
           <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
           <p id="msg" class="err"></p>
           <div class="chips">
@@ -162,7 +163,9 @@
 
   function leggiCampi() {
     const o = { didas: $('iDid').value.replace(/[|\[\]]/g, ' ').trim(), w: '', h: '', pos: $('iPos').value, va: $('iVa').value,
-      y: parseInt($('iY').value, 10) || 0, cap: $('iCap').checked, nob: $('iNob').checked, fit: $('iFit').value };
+      y: parseInt($('iY').value, 10) || 0, cap: $('iCap').checked, nob: $('iNob').checked, fit: $('iFit').value, dark: false, ns: false };
+    const graf = Wiki.eGrafico($('iUrl').value.trim()); $('gOpz').hidden = !graf;   // scuro / noseggi esistono solo per i grafici CEPU
+    if (graf) { o.dark = $('iScuro').checked; o.ns = $('iNoS').checked; }
     const w = parseInt($('iW').value, 10); if (w > 0) o.w = w + $('iWu').value;
     const h = parseInt($('iH').value, 10); if (h > 0) o.h = String(h);
     if (o.pos) o.va = '';                      // l'allineamento verticale vale solo per le immagini in riga
@@ -171,11 +174,11 @@
   }
   function apriImg(sel) {
     imgSel = sel ? { i: sel.i, f: sel.f } : null;
-    const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '' };
+    const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '', dark: false, ns: false };
     $('iUrl').value = sel ? sel.url : ''; $('iDid').value = o.didas;
     $('iW').value = o.w ? parseInt(o.w, 10) : ''; $('iWu').value = /%$/.test(o.w) ? '%' : 'px'; $('iH').value = o.h;
     $('iFit').value = o.fit; $('iPos').value = o.pos === 'in' ? '' : o.pos; $('iVa').value = o.va; $('iY').value = o.y || '';
-    $('iCap').checked = o.cap; $('iNob').checked = o.nob;
+    $('iCap').checked = o.cap; $('iNob').checked = o.nob; $('iScuro').checked = !!o.dark; $('iNoS').checked = !!o.ns;
     $('imgTit').textContent = sel ? 'Modifica immagine' : 'Nuova immagine'; $('iDel').hidden = !sel;
     $('imgPanel').hidden = false; leggiCampi();
     caricaAlbero();
