@@ -215,6 +215,17 @@ main,.panel,.wk{min-width:0}
 .ed #fTesto::selection{background:rgba(79,208,255,.35);color:transparent}
 .ed #fTesto::placeholder{color:#6b86a8}
 @media(max-width:720px){.ed #hl,.ed #fTesto{font-size:16px}}
+/* una sola casella: il riquadro è quello del contenitore, la textarea è senza bordo e senza contorno proprio */
+.edcols{align-items:start}
+.ed #fTesto:focus,.ed #fTesto:focus-visible{outline:0}
+.ed:focus-within{outline:2px solid #9ee6ff;outline-offset:2px}
+/* SOLO redazione: pannello più largo e editor più alto */
+body.red .site{max-width:1500px}
+@media(min-width:721px){
+  body.red .edcols{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+  body.red .ed #fTesto{height:72vh;min-height:420px}
+  body.red #anteprima{max-height:72vh!important}
+}
 #hl .h-img{color:#6ee7a0}                 /* immagini e grafici: verde */
 #hl .h-url{color:#5aa9ff}                 /* link a siti: blu */
 #hl .h-wk{color:#2dd4bf}                  /* [[pagine wiki]]: turchese */

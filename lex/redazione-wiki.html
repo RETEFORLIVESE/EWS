@@ -7,9 +7,9 @@
 <title>Estji Wiki — Redazione</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=6">
+<link rel="stylesheet" href="assets/css/wiki.css?v=7">
 </head>
-<body>
+<body class="red">
 <div class="site">
   <header>
     <div class="flag"><i></i><i></i><i></i><i></i></div>
@@ -86,7 +86,7 @@
             </div>
             <div class="chips"><button type="button" class="btn pri" id="iChiudi">Fatto</button><button type="button" class="btn del" id="iDel" hidden>Rimuovi immagine</button></div>
           </div>
-          <div class="cols"><div class="ed"><pre id="hl" aria-hidden="true"></pre><textarea id="fTesto" rows="20" aria-label="Testo della pagina" spellcheck="false"></textarea></div><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
+          <div class="cols edcols"><div class="ed"><pre id="hl" aria-hidden="true"></pre><textarea id="fTesto" rows="20" aria-label="Testo della pagina" spellcheck="false"></textarea></div><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
           <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Barre %</i> (<code>barre</code>), <i>Grafico scuro</i> (<code>scuro</code>) e <i>Solo emiciclo</i> (<code>noseggi</code>: niente legenda né seggi per partito, il totale sta al centro). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
