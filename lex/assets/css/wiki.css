@@ -240,3 +240,34 @@ body.red .site{max-width:1500px}
 #hl .h-hr{color:#7d8fa8}
 #hl .h-ib{color:#c084fc;font-weight:700}  /* {{infobox ... }} */
 #hl .h-lab{color:#f9a8d4}                 /* Etichetta: dentro la scheda */
+
+/* ===== Tabelle ({{tabella}}): celle unite e colorate ===== */
+.wk table.tbl{margin:10px 0}
+.wk table.tbl.tfull{width:100%}
+.wk table.tbl caption{caption-side:top;padding:6px 8px;font-size:17px;font-weight:700;color:#fff;text-align:center}
+.wk table.tbl th{text-align:center;font-weight:700}
+.wk table.tbl img{margin:2px 0;vertical-align:middle}
+.wk table.tbl .cb a{color:inherit;text-decoration:underline}
+.wk table.tbl .cb img{border-color:rgba(0,0,0,.35)}
+[data-tb]{cursor:default}
+#anteprima table[data-tb]{cursor:pointer}
+
+/* ===== Editor delle tabelle (redazione) ===== */
+.tb-bar{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.tb-grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px 6px;border:1px solid rgba(160,200,255,.25);border-radius:6px;background:rgba(255,255,255,.04)}
+.tb-grp>span{font-size:11px;color:#9cc4ea;margin-right:2px}
+.tb-grp .btn{padding:3px 8px;min-height:30px;font-size:13px}
+.tb-grp input[type=color]{width:34px;height:28px;padding:0;border:1px solid #000;border-radius:4px;background:none;cursor:pointer}
+.tb-grp input[type=number]{width:70px;padding:3px 6px}
+.tb-sws{display:inline-flex;flex-wrap:wrap;gap:3px;align-items:center}
+.tb-sw{width:20px;height:20px;padding:0;border:1px solid #000;border-radius:4px;box-shadow:0 0 0 1px rgba(255,255,255,.35);cursor:pointer}
+#tbGrid{overflow:auto;max-height:440px;border:1px solid rgba(160,200,255,.3);border-radius:5px;background:#050b17;padding:4px;margin:6px 0}
+#tbGrid table{border-collapse:collapse;table-layout:fixed;-webkit-user-select:none;user-select:none}
+#tbGrid td{position:relative;vertical-align:top;border:1px solid rgba(160,200,255,.45);padding:0}
+#tbGrid td.act{outline:2px solid #ffd84a;outline-offset:-2px;z-index:1}
+#tbGrid td.sel{outline:2px solid #4fd0ff;outline-offset:-2px}
+#tbGrid td.sel::after{content:"";position:absolute;inset:0;background:rgba(79,208,255,.25);pointer-events:none}
+#tbGrid textarea{display:block;width:100%;min-height:34px;box-sizing:border-box;margin:0;padding:6px 7px;border:0;border-radius:0;resize:none;overflow:hidden;
+  background:transparent;box-shadow:none;color:inherit;caret-color:currentColor;font-family:inherit;font-size:13px;line-height:1.35;font-weight:inherit;font-style:inherit;text-align:inherit;-webkit-user-select:text;user-select:text}
+#tbGrid textarea:focus,#tbGrid textarea:focus-visible{outline:0}
+@media(max-width:720px){#tbGrid textarea{font-size:16px}.tb-grp .btn{min-height:36px}}

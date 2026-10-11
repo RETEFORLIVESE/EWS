@@ -63,6 +63,71 @@ const Wiki = {
   _k: (u, ns, br) => u + (ns ? '|noseggi' : '') + (br ? '|barre' : ''),   // chiave della cache: il testo del grafico cambia solo con noseggi
   eGrafico: url => /\/CEPU\.html\?/i.test(url) && /[?&;]tipo=/i.test(url),
   _dataEl: e => e.data ?? e.Data ?? e.data_elezione ?? e.dataElezione ?? e.date ?? e.anno ?? '',
+  /* ---------- TABELLE ----------
+     {{tabella Titolo (facoltativo)
+     @piena                         tabella a tutta larghezza (senza: larga quanto serve)
+     --                             inizio di una nuova riga
+     | testo                        cella normale          ! testo = cella d'intestazione
+     |{c2 r3 bg:#ffe599 tc:#000000 al:c va:m w:120 b i} testo      opzioni della cella: tutte facoltative, in qualsiasi ordine
+     }}
+     c2 = occupa 2 colonne · r3 = occupa 3 righe · bg:#rrggbb = colore di sfondo di TUTTA la cella · tc:#rrggbb = colore del testo
+     al:s|c|d = testo a sinistra|centro|destra · va:a|m|b = in alto|al centro|in basso · w:120 (px) o w:30% = larghezza · b = grassetto · i = corsivo
+     una cella può continuare nelle righe seguenti (a capo); dentro le celle funzionano link [[Pagina]], [testo](https://…) e immagini ![](https://…) */
+  tabParse(titolo, linee) {
+    const t = { titolo: titolo || '', piena: false, righe: [] }, col = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+    let riga = null, cella = null, m;
+    for (const l of linee) {
+      const r = l.trim(); if (!r) continue;
+      if (/^---?$/.test(r)) { if (riga) t.righe.push(riga); riga = []; cella = null; }
+      else if (/^@piena\b/i.test(r)) t.piena = true;
+      else if (r[0] === '|' || (r[0] === '!' && r[1] !== '[')) {
+        m = /^([|!])(?:\{([^}]*)\})?\s?(.*)$/.exec(r);
+        cella = { th: m[1] === '!', t: m[3], cs: 1, rs: 1, bg: '', tc: '', al: '', va: '', w: '', b: false, i: false };
+        (m[2] || '').split(/\s+/).forEach(k => {
+          let x;
+          if ((x = /^c(\d{1,2})$/.exec(k))) cella.cs = Math.min(50, Math.max(1, +x[1]));
+          else if ((x = /^r(\d{1,2})$/.exec(k))) cella.rs = Math.min(50, Math.max(1, +x[1]));
+          else if ((x = /^bg:(.+)$/.exec(k)) && col.test(x[1])) cella.bg = x[1].toLowerCase();
+          else if ((x = /^tc:(.+)$/.exec(k)) && col.test(x[1])) cella.tc = x[1].toLowerCase();
+          else if ((x = /^al:([scd])$/.exec(k))) cella.al = x[1];
+          else if ((x = /^va:([amb])$/.exec(k))) cella.va = x[1];
+          else if ((x = /^w:(\d{1,4})(px|%)?$/.exec(k))) cella.w = x[1] + (x[2] === '%' ? '%' : 'px');
+          else if (k === 'b') cella.b = true;
+          else if (k === 'i') cella.i = true;
+        });
+        if (!riga) riga = [];
+        riga.push(cella);
+      } else if (cella) cella.t += '\n' + r.replace(/^\\(?=[|!@}-])/, '');
+    }
+    if (riga) t.righe.push(riga);
+    return t;
+  },
+  tabSintassi(t) {   // t = { titolo, piena, righe: [[cella, …], …] }  ->  testo del blocco {{tabella … }}
+    const o = ['{{tabella' + (t.titolo ? ' ' + String(t.titolo).replace(/\s+/g, ' ').trim() : '')];
+    if (t.piena) o.push('@piena');
+    t.righe.forEach(riga => {
+      o.push('--');
+      riga.forEach(c => {
+        const a = [];
+        if (c.cs > 1) a.push('c' + c.cs); if (c.rs > 1) a.push('r' + c.rs);
+        if (c.bg) a.push('bg:' + c.bg); if (c.tc) a.push('tc:' + c.tc);
+        if (c.al) a.push('al:' + c.al); if (c.va) a.push('va:' + c.va);
+        if (c.w) a.push('w:' + String(c.w).replace(/px$/, ''));
+        if (c.b) a.push('b'); if (c.i) a.push('i');
+        const ls = String(c.t || '').replace(/\r/g, '').split('\n').map(x => x.trim()).filter(Boolean);
+        o.push((c.th ? '!' : '|') + (a.length ? '{' + a.join(' ') + '}' : '') + (ls.length ? ' ' + ls[0] : ''));
+        ls.slice(1).forEach(x => o.push(x.replace(/^(?=[|!@}-])/, '\\')));
+      });
+    });
+    o.push('}}');
+    return o.join('\n');
+  },
+  tabContrasto(bg) {   // colore del testo leggibile (scuro o bianco) sopra uno sfondo #rgb / #rrggbb
+    let h = String(bg).slice(1); if (h.length === 3) h = h.replace(/./g, '$&$&');
+    const v = [0, 2, 4].map(k => { const x = parseInt(h.substr(k, 2), 16) / 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); });
+    return .2126 * v[0] + .7152 * v[1] + .0722 * v[2] > .3 ? '#10203a' : '#ffffff';
+  },
+
   _ymd(v) {   // data -> "AAAA-MM-GG" (oppure il solo valore, se è un anno)
     const s = String(v == null ? '' : v).trim(); let m;
     if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[1] + '-' + m[2] + '-' + m[3];
@@ -198,10 +263,10 @@ const Wiki = {
      ## Titolo · ### Sottotitolo · **grassetto** · *corsivo* · `codice` · - elenco · 1. elenco numerato
      > citazione · --- linea · [testo](https://...) · ![didascalia](https://immagine) · [[Altra pagina]] · [[Altra pagina|testo]]
      {{infobox Titolo … }} scheda laterale stile Wikipedia (vedi sotto)
-     | a | b | tabelle (la 2ª riga |---|---| separa l'intestazione) */
+     {{tabella … }} tabelle con celle unite e colorate (vedi Wiki.tabParse) */
   render(src, pagine) {
     const e = Wiki.esc, trova = n => (pagine || []).find(p => Wiki.norm(p.titolo) === Wiki.norm(n) || p.id === Wiki.slug(n));
-    let nImg = 0, inIb = false;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
+    let nImg = 0, inIb = false, nTab = 0;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
     const imm = (alt, url) => {
       const o = Wiki.imgOpz(alt), n = nImg++, va = { alto: 'text-top', medio: 'middle', basso: 'text-bottom', base: 'baseline' };
       const fit = o.fit === 'adatta' ? 'contain' : o.fit === 'riempi' ? 'cover' : '';
@@ -239,6 +304,24 @@ const Wiki = {
       inIb = false;
       return `<table class="ib">${tit ? `<caption class="ib-t">${inl(tit)}</caption>` : ''}<colgroup><col style="width:38%"><col></colgroup><tbody>${rows}</tbody></table>`;
     };
+    // TABELLA: {{tabella Titolo … }}  (sintassi in Wiki.tabParse)
+    const ALL = { s: 'left', c: 'center', d: 'right' }, VAL = { a: 'top', m: 'middle', b: 'bottom' };
+    const tabella = (tit, linee) => {
+      const t = Wiki.tabParse(tit, linee), n = nTab++;
+      if (!t.righe.length) return '';
+      const rows = t.righe.map(riga => '<tr>' + riga.map(c => {
+        const st = [], tc = c.tc || (c.bg ? Wiki.tabContrasto(c.bg) : ''), tag = c.th ? 'th' : 'td';
+        if (c.bg) st.push('background:' + c.bg);
+        if (tc) st.push('color:' + tc);
+        if (c.al) st.push('text-align:' + ALL[c.al]);
+        if (c.va) st.push('vertical-align:' + VAL[c.va]);
+        if (c.w) st.push('width:' + c.w);
+        if (c.b) st.push('font-weight:700');
+        if (c.i) st.push('font-style:italic');
+        return `<${tag}${c.cs > 1 ? ` colspan="${c.cs}"` : ''}${c.rs > 1 ? ` rowspan="${c.rs}"` : ''}${c.bg ? ' class="cb"' : ''}${st.length ? ` style="${st.join(';')}"` : ''}>${inl(c.t).replace(/\n/g, '<br>')}</${tag}>`;
+      }).join('') + '</tr>').join('');
+      return `<div class="tw"><table class="tbl${t.piena ? ' tfull' : ''}" data-tb="${n}">${tit ? `<caption>${inl(tit)}</caption>` : ''}<tbody>${rows}</tbody></table></div>`;
+    };
     const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
     for (let i = 0; i < L.length; i++) {
       const r = L[i].trim(); let m;
@@ -248,17 +331,18 @@ const Wiki = {
         if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') { if (L[i].trim()) righe.push(L[i].trim()); i++; } }
         out.push(infobox(tit, righe)); continue;
       }
+      if (/^\{\{\s*tabella\b/i.test(r)) {
+        const tit = r.replace(/^\{\{\s*tabella\b\s*/i, '').replace(/\}\}\s*$/, ''), linee = [];
+        if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') linee.push(L[i++]); }
+        out.push(tabella(tit, linee)); continue;
+      }
       if ((m = /^(#{2,3})\s+(.*)/.exec(r))) out.push(`<h${m[1].length} id="s-${Wiki.slug(m[2])}">${inl(m[2])}</h${m[1].length}>`);
       else if (/^---+$/.test(r)) out.push('<hr>');
       else if (r[0] === '>') { const q = []; while (i < L.length && L[i].trim()[0] === '>') q.push(inl(L[i++].trim().replace(/^>\s?/, ''))); i--; out.push(`<blockquote>${q.join('<br>')}</blockquote>`); }
-      else if (r[0] === '|') {
-        const rows = []; while (i < L.length && L[i].trim()[0] === '|') rows.push(L[i++].trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim())); i--;
-        const head = rows[1] && rows[1].every(c => /^:?-+:?$/.test(c)); const body = rows.slice(head ? 2 : 0);
-        out.push(`<div class="tw"><table>${head ? `<thead><tr>${rows[0].map(c => `<th>${inl(c)}</th>`).join('')}</tr></thead>` : ''}<tbody>${body.map(x => `<tr>${x.map(c => `<td>${inl(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
-      } else if (/^([-*]|\d+\.)\s/.test(r)) {
+      else if (/^([-*]|\d+\.)\s/.test(r)) {
         const ol = /^\d/.test(r), it = []; while (i < L.length && /^([-*]|\d+\.)\s/.test(L[i].trim())) it.push(`<li>${inl(L[i++].trim().replace(/^([-*]|\d+\.)\s+/, ''))}</li>`); i--;
         out.push(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
-      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|\||---+$|\{\{|([-*]|\d+\.)\s)/.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; out.push(`<p>${p.join('<br>')}</p>`); }
+      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; out.push(`<p>${p.join('<br>')}</p>`); }
     }
     return out.join('\n');
   },
