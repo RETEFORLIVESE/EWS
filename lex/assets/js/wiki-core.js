@@ -9,7 +9,7 @@ const Wiki = {
   /* ---------- immagini: ![didascalia|opzioni](https://...) ----------
      opzioni (in qualsiasi ordine, separate da |):  300 = larghezza px · 40% = larghezza % · h120 = altezza px
      sx / dx = a sinistra/destra con il testo intorno · centro = centrata su riga propria · riga = in mezzo alle parole (predefinito)
-     grafici CEPU: scuro = sfondo scuro · noseggi = niente seggi per partito (resta il totale)
+     grafici CEPU: scuro = sfondo scuro · noseggi = niente pallini né seggi per partito (resta il totale)
      alto / medio / basso / base = allineamento verticale rispetto alle parole (in riga) · y-10 / y15 = sposta su/giù di N px
      cap = mostra la didascalia sotto · nobordo = senza bordo · adatta / riempi = come riempire il riquadro se larghezza e altezza sono fisse */
   imgOpz(alt) {
@@ -52,7 +52,7 @@ const Wiki = {
      Si scrivono come un'immagine il cui indirizzo è il link dell'elezione:
         ![didascalia|sx|300|cap](https://ews-rose.vercel.app/CEPU.html?tipo=K&data=12%2F09%2F2023)
      Accetta le stesse opzioni delle immagini (sx / dx / centro / riga (predefinito), larghezza, h…, y…, cap, nobordo) più due solo per i grafici:
-     scuro = sfondo scuro · noseggi = niente seggi per partito, resta solo il totale.
+     scuro = sfondo scuro · noseggi = niente pallini né seggi per partito, resta il totale.
      Lo stile è in wiki.css (sezione «Grafici delle elezioni»).
      Senza didascalia, con "cap" compare "tipo — data" in automatico. Parametro facoltativo: &comune=… */
   _MAPPA_TIPO: { K: 'costituzionale', G: 'assemblea di sezione', C: 'congresso statale', S: 'congresso unitario', D: 'congresso distrettuale', M: 'congresso metropolitano', T: 'congresso regionale', R: 'referendum' },
@@ -116,6 +116,10 @@ const Wiki = {
     }
     punti.sort((a, b) => b.ang - a.ang);
     const spazio = righe > 1 ? (rEst - rInt) / (righe - 1) : (rEst - rInt), rp = Math.max(2.5, Math.min(9, spazio / 2.4));
+    if (ns) {   // «niente seggi»: nessun pallino e nessun numero per partito, solo il totale (e i nomi dei partiti con il loro colore)
+      const nomi = cs.map(x => `<span><i style="background:${Wiki.esc(Wiki._col(x.p, x.i))}"></i>${Wiki.esc(x.p.nome)}</span>`).join('');
+      return `<span class="wg-tot wg-big">${n} seggi</span><span class="wg-leg">${nomi}</span>`;
+    }
     let k = 0, cerchi = '';
     cs.forEach(x => { for (let j = 0; j < x.seggi && k < punti.length; j++, k++) cerchi += `<circle cx="${punti[k].x.toFixed(1)}" cy="${punti[k].y.toFixed(1)}" r="${rp.toFixed(1)}" fill="${Wiki.esc(Wiki._col(x.p, x.i))}"><title>${Wiki.esc(x.p.nome)}${ns ? '' : ' (' + x.seggi + ' seggi)'}</title></circle>`; });
     const leg = cs.map(x => `<span><i style="background:${Wiki.esc(Wiki._col(x.p, x.i))}"></i>${Wiki.esc(x.p.nome)}${ns ? '' : ' — ' + x.seggi}</span>`).join('');
@@ -231,7 +235,7 @@ const Wiki = {
         return `<tr><td colspan="2" class="ib-c">${inl(x)}</td></tr>`;
       }).join('');
       inIb = false;
-      return `<table class="ib">${tit ? `<caption class="ib-t">${inl(tit)}</caption>` : ''}<tbody>${rows}</tbody></table>`;
+      return `<table class="ib">${tit ? `<caption class="ib-t">${inl(tit)}</caption>` : ''}<colgroup><col style="width:38%"><col></colgroup><tbody>${rows}</tbody></table>`;
     };
     const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
     for (let i = 0; i < L.length; i++) {
