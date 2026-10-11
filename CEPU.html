@@ -989,6 +989,22 @@
             return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
         }
 
+        // Tiene l'indirizzo della pagina allineato alla selezione corrente
+        // (tipo, data, sezione), così basta copiare l'URL dalla barra del
+        // browser per condividere esattamente quell'elezione.
+        // Usa gli stessi parametri letti da applicaLinkDiretto().
+        function aggiornaUrl(tipo, data, comune) {
+            try {
+                const parametri = new URLSearchParams();
+                if (tipo) parametri.set('tipo', tipo);
+                if (data) parametri.set('data', data);
+                if (comune) parametri.set('comune', comune);
+                const query = parametri.toString();
+                const nuovoUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+                window.history.replaceState(null, '', nuovoUrl);
+            } catch (e) { /* ambienti senza History API (es. file://): link non aggiornato */ }
+        }
+
         // Scarica (una sola volta) l'intero dataset da JSONBin
         async function caricaDataset() {
             if (elezioniCache) return elezioniCache;
@@ -1026,6 +1042,7 @@
             document.getElementById('dati-elettorali').style.display = 'none';
             document.getElementById('dati-elettorali').innerHTML = '';
             document.getElementById('messaggio-iniziale').style.display = 'block';
+            aggiornaUrl(codice);
 
             try {
                 const dataset = await caricaDataset();
@@ -1097,6 +1114,7 @@
                 selComune.disabled = true;
                 gruppoSezione.style.display = richiedeSezione(codice) ? '' : 'none';
                 document.getElementById('messaggio-iniziale').style.display = 'block';
+                aggiornaUrl(codice);
                 return;
             }
 
@@ -1119,6 +1137,7 @@
                 }
 
                 gruppoSezione.style.display = '';
+                aggiornaUrl(codice, estraiValoreData(dataset[indici[0]]));
                 let opzioni = '<option value="">Scegli Sezione</option>';
                 indici.forEach(indice => {
                     opzioni += `<option value="${indice}">${dataset[indice].comune}</option>`;
@@ -1271,6 +1290,10 @@
                 document.getElementById('loading_screen').style.display = 'none';
                 document.getElementById('dati-elettorali').innerHTML = htmlRisultati;
                 document.getElementById('dati-elettorali').style.display = 'block';
+
+                // Indirizzo completo e condivisibile dell'elezione appena aperta
+                const sezioneNellUrl = richiedeSezione(codiceTipo) && !elezione.consultazione_unitaria;
+                aggiornaUrl(codiceTipo, valoreData, sezioneNellUrl ? elezione.comune : '');
 
             } catch (error) {
                 console.error(error);
