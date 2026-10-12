@@ -1,249 +1,220 @@
 <!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NomrAktiv — Redazione</title>
-  <meta name="description" content="Area di redazione per creare e modificare gli atti normativi." />
-  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/style.css" />
-  <link rel="apple-touch-icon" href="NormAktiv.png">
-  <link rel="icon" type="image/png" href="NormAktiv.png">
-
- <style>
-  /* ---- UI di login (integrazione con lo stile del sito) ---- */
-  .login-wrap {
-    max-width: 440px;
-    margin: 48px auto 80px;
-    padding: 2rem 2rem 1.6rem;
-    background: #ffffff;
-    border: 1px solid var(--bordo, #d6e2ed);
-    border-top: 5px solid var(--blu-700, #12508c);
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(11,61,110,0.12);
-    color: var(--inchiostro, #1f2a33);
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex"><link rel="manifest" href="id-manifest.webmanifest"><meta name="theme-color" content="#043a96"><link rel="apple-touch-icon" href="id-icon-512.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Estji ID"><title>Estji ID</title>
+<style>
+:root{--bg:#eaf0fb;--p:#fff;--ink:#0a1f44;--mute:#566684;--blue:#043a96;--blue2:#0a56d6;--line:#d3dcee;--ok:#0b7a4b;--bad:#b3261e;--gold:#b8921f;--r:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#050d20;--p:#0d1b3b;--ink:#e8eefc;--mute:#9aaccf;--blue:#6b97ff;--blue2:#8fb0ff;--line:#22365f;--ok:#4cd08f;--bad:#ff8a80;--gold:#e0b84a}}
+/* ===== DISEGNI DELLE CARTE (filigrana) — cambiali qui =====
+   Tessera fiscale: --disegno-fisc · Tessera elettorale: --disegno-elet
+   Valori: url("immagine.png"), un data-URI SVG, oppure none. (La carta d'identità usa --stemma.) */
+:root{--disegno-fisc:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%230b7a4b' stroke-width='3.5' stroke-linecap='round'%3E%3Ccircle cx='50' cy='50' r='45'/%3E%3Ccircle cx='50' cy='50' r='37'/%3E%3Cpath d='M64 36a20 20 0 1 0 0 28M32 45h26M32 55h26'/%3E%3C/g%3E%3C/svg%3E");--disegno-elet:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23a67c00' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='14' y='50' width='72' height='38' rx='4'/%3E%3Cpath d='M36 50V44h28v6M30 12h40v30H30zM40 27l7 7 14-15'/%3E%3C/g%3E%3C/svg%3E")}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{position:relative;background:linear-gradient(135deg,#032a6e,#043a96 55%,#0a56d6);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 22px;border-bottom:3px solid var(--gold)}
+header h1{margin:0 auto;max-width:520px;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:700;font-size:1.3rem;line-height:1.3;letter-spacing:.02em;-webkit-font-smoothing:antialiased}
+main{max-width:520px;margin:0 auto;padding:18px 16px calc(48px + env(safe-area-inset-bottom,0px))}
+.p{background:var(--p);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+h2{margin:0 0 10px;font:700 1.1rem/1.3 "Helvetica Neue",Helvetica,Arial,sans-serif}
+label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 5px}
+input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent)}
+button{margin-top:14px;padding:12px 16px;border:1px solid transparent;border-radius:8px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer;min-height:44px;transition:background .15s,transform .1s}
+@media(prefers-color-scheme:dark){button:not(.alt){color:#04112b}}
+button:hover{background:var(--blue2)}button:active{transform:scale(.98)}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.alt{background:transparent;color:var(--blue);border-color:var(--blue)}
+button.alt:hover{background:color-mix(in srgb,var(--blue) 12%,transparent)}
+button#out{width:100%;margin-top:4px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1;margin-top:0}
+.m{margin:12px 0;padding:10px 12px;border-left:4px solid var(--blue);background:var(--bg);border-radius:6px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
+ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}li:last-child{border-bottom:0}
+input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transform:scale(1.2)}
+.wal{container-type:inline-size;margin:14px 0 4px}
+.wi{position:relative;height:85.2cqw}
+.wc{position:absolute;left:0;right:0;height:63.05cqw;border-radius:3.6cqw;overflow:hidden;border:1px solid #bfcbe6;background:#f4f7fd;color:#0a1f44;box-shadow:0 -.8cqw 2.4cqw rgba(4,30,90,.22);transition:top .45s cubic-bezier(.2,.8,.2,1);cursor:pointer;isolation:isolate;-webkit-tap-highlight-color:transparent;user-select:none}
+.wc:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wc::before{content:"";position:absolute;inset:0;z-index:-1}
+.wc::after{content:"";position:absolute;z-index:0;right:-6cqw;bottom:-12cqw;width:54cqw;height:54cqw;opacity:.2;pointer-events:none;background:center/contain no-repeat}
+.wc .h{position:relative;z-index:2;height:11cqw;display:flex;align-items:center;justify-content:space-between;gap:2cqw;padding:0 4cqw;color:#fff;border-bottom:.7cqw solid #c9a227}
+.wc .h b{font-size:4.1cqw;white-space:nowrap}
+.wc .h small{font-size:2.2cqw;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:#fff}
+.wc .bd{position:absolute;z-index:1;top:11cqw;bottom:5.5cqw;left:0;right:0;padding:2.8cqw 4cqw 0;display:flex;gap:3.5cqw;overflow:hidden}
+.wc .mrz{position:absolute;z-index:1;left:0;right:0;bottom:0;height:5.5cqw;display:flex;align-items:center;padding:0 3cqw;font:700 2.1cqw ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;border-top:1px dashed #9db0d6;background:#dfe7f7}
+.wc .g{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:1.6cqw 3cqw;align-content:start;position:relative;z-index:1}
+.wc .g>div{min-width:0}
+.wc .s2{grid-column:1/-1}
+.wc small{display:block;font-size:2.2cqw;line-height:1.2;color:#566684}
+.wc .g b{display:block;font-size:3.1cqw;line-height:1.25;overflow-wrap:anywhere}
+.wc .g em{display:block;font-style:normal;font-size:2.1cqw;line-height:1.25;color:#566684;overflow-wrap:anywhere}
+.wc .u b{font:600 2.6cqw/1.3 ui-monospace,Menlo,monospace}
+.wc .dots{letter-spacing:.4cqw;color:#566684;font-weight:400}
+.wc .lc{flex:none;width:21cqw;display:flex;flex-direction:column;gap:2.5cqw;position:relative;z-index:1}
+.wc .av{flex:none;width:21cqw;height:21cqw;border-radius:2cqw;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:8cqw;font-weight:700;display:flex;align-items:center;justify-content:center;border:.5cqw solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 .8cqw 2cqw rgba(0,0,0,.18);overflow:hidden;position:relative;z-index:1}
+.wc .av.sk{background:#dfe7f7}
+.wc .av img{display:block;width:100%;height:100%;image-rendering:pixelated}
+.wc .bars{height:6cqw;opacity:.75;background:repeating-linear-gradient(90deg,#1b1f6b 0 .5cqw,transparent .5cqw 1.1cqw,#1b1f6b 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
+.wc.id .h{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6)}
+.wc.id::before{background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
+.wc.id::after{background-image:var(--stemma,url("USSEcoat.png"));opacity:.22}
+.wc.fisc{background:#fff;border-color:#c6dccf}
+.wc.fisc .h{background:linear-gradient(135deg,#074a28,#0b7a4b 60%,#14a566);border-bottom-color:#fff}
+.wc.fisc::before{background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(11,122,75,.07) 5px 6px)}
+.wc.fisc::after{background-image:var(--disegno-fisc)}
+.wc.fisc .mrz{background:#e3f0e8;border-top-color:#9cc7b0}
+.wc.elet{background:#fffbea;border-color:#e6d27a}
+.wc.elet .h{background:linear-gradient(135deg,#f2b705,#ffd23f 60%,#ffe27a);color:#3b2e00;border-bottom-color:#8a6d12}
+.wc.elet .h small{color:#5a4600;opacity:1}
+.wc.elet::before{background:repeating-linear-gradient(115deg,transparent 0 6px,rgba(184,146,31,.10) 6px 7px),repeating-linear-gradient(65deg,transparent 0 11px,rgba(138,109,18,.08) 11px 12px)}
+.wc.elet::after{background-image:var(--disegno-elet)}
+.wc.elet .mrz{background:#fbefb5;border-top-color:#e0c95a}
+.wc.elet .bars{background:repeating-linear-gradient(90deg,#3b2e00 0 .5cqw,transparent .5cqw 1.1cqw,#3b2e00 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--blue)}
+[hidden]{display:none!important}
+.qrb{text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.qrb h2{margin-bottom:4px}.qrb .oppure{margin:16px 0 0;font-size:.85rem;color:var(--mute)}
+#estji-login{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;margin:12px 0}
+#estji-login>*{margin-left:auto;margin-right:auto}
+#estji-login canvas,#estji-login img,#estji-login svg{display:block;margin:0 auto;max-width:100%;height:auto;background:#fff;padding:10px;border-radius:10px}
+#estji-login button{width:auto;margin-top:0}
+#scn{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center}
+#scn video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scn-fr{position:relative;width:min(70vw,320px);aspect-ratio:1;border:3px solid var(--gold);border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
+.scn-b{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff}
+.scn-b p{margin:0 0 8px;font-size:.95rem}.scn-b button{min-width:50%;background:rgba(255,255,255,.14);color:#fff;border-color:#fff}
+</style></head><body>
+<header><h1>Estji ID · Identità digitale USSE</h1></header><main id="app"></main>
+<div id="scn" hidden role="dialog" aria-modal="true" aria-label="Scansiona QR"><video id="scv" playsinline muted></video><div class="scn-fr"></div><div class="scn-b"><p id="scs"></p><button class="alt" id="scx" type="button">Annulla</button></div></div>
+<script src="https://ews-rose.vercel.app/estji-login.js"></script>
+<link rel="apple-touch-icon" href="id-icon-512.png">
+<link rel="icon" type="image/png" href="id-icon-512.png">
+<script>
+var $=function(s){return document.querySelector(s)},esc=function(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+var vista="pub",ip=null;
+if("serviceWorker" in navigator)navigator.serviceWorker.register("id-sw.js").catch(function(){});
+function risolvi(n){n=String(n||"").trim();if(!n)return Promise.resolve(null);var k="estji_uuid_"+n.toLowerCase();
+  try{var c=localStorage.getItem(k);if(c)return Promise.resolve(JSON.parse(c))}catch(e){}
+  return fetch("https://playerdb.co/api/player/minecraft/"+encodeURIComponent(n)).then(function(r){return r.json()}).then(function(j){var p=j&&j.success&&j.data&&j.data.player;if(!p)return null;var o={uuid:p.id,nome:p.username};try{localStorage.setItem(k,JSON.stringify(o))}catch(e){}return o}).catch(function(){return undefined})}
+function uuidMc(){if(!me||me.uuid||me._ur)return;me._ur=1;risolvi(me.nick).then(function(r){if(r&&r.uuid&&me){me.uuid=r.uuid;render()}})}
+function resid(m){return m.residenzaNome||m.residenza||((m.stato||"")+(m.sezione?" · "+m.sezione:""))}
+function testa(m){var l=esc(String(m.nick||"?").charAt(0).toUpperCase()),k=m.uuid||m.nick;
+  if(!k)return l;
+  return'<img src="https://mc-heads.net/avatar/'+encodeURIComponent(k)+'/128" alt="'+esc(m.nick)+'" width="76" height="76" onerror="this.parentNode.classList.remove(\'sk\');this.outerHTML=\''+l+'\'">'}
+var wo=["fisc","elet","id"];
+function dt(v){if(v==null||v==="")return null;var d;if(typeof v==="number")d=new Date(v<1e12?v*1000:v);else{var s=String(v).trim(),r=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);d=r?new Date(+r[3],+r[2]-1,+r[1]):new Date(s)}return isNaN(d.getTime())?null:d}
+function fd(d){return d?("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear():"—"}
+function sca(m,k){var e=dt(m[k])||dt(m.emissione)||dt(m.registrazione)||dt(m.iscritto);if(!e)return"—";var f=new Date(e.getTime());f.setDate(f.getDate()+365);return"Fino al "+fd(f)+(f<new Date()?" (scaduta)":"")}
+function cl(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")}
+function f(l,v,x,s){return'<div'+(x?' class="'+x+'"':'')+'><small>'+l+'</small><b>'+v+'</b>'+(s?'<em>'+s+'</em>':'')+'</div>'}
+function wc(k,tit,body,mrz){return'<div class="wc '+k+'" data-k="'+k+'" role="button" tabindex="0" aria-label="'+esc(tit)+'"><div class="h"><b>'+esc(tit)+'</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="bd">'+body+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
+function wallet(m){
+  var full=vista==="full",dots='<span class="dots">••••••••</span>',foto='<div class="av sk">'+testa(m)+'</div>',cup=full&&m.cup?esc(m.cup):dots,reg=fd(dt(m.registrazione||m.registrato||m.iscritto));
+  var C={};
+  C.id=wc("id","USSE · Carta d\'Identità",foto+'<div class="g">'+f("NickName",esc(m.nick))+f("Estji ID",esc(m.id))+f("Residenza",esc(resid(m)))+f("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+f("Data di registrazione",esc(reg))+f("Validità",esc(sca(m,"emissioneId")))+f("Discord",full&&m.discord?esc(m.discord):dots)+f("UUID di gioco",full&&m.uuid?esc(m.uuid):dots,"u")+'</div>',"P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,""));
+  C.fisc=wc("fisc","USSE · Tessera fiscale",'<div class="lc">'+foto+'</div><div class="g">'+f("Intestatario",esc(m.nick))+f("Stato",m.verificato?"Verificato":"In verifica")+f("Codice fiscale (CUP)",cup,"s2")+f("Residenza fiscale",esc(resid(m)),"s2",esc(m.indirizzo||m.indirizzoResidenza||""))+f("Iscritto dal",esc(fd(dt(m.iscrittoFisc||m.iscritto))))+f("Validità",esc(sca(m,"emissioneFisc")))+'</div>',"F<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
+  C.elet=wc("elet","USSE · Tessera elettorale",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Nome",esc(m.nick),"s2")+f("Sezione",esc(resid(m)),"s2")+f("Codice elettorale",cup)+f("Validità",esc(sca(m,"emissioneElet")))+'</div>',"E<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
+  var cards=wo.map(function(k,i){return C[k].replace('class="wc ','style="top:'+i*11+'cqw;z-index:'+i+'" class="wc ')}).join("");
+  return'<div class="row" style="margin-top:0"><button class="'+(full?"alt":"")+'" data-v="pub">Dati nascosti</button><button class="'+(full?"":"alt")+'" data-v="full">Dati completi</button></div><div class="wal"><div class="wi">'+cards+'</div></div>'}
+function fronte(c){var k=c.getAttribute("data-k");if(wo[wo.length-1]===k)return;wo=wo.filter(function(x){return x!==k});wo.push(k);wo.forEach(function(x,i){var e=document.querySelector('.wc[data-k="'+x+'"]');if(e){e.style.top=i*11+"cqw";e.style.zIndex=i}})}
+var UE=[["at","Austria"],["be","Belgio"],["bg","Bulgaria"],["hr","Croazia"],["cy","Cipro"],["cz","Cechia"],["dk","Danimarca"],["ee","Estonia"],["fi","Finlandia"],["fr","Francia"],["de","Germania"],["gr","Grecia"],["hu","Ungheria"],["ie","Irlanda"],["it","Italia"],["lv","Lettonia"],["lt","Lituania"],["lu","Lussemburgo"],["mt","Malta"],["nl","Paesi Bassi"],["pl","Polonia"],["pt","Portogallo"],["ro","Romania"],["sk","Slovacchia"],["si","Slovenia"],["es","Spagna"],["se","Svezia"]];
+function optUE(){return UE.map(function(c){return'<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join("")}
+function deleg(m){var v=String(m.delegazione||"").toLowerCase();for(var i=0;i<UE.length;i++)if(UE[i][0]===v||UE[i][1].toLowerCase()===v)return UE[i];return null}
+function bandiera(c){return c.toUpperCase().replace(/./g,function(x){return String.fromCodePoint(127397+x.charCodeAt(0))})}
+var LUOGHI=null,LERR=null;
+function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
+function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
+function caricaLuoghi(){return fetch("/api/organi",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){var o=[];raccogli(j&&j.luoghi,"",o);LUOGHI=o}).catch(function(e){LERR=e.message}).then(render)}
+function optLuoghi(){var gr={},ord=[];LUOGHI.forEach(function(l){var g=l.gruppo||"";if(!gr[g]){gr[g]=[];ord.push(g)}gr[g].push(l)});
+  return ord.map(function(g){var o=gr[g].map(function(l){return'<option value="'+esc(l.id)+'">'+esc(l.nome)+'</option>'}).join("");return g?'<optgroup label="'+esc(g.replace(/_/g," "))+'">'+o+'</optgroup>':o}).join("")}
+var R=new URLSearchParams(location.search).get("r"),tok=localStorage.getItem("estji_id_tok"),me=null,sso=null,tab="in",M=null,done=null;
+function api(u,b){return fetch(u,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},tok?{Authorization:"Bearer "+tok}:{}),body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok){var e=new Error(d.error||"Errore "+r.status);e.status=r.status;throw e}return d})})}
+function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
+function esci(){tok=null;me=null;sso=null;localStorage.removeItem("estji_id_tok")}
+function carica(){
+  if(!tok)return render();
+  api("/api/estji",{azione:"profilo"}).then(function(d){me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){sso=null;done=["bad",e.message]}):0}).catch(function(e){if(e.status===401)esci();else M=["bad",e.message]}).then(render);
+}
+function render(){uuidMc();
+  var h="";
+  if(R&&!done&&!me)h+='<div class="m">Per confermare l\'accesso al portale, accedi con la tua identità.</div>';
+  if(!me){
+    h+='<div class="row"><button class="'+(tab==="in"?"":"alt")+'" data-t="in">Accedi</button><button class="'+(tab==="reg"?"":"alt")+'" data-t="reg">Registrati</button></div><div class="p" style="margin-top:12px">';
+    if(tab==="in")h+=qrBlocco()+'<label for="n">Nome in gioco</label><input id="n" autocomplete="username" value="'+esc(localStorage.getItem("estji_id_nick")||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><button id="go">Accedi</button>';
+    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="ind">Indirizzo di residenza</label><input id="ind" maxlength="80" autocomplete="off"><label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
+    $("#app").innerHTML=h+msg()+"</div>";bind();return;
   }
-  .login-wrap h2 {
-    margin: 0 0 0.3rem;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    letter-spacing: 0.03em;
-    font-size: 1.35rem;
-    color: var(--blu-900, #0b1f38);
+  if(R){
+    h+='<div class="p"><h2>Richiesta di accesso</h2>';
+    if(done)h+='<div class="m '+done[0]+'">'+esc(done[1])+'</div>';
+    else if(sso){
+      h+='<p>Vuoi accedere a <b>'+esc(sso.portale)+'</b>?<br><span class="mute">Richiesta da: '+esc(sso.da||"browser")+'</span></p><p class="mute">Il portale vedrà:</p><ul>'+sso.permessi.map(function(x){return"<li>"+esc(x)+"</li>"}).join("")+'</ul>';
+      if(sso.numero)h+='<p><b>Scegli il numero che vedi sul PC.</b></p><div class="row">'+sso.numero.map(function(n){return'<button class="alt" data-n="'+n+'">'+n+'</button>'}).join("")+'</div>';
+      else h+='<button id="ok" style="width:100%">Conferma accesso</button>';
+      h+='<button class="alt" id="no" style="width:100%">Non sono io</button>';
+    }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
+    h+='</div>';
   }
-  .login-wrap p.sottotitolo {
-    margin: 0 0 1.2rem;
-    color: var(--inchiostro-tenue, #4b5866);
-    font-size: 0.88rem;
-  }
-  .login-wrap label {
-    display: block;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--blu-800, #0b3d6e);
-    margin-bottom: 0.25rem;
-  }
-  .login-wrap input {
-    width: 100%;
-    padding: 0.7rem 0.85rem;
-    margin-bottom: 0.9rem;
-    background: #f5f9fd;
-    border: 1px solid var(--bordo, #d6e2ed);
-    color: var(--inchiostro, #1f2a33);
-    border-radius: 4px;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    font-size: 0.95rem;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .login-wrap input:focus {
-    outline: none;
-    border-color: var(--blu-accento, #2e77c9);
-    box-shadow: 0 0 0 3px rgba(46,119,201,0.18);
-  }
-  .login-wrap button {
-    width: 100%;
-    padding: 0.8rem;
-    background: var(--blu-700, #12508c);
-    border: none;
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    font-weight: 700;
-    font-size: 0.95rem;
-    letter-spacing: 0.04em;
-    transition: background 0.15s ease;
-  }
-  .login-wrap button:hover:not(:disabled) { background: var(--blu-800, #0b3d6e); }
-  .login-wrap button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .login-error {
-    color: #a72e23;
-    background: #fdeceb;
-    border: 1px solid rgba(205,33,42,0.25);
-    border-radius: 4px;
-    font-size: 0.85rem;
-    min-height: 1.2em;
-    margin: 0.6rem 0 0;
-    padding: 0.4rem 0.6rem;
-    text-align: center;
-    display: none;
-  }
-  .login-error.show { display: block; }
-
-  /* ---- Barra di stato quando l'admin è loggato ---- */
-  .admin-topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin: 1.2rem 0 0.5rem;
-    padding: 0.7rem 1rem;
-    background: #e7f1fa;
-    border-left: 4px solid var(--blu-700, #12508c);
-    border-radius: 4px;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    font-size: 0.88rem;
-    color: var(--inchiostro, #1f2a33);
-  }
-  .admin-topbar strong { color: var(--blu-900, #0b1f38); }
-  .admin-topbar button {
-    background: transparent;
-    border: 1px solid var(--blu-700, #12508c);
-    color: var(--blu-700, #12508c);
-    padding: 6px 14px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.82rem;
-    font-weight: 600;
-    transition: all 0.15s ease;
-  }
-  .admin-topbar button:hover {
-    background: var(--blu-700, #12508c);
-    color: #fff;
-  }
-
-  /* ---- Accesso con Estji ID (QR) — tutto centrato ---- */
-  .estji-blocco {
-    text-align: center;
-    margin: 0 0 1.4rem;
-    padding-bottom: 1.2rem;
-    border-bottom: 1px solid var(--bordo, #d6e2ed);
-  }
-  .estji-blocco h3 {
-    margin: 0 0 0.3rem;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    font-size: 1.05rem;
-    letter-spacing: 0.03em;
-    color: var(--blu-900, #0b1f38);
-  }
-  .estji-blocco p.sottotitolo { margin-bottom: 0.9rem; }
-  #estji-login {
-    display: flex;
-    flex-direction: column;
-    align-items: center;      /* QR al centro, non a sinistra */
-    justify-content: center;
-    gap: 0.5rem;
-    text-align: center;
-  }
-  #estji-login > * { margin-left: auto; margin-right: auto; }
-  #estji-login canvas,
-  #estji-login img,
-  #estji-login svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
-  #estji-login button { width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; }
-  .estji-oppure {
-    margin: 1rem 0 0;
-    font-family: var(--font-chrome, "Titillium Web", sans-serif);
-    font-size: 0.82rem;
-    color: var(--inchiostro-tenue, #4b5866);
-  }
-</style>
-</head>
-<body>
-  <div id="testata-root"></div>
-
-  <main class="container">
-
-    <!-- ============================================================
-         AREA DI LOGIN (visibile solo se non autenticato)
-         ============================================================ -->
-    <div id="login-area" style="display:none;">
-      <div class="login-wrap">
-        <h2>🔐 Accesso redazione</h2>
-
-        <!-- Accesso con Estji ID: resta nascosto finché il backend non è pronto (vedi script in fondo) -->
-        <div id="estji-blocco" class="estji-blocco" style="display:none;">
-          <h3>Accedi con Estji ID</h3>
-          <p class="sottotitolo">Inquadra il QR con il telefono e conferma l'accesso.</p>
-          <div id="estji-login"></div>
-          <p class="estji-oppure">oppure usa nome utente e password</p>
-        </div>
-        <p class="sottotitolo">Inserisci le credenziali per modificare gli atti.</p>
-
-        <label for="adminUsername">Nome utente</label>
-        <input type="text" id="adminUsername" placeholder="es. redazione"
-               autocomplete="username" autocapitalize="off" spellcheck="false" />
-
-        <label for="adminPassword">Password</label>
-        <input type="password" id="adminPassword" placeholder="••••••••"
-               autocomplete="current-password" />
-
-        <button id="loginBtn" type="button">Accedi</button>
-
-        <p class="login-error" id="loginError"></p>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         AREA REDAZIONE (visibile solo se autenticato)
-         ============================================================ -->
-    <div id="admin-content" style="display:none;">
-      <div class="admin-topbar">
-        <span>👤 Connesso come <strong id="adminUsernameLabel">—</strong></span>
-        <button id="logoutBtn" type="button">Esci</button>
-      </div>
-      <div id="redazione-root"></div>
-    </div>
-
-  </main>
-
-  <div id="footer-root"></div>
-
-  <script src="https://ews-rose.vercel.app/estji-login.js"></script>
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/layout.js"></script>
-  <script src="assets/js/formattazione.js"></script>
-  <script src="assets/js/redazione.js"></script>
-
-  <!-- Login con Estji ID: si attiva solo se api.js definisce API.loginEstji(id_token).
-       Dopo l'accesso la pagina si ricarica: redazione.js trova la sessione e apre la redazione. -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var blocco = document.getElementById('estji-blocco');
-      var err = document.getElementById('loginError');
-      var pronto = blocco && typeof EstjiLogin !== 'undefined' &&
-                   typeof API !== 'undefined' && typeof API.loginEstji === 'function';
-      if (!pronto) return;                       // backend non ancora collegato: resta solo nome+password
-      blocco.style.display = 'block';
-      EstjiLogin.mount('#estji-login', {
-        clientId: 'normaktiv',
-        scopes: ['profile.basic', 'normaktiv.edit'],
-        onLogin: async function (res) {
-          err.classList.remove('show');
-          try {
-            var nome = await API.loginEstji(res.id_token);
-            try { sessionStorage.setItem('fz_user', nome || ''); } catch (e) {}
-            location.reload();
-          } catch (e) {
-            err.textContent = '❌ ' + (e.message || 'Accesso non riuscito');
-            err.classList.add('show');
-          }
-        }
-      });
-    });
-  </script>
-</body>
-</html>
+  h+=scanBtn();
+  h+='<div class="p">'+wallet(me)+'</div>'+
+   '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
+  $("#app").innerHTML=h;bind();
+}
+function ask(fn){M=null;return fn().catch(function(e){M=["bad",e.message];if(e.status===401&&me){esci()}}).then(render)}
+function bind(){
+  var g=function(i){return document.getElementById(i)};
+  qrAccesso();document.querySelectorAll("[data-scan]").forEach(function(b){b.onclick=scansiona});
+  document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){tab=b.getAttribute("data-t");M=null;render()}});
+  if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){try{localStorage.setItem("estji_id_nick",g("n").value.trim())}catch(e){}tok=d.token;localStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
+  if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
+    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d").value,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,indirizzo:g("ind").value,password:g("pw").value})}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+  document.querySelectorAll(".wc").forEach(function(c){c.onclick=function(){fronte(c)};c.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();fronte(c)}}});
+  document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){vista=b.getAttribute("data-v");render()}});
+  if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
+  if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
+    ask(function(){return api("/api/estji",{azione:"cambia-password",attuale:g("cp").value,nuova:g("n1").value}).then(function(){M=["ok","Password aggiornata."]})})};
+  if(g("out"))g("out").onclick=function(){esci();M=null;render()};
+  var fin=function(a,extra){ask(function(){return api("/api/estji",Object.assign({azione:a,id:R},extra||{})).then(function(){done=a==="approva"?["ok","Fatto: torna al PC, l'accesso è confermato."]:["ok","Richiesta rifiutata: nessun accesso concesso."]},function(e){done=["bad",e.message]})})};
+  if(g("ok"))g("ok").onclick=function(){fin("approva")};if(g("no"))g("no").onclick=function(){fin("rifiuta")};
+  document.querySelectorAll("[data-n]").forEach(function(b){b.onclick=function(){fin("approva",{scelta:+b.getAttribute("data-n")})}});
+}
+/* ---- Accesso con QR (mostra il QR) + scanner (bottone Scansiona) ---- */
+function scanBtn(){return'<button data-scan style="width:100%;margin:0 0 16px">Scansiona QR</button>'}
+function qrBlocco(){return(typeof EstjiLogin!=="undefined"&&!R)?'<div class="qrb"><h2>Accedi con l\'app Estji ID</h2><p class="mute">Sul telefono apri l\'app, premi <b>Scansiona</b> e inquadra questo QR.</p><div id="qrslot"></div><p class="mute">Hai un QR da confermare?</p><button class="alt" data-scan style="width:100%;margin-top:0">Scansiona un QR</button><p class="oppure">oppure usa nome e password</p></div>':""}
+var qrBox=null,qrT=0;
+function qrAccesso(){var s=document.getElementById("qrslot");if(!s||typeof EstjiLogin==="undefined")return;
+  if(qrBox&&Date.now()-qrT<100000){s.appendChild(qrBox);return}
+  qrBox=document.createElement("div");qrBox.id="estji-login";qrT=Date.now();s.appendChild(qrBox);
+  EstjiLogin.mount("#estji-login",{clientId:"id",scopes:["id.session"],onLogin:function(r){qrBox=null;
+    api("/api/estji",{azione:"accedi-qr",id_token:r&&r.id_token}).then(function(d){tok=d.token;localStorage.setItem("estji_id_tok",tok);M=null;carica()},function(e){M=["bad",e.message];render()})}})}
+var SC=null;
+function idDaQr(t){t=String(t||"").trim();var m=null;try{m=new URL(t,location.href).searchParams.get("r")}catch(e){}m=m||t;return/^[A-Za-z0-9_-]{20,32}$/.test(m)?m:null}
+function scanStato(t){var e=document.getElementById("scs");if(e)e.textContent=t}
+function scanStop(){if(SC){SC.on=false;clearTimeout(SC.tm);if(SC.stream)SC.stream.getTracks().forEach(function(t){t.stop()});SC=null}
+  var o=document.getElementById("scn"),v=document.getElementById("scv");if(o)o.hidden=true;if(v)v.srcObject=null}
+function jsQRcarica(){if(window.jsQR)return Promise.resolve();return new Promise(function(ok,ko){var e=document.createElement("script");e.src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";e.onload=ok;e.onerror=function(){ko(new Error("Lettore QR non disponibile: controlla la connessione."))};document.head.appendChild(e)})}
+function apriRichiesta(id){R=id;done=null;sso=null;M=null;tab="in";try{history.replaceState(null,"","?r="+encodeURIComponent(id))}catch(e){}carica()}
+function scansiona(){
+  if(SC)return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){M=["bad","Fotocamera non disponibile: apri Estji ID da un telefono, in HTTPS."];return render()}
+  var o=document.getElementById("scn"),v=document.getElementById("scv"),det=null;
+  try{if("BarcodeDetector" in window)det=new BarcodeDetector({formats:["qr_code"]})}catch(e){det=null}
+  var cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
+  SC={on:true};o.hidden=false;scanStato("Avvio fotocamera…");
+  (det?Promise.resolve():jsQRcarica()).then(function(){return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false})}).then(function(st){
+    if(!SC){st.getTracks().forEach(function(t){t.stop()});return}
+    SC.stream=st;v.srcObject=st;return v.play().then(function(){scanStato("Inquadra il QR mostrato sul PC");giro()})
+  }).catch(function(e){scanStop();M=["bad",e&&e.name==="NotAllowedError"?"Permesso alla fotocamera negato: abilitalo dalle impostazioni del browser.":(e&&e.message)||"Impossibile avviare la fotocamera."];render()});
+  function giro(){if(!SC||!SC.on)return;var p;
+    if(det)p=det.detect(v).then(function(r){return r&&r[0]?r[0].rawValue:null});
+    else if(!v.videoWidth)p=Promise.resolve(null);
+    else{var k=Math.min(1,640/v.videoWidth);cv.width=Math.round(v.videoWidth*k);cv.height=Math.round(v.videoHeight*k);cx.drawImage(v,0,0,cv.width,cv.height);var im=cx.getImageData(0,0,cv.width,cv.height),q=window.jsQR(im.data,im.width,im.height,{inversionAttempts:"dontInvert"});p=Promise.resolve(q?q.data:null)}
+    p.catch(function(){return null}).then(function(t){if(!SC||!SC.on)return;
+      if(t){var id=idDaQr(t);if(id){scanStop();apriRichiesta(id);return}scanStato("QR non riconosciuto: inquadra quello di Estji ID.")}
+      SC.tm=setTimeout(giro,160)})}
+}
+document.getElementById("scx").onclick=scanStop;
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&SC)scanStop()});
+caricaLuoghi();carica();
+</script></body></html>
