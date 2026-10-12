@@ -132,36 +132,136 @@ export function ruoliTecnici(p) {
     if (/Redattore CTSU/i.test(x)) r.push('redattore_ctsu');
     if (/Redattore CEPU/i.test(x)) r.push('redattore_cepu');
     if (/^Generale$/i.test(String(x).trim())) r.push('generale');   // accesso a tutti i permessi (resta il livello minimo di sicurezza)
+    if (/^(Staff|Admin(istrator)?|Amministratore)$/i.test(String(x).trim())) r.push('staff');   // accesso al pannello staff (non ai permessi dei portali)
     if (/Dirigente/i.test(x)) r.push('dirigente_agenzia');
     if (/Presidente|Delegato/i.test(x)) r.push('delegato');
   });
   return r;
 }
 export function scopeConcessi(p, richiesti, loa) {
+  if (p.sospeso) return [];   // identità sospesa dallo staff: nessun permesso
   const r = ruoliTecnici(p);
   const generale = r.includes('generale');   // il ruolo "Generale" soddisfa il ruolo richiesto da qualsiasi permesso
   return richiesti.filter(s => SCOPES[s] && (p.verificato || s === 'id.session') && (generale || r.includes(SCOPES[s][1])) && loa >= SCOPES[s][0]);
 }
 
 /* ---------- sessione personale (diversa da quella delle redazioni) ---------- */
+// Token: base64url( id.scadenza[.sid].firma ). Con "sid" la sessione è registrata in Redis e si può revocare;
+// i vecchi token senza sid restano validi fino alla scadenza (max 2 ore).
+export const SESS_MS = 2 * 60 * 60 * 1000;
 const chiaveSess = () => {
   if (!process.env.AUTH_SECRET) throw new Error('AUTH_SECRET non configurato.');
   return crypto.createHmac('sha256', process.env.AUTH_SECRET).update('estji-id-sessione').digest();
 };
-export function creaSessioneId(id) {
-  const p = id + '.' + (Date.now() + 2 * 60 * 60 * 1000);
-  return Buffer.from(p + '.' + crypto.createHmac('sha256', chiaveSess()).update(p).digest('hex')).toString('base64url');
+const firmaSess = s => crypto.createHmac('sha256', chiaveSess()).update(s).digest('hex');
+export function creaSessioneId(id, sid) {
+  const p = id + '.' + (Date.now() + SESS_MS) + (sid ? '.' + sid : '');
+  return Buffer.from(p + '.' + firmaSess(p)).toString('base64url');
 }
+// Verifica SOLO la firma e la scadenza (sincrona). Per rispettare le revoche usa sessioneAttiva().
 export function sessioneId(req) {
   try {
     const h = req.headers.authorization || '';
     if (!h.startsWith('Bearer ')) return null;
-    const [id, scad, firma] = Buffer.from(h.slice(7), 'base64url').toString().split('.');
-    const att = crypto.createHmac('sha256', chiaveSess()).update(id + '.' + scad).digest('hex');
-    const a = Buffer.from(String(firma)), b = Buffer.from(att);
+    const parti = Buffer.from(h.slice(7), 'base64url').toString().split('.');
+    const firma = parti.pop();
+    if (parti.length < 2 || parti.length > 3) return null;
+    const [id, scad, sid] = parti;
+    const a = Buffer.from(String(firma)), b = Buffer.from(firmaSess(parti.join('.')));
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b) || Date.now() > Number(scad)) return null;
-    return { id };
+    return { id, sid: sid || '' };
   } catch (e) { return null; }
+}
+
+/* ---------- sessioni revocabili, dispositivi, avvisi ---------- */
+export async function creaSessione(req, id, metodo) {
+  const sid = crypto.randomBytes(9).toString('base64url');
+  const meta = { id, sid, creata: Date.now(), ip: ipDi(req), ua: String(req.headers['user-agent'] || '').slice(0, 300), metodo };
+  const ttl = Math.ceil(SESS_MS / 1000) + 60;
+  await redis('SET', 'ses:' + sid, JSON.stringify(meta), 'EX', ttl);
+  await redis('SADD', 'sesl:' + id, sid);
+  await redis('EXPIRE', 'sesl:' + id, ttl + 3600);
+  return { token: creaSessioneId(id, sid), sid, meta };
+}
+// Come sessioneId, ma controlla anche che la sessione non sia stata revocata.
+export async function sessioneAttiva(req) {
+  const s = sessioneId(req);
+  if (!s) return null;
+  if (s.sid && (await redis('EXISTS', 'ses:' + s.sid)) !== 1) return null;
+  return s;
+}
+export async function listaSessioni(id) {
+  const sids = (await redis('SMEMBERS', 'sesl:' + id)) || [];
+  if (!sids.length) return [];
+  const vals = await redis('MGET', ...sids.map(x => 'ses:' + x));
+  const out = [], morte = [];
+  vals.forEach((v, i) => { if (v) { try { out.push(JSON.parse(v)); } catch (e) { morte.push(sids[i]); } } else morte.push(sids[i]); });
+  if (morte.length) await redis('SREM', 'sesl:' + id, ...morte);
+  return out.sort((a, b) => b.creata - a.creata);
+}
+// Chiude le sessioni di un'identità; "tranne" = sid da mantenere. Restituisce quante ne ha chiuse.
+export async function revocaSessioni(id, tranne) {
+  const sids = ((await redis('SMEMBERS', 'sesl:' + id)) || []).filter(x => x !== tranne);
+  if (!sids.length) return 0;
+  await redis('DEL', ...sids.map(x => 'ses:' + x));
+  await redis('SREM', 'sesl:' + id, ...sids);
+  return sids.length;
+}
+export function etichetta(ua) {
+  ua = String(ua || '');
+  const b = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\/|CriOS/.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const o = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'dispositivo sconosciuto';
+  return b + ' su ' + o;
+}
+export function maskIp(ip) {
+  ip = String(ip || '');
+  if (ip.includes(':')) return ip.split(':').slice(0, 2).join(':') + ':…';
+  const p = ip.split('.');
+  return p.length === 4 ? p[0] + '.' + p[1] + '.•.•' : '—';
+}
+async function dmDiscord(uid, testo) {
+  const H = { Authorization: 'Bot ' + process.env.DISCORD_BOT_TOKEN, 'Content-Type': 'application/json' };
+  const ch = await (await fetch('https://discord.com/api/v10/users/@me/channels', { method: 'POST', headers: H, body: JSON.stringify({ recipient_id: uid }) })).json();
+  if (ch && ch.id) await fetch('https://discord.com/api/v10/channels/' + ch.id + '/messages', { method: 'POST', headers: H, body: JSON.stringify({ content: testo }) });
+}
+// Avviso di sicurezza: sempre nell'elenco dell'app; in più un messaggio privato su Discord se c'è DISCORD_BOT_TOKEN.
+export async function avvisa(p, tipo, testo) {
+  try {
+    await redis('LPUSH', 'notif:' + p.id, JSON.stringify({ t: Date.now(), tipo, testo }));
+    await redis('LTRIM', 'notif:' + p.id, 0, 29);
+    await redis('EXPIRE', 'notif:' + p.id, 90 * 86400);
+    if (p.discordId && process.env.DISCORD_BOT_TOKEN) await Promise.race([dmDiscord(p.discordId, '🔔 Estji ID — ' + testo), new Promise(r => setTimeout(r, 2500))]);
+  } catch (e) { /* l'avviso non deve mai bloccare l'accesso */ }
+}
+export async function leggiAvvisi(id) {
+  return ((await redis('LRANGE', 'notif:' + id, 0, 29)) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
+}
+// Da chiamare dopo ogni accesso riuscito: avvisa se il dispositivo è nuovo (o sempre, se l'utente lo ha chiesto).
+export async function registraAccesso(p, req, sess) {
+  try {
+    const ua = String(req.headers['user-agent'] || '');
+    const dev = crypto.createHash('sha256').update(ua).digest('hex').slice(0, 16);
+    const prima = await redis('SCARD', 'dev:' + p.id);
+    const nuovo = (await redis('SADD', 'dev:' + p.id, dev)) === 1;
+    if (nuovo) await redis('EXPIRE', 'dev:' + p.id, 365 * 86400);
+    if ((nuovo && prima > 0) || p.avvisiTutti)
+      await avvisa(p, nuovo ? 'nuovo-dispositivo' : 'accesso', (nuovo ? 'Nuovo dispositivo: ' : 'Accesso: ') + etichetta(ua) + ', IP ' + maskIp(sess.meta.ip) + ' (' + sess.meta.metodo + '). Se non sei stato tu, esci da tutti i dispositivi e cambia la password.');
+  } catch (e) { /* idem */ }
+}
+
+/* ---------- Discord (OAuth) e staff ---------- */
+export const discordAttivo = () => !!(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
+// Super-amministratori: variabile ESTJI_STAFF = elenco (virgole) di ID (EST-2026-000001) o nomi in gioco.
+export const eSuper = p => String(process.env.ESTJI_STAFF || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean).some(x => x === String(p.id).toLowerCase() || x === String(p.nick).toLowerCase());
+export const eStaff = p => eSuper(p) || ruoliTecnici(p).includes('staff');
+export async function audit(da, azione, id, dettaglio) {
+  try {
+    await redis('LPUSH', 'audit', JSON.stringify({ t: Date.now(), da, azione, id, dettaglio: dettaglio || '' }));
+    await redis('LTRIM', 'audit', 0, 999);
+  } catch (e) { /* il registro non deve bloccare l'azione */ }
+}
+export async function leggiAudit(n) {
+  return ((await redis('LRANGE', 'audit', 0, n - 1)) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
 }
 
 /* ---------- token firmati (RS256) ---------- */

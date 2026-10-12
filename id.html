@@ -115,7 +115,7 @@ function testa(m){var l=esc(String(m.nick||"?").charAt(0).toUpperCase()),k=m.uui
   return'<img src="https://mc-heads.net/avatar/'+encodeURIComponent(k)+'/128" alt="'+esc(m.nick)+'" width="76" height="76" onerror="this.parentNode.classList.remove(\'sk\');this.outerHTML=\''+l+'\'">'}
 function dt(v){if(v==null||v==="")return null;var d;if(typeof v==="number")d=new Date(v<1e12?v*1000:v);else{var s=String(v).trim(),r=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);d=r?new Date(+r[3],+r[2]-1,+r[1]):new Date(s)}return isNaN(d.getTime())?null:d}
 function fd(d){return d?("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear():"—"}
-function sca(m,k){var e=dt(m[k])||dt(m.emissione)||dt(m.registrazione)||dt(m.iscritto);if(!e)return"—";var f=new Date(e.getTime());f.setDate(f.getDate()+365);return"Fino al "+fd(f)+(f<new Date()?" (scaduta)":"")}
+function sca(m,k){if(m.revocati&&m.revocati[k])return"Revocata dallo staff";var e=dt(m[k])||dt(m.emissione)||dt(m.registrazione)||dt(m.iscritto);if(!e)return"—";var f=new Date(e.getTime());f.setDate(f.getDate()+365);return"Fino al "+fd(f)+(f<new Date()?" (scaduta)":"")}
 function cl(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")}
 function f(l,v,x,s){return'<div'+(x?' class="'+x+'"':'')+'><small>'+l+'</small><b>'+v+'</b>'+(s?'<em>'+s+'</em>':'')+'</div>'}
 function wc(k,tit,body,mrz){return'<div class="wc '+k+'" data-k="'+k+'" role="group" aria-label="'+esc(tit)+'"><div class="h"><b>'+esc(tit)+'</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="bd">'+body+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
@@ -142,7 +142,26 @@ function api(u,b){return fetch(u,{method:"POST",headers:Object.assign({"Content-
 function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
 var MS=null;
 var DOCS=[["id","Carta d'Identità","emissioneId"],["fisc","Tessera fiscale","emissioneFisc"],["elet","Tessera elettorale","emissioneElet"]];
-var OPEN={res:false,rin:false,pw:false};
+var OPEN={res:false,rin:false,pw:false,ses:false};
+var DCON=false,DCT="",DCN="",REGF={},SIC=null,SICL=0;
+try{REGF=JSON.parse(sessionStorage.getItem("estji_regf")||"{}")}catch(e){}
+function fdt(t){var d=new Date(t);return fd(d)+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+function discordCampo(){if(!DCON)return'<input id="d" maxlength="40" autocomplete="off">';
+  return DCT?'<div class="m ok">Discord verificato: <b>'+esc(DCN)+'</b> ✓</div>':'<button class="alt" id="dcv" type="button" style="width:100%;margin-top:0">Verifica con Discord</button><p class="mute">Accedi a Discord per confermare che l\'account è tuo.</p>'}
+function discordRiga(m){var st=m.discordVerificato?'<span class="cup">✓ verificato</span>':'<span class="mute">non verificato</span>';
+  return'<p style="margin:0 0 6px">Discord: <b>'+esc(m.discord||"—")+'</b> '+st+'</p>'+((DCON&&!m.discordVerificato)?'<button class="alt" id="dcl" style="width:100%;margin-top:4px">Collega e verifica Discord</button>':'')}
+function staffLink(m){return m.staff?'<a class="p" href="staff.html" style="display:block;text-decoration:none;color:var(--blue);font-weight:700">Pannello staff →</a>':''}
+function dcVai(scopo){try{sessionStorage.setItem("estji_regf",JSON.stringify(REGF))}catch(e){}
+  api("/api/idx",{azione:"discord-avvia",scopo:scopo}).then(function(d){location.href=d.url},function(e){M=["bad",e.message];render()})}
+function caricaSic(){api("/api/idx",{azione:"sicurezza"}).then(function(d){SIC=d;render()}).catch(function(e){SICL=0;SIC=null;if(e.status===401&&me){esci();render()}})}
+function sessioniBlocco(){
+  var h='<details class="sub" data-d="ses"'+ap('ses')+'><summary>Sessioni e avvisi'+(SIC&&SIC.avvisi.length?' ('+SIC.avvisi.length+')':'')+'</summary>';
+  if(!SIC)return h+'<p class="mute">Caricamento…</p></details>';
+  if(SIC.avvisi.length)h+='<p class="mute"><b>Avvisi di sicurezza</b></p><ul>'+SIC.avvisi.map(function(a){return'<li><span>'+esc(a.testo)+'<br><span class="mute">'+esc(fdt(a.t))+'</span></span></li>'}).join("")+'</ul><button class="alt" id="avc" style="width:100%">Cancella avvisi</button>';
+  h+='<p class="mute" style="margin-top:14px"><b>Dispositivi con accesso attivo</b></p><ul>'+SIC.sessioni.map(function(s){return'<li><span><b>'+esc(s.etichetta)+'</b>'+(s.corrente?' · <span class="cup">questa sessione</span>':'')+'<br><span class="mute">IP '+esc(s.ip)+' · '+esc(s.metodo)+' · '+esc(fdt(s.creata))+'</span></span></li>'}).join("")+'</ul>';
+  h+='<div class="row"><button class="alt" id="sxa">Esci dagli altri dispositivi</button><button class="alt" id="sxt">Esci da tutti i dispositivi</button></div>';
+  h+='<label><input type="checkbox" id="avt"'+(me&&me.avvisiTutti?" checked":"")+'>Avvisami a ogni accesso, non solo da dispositivi nuovi</label>';
+  return h+'<p class="mute">Gli avvisi compaiono qui'+(me&&me.discordVerificato?' e arrivano anche in privato su Discord (se il bot è attivo)':'; con Discord verificato potrai riceverli anche lì')+'.</p></details>'}
 function ap(k){return OPEN[k]?' open':''}
 function msgS(k){return MS&&MS[2]===k?'<div class="m '+MS[0]+'">'+esc(MS[1])+'</div>':""}
 function askS(k,fn){MS=null;return fn().catch(function(e){MS=["bad",e.message,k];if(e.status===401&&me)esci()}).then(render)}
@@ -152,7 +171,7 @@ function servizi(m){
   else h+='<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):"Caricamento dei luoghi…")+'</div>';
   h+=msgS('res')+'</details><details class="p" data-d="rin"'+ap('rin')+'><summary>Rinnovo documenti</summary><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS('rin')+'</details>';
   return h}
-function esci(){MS=null;tok=null;me=null;sso=null;localStorage.removeItem("estji_id_tok")}
+function esci(){MS=null;tok=null;me=null;sso=null;SIC=null;SICL=0;localStorage.removeItem("estji_id_tok")}
 function carica(){
   if(!tok)return render();
   api("/api/estji",{azione:"profilo"}).then(function(d){me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){sso=null;done=["bad",e.message]}):0}).catch(function(e){if(e.status===401)esci();else M=["bad",e.message]}).then(render);
@@ -163,7 +182,7 @@ function render(){uuidMc();
   if(!me){
     h+='<div class="row"><button class="'+(tab==="in"?"":"alt")+'" data-t="in">Accedi</button><button class="'+(tab==="reg"?"":"alt")+'" data-t="reg">Registrati</button></div><div class="p" style="margin-top:12px">';
     if(tab==="in")h+=qrBlocco()+'<label for="n">Nome in gioco</label><input id="n" autocomplete="username" value="'+esc(localStorage.getItem("estji_id_nick")||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><button id="go">Accedi</button>';
-    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="ind">Indirizzo di residenza</label><input id="ind" maxlength="80" autocomplete="off"><label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
+    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off" value="'+esc(REGF.n||"")+'"><label for="d">Account Discord</label>'+discordCampo()+'<label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="ind">Indirizzo di residenza</label><input id="ind" maxlength="80" autocomplete="off" value="'+esc(REGF.ind||"")+'"><label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
     $("#app").innerHTML=h+msg()+"</div>";bind();return;
   }
   if(R){
@@ -177,9 +196,10 @@ function render(){uuidMc();
     }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
     h+='</div>';
   }
+  if(!SIC&&!SICL){SICL=1;caricaSic()}
   h+=scanBtn();
-  h+='<div class="p">'+wallet(me)+'</div>'+servizi(me)+
-   '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><details class=\"sub\" data-d=\"pw\"'+ap('pw')+'><summary>Cambia password</summary><label for=\"cp\">Password attuale</label><input id=\"cp\" type=\"password\" autocomplete=\"current-password\"><label for=\"n1\">Nuova password</label><input id=\"n1\" type=\"password\" autocomplete=\"new-password\"><label for=\"n2\">Ripeti la nuova password</label><input id=\"n2\" type=\"password\" autocomplete=\"new-password\"><button id="sv">Salva password</button></details>'+msg()+'</div><button class="alt" id="out">Esci</button>';
+  h+='<div class="p">'+wallet(me)+'</div>'+servizi(me)+staffLink(me)+
+   '<div class="p"><h2>Sicurezza</h2>'+discordRiga(me)+'<label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><details class=\"sub\" data-d=\"pw\"'+ap('pw')+'><summary>Cambia password</summary><label for=\"cp\">Password attuale</label><input id=\"cp\" type=\"password\" autocomplete=\"current-password\"><label for=\"n1\">Nuova password</label><input id=\"n1\" type=\"password\" autocomplete=\"new-password\"><label for=\"n2\">Ripeti la nuova password</label><input id=\"n2\" type=\"password\" autocomplete=\"new-password\"><button id="sv">Salva password</button></details>'+sessioniBlocco()+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
 function ask(fn){M=null;return fn().catch(function(e){M=["bad",e.message];if(e.status===401&&me){esci()}}).then(render)}
@@ -188,8 +208,8 @@ function bind(){
   qrAccesso();document.querySelectorAll("[data-scan]").forEach(function(b){b.onclick=scansiona});
   document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){tab=b.getAttribute("data-t");M=null;render()}});
   if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){try{localStorage.setItem("estji_id_nick",g("n").value.trim())}catch(e){}tok=d.token;localStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
-  if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
-    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d").value,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,indirizzo:g("ind").value,password:g("pw").value})}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+  if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(DCON&&!DCT){M=["bad","Verifica prima il tuo account Discord."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
+    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d")?g("d").value:"",discordTicket:DCT,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,indirizzo:g("ind").value,password:g("pw").value})}).then(function(d){tab="in";DCT="";DCN="";REGF={};try{sessionStorage.removeItem("estji_regf")}catch(e){}M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
   document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){vista=b.getAttribute("data-v");render()}});
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
@@ -198,6 +218,14 @@ function bind(){
   if(g("rsv"))g("rsv").onclick=function(){askS("res",function(){return api("/api/estji",{azione:"cambia-residenza",residenza:g("rs").value,indirizzo:g("rind").value}).then(function(d){me=d.profilo;MS=["ok","Residenza aggiornata.","res"]})})};
   document.querySelectorAll("[data-rin]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-rin");askS("rin",function(){return api("/api/estji",{azione:"rinnova",documento:k}).then(function(d){me=d.profilo;var x=DOCS.filter(function(z){return z[0]===k})[0];MS=["ok",x[1]+" rinnovata. "+sca(me,x[2])+".","rin"]})})}});
   if(g("out"))g("out").onclick=function(){esci();M=null;render()};
+  if(g("dcv"))g("dcv").onclick=function(){dcVai("reg")};
+  if(g("dcl"))g("dcl").onclick=function(){dcVai("link")};
+  if(g("sxa"))g("sxa").onclick=function(){ask(function(){return api("/api/idx",{azione:"sessioni-esci",modo:"altre"}).then(function(d){M=["ok","Disconnesso da "+d.chiuse+" altri dispositivi."];SIC=null;SICL=0})})};
+  if(g("sxt"))g("sxt").onclick=function(){if(!confirm("Uscire da tutti i dispositivi, compreso questo?"))return;
+    api("/api/idx",{azione:"sessioni-esci",modo:"tutte"}).then(function(){esci();M=["ok","Sei uscito da tutti i dispositivi."];render()},function(e){M=["bad",e.message];render()})};
+  if(g("avc"))g("avc").onclick=function(){ask(function(){return api("/api/idx",{azione:"avvisi-svuota"}).then(function(){SIC=null;SICL=0})})};
+  if(g("avt"))g("avt").onchange=function(){ask(function(){return api("/api/idx",{azione:"avvisi-impostazione",tutti:g("avt").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
+  if(tab==="reg"&&!me)["n","ind","s","dg"].forEach(function(k){var el=g(k);if(!el)return;if(REGF[k])el.value=REGF[k];var sv=function(){REGF[k]=el.value};el.addEventListener("input",sv);el.addEventListener("change",sv)});
   var fin=function(a,extra){ask(function(){return api("/api/estji",Object.assign({azione:a,id:R},extra||{})).then(function(){done=a==="approva"?["ok","Fatto: torna al PC, l'accesso è confermato."]:["ok","Richiesta rifiutata: nessun accesso concesso."]},function(e){done=["bad",e.message]})})};
   if(g("ok"))g("ok").onclick=function(){fin("approva")};if(g("no"))g("no").onclick=function(){fin("rifiuta")};
   document.querySelectorAll("[data-n]").forEach(function(b){b.onclick=function(){fin("approva",{scelta:+b.getAttribute("data-n")})}});
@@ -239,5 +267,12 @@ function scansiona(){
 }
 document.getElementById("scx").onclick=scanStop;
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&SC)scanStop()});
+/* ritorno da Discord (?dcreg=ticket&dcn=nome | ?dcok=1 | ?dcerr=messaggio) */
+(function(){var q=new URLSearchParams(location.search),ks=["dcreg","dcn","dcerr","dcok"],hit=ks.some(function(k){return q.has(k)});
+  if(q.get("dcreg")){DCT=q.get("dcreg");DCN=q.get("dcn")||"";tab="reg";M=["ok","Discord verificato: completa la registrazione."]}
+  else if(q.get("dcerr")){M=["bad",q.get("dcerr")];if(!tok)tab="reg"}
+  else if(q.get("dcok"))M=["ok","Discord collegato e verificato."];
+  if(hit){ks.forEach(function(k){q.delete(k)});var s=q.toString();try{history.replaceState(null,"",location.pathname+(s?"?"+s:""))}catch(e){}}})();
+api("/api/idx",{azione:"discord-stato"}).then(function(d){DCON=!!d.attivo;render()}).catch(function(){});
 caricaLuoghi();carica();
 </script></body></html>
