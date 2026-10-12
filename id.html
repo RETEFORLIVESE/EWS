@@ -7,7 +7,7 @@
 /* ===== DISEGNI DELLE CARTE (filigrana) — cambiali qui =====
    Tessera fiscale: --disegno-fisc · Tessera elettorale: --disegno-elet
    Valori: url("immagine.png"), un data-URI SVG, oppure none. (La carta d'identità usa --stemma.) */
-:root{--disegno-fisc:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%230b7a4b' stroke-width='3.5' stroke-linecap='round'%3E%3Ccircle cx='50' cy='50' r='45'/%3E%3Ccircle cx='50' cy='50' r='37'/%3E%3Cpath d='M64 36a20 20 0 1 0 0 28M32 45h26M32 55h26'/%3E%3C/g%3E%3C/svg%3E");--disegno-elet:url("USSEunion.png")}
+:root{--disegno-fisc:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cpath id='t' d='M13.5 50A36.5 36.5 0 0 1 86.5 50'/%3E%3Cpath id='b' d='M7 50A43 43 0 0 0 93 50'/%3E%3C/defs%3E%3Cg fill='none' stroke='%230b7a4b' stroke-width='2' stroke-linejoin='round'%3E%3Ccircle cx='50' cy='50' r='48'/%3E%3Ccircle cx='50' cy='50' r='32'/%3E%3C/g%3E%3Cg fill='%230b7a4b' font-family='Helvetica,Arial,sans-serif' font-weight='700'%3E%3Ctext font-size='6.6' letter-spacing='.7' text-anchor='middle'%3E%3CtextPath href='%23t' xlink:href='%23t' startOffset='50%25'%3EAGENZIA DELLE ENTRATE%3C/textPath%3E%3C/text%3E%3Ctext font-size='6.6' letter-spacing='1.6' text-anchor='middle'%3E%3CtextPath href='%23b' xlink:href='%23b' startOffset='50%25'%3EUSSE%3C/textPath%3E%3C/text%3E%3Cpath d='M50 30.5 72 43.5H28Z'/%3E%3Crect x='28' y='45' width='44' height='3'/%3E%3Crect x='32' y='50' width='5' height='14'/%3E%3Crect x='42' y='50' width='5' height='14'/%3E%3Crect x='53' y='50' width='5' height='14'/%3E%3Crect x='63' y='50' width='5' height='14'/%3E%3Crect x='28' y='65.5' width='44' height='3'/%3E%3Crect x='25' y='70' width='50' height='3'/%3E%3C/g%3E%3Ccircle cx='50' cy='38.5' r='2.6' fill='%23fff'/%3E%3C/svg%3E");--disegno-elet:url("USSEunion.png")}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -67,7 +67,7 @@ input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transf
 .wc.elet .h{background:linear-gradient(135deg,#f2b705,#ffd23f 60%,#ffe27a);color:#3b2e00;border-bottom-color:#8a6d12}
 .wc.elet .h small{color:#5a4600;opacity:1}
 .wc.elet::before{background:repeating-linear-gradient(115deg,transparent 0 6px,rgba(184,146,31,.10) 6px 7px),repeating-linear-gradient(65deg,transparent 0 11px,rgba(138,109,18,.08) 11px 12px)}
-.wc.elet::after{background-image:var(--disegno-elet);width:74cqw;height:36.5cqw;right:-6cqw;bottom:-3cqw;opacity:.28}
+.wc.elet::after{background-image:var(--disegno-elet);width:74cqw;height:36.5cqw;right:-6cqw;bottom:4cqw;opacity:.28}
 .wc.elet .mrz{background:#fbefb5;border-top-color:#e0c95a}
 .wc.elet .bars{background:repeating-linear-gradient(90deg,#3b2e00 0 .5cqw,transparent .5cqw 1.1cqw,#3b2e00 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -84,6 +84,13 @@ input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transf
 .scn-fr{position:relative;width:min(70vw,320px);aspect-ratio:1;border:3px solid var(--gold);border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
 .scn-b{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff}
 .scn-b p{margin:0 0 8px;font-size:.95rem}.scn-b button{min-width:50%;background:rgba(255,255,255,.14);color:#fff;border-color:#fff}
+details>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;font:700 1.1rem/1.3 "Helvetica Neue",Helvetica,Arial,sans-serif;min-height:28px;-webkit-tap-highlight-color:transparent}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"+";font-size:1.4rem;line-height:1;color:var(--blue)}
+details[open]>summary::after{content:"\2212"}
+details[open]>summary{margin-bottom:10px}
+details>summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px;border-radius:6px}
+details.sub{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 </style></head><body>
 <header><h1>Estji ID · Identità digitale USSE</h1></header><main id="app"></main>
 <div id="scn" hidden role="dialog" aria-modal="true" aria-label="Scansiona QR"><video id="scv" playsinline muted></video><div class="scn-fr"></div><div class="scn-b"><p id="scs"></p><button class="alt" id="scx" type="button">Annulla</button></div></div>
@@ -112,9 +119,9 @@ function wc(k,tit,body,mrz){return'<div class="wc '+k+'" data-k="'+k+'" role="bu
 function wallet(m){
   var full=vista==="full",dots='<span class="dots">••••••••</span>',foto='<div class="av sk">'+testa(m)+'</div>',cup=full&&m.cup?esc(m.cup):dots,reg=fd(dt(m.registrazione||m.registrato||m.iscritto));
   var C={};
-  C.id=wc("id","USSE · Carta d\'Identità",foto+'<div class="g">'+f("NickName",esc(m.nick))+f("Estji ID",esc(m.id))+f("Residenza",esc(resid(m)))+f("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+f("Data di registrazione",esc(reg))+f("Validità",esc(sca(m,"emissioneId")))+f("Discord",full&&m.discord?esc(m.discord):dots)+f("UUID di gioco",full&&m.uuid?esc(m.uuid):dots,"u")+'</div>',"P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,""));
+  C.id=wc("id","USSE · Carta d\'Identità",foto+'<div class="g">'+f("NickName",esc(m.nick))+f("Estji ID",esc(m.id))+f("Residenza",esc(resid(m)),"",esc(m.indirizzo||m.indirizzoResidenza||""))+f("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+f("Data di registrazione",esc(reg))+f("Validità",esc(sca(m,"emissioneId")))+f("Discord",full&&m.discord?esc(m.discord):dots)+f("UUID di gioco",full&&m.uuid?esc(m.uuid):dots,"u")+'</div>',"P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,""));
   C.fisc=wc("fisc","USSE · Tessera fiscale",'<div class="lc">'+foto+'</div><div class="g">'+f("Intestatario",esc(m.nick))+f("Stato",m.verificato?"Verificato":"In verifica")+f("Codice fiscale (CUP)",cup,"s2")+f("Residenza fiscale",esc(resid(m)),"s2",esc(m.indirizzo||m.indirizzoResidenza||""))+f("Iscritto dal",esc(fd(dt(m.iscrittoFisc||m.iscritto))))+f("Validità",esc(sca(m,"emissioneFisc")))+'</div>',"F<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
-  C.elet=wc("elet","USSE · Tessera elettorale",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Nome",esc(m.nick),"s2")+f("Sezione",esc(resid(m)),"s2")+f("Codice elettorale",cup)+f("Validità",esc(sca(m,"emissioneElet")))+'</div>',"E<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
+  C.elet=wc("elet","USSE · Tessera elettorale",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Nome",esc(m.nick),"s2")+f("Residenza elettorale",esc(resid(m)),"s2",esc(m.indirizzo||m.indirizzoResidenza||""))+f("Codice elettorale",cup)+f("Validità",esc(sca(m,"emissioneElet")))+'</div>',"E<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
   var cards=wo.map(function(k,i){return C[k].replace('class="wc ','style="top:'+i*11+'cqw;z-index:'+i+'" class="wc ')}).join("");
   return'<div class="row" style="margin-top:0"><button class="'+(full?"alt":"")+'" data-v="pub">Dati nascosti</button><button class="'+(full?"":"alt")+'" data-v="full">Dati completi</button></div><div class="wal"><div class="wi">'+cards+'</div></div>'}
 function fronte(c){var k=c.getAttribute("data-k");if(wo[wo.length-1]===k)return;wo=wo.filter(function(x){return x!==k});wo.push(k);wo.forEach(function(x,i){var e=document.querySelector('.wc[data-k="'+x+'"]');if(e){e.style.top=i*11+"cqw";e.style.zIndex=i}})}
@@ -132,14 +139,16 @@ var R=new URLSearchParams(location.search).get("r"),tok=localStorage.getItem("es
 function api(u,b){return fetch(u,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},tok?{Authorization:"Bearer "+tok}:{}),body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok){var e=new Error(d.error||"Errore "+r.status);e.status=r.status;throw e}return d})})}
 function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
 var MS=null;
-function msgS(){return MS?'<div class="m '+MS[0]+'">'+esc(MS[1])+'</div>':""}
-function askS(fn){MS=null;return fn().catch(function(e){MS=["bad",e.message];if(e.status===401&&me)esci()}).then(render)}
 var DOCS=[["id","Carta d'Identità","emissioneId"],["fisc","Tessera fiscale","emissioneFisc"],["elet","Tessera elettorale","emissioneElet"]];
+var OPEN={res:false,rin:false,pw:false};
+function ap(k){return OPEN[k]?' open':''}
+function msgS(k){return MS&&MS[2]===k?'<div class="m '+MS[0]+'">'+esc(MS[1])+'</div>':""}
+function askS(k,fn){MS=null;return fn().catch(function(e){MS=["bad",e.message,k];if(e.status===401&&me)esci()}).then(render)}
 function servizi(m){
-  var h='<div class="p"><h2>Cambio di residenza</h2><p class="mute">Attuale: <b>'+esc(resid(m))+'</b>'+(m.indirizzo?' · '+esc(m.indirizzo):'')+'</p>';
+  var h='<details class="p" data-d="res"'+ap('res')+'><summary>Cambio di residenza</summary><p class="mute">Attuale: <b>'+esc(resid(m))+'</b>'+(m.indirizzo?' · '+esc(m.indirizzo):'')+'</p>';
   if(LUOGHI&&LUOGHI.length)h+='<label for="rs">Nuova residenza</label><select id="rs">'+optLuoghi(m.residenza)+'</select><label for="rind">Indirizzo di residenza</label><input id="rind" maxlength="80" autocomplete="off" value="'+esc(m.indirizzo||"")+'"><button id="rsv">Aggiorna residenza</button>';
   else h+='<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):"Caricamento dei luoghi…")+'</div>';
-  h+='</div><div class="p"><h2>Rinnovo documenti</h2><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS()+'</div>';
+  h+=msgS('res')+'</details><details class="p" data-d="rin"'+ap('rin')+'><summary>Rinnovo documenti</summary><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS('rin')+'</details>';
   return h}
 function esci(){MS=null;tok=null;me=null;sso=null;localStorage.removeItem("estji_id_tok")}
 function carica(){
@@ -168,7 +177,7 @@ function render(){uuidMc();
   }
   h+=scanBtn();
   h+='<div class="p">'+wallet(me)+'</div>'+servizi(me)+
-   '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
+   '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><details class=\"sub\" data-d=\"pw\"'+ap('pw')+'><summary>Cambia password</summary><label for=\"cp\">Password attuale</label><input id=\"cp\" type=\"password\" autocomplete=\"current-password\"><label for=\"n1\">Nuova password</label><input id=\"n1\" type=\"password\" autocomplete=\"new-password\"><label for=\"n2\">Ripeti la nuova password</label><input id=\"n2\" type=\"password\" autocomplete=\"new-password\"><button id="sv">Salva password</button></details>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
 function ask(fn){M=null;return fn().catch(function(e){M=["bad",e.message];if(e.status===401&&me){esci()}}).then(render)}
@@ -184,8 +193,9 @@ function bind(){
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
     ask(function(){return api("/api/estji",{azione:"cambia-password",attuale:g("cp").value,nuova:g("n1").value}).then(function(){M=["ok","Password aggiornata."]})})};
-  if(g("rsv"))g("rsv").onclick=function(){askS(function(){return api("/api/estji",{azione:"cambia-residenza",residenza:g("rs").value,indirizzo:g("rind").value}).then(function(d){me=d.profilo;MS=["ok","Residenza aggiornata."]})})};
-  document.querySelectorAll("[data-rin]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-rin");askS(function(){return api("/api/estji",{azione:"rinnova",documento:k}).then(function(d){me=d.profilo;var x=DOCS.filter(function(z){return z[0]===k})[0];MS=["ok",x[1]+" rinnovata. "+sca(me,x[2])+"."]})})}});
+  document.querySelectorAll("details[data-d]").forEach(function(d){d.addEventListener("toggle",function(){OPEN[d.getAttribute("data-d")]=d.open})});
+  if(g("rsv"))g("rsv").onclick=function(){askS("res",function(){return api("/api/estji",{azione:"cambia-residenza",residenza:g("rs").value,indirizzo:g("rind").value}).then(function(d){me=d.profilo;MS=["ok","Residenza aggiornata.","res"]})})};
+  document.querySelectorAll("[data-rin]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-rin");askS("rin",function(){return api("/api/estji",{azione:"rinnova",documento:k}).then(function(d){me=d.profilo;var x=DOCS.filter(function(z){return z[0]===k})[0];MS=["ok",x[1]+" rinnovata. "+sca(me,x[2])+".","rin"]})})}});
   if(g("out"))g("out").onclick=function(){esci();M=null;render()};
   var fin=function(a,extra){ask(function(){return api("/api/estji",Object.assign({azione:a,id:R},extra||{})).then(function(){done=a==="approva"?["ok","Fatto: torna al PC, l'accesso è confermato."]:["ok","Richiesta rifiutata: nessun accesso concesso."]},function(e){done=["bad",e.message]})})};
   if(g("ok"))g("ok").onclick=function(){fin("approva")};if(g("no"))g("no").onclick=function(){fin("rifiuta")};
