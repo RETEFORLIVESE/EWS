@@ -327,6 +327,19 @@ const APICtsu = {
     return true;
   },
 
+  // Accesso con Estji ID (QR): restituisce il nome dell'utente
+  async loginEstji(id_token) {
+    const res = await fetch('/api/ctsu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ azione: 'estji', id_token })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) throw new Error(data.error || 'Accesso non riuscito');
+    this.setSessione(data.token, data.username);
+    return data.username;
+  },
+
   async login(username, password) {
     const res = await fetch('/api/ctsu', {
       method: 'POST',
