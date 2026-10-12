@@ -13,11 +13,29 @@ button{margin-top:12px;padding:10px 16px;border:0;border-radius:6px;background:v
 button.alt{background:none;color:var(--blue);border:1px solid var(--blue)}.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1}
 .m{margin:10px 0;padding:9px 11px;border-left:4px solid var(--blue);background:var(--bg);border-radius:4px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
 ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.card{background:#f3f6fd;color:#0a1f44;border:1px solid #cfd8ea;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.25);margin:12px 0 6px}
+.card .ch{background:#043a96;color:#fff;padding:12px 16px}.card .ch b{display:block;font-size:1rem}.card .ch small{opacity:.85;font-size:.72rem}
+.card .cb{display:flex;gap:14px;padding:14px 16px;position:relative}
+.card .av{flex:none;width:76px;height:98px;border-radius:8px;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:2.2rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.card .cf{min-width:0;flex:1}.card .cf small{display:block;font-size:.68rem;color:#5a6a8a;margin-top:7px}.card .cf b{display:block;font-size:.98rem;overflow-wrap:anywhere}
+.card .dots{letter-spacing:2px;color:#5a6a8a;font-weight:400}
+.card .st{position:absolute;right:12px;bottom:8px;width:64px;height:64px;border:3px double #c9a227;border-radius:50%;color:#c9a227;font-size:.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);opacity:.85}
+.card .mrz{background:#e2e9f7;font:700 .68rem ui-monospace,monospace;padding:8px 12px;overflow:hidden;white-space:nowrap;text-overflow:clip;color:#0a1f44}
 .mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,monospace;font-weight:700;color:var(--blue)}
 </style></head><body>
 <header><h1>Estji ID · Identità digitale USSE</h1></header><main id="app"></main>
 <script>
 var $=function(s){return document.querySelector(s)},esc=function(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+var vista="pub";
+function resid(m){return m.residenzaNome||m.residenza||((m.stato||"")+(m.sezione?" · "+m.sezione:""))}
+function carta(m){
+  var full=vista==="full",dots='<span class="dots">••••••••</span>',cl=function(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")};
+  var mrz="P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,"");
+  return'<div class="row" style="margin-top:6px"><button class="'+(full?"alt":"")+'" data-v="pub">Vista pubblica</button><button class="'+(full?"":"alt")+'" data-v="full">Vista completa</button></div>'+
+  '<div class="card"><div class="ch"><b>USSE · Carta d\'Identità</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="cb"><div class="av">'+esc(String(m.nick||"?").charAt(0).toUpperCase())+'</div><div class="cf">'+
+  '<small>Nome in gioco</small><b>'+esc(m.nick)+'</b><small>ID Estji</small><b>'+esc(m.id)+'</b><small>Residenza elettorale</small><b>'+esc(resid(m))+'</b><small>Cariche e ruoli</small><b>'+esc((m.ruoli||[]).join(", ")||"Nessuna")+'</b>'+
+  '<small>Discord</small><b>'+(full&&m.discord?esc(m.discord):dots)+'</b><small>UUID di gioco</small><b>'+(full&&m.uuid?esc(m.uuid):dots)+'</b></div>'+(m.verificato?'<div class="st">VERIFICATO<br>EWS</div>':'')+'</div><div class="mrz">'+esc(mrz)+'</div></div>'+
+  '<p class="mute" style="text-align:center;margin:6px 0 0">URL pubblico: '+esc(location.host+"/p/"+m.id)+'</p>'}
 var LUOGHI=null,LERR=null;
 function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
 function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
@@ -52,10 +70,7 @@ function render(){
     }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
     h+='</div>';
   }
-  h+='<div class="p"><h2>Il mio profilo</h2><p class="mute">Dati e ruoli sono in sola lettura: li gestisce lo staff.</p><ul>'+
-   '<li><span>Nome in gioco</span><b>'+esc(me.nick)+'</b></li><li><span>ID Estji</span><b>'+esc(me.id)+'</b></li><li><span>CUP</span><b class="cup">'+esc(me.cup)+'</b></li>'+
-   '<li><span>Residenza</span><b>'+esc(me.residenzaNome||me.residenza||(me.stato+" · "+me.sezione))+'</b></li><li><span>Iscritto dal</span><b>'+esc(me.iscritto)+'</b></li>'+
-   '<li><span>Stato</span><b>'+(me.verificato?"Verificato":"In verifica")+'</b></li><li><span>Cariche</span><b>'+esc(me.ruoli.join(", ")||"Nessuna")+'</b></li></ul></div>'+
+  h+='<div class="p"><h2>La mia carta d\'identità</h2><p class="mute">Dati e ruoli sono in sola lettura: li gestisce lo staff.</p>'+carta(me)+'<ul style="margin-top:12px"><li><span>CUP</span><b class="cup">'+esc(me.cup)+'</b></li><li><span>Iscritto dal</span><b>'+esc(me.iscritto)+'</b></li><li><span>Stato</span><b>'+(me.verificato?"Verificato":"In verifica")+'</b></li></ul></div>'+
    '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
@@ -66,6 +81,7 @@ function bind(){
   if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){tok=d.token;sessionStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
   if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
     ask(function(){return api("/api/estji",{azione:"registra",nick:g("n").value,discord:g("d").value,residenza:lu.id,residenzaNome:lu.nome,password:g("pw").value}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+  document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){vista=b.getAttribute("data-v");render()}});
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
     ask(function(){return api("/api/estji",{azione:"cambia-password",attuale:g("cp").value,nuova:g("n1").value}).then(function(){M=["ok","Password aggiornata."]})})};
