@@ -293,3 +293,12 @@ body.red .site{max-width:1500px}
   background:transparent;box-shadow:none;color:inherit;caret-color:currentColor;font-family:inherit;font-size:13px;line-height:1.35;font-weight:inherit;font-style:inherit;text-align:inherit;-webkit-user-select:text;user-select:text}
 #tbGrid textarea:focus,#tbGrid textarea:focus-visible{outline:0}
 @media(max-width:720px){#tbGrid textarea{font-size:16px}#tbGrid td{min-width:96px}.tb-grp .btn{min-height:36px}}
+
+/* ===== Mobile: "Articoli principali" nascosti, indice chiuso di default (apribile con un tap sull'intestazione) ===== */
+@media(max-width:720px){
+  .solo-desk{display:none!important}
+  .sb-toggle{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;width:100%;font:inherit;color:inherit}
+  .sb-toggle::after{content:"▾";font-size:12px;transition:transform .2s}
+  .toc-open .sb-toggle::after{transform:rotate(180deg)}
+  .sb-group:not(.toc-open) #toc{display:none}
+}

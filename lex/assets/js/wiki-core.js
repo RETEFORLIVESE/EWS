@@ -377,3 +377,26 @@ const Wiki = {
 };
 Wiki.loadCredentials();
 Wiki._avvia();
+
+/* ---------- mobile: indice chiuso di default + "Articoli principali" nascosti (solo <= 720px, via CSS) ---------- */
+Wiki.mobileSidebar = function () {
+  const toc = document.getElementById('toc'); if (!toc) return;
+  const grp = toc.closest('.sb-group') || toc.parentElement;
+  // "Articoli principali": visibili solo su desktop
+  const pr = document.getElementById('principali');
+  if (pr) {
+    const g = pr.closest('.sb-group');
+    if (g && g !== grp && !g.contains(toc)) g.classList.add('solo-desk');
+    else { pr.classList.add('solo-desk'); const h = pr.previousElementSibling; if (h && h.classList.contains('sb-head')) h.classList.add('solo-desk'); }
+  }
+  // indice: l'intestazione diventa un pulsante che apre/chiude
+  let head = grp.querySelector(':scope > .sb-head');
+  if (!head) { head = document.createElement('button'); head.type = 'button'; head.className = 'sb-head'; head.textContent = 'Indice'; grp.insertBefore(head, toc); }
+  head.classList.add('sb-toggle'); head.setAttribute('role', 'button'); head.tabIndex = 0;
+  const set = o => { grp.classList.toggle('toc-open', o); head.setAttribute('aria-expanded', o ? 'true' : 'false'); };
+  set(false);
+  const flip = () => set(!grp.classList.contains('toc-open'));
+  head.addEventListener('click', flip);
+  head.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+};
+document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', () => Wiki.mobileSidebar()) : Wiki.mobileSidebar();
