@@ -1,28 +1,49 @@
 <!DOCTYPE html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex"><link rel="manifest" href="id-manifest.webmanifest"><meta name="theme-color" content="#043a96"><link rel="apple-touch-icon" href="id-icon-512.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Estji ID"><title>Estji ID</title>
 <style>
-:root{--bg:#eef2fa;--p:#fff;--ink:#0a1f44;--mute:#5a6a8a;--blue:#043a96;--line:#cfd8ea;--ok:#0b7a4b;--bad:#b3261e}
-@media(prefers-color-scheme:dark){:root{--bg:#07122b;--p:#0e1d3f;--ink:#e6edfb;--mute:#93a3c6;--blue:#5b8cff;--line:#243660;--ok:#4cd08f;--bad:#ff8a80}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
-header{background:#043a96;color:#fff;padding:16px 20px}header h1{margin:0;font-size:1.2rem}
-main{max-width:520px;margin:0 auto;padding:16px 16px 48px}.p{background:var(--p);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px}
-h2{margin:0 0 8px;font-size:1.05rem}label{display:block;font-size:.85rem;font-weight:600;margin:10px 0 3px}
-input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
-button{margin-top:12px;padding:10px 16px;border:0;border-radius:6px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer}
-button.alt{background:none;color:var(--blue);border:1px solid var(--blue)}.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1}
-.m{margin:10px 0;padding:9px 11px;border-left:4px solid var(--blue);background:var(--bg);border-radius:4px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
-ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
-.card{background:#f3f6fd;color:#0a1f44;border:1px solid #cfd8ea;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.25);margin:12px 0 6px}
-.card .ch{background:#043a96;color:#fff;padding:12px 16px}.card .ch b{display:block;font-size:1rem}.card .ch small{opacity:.85;font-size:.72rem}
-.card .cb{display:flex;gap:14px;padding:14px 16px;position:relative}
-.card .av{flex:none;width:76px;height:98px;border-radius:8px;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:2.2rem;font-weight:700;display:flex;align-items:center;justify-content:center}
-.card .av.sk{height:76px;background:none;overflow:hidden}.card .av img{display:block;width:76px;height:76px;border-radius:8px;image-rendering:pixelated}
-.card .cf{min-width:0;flex:1}.card .cf small{display:block;font-size:.68rem;color:#5a6a8a;margin-top:7px}.card .cf b{display:block;font-size:.98rem;overflow-wrap:anywhere}
-.card .dots{letter-spacing:2px;color:#5a6a8a;font-weight:400}
-.card .st{position:absolute;right:12px;bottom:8px;width:64px;height:64px;border:3px double #c9a227;border-radius:50%;color:#c9a227;font-size:.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);opacity:.85}
-.card .mrz{background:#e2e9f7;font:700 .68rem ui-monospace,monospace;padding:8px 12px;overflow:hidden;white-space:nowrap;text-overflow:clip;color:#0a1f44}
-.mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,monospace;font-weight:700;color:var(--blue)}
+:root{--bg:#eaf0fb;--p:#fff;--ink:#0a1f44;--mute:#566684;--blue:#043a96;--blue2:#0a56d6;--line:#d3dcee;--ok:#0b7a4b;--bad:#b3261e;--gold:#b8921f;--r:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#050d20;--p:#0d1b3b;--ink:#e8eefc;--mute:#9aaccf;--blue:#6b97ff;--blue2:#8fb0ff;--line:#22365f;--ok:#4cd08f;--bad:#ff8a80;--gold:#e0b84a}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+header{position:relative;background:linear-gradient(135deg,#032a6e,#043a96 55%,#0a56d6);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 22px;border-bottom:3px solid var(--gold)}
+header h1{margin:0 auto;max-width:520px;font:700 1.25rem/1.25 ui-serif,Georgia,"Times New Roman",serif;letter-spacing:.01em}
+main{max-width:520px;margin:0 auto;padding:18px 16px calc(48px + env(safe-area-inset-bottom,0px))}
+.p{background:var(--p);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+h2{margin:0 0 10px;font:700 1.1rem/1.3 ui-serif,Georgia,serif}
+label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 5px}
+input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent)}
+button{margin-top:14px;padding:12px 16px;border:1px solid transparent;border-radius:8px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer;min-height:44px;transition:background .15s,transform .1s}
+@media(prefers-color-scheme:dark){button:not(.alt){color:#04112b}}
+button:hover{background:var(--blue2)}button:active{transform:scale(.98)}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.alt{background:transparent;color:var(--blue);border-color:var(--blue)}
+button.alt:hover{background:color-mix(in srgb,var(--blue) 12%,transparent)}
+button#out{width:100%;margin-top:4px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1;margin-top:0}
+.m{margin:12px 0;padding:10px 12px;border-left:4px solid var(--blue);background:var(--bg);border-radius:6px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
+ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}li:last-child{border-bottom:0}
+input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transform:scale(1.2)}
+.card{position:relative;background:#f4f7fd;color:#0a1f44;border:1px solid #bfcbe6;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(4,58,150,.28),0 1px 0 #fff inset;margin:14px 0 8px;isolation:isolate;animation:rise .5s ease-out both}
+.card::before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
+.card .ch{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6);color:#fff;padding:13px 16px;border-bottom:3px solid #c9a227}
+.card .ch b{display:block;font:700 1.02rem/1.2 ui-serif,Georgia,serif}.card .ch small{opacity:.85;font-size:.72rem}
+.card .cb{display:flex;gap:16px;padding:16px;position:relative}
+.card .av{flex:none;width:80px;height:100px;border-radius:10px;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:2.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 3px 8px rgba(0,0,0,.18)}
+.card .av.sk{height:80px;background:#dfe7f7;overflow:hidden}
+.card .av img{display:block;width:100%;height:100%;border-radius:8px;image-rendering:pixelated}
+.card .cf{min-width:0;flex:1}.card .cf small{display:block;font-size:.68rem;color:#566684;margin-top:8px}.card .cf small:first-child{margin-top:0}
+.card .cf b{display:block;font-size:.98rem;overflow-wrap:anywhere}
+.card .dots{letter-spacing:2px;color:#566684;font-weight:400}
+.card .st{position:absolute;right:12px;bottom:8px;width:66px;height:66px;border:3px double #b8921f;border-radius:50%;color:#a07e12;background:rgba(255,248,222,.6);font-size:.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);opacity:.9}
+.card .mrz{background:#dfe7f7;border-top:1px dashed #9db0d6;font:700 .68rem ui-monospace,Menlo,monospace;padding:9px 12px;overflow:hidden;white-space:nowrap;color:#0a1f44}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:380px){.card .cb{gap:12px}.card .av{width:68px}.card .av.sk{height:68px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--blue)}
 </style></head><body>
 <header><h1>Estji ID · Identità digitale USSE</h1></header><main id="app"></main>
 <link rel="apple-touch-icon" href="id-icon-512.png">
