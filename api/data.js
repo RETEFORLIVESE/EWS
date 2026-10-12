@@ -5,7 +5,7 @@
 //   GITHUB_TOKEN  (obbligatoria)  token fine-grained con sola lettura "Contents" sul repo DATA
 //   DATA_REPO     (facoltativa)   default "RETEFORLIVESE/DATA"
 //   DATA_BRANCH   (facoltativa)   default: il ramo predefinito del repo
-const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'unitext.json', 'organi.json'];
+const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json']   // unitext.json NON va qui: contiene le bozze, UniText si legge solo da /api/unitext;
 
 module.exports = async (req, res) => {
   const wanted = String((req.query && req.query.file) || '').toLowerCase();

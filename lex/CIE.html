@@ -81,10 +81,10 @@ var STATI={"EstjiFall":["Sezione 01","Sezione 02","Sezione 03"],"EstjiKuro":["Se
 var ELEZ=["Assemblea di Sezione","Congresso Distrettuale","Congresso Statale","Referendum"];
 var P=[
  {id:"EST-2026-000001",nick:"Terlin_Mayor",discord:"terlin#0001",uuid:"a1f3…92c1",stato:"EstjiFall",sez:"Sezione 01",ruoli:["Presidente Assemblea di Sezione"],verified:true,joined:"2025-05-05"},
- {id:"EST-2026-000002",nick:"KuroEngineer",discord:"kuro#0042",uuid:"7be0…11d8",stato:"EstjiKuro",sez:"Sezione 02",ruoli:["Dirigente RSGI","Redattore Wiki"],verified:true,joined:"2025-06-18"}
+ {id:"EST-2026-000002",nick:"KuroEngineer",discord:"kuro#0042",uuid:"7be0…11d8",stato:"EstjiKuro",sez:"Sezione 02",ruoli:["Dirigente RSGI","Redattore Wiki","Redattore UniText"],verified:true,joined:"2025-06-18"}
 ];
 var S={tab:"reg",cur:null,view:"public",votes:{},pending:null,msg:null,vmsg:null};
-var TABS=[["reg","1 · Registrazione"],["card","2 · Scheda cittadino"],["vote","3 · Registro elettorale"],["priv","4 · Visibilità dati"],["sso","5 · Accesso ai portali"]];
+var TABS=[["reg","1 · Registrazione"],["card","2 · Scheda cittadino"],["vote","3 · Registro elettorale"],["priv","4 · Visibilità dati"],["sso","5 · Accesso ai portali"],["me","6 · Area personale"]];
 var $=function(s){return document.querySelector(s)};
 function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function get(id){return P.filter(function(p){return p.id===id})[0]}
@@ -125,7 +125,7 @@ function vReg(){
   '<label for="n">Nome in gioco</label><input id="n" maxlength="20" autocomplete="off">'+
   '<label for="d">Account Discord</label><input id="d" maxlength="24" placeholder="es. nome#0000" autocomplete="off">'+
   '<label for="s">Residenza (Stato – Sezione)</label><select id="s">'+secOpts()+'</select>'+
-  '<button class="btn" id="go">Crea identità</button>';
+  '<label for="pw1">Password di accesso</label><input id="pw1" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><p class="note" style="margin-top:8px">Cariche e ruoli non si scelgono qui: li assegna lo staff.</p><button class="btn" id="go">Crea identità</button>';
   if(S.msg)h+='<div class="msg '+S.msg[0]+'">'+S.msg[1]+'</div>';
   h+='</div><div class="panel"><h2>Verifica dell\'account di gioco</h2>';
   if(p&&!p.verified){
@@ -166,12 +166,12 @@ function vVote(){
   return h;
 }
 
-var SC={"profile.basic":["Nome e ID",1,"cittadino"],"profile.residence":["Residenza elettorale",1,"cittadino"],"vote.eligibility":["Idoneità al voto",2,"cittadino"],"wiki.edit":["Modifica della Wiki",2,"redattore_wiki"],"normaktiv.sign":["Firma di atti normativi",3,"delegato"],"agency.manage":["Gestione agenzia",2,"dirigente_agenzia"]};
-var PT={"CEPU":["profile.basic","profile.residence","vote.eligibility"],"NormAktiv":["profile.basic","normaktiv.sign"],"Estji Wiki":["profile.basic","wiki.edit"],"Kon.Et":["profile.basic","profile.residence"],"TETA":["profile.basic","agency.manage"]};
+var SC={"profile.basic":["Nome e ID",1,"cittadino"],"profile.residence":["Residenza elettorale",1,"cittadino"],"vote.eligibility":["Idoneità al voto",2,"cittadino"],"wiki.edit":["Modifica della Wiki",2,"redattore_wiki"],"normaktiv.sign":["Firma di atti normativi",3,"delegato"],"agency.manage":["Gestione agenzia",2,"dirigente_agenzia"],"unitext.edit":["Redazione UniText",2,"redattore_unitext"]};
+var PT={"CEPU":["profile.basic","profile.residence","vote.eligibility"],"NormAktiv":["profile.basic","normaktiv.sign"],"Estji Wiki":["profile.basic","wiki.edit"],"Kon.Et":["profile.basic","profile.residence"],"TETA":["profile.basic","agency.manage"],"UniText":["profile.basic","unitext.edit"]};
 var LOA=["","1 · password","2 · 2FA o telefono collegato","3 · QR + numero di controllo"];
 function isHard(pt){return PT[pt].some(function(k){return SC[k][1]>=3})}
 S.log=[];
-function rolesOf(p){var r=["cittadino"];p.ruoli.forEach(function(x){if(/Redattore/i.test(x))r.push("redattore_wiki");if(/Dirigente/i.test(x))r.push("dirigente_agenzia");if(/Presidente|Delegato/i.test(x))r.push("delegato")});return r}
+function rolesOf(p){var r=["cittadino"];p.ruoli.forEach(function(x){if(/Redattore Wiki/i.test(x))r.push("redattore_wiki");if(/Redattore UniText/i.test(x))r.push("redattore_unitext");if(/Dirigente/i.test(x))r.push("dirigente_agenzia");if(/Presidente|Delegato/i.test(x))r.push("delegato")});return r}
 function vSso(){
   var p=S.sp&&get(S.sp),pt=S.pt||"CEPU",me=S.me||"pw";
   var h='<div class="grid"><div class="panel"><h2>Entra in un portale con l\'identità USSE</h2><p class="sub">Il portale chiede dei permessi. Li ottieni solo se hai il ruolo e il livello di accesso richiesti.</p>'+
@@ -180,7 +180,7 @@ function vSso(){
   '<label>Metodo di accesso</label><div class="seg"><button data-m="pw" aria-pressed="'+(me==="pw")+'">Password</button><button data-m="qr" aria-pressed="'+(me==="qr")+'">QR code</button></div>';
   if(S.err)h+='<div class="msg bad">'+S.err+'</div>';
   if(me==="pw"){
-    h+='<label for="pw">Password</label><input id="pw" type="password" autocomplete="off" placeholder="qualsiasi, è una simulazione"><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px">Codice a due fattori inserito</label><button class="btn" id="enter"'+(p?"":" disabled")+'>Entra</button>';
+    h+='<label for="pw">Password</label><input id="pw" type="password" autocomplete="off" placeholder="la tua password"><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px">Codice a due fattori inserito</label><button class="btn" id="enter"'+(p?"":" disabled")+'>Entra</button>';
   }else if(!S.qs){
     h+='<p class="sub"><b>Sul PC</b>: la pagina di '+esc(pt)+' mostra questo QR.</p><div id="qrbox" style="width:170px;background:#fff;padding:8px;border-radius:6px"></div><p class="sub" style="margin-top:12px">Inquadralo con la fotocamera del telefono.</p><button class="btn" id="scan"'+(p?"":" disabled")+'>Simula la scansione dal telefono</button>';
   }else{
@@ -220,13 +220,36 @@ function ssoBind(){
   document.querySelectorAll("[data-m]").forEach(function(b){b.onclick=function(){S.me=b.getAttribute("data-m");S.res=null;S.err=null;S.qs=0;render()}});
   var qb=g("qrbox");
   if(qb){try{var q=qrcode(0,"M");q.addData("https://ews-rose.vercel.app/approve?r=demo");q.make();qb.innerHTML=q.createSvgTag(4)}catch(e){}}
-  var en=g("enter");if(en)en.onclick=function(){var tf=g("tf").checked;ssoFinish(tf?2:1,tf?"pwd+2FA":"pwd")};
+  var en=g("enter");if(en)en.onclick=async function(){var p=get(S.sp);
+    if(!p.ph){S.err="Questa identità non ha ancora una password: impostala in Area personale.";return render()}
+    if(await hp(g("pw").value,p.salt)!==p.ph){S.err="Password errata.";return render()}
+    var tf=g("tf").checked;ssoFinish(tf?2:1,tf?"pwd+2FA":"pwd")};
   var sc=g("scan");if(sc)sc.onclick=function(){S.qrn=10+Math.floor(Math.random()*90);S.qs=1;render()};
   var ok=g("ok");if(ok)ok.onclick=function(){ssoFinish(2,"QR")};
   var no=g("no");if(no)no.onclick=function(){S.qs=0;S.qrn=null;S.err="Richiesta rifiutata dal telefono: nessun accesso concesso.";render()};
   document.querySelectorAll("[data-n]").forEach(function(b){b.onclick=function(){
     if(+b.getAttribute("data-n")!==S.qrn){S.res=null;S.qrn=null;S.qs=0;S.err="Numero errato: richiesta annullata. Se non hai avviato tu l'accesso, potrebbe essere un tentativo di phishing.";render()}
     else ssoFinish(3,"QR+num")}});
+}
+async function hp(pw,salt){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+pw));return Array.from(new Uint8Array(b)).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+function vMe(){
+  var p=S.mp&&get(S.mp),m=S.mm?'<div class="msg '+S.mm[0]+'">'+S.mm[1]+'</div>':"";
+  if(!p)return '<div class="panel" style="max-width:440px;margin:0 auto"><h2>Area personale</h2><p class="sub">Accedi per gestire la tua identità digitale.</p><label for="mu">Cittadino</label><select id="mu"><option value="">Scegli…</option>'+P.filter(function(x){return x.verified}).map(function(x){return '<option value="'+x.id+'">'+esc(x.nick)+'</option>'}).join("")+'</select><label for="mlp">Password</label><input id="mlp" type="password" autocomplete="current-password"><button class="btn" id="mlogin">Accedi</button>'+m+'<p class="note">Se non hai ancora una password, accedi senza inserirla per impostarla.</p></div>';
+  return '<div class="grid"><div class="panel"><h2>Il mio profilo</h2><p class="sub">Dati e ruoli sono in sola lettura: li gestisce lo staff.</p><ul class="clean"><li><span>Nome in gioco</span><b>'+esc(p.nick)+'</b></li><li><span>ID Estji</span><b>'+p.id+'</b></li><li><span>Residenza</span><b>'+esc(p.stato)+' · '+esc(p.sez)+'</b></li><li><span>Cariche</span><b>'+esc(ruoliTxt(p))+'</b></li><li><span>Ruoli per i portali</span><span>'+rolesOf(p).map(function(r){return '<span class="tag">'+r+'</span> '}).join("")+'</span></li></ul><button class="btn alt" id="mout">Esci</button></div>'+
+  '<div class="panel"><h2>Sicurezza</h2><label><input type="checkbox" id="mtf" style="width:auto;margin-right:6px"'+(p.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:20px">'+(p.ph?"Cambia password":"Imposta password")+'</h2>'+(p.ph?'<label for="mcp">Password attuale</label><input id="mcp" type="password" autocomplete="current-password">':"")+'<label for="mn1">Nuova password</label><input id="mn1" type="password" autocomplete="new-password"><label for="mn2">Ripeti la nuova password</label><input id="mn2" type="password" autocomplete="new-password"><button class="btn" id="msave">Salva password</button>'+m+'</div></div>';
+}
+function meBind(){
+  var g=function(i){return document.getElementById(i)};
+  var l=g("mlogin");if(l)l.onclick=async function(){var p=get(g("mu").value);
+    if(!p){S.mm=["bad","Scegli un cittadino."];return render()}
+    if(p.ph&&await hp(g("mlp").value,p.salt)!==p.ph){S.mm=["bad","Password errata."];return render()}
+    S.mp=p.id;S.mm=p.ph?null:["ok","Prima attivazione: imposta la tua password."];render()};
+  var o=g("mout");if(o)o.onclick=function(){S.mp=null;S.mm=null;render()};
+  var t=g("mtf");if(t)t.onchange=function(){get(S.mp).tf=t.checked;S.mm=["ok","Impostazione salvata."];render()};
+  var sv=g("msave");if(sv)sv.onclick=async function(){var p=get(S.mp),a=g("mn1").value,b=g("mn2").value;
+    if(p.ph&&await hp(g("mcp").value,p.salt)!==p.ph){S.mm=["bad","La password attuale non è corretta."];return render()}
+    if(a.length<8||a!==b){S.mm=["bad","La nuova password deve avere almeno 8 caratteri e coincidere nei due campi."];return render()}
+    p.salt=rnd(16,"abcdef0123456789");p.ph=await hp(a,p.salt);S.mm=["ok","Password salvata."];render()};
 }
 function vPriv(){
   var rows=[["Nome in gioco","Pubblico"],["ID Estji","Pubblico"],["Residenza (Stato, Sezione)","Pubblico"],["Cariche e ruoli","Pubblico"],["Partecipazione al voto (sì/no)","Pubblico"],["Contenuto del voto","Nessuno, mai registrato"],["Discord e UUID","Staff"],["Sanzioni e note di moderazione","Staff"]];
@@ -280,21 +303,25 @@ function walletBind(){
 }
 function render(){
   tabs();
-  var v={reg:vReg,card:vCard,vote:vVote,priv:vPriv,sso:vSso}[S.tab]();
+  var v={reg:vReg,card:vCard,vote:vVote,priv:vPriv,sso:vSso,me:vMe}[S.tab]();
   $("#app").innerHTML=v;
   bind();
 }
 
 function bind(){
   var g=$("#go");
-  if(g)g.onclick=function(){
+  if(g)g.onclick=async function(){
     var n=$("#n").value.trim(),d=$("#d").value.trim().toLowerCase(),s=$("#s").value.split("|");
     if(n.length<3){S.msg=["bad","Il nome in gioco deve avere almeno 3 caratteri."];return render()}
     if(!d){S.msg=["bad","Inserisci l'account Discord."];return render()}
     if(P.some(function(p){return p.discord.toLowerCase()===d})){S.msg=["bad","Questo account Discord ha già un'identità. Ogni persona può averne una sola."];return render()}
     if(P.some(function(p){return p.nick.toLowerCase()===n.toLowerCase()})){S.msg=["bad","Il nome in gioco è già registrato."];return render()}
+    var pw=$("#pw1").value,pw2=$("#pw2").value;
+    if(pw.length<8){S.msg=["bad","La password deve avere almeno 8 caratteri."];return render()}
+    if(pw!==pw2){S.msg=["bad","Le due password non coincidono."];return render()}
+    var salt=rnd(16,"abcdef0123456789"),ph=await hp(pw,salt);
     var id="EST-2026-"+("000000"+(P.length+1)).slice(-6);
-    var np={id:id,nick:n,discord:d,uuid:rnd(4,"abcdef0123456789")+"…"+rnd(4,"abcdef0123456789"),stato:s[0],sez:s[1],ruoli:[],verified:false,joined:new Date().toISOString().slice(0,10),code:rnd(6,"ABCDEFGHJKLMNPQRSTUVWXYZ23456789")};
+    var np={id:id,nick:n,discord:d,uuid:rnd(4,"abcdef0123456789")+"…"+rnd(4,"abcdef0123456789"),stato:s[0],sez:s[1],ruoli:[],salt:salt,ph:ph,tf:false,verified:false,joined:new Date().toISOString().slice(0,10),code:rnd(6,"ABCDEFGHJKLMNPQRSTUVWXYZ23456789")};
     P.push(np);S.pending=id;S.msg=["ok","Identità creata: <b>"+id+"</b>. Ora verifica l'account in gioco."];render();
   };
   var v=$("#ver");if(v)v.onclick=function(){get(S.pending).verified=true;S.msg=["ok","Verifica completata. L'identità è attiva."];S.cur=S.pending;render()};
@@ -303,6 +330,7 @@ function bind(){
   document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){S.view=b.getAttribute("data-v");render()}});
   if(S.tab==="card")walletBind();
   if(S.tab==="sso")ssoBind();
+  if(S.tab==="me")meBind();
   var e=$("#e");if(e)e.onchange=function(){S.el=e.value;S.vmsg=null;render()};
   var vp=$("#vp");if(vp)vp.onchange=function(){S.vp=vp.value;S.vmsg=null;render()};
   document.querySelectorAll("[data-b]").forEach(function(b){b.onclick=function(){

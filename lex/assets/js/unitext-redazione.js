@@ -58,7 +58,33 @@
     el("adminUsernameLabel").textContent = API._sessione.username || "—";
   }
 
+  /* ---------- LOGIN CON ESTJI ID (QR) ---------- */
+
+  async function accediConEstji(idToken) {
+    const r = await fetch(SITE_CONFIG_UNITEXT.endpoint, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ azione: "login-estji", id_token: idToken }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.success) throw new Error(d.error || "Accesso non riuscito");
+    API.setSessione(d.token, d.username);   // stessa sessione del login con password
+  }
+
+  function montaQr() {
+    const box = el("estji-login"), err = el("loginError");
+    if (!box) return;
+    if (!window.EstjiLogin) { box.textContent = "Accesso con QR non disponibile al momento: usa nome e password."; return; }
+    EstjiLogin.mount("#estji-login", {
+      clientId: "unitext",
+      scopes: ["profile.basic", "unitext.edit"],
+      onLogin: async res => {
+        err.classList.remove("show");
+        try { await accediConEstji(res.id_token); await avvia(); }
+        catch (e) { err.textContent = e.message || "Accesso non riuscito"; err.classList.add("show"); }
+      }
+    });
+  }
+
   function setupLoginUI() {
+    montaQr();
     const btn = el("loginBtn"), err = el("loginError");
     const user = el("adminUsername"), pass = el("adminPassword");
     const accedi = async () => {
