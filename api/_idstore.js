@@ -90,17 +90,20 @@ export async function trovaLuogo(id) {
   if (!id) return null;
   const dati = await leggiFileJson('organi.json', { luoghi: {} });
   const eVoce = v => typeof v === 'string' || (v && typeof v === 'object' && typeof v.nome === 'string');
-  const cerca = c => {
+  // g = gruppo di primo livello sotto "luoghi" (lo stato sociale), come in id.html
+  const cerca = (c, g) => {
     if (!c || typeof c !== 'object') return null;
-    if (Object.prototype.hasOwnProperty.call(c, id) && eVoce(c[id])) return c[id];
+    if (Object.prototype.hasOwnProperty.call(c, id) && eVoce(c[id])) return { v: c[id], g };
     for (const k of Object.keys(c)) {
       const v = c[k];
-      if (v && typeof v === 'object' && !eVoce(v)) { const t = cerca(v); if (t) return t; }
+      if (v && typeof v === 'object' && !eVoce(v)) { const t = cerca(v, g || k); if (t) return t; }
     }
     return null;
   };
-  const v = cerca(dati && dati.luoghi);
-  return v ? { id, nome: typeof v === 'string' ? v : v.nome } : null;
+  const t = cerca(dati && dati.luoghi, '');
+  if (!t) return null;
+  const v = t.v, stato = (typeof v === 'object' && (v.stato || v.statoSociale || v.stato_sociale)) || t.g || '';
+  return { id, nome: typeof v === 'string' ? v : v.nome, stato: String(stato).replace(/_/g, ' ') };
 }
 
 /* ---------- CUP: LUOGO-SEZIONE-AAMMGG-PP-C ---------- */

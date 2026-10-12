@@ -422,6 +422,15 @@
     }
     .login-error.show { display: block; }
 
+    /* ---- Accesso con Estji ID (QR + codice) ---- */
+    .estji-blocco { text-align: left; margin: 0 0 1.4rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--ist-line); }
+    .estji-blocco p.sottotitolo { margin-bottom: 0.9rem; }
+    #estji-login { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; text-align: center; }
+    #estji-login > * { margin-left: auto; margin-right: auto; }
+    #estji-login canvas, #estji-login img, #estji-login svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+    #estji-login button { width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; }
+    .estji-oppure { margin: 1rem 0 0; font-size: 0.82rem; color: var(--ist-text); text-align: center; }
+
     /* ---- Barra di stato quando la redazione è collegata ---- */
     .admin-topbar {
         display: flex;
@@ -458,6 +467,7 @@
     }
 </style>
     <script src="lex/assets/js/api-organi.js"></script>
+    <script src="https://ews-rose.vercel.app/estji-login.js"></script>
 </head>
 <body>
 
@@ -484,6 +494,15 @@
 <div id="login-area">
     <div class="login-wrap">
         <h2>🔐 Accesso redazione</h2>
+
+        <!-- Accesso con Estji ID: resta nascosto finché il widget non è caricato -->
+        <div id="estji-blocco" class="estji-blocco" style="display:none;">
+            <label>Accedi con Estji ID</label>
+            <p class="sottotitolo">Inquadra il QR con l'app Estji ID: sul telefono scegli il numero che vedi qui per confermare l'accesso.</p>
+            <div id="estji-login"></div>
+            <p class="estji-oppure">oppure usa nome utente e password</p>
+        </div>
+
         <p class="sottotitolo">Inserisci le credenziali per modificare il file di redazione.</p>
 
         <label for="adminUsername">Nome utente</label>
@@ -804,6 +823,44 @@
         document.getElementById('login-area').style.display = 'block';
         document.getElementById('adminPassword').value = '';
         document.getElementById('loginError').classList.remove('show');
+        montaQr();
+    }
+
+    // Accesso con Estji ID (QR + codice): il token firmato va a /api/elezioni, che apre una sessione valida solo per CEPU.
+    function montaQr() {
+        const blocco = document.getElementById('estji-blocco');
+        const box = document.getElementById('estji-login');
+        if (!blocco || !box || !window.EstjiLogin) return;   // widget non caricato: resta solo nome+password
+        blocco.style.display = 'block';
+        box.innerHTML = '';
+        EstjiLogin.mount('#estji-login', {
+            clientId: 'cepu',
+            scopes: ['profile.basic', 'cepu.edit'],
+            onLogin: async function (res) {
+                const erroreBox = document.getElementById('loginError');
+                erroreBox.classList.remove('show');
+                try {
+                    const risposta = await fetch(API_LOGIN, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ azione: 'login-estji', id_token: res && res.id_token })
+                    });
+                    const dati = await risposta.json().catch(() => ({}));
+                    if (!risposta.ok || !dati.token) {
+                        erroreBox.textContent = dati.error || 'Accesso con Estji ID non riuscito.';
+                        erroreBox.classList.add('show');
+                        return;
+                    }
+                    salvaCredenziali(dati.token);
+                    const nomeUtente = dati.username || 'Estji ID';
+                    try { sessionStorage.setItem(CHIAVE_SESSIONE, nomeUtente); } catch (err) { /* si continua comunque */ }
+                    mostraAreaRedazione(nomeUtente);
+                } catch (errore) {
+                    erroreBox.textContent = 'Impossibile contattare il server di autenticazione.';
+                    erroreBox.classList.add('show');
+                }
+            }
+        });
     }
 
     async function tentaAccesso() {
@@ -1579,6 +1636,7 @@
     // Avvio
     // ============================================================
     verificaSessioneEsistente();
+    if (document.getElementById('login-area').style.display !== 'none') montaQr();
     caricaOrgani();
     aggiornaCampiPerTipo();
     renderElenco();
