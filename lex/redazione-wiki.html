@@ -20,6 +20,12 @@
     <section id="login-area">
       <div class="bar">🔐 Accesso redazione</div>
       <div class="panel" style="max-width:420px;margin-inline:auto">
+        <div id="estji-blocco" style="display:none;text-align:center;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid rgba(150,200,255,.25)">
+          <label>Accedi con Estji ID</label>
+          <p class="note">Inquadra il QR con il telefono e conferma l'accesso.</p>
+          <div id="estji-login" style="display:flex;flex-direction:column;align-items:center;gap:8px"></div>
+          <p class="note">oppure usa nome e password</p>
+        </div>
         <p class="note">Inserisci il tuo nome e la password per modificare la wiki.</p>
         <label for="adminUsername">Nome</label><input id="adminUsername" autocomplete="username">
         <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password">
@@ -129,7 +135,8 @@
     </section>
   </main>
 </div>
-<script src="assets/js/wiki-core.js?v=6"></script>
+<script src="https://ews-rose.vercel.app/estji-login.js"></script>
+<script src="assets/js/wiki-core.js?v=7"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
@@ -151,6 +158,20 @@
     });
     ['adminUsername', 'adminPassword'].forEach(i => $(i).addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); } }));
     $('logoutBtn').addEventListener('click', () => { Wiki.clearCredentials(); location.reload(); });
+
+    // Accesso con Estji ID (QR): il blocco compare solo se il widget è stato caricato
+    if (window.EstjiLogin && $('estji-login')) {
+      $('estji-blocco').style.display = 'block';
+      EstjiLogin.mount('#estji-login', {
+        clientId: 'wiki',
+        scopes: ['profile.basic', 'wiki.edit'],
+        onLogin: async res => {
+          err.textContent = '';
+          try { const nome = await Wiki.loginEstji(res.id_token); $('adminUsernameLabel').textContent = nome || ''; mostra(true); await avvia(); }
+          catch (e) { err.textContent = '❌ ' + (e.message || 'Accesso non riuscito'); }
+        }
+      });
+    }
   }
 
   /* ---------- elenco ---------- */
