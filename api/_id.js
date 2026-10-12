@@ -1,13 +1,13 @@
 // api/_id.js — identità digitale: registrazione, accesso personale, profilo, password, 2FA.
-//   POST { azione: "registra", nick, discord, stato, sezione, password }
+//   POST { azione: "registra", nick, discord, residenza (ID di un luogo di organi.json), password }
 //   POST { azione: "accedi", nick, password }                        -> token di sessione personale
 //   POST { azione: "profilo" | "cambia-password" | "tf" } + Authorization: Bearer <token>
 // Ruolo, CUP, verificato, uuid NON si leggono mai dalla richiesta: li decide il sistema / lo staff (ide.json).
-import { STATI, leggiIde, scriviIde, trovaId, nuovoHash, passwordOk, nuovoCup, creaSessioneId, sessioneId,
+import { trovaLuogo, leggiIde, scriviIde, trovaId, nuovoHash, passwordOk, nuovoCup, creaSessioneId, sessioneId,
          limite, ipDi, ruoliTecnici, corpoJson } from './_idstore.js';
 
 const str = (v, max) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
-const profilo = p => ({ id: p.id, cup: p.cup, nick: p.nick, discord: p.discord, stato: p.stato, sezione: p.sezione,
+const profilo = p => ({ id: p.id, cup: p.cup, nick: p.nick, discord: p.discord, stato: p.stato, sezione: p.sezione, residenza: p.residenza, residenzaNome: p.residenzaNome, uuid: p.uuid,
   ruoli: p.ruoli || [], ruoliTecnici: ruoliTecnici(p), verificato: !!p.verificato, iscritto: p.iscritto, tf: !!p.tf, haPassword: !!p.password });
 
 export default async function handler(req, res) {
@@ -17,16 +17,17 @@ export default async function handler(req, res) {
   try {
     if (c.azione === 'registra') {
       if (!(await limite('reg:' + ipDi(req), 5, 3600))) return err(429, 'Troppe registrazioni: riprova più tardi.');
-      const nick = str(c.nick, 16), discord = str(c.discord, 40).toLowerCase(), stato = str(c.stato, 40), sezione = str(c.sezione, 40);
+      const nick = str(c.nick, 16), discord = str(c.discord, 40).toLowerCase(), residenza = str(c.residenza, 80);
       if (!/^[A-Za-z0-9_]{3,16}$/.test(nick)) return err(400, 'Il nome in gioco deve avere 3-16 caratteri (lettere, numeri, _).');
       if (discord.length < 2) return err(400, "Inserisci l'account Discord.");
-      if (!STATI[stato] || !STATI[stato].sezioni.includes(sezione)) return err(400, 'Residenza non valida.');
+      const luogo = await trovaLuogo(residenza);
+      if (!luogo) return err(400, 'Residenza non valida.');
       if (typeof c.password !== 'string' || c.password.length < 8 || c.password.length > 128) return err(400, 'La password deve avere almeno 8 caratteri.');
       const ide = await leggiIde();
       if (ide.identita.some(p => p.discord === discord)) return err(409, 'Questo account Discord ha già un\'identità.');
       if (ide.identita.some(p => p.nick.toLowerCase() === nick.toLowerCase())) return err(409, 'Il nome in gioco è già registrato.');
       const p = { id: 'EST-' + new Date().getFullYear() + '-' + String(ide.identita.length + 1).padStart(6, '0'), cup: '', nick, discord, uuid: '',
-        stato, sezione, ruoli: [], verificato: false, iscritto: new Date().toISOString().slice(0, 10), password: nuovoHash(c.password), tf: false };
+        residenza: luogo.id, residenzaNome: luogo.nome, stato: luogo.nome, sezione: '', ruoli: [], verificato: false, iscritto: new Date().toISOString().slice(0, 10), password: nuovoHash(c.password), tf: false };
       p.cup = nuovoCup(p, ide);
       ide.identita.push(p);
       await scriviIde(ide, 'Nuova identità ' + p.id);
