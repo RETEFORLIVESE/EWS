@@ -263,7 +263,10 @@ const Wiki = {
      ## Titolo · ### Sottotitolo · **grassetto** · *corsivo* · `codice` · - elenco · 1. elenco numerato
      > citazione · --- linea · [testo](https://...) · ![didascalia](https://immagine) · [[Altra pagina]] · [[Altra pagina|testo]]
      {{infobox Titolo … }} scheda laterale stile Wikipedia (vedi sotto)
-     {{tabella … }} tabelle con celle unite e colorate (vedi Wiki.tabParse) */
+     {{tabella … }} tabelle con celle unite e colorate (vedi Wiki.tabParse)
+     ALLINEAMENTO (titoli, paragrafi, citazioni, elenchi, tabelle, infobox):
+       {centro} Testo…   {sx} Testo…   {dx} Testo…     a inizio riga: vale per quel blocco (anche se la riga è da sola, vale per il blocco dopo)
+       {{centro            ·  {{sx  ·  {{dx            su una riga da sole, chiusi da }}: valgono per tutto ciò che sta in mezzo */
   render(src, pagine) {
     const e = Wiki.esc, trova = n => (pagine || []).find(p => Wiki.norm(p.titolo) === Wiki.norm(n) || p.id === Wiki.slug(n));
     let nImg = 0, inIb = false, nTab = 0;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
@@ -323,26 +326,34 @@ const Wiki = {
       return `<div class="tw"><table class="tbl${t.piena ? ' tfull' : ''}" data-tb="${n}">${tit ? `<caption>${inl(tit)}</caption>` : ''}<tbody>${rows}</tbody></table></div>`;
     };
     const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
+    // ALLINEAMENTO del testo: {sx} {centro} {dx} a inizio riga (vale per quel blocco) · {{centro … }} per più blocchi (vedi sopra)
+    const ALN = { sx: 's', sinistra: 's', centro: 'c', centrato: 'c', dx: 'd', destra: 'd' };
+    let blocco = '', pend = '', la = '';
+    const allinea = (h, a) => h.replace(/^<(\w+)([^>]*)>/, (m, t, at) => /\bclass="/.test(at) ? `<${t}${at.replace('class="', `class="al-${a} `)}>` : `<${t}${at} class="al-${a}">`);
+    const add = h => { const a = la || pend || blocco; pend = ''; out.push(a && !/^<hr/.test(h) ? allinea(h, a) : h); };
     for (let i = 0; i < L.length; i++) {
-      const r = L[i].trim(); let m;
+      let r = L[i].trim(), m; la = '';
       if (!r) continue;
+      if (r === '}}' && blocco) { blocco = ''; continue; }
+      if ((m = /^\{\{\s*(sx|sinistra|dx|destra|centro|centrato)\s*$/i.exec(r))) { blocco = ALN[m[1].toLowerCase()]; continue; }
+      if ((m = /^\{(sx|sinistra|dx|destra|centro|centrato)\}\s*/i.exec(r))) { la = ALN[m[1].toLowerCase()]; r = L[i] = r.slice(m[0].length); if (!r) { pend = la; continue; } }
       if (/^\{\{\s*infobox\b/i.test(r)) {
         const tit = r.replace(/^\{\{\s*infobox\b\s*/i, '').replace(/\}\}\s*$/, ''), righe = [];
         if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') { if (L[i].trim()) righe.push(L[i].trim()); i++; } }
-        out.push(infobox(tit, righe)); continue;
+        add(infobox(tit, righe)); continue;
       }
       if (/^\{\{\s*tabella\b/i.test(r)) {
         const tit = r.replace(/^\{\{\s*tabella\b\s*/i, '').replace(/\}\}\s*$/, ''), linee = [];
         if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') linee.push(L[i++]); }
-        out.push(tabella(tit, linee)); continue;
+        add(tabella(tit, linee)); continue;
       }
-      if ((m = /^(#{2,3})\s+(.*)/.exec(r))) out.push(`<h${m[1].length} id="s-${Wiki.slug(m[2])}">${inl(m[2])}</h${m[1].length}>`);
-      else if (/^---+$/.test(r)) out.push('<hr>');
-      else if (r[0] === '>') { const q = []; while (i < L.length && L[i].trim()[0] === '>') q.push(inl(L[i++].trim().replace(/^>\s?/, ''))); i--; out.push(`<blockquote>${q.join('<br>')}</blockquote>`); }
+      if ((m = /^(#{2,3})\s+(.*)/.exec(r))) add(`<h${m[1].length} id="s-${Wiki.slug(m[2])}">${inl(m[2])}</h${m[1].length}>`);
+      else if (/^---+$/.test(r)) add('<hr>');
+      else if (r[0] === '>') { const q = []; while (i < L.length && L[i].trim()[0] === '>') q.push(inl(L[i++].trim().replace(/^>\s?/, ''))); i--; add(`<blockquote>${q.join('<br>')}</blockquote>`); }
       else if (/^([-*]|\d+\.)\s/.test(r)) {
         const ol = /^\d/.test(r), it = []; while (i < L.length && /^([-*]|\d+\.)\s/.test(L[i].trim())) it.push(`<li>${inl(L[i++].trim().replace(/^([-*]|\d+\.)\s+/, ''))}</li>`); i--;
-        out.push(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
-      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; out.push(`<p>${p.join('<br>')}</p>`); }
+        add(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
+      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|\}\}$|\{(?:sx|sinistra|dx|destra|centro|centrato)\}|([-*]|\d+\.)\s)/.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; add(`<p>${p.join('<br>')}</p>`); }
     }
     return out.join('\n');
   },
