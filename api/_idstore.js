@@ -23,7 +23,8 @@ export const SCOPES = {
   'normaktiv.sign': [3, 'delegato', 'Firma di atti normativi'],
   'agency.manage': [2, 'dirigente_agenzia', 'Gestione agenzia'],
   'unitext.edit': [2, 'redattore', 'Redazione UniText'],
-  'normaktiv.edit': [2, 'redattore', 'Redazione atti NormAktiv']
+  'normaktiv.edit': [2, 'redattore', 'Redazione atti NormAktiv'],
+  'ctsu.edit': [2, 'redattore_ctsu', 'Redazione progetti CTSU']
 };
 
 const SITI = ['https://ews-rose.vercel.app', 'https://rtf-rose.vercel.app'];
@@ -32,7 +33,8 @@ export const PORTALI = {
   cepu:      { nome: 'CEPU', origins: SITI, scopes: ['profile.basic', 'profile.residence', 'vote.eligibility'] },
   normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'] },
   wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'] },
-  unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'] }
+  unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'] },
+  ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'] }
 };
 
 /* ---------- Redis (Upstash, REST) ---------- */
@@ -117,6 +119,8 @@ export function ruoliTecnici(p) {
   (p.ruoli || []).forEach(x => {
     if (/Redattore Wiki/i.test(x)) r.push('redattore_wiki');
     if (/^Redattore( UniText)?$/i.test(String(x).trim())) r.push('redattore');   // "Redattore" (e la vecchia etichetta "Redattore UniText")
+    if (/Redattore CTSU/i.test(x)) r.push('redattore_ctsu');
+    if (/^Generale$/i.test(String(x).trim())) r.push('generale');   // accesso a tutti i permessi (resta il livello minimo di sicurezza)
     if (/Dirigente/i.test(x)) r.push('dirigente_agenzia');
     if (/Presidente|Delegato/i.test(x)) r.push('delegato');
   });
@@ -124,7 +128,8 @@ export function ruoliTecnici(p) {
 }
 export function scopeConcessi(p, richiesti, loa) {
   const r = ruoliTecnici(p);
-  return richiesti.filter(s => SCOPES[s] && p.verificato && r.includes(SCOPES[s][1]) && loa >= SCOPES[s][0]);
+  const generale = r.includes('generale');   // il ruolo "Generale" soddisfa il ruolo richiesto da qualsiasi permesso
+  return richiesti.filter(s => SCOPES[s] && p.verificato && (generale || r.includes(SCOPES[s][1])) && loa >= SCOPES[s][0]);
 }
 
 /* ---------- sessione personale (diversa da quella delle redazioni) ---------- */
