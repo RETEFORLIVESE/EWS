@@ -54,6 +54,21 @@ const API = {
     return true;
   },
 
+  // Login con Estji ID (QR): invia all'endpoint il token firmato e apre la stessa sessione del login con password.
+  async loginEstji(idToken) {
+    const res = await fetch('/api/atti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ azione: 'login-estji', id_token: idToken })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Accesso non riuscito');
+    }
+    this.setSessione(data.token, data.username);
+    return data.username;
+  },
+
   async login(username, password) {
     const res = await fetch('/api/atti', {
       method: 'POST',

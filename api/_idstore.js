@@ -22,14 +22,15 @@ export const SCOPES = {
   'wiki.edit': [2, 'redattore_wiki', 'Modifica della Wiki'],
   'normaktiv.sign': [3, 'delegato', 'Firma di atti normativi'],
   'agency.manage': [2, 'dirigente_agenzia', 'Gestione agenzia'],
-  'unitext.edit': [2, 'redattore_unitext', 'Redazione UniText']
+  'unitext.edit': [2, 'redattore', 'Redazione UniText'],
+  'normaktiv.edit': [2, 'redattore', 'Redazione atti NormAktiv']
 };
 
 const SITI = ['https://ews-rose.vercel.app', 'https://rtf-rose.vercel.app'];
 export const PORTALI = {
   archive:   { nome: 'Estji Archive', origins: SITI, scopes: ['profile.basic'] },
   cepu:      { nome: 'CEPU', origins: SITI, scopes: ['profile.basic', 'profile.residence', 'vote.eligibility'] },
-  normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.sign'] },
+  normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'] },
   wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'] },
   unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'] }
 };
@@ -92,7 +93,7 @@ export function ruoliTecnici(p) {
   const r = ['cittadino'];
   (p.ruoli || []).forEach(x => {
     if (/Redattore Wiki/i.test(x)) r.push('redattore_wiki');
-    if (/Redattore UniText/i.test(x)) r.push('redattore_unitext');
+    if (/^Redattore( UniText)?$/i.test(String(x).trim())) r.push('redattore');   // "Redattore" (e la vecchia etichetta "Redattore UniText")
     if (/Dirigente/i.test(x)) r.push('dirigente_agenzia');
     if (/Presidente|Delegato/i.test(x)) r.push('delegato');
   });
