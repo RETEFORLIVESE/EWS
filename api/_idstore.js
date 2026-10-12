@@ -78,9 +78,32 @@ export function passwordOk(pw, rec) {
   return a.length === h.length && crypto.timingSafeEqual(a, h);
 }
 
-/* ---------- CUP: STATO-SEZIONE-AAMMGG-PP-C ---------- */
+/* ---------- luoghi (organi.json, stessa logica di CA.html) ---------- */
+// "luoghi" può essere piatto o raggruppato: l'ID si cerca a qualsiasi profondità.
+export async function trovaLuogo(id) {
+  if (!id) return null;
+  const dati = await leggiFileJson('organi.json', { luoghi: {} });
+  const eVoce = v => typeof v === 'string' || (v && typeof v === 'object' && typeof v.nome === 'string');
+  const cerca = c => {
+    if (!c || typeof c !== 'object') return null;
+    if (Object.prototype.hasOwnProperty.call(c, id) && eVoce(c[id])) return c[id];
+    for (const k of Object.keys(c)) {
+      const v = c[k];
+      if (v && typeof v === 'object' && !eVoce(v)) { const t = cerca(v); if (t) return t; }
+    }
+    return null;
+  };
+  const v = cerca(dati && dati.luoghi);
+  return v ? { id, nome: typeof v === 'string' ? v : v.nome } : null;
+}
+
+/* ---------- CUP: LUOGO-SEZIONE-AAMMGG-PP-C ---------- */
+// Account vecchi: codice e sezione di STATI. Account nuovi: 3 lettere dall'ID del luogo e sezione "00".
 export function nuovoCup(p, ide) {
-  const pre = STATI[p.stato].cod + '-' + p.sezione.replace(/\D/g, '') + '-' + p.iscritto.slice(2).replace(/-/g, '');
+  const leg = Object.prototype.hasOwnProperty.call(STATI, p.stato) ? STATI[p.stato] : null;
+  const cod = leg ? leg.cod : String(p.residenza || p.stato || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 3).padEnd(3, 'X');
+  const sez = (p.sezione || '').replace(/\D/g, '') || '00';
+  const pre = cod + '-' + sez + '-' + p.iscritto.slice(2).replace(/-/g, '');
   const n = ide.identita.filter(x => x.cup && x.cup.indexOf(pre + '-') === 0).length + 1;
   const corpo = pre + '-' + ('0' + n).slice(-2);
   let t = 0; const c = corpo.replace(/-/g, '');
