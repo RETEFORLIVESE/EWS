@@ -27,24 +27,44 @@ button#out{width:100%;margin-top:4px}
 .m{margin:12px 0;padding:10px 12px;border-left:4px solid var(--blue);background:var(--bg);border-radius:6px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
 ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}li:last-child{border-bottom:0}
 input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transform:scale(1.2)}
-.card{position:relative;background:#f4f7fd;color:#0a1f44;border:1px solid #bfcbe6;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(4,58,150,.28),0 1px 0 #fff inset;margin:14px 0 8px;isolation:isolate;animation:rise .5s ease-out both}
-.card::before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
-.card .ch{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6);color:#fff;padding:13px 16px;border-bottom:3px solid #c9a227}
-.card.fisc .ch{background:linear-gradient(135deg,#074a28,#0b7a4b 60%,#14a566)}
-.card .ch b{display:block;font:700 1.02rem/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif}.card .ch small{opacity:.85;font-size:.72rem}
-.card .cb{display:flex;gap:16px;padding:16px;position:relative}
-.card .av{flex:none;width:80px;height:100px;border-radius:10px;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:2.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 3px 8px rgba(0,0,0,.18)}
-.card .av.sk{height:80px;background:#dfe7f7;overflow:hidden}
-.card .av img{display:block;width:100%;height:100%;border-radius:8px;image-rendering:pixelated}
-.card .cf{min-width:0;flex:1}.card .cf small{display:block;font-size:.68rem;color:#566684;margin-top:8px}.card .cf small:first-child{margin-top:0}
-.card .cf b{display:block;font-size:.98rem;overflow-wrap:anywhere}
-.card .dots{letter-spacing:2px;color:#566684;font-weight:400}
-.card .mrz{background:#dfe7f7;border-top:1px dashed #9db0d6;font:700 .68rem ui-monospace,Menlo,monospace;padding:9px 12px;overflow:hidden;white-space:nowrap;color:#0a1f44}
-.card .cb{overflow:hidden}
-.card .cb::after{content:"";position:absolute;right:-96px;bottom:-96px;width:360px;height:360px;z-index:0;pointer-events:none;opacity:.22;background:var(--stemma,url("USSEcoat.png")) center/contain no-repeat}
-.card .cf{position:relative;z-index:1}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media(max-width:380px){.card .cb{gap:12px}.card .av{width:68px}.card .av.sk{height:68px}}
+.wal{container-type:inline-size;margin:14px 0 4px}
+.wi{position:relative;height:85.2cqw}
+.wc{position:absolute;left:0;right:0;height:63.05cqw;border-radius:3.6cqw;overflow:hidden;border:1px solid #bfcbe6;background:#f4f7fd;color:#0a1f44;box-shadow:0 -.8cqw 2.4cqw rgba(4,30,90,.22);transition:top .45s cubic-bezier(.2,.8,.2,1);cursor:pointer;isolation:isolate;-webkit-tap-highlight-color:transparent;user-select:none}
+.wc:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wc::before{content:"";position:absolute;inset:0;z-index:-1}
+.wc::after{content:"";position:absolute;z-index:0;right:-6cqw;bottom:-12cqw;width:54cqw;height:54cqw;opacity:.2;pointer-events:none;background:center/contain no-repeat}
+.wc .h{position:relative;z-index:2;height:11cqw;display:flex;align-items:center;justify-content:space-between;gap:2cqw;padding:0 4cqw;color:#fff;border-bottom:.7cqw solid #c9a227}
+.wc .h b{font-size:4.1cqw;white-space:nowrap}
+.wc .h small{font-size:2.2cqw;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:#fff}
+.wc .bd{position:absolute;z-index:1;top:11cqw;bottom:5.5cqw;left:0;right:0;padding:2.8cqw 4cqw 0;display:flex;gap:3.5cqw;overflow:hidden}
+.wc .mrz{position:absolute;z-index:1;left:0;right:0;bottom:0;height:5.5cqw;display:flex;align-items:center;padding:0 3cqw;font:700 2.1cqw ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;border-top:1px dashed #9db0d6;background:#dfe7f7}
+.wc .g{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:1.6cqw 3cqw;align-content:start;position:relative;z-index:1}
+.wc .g>div{min-width:0}
+.wc .s2{grid-column:1/-1}
+.wc small{display:block;font-size:2.2cqw;line-height:1.2;color:#566684}
+.wc .g b{display:block;font-size:3.1cqw;line-height:1.25;overflow-wrap:anywhere}
+.wc .g em{display:block;font-style:normal;font-size:2.1cqw;line-height:1.25;color:#566684;overflow-wrap:anywhere}
+.wc .u b{font:600 2.6cqw/1.3 ui-monospace,Menlo,monospace}
+.wc .dots{letter-spacing:.4cqw;color:#566684;font-weight:400}
+.wc .lc{flex:none;width:21cqw;display:flex;flex-direction:column;gap:2.5cqw;position:relative;z-index:1}
+.wc .av{flex:none;width:21cqw;height:21cqw;border-radius:2cqw;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:8cqw;font-weight:700;display:flex;align-items:center;justify-content:center;border:.5cqw solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 .8cqw 2cqw rgba(0,0,0,.18);overflow:hidden;position:relative;z-index:1}
+.wc .av.sk{background:#dfe7f7}
+.wc .av img{display:block;width:100%;height:100%;image-rendering:pixelated}
+.wc .chip{width:12cqw;height:8.5cqw;border-radius:1.3cqw;border:.25cqw solid #8a6d12;background:linear-gradient(#8a6d12,#8a6d12) center/100% .3cqw no-repeat,linear-gradient(90deg,#8a6d12,#8a6d12) center/.3cqw 100% no-repeat,linear-gradient(135deg,#f0dc8a,#b8921f)}
+.wc .bars{height:6cqw;opacity:.75;background:repeating-linear-gradient(90deg,#1b1f6b 0 .5cqw,transparent .5cqw 1.1cqw,#1b1f6b 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
+.wc.id .h{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6)}
+.wc.id::before{background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
+.wc.id::after{background-image:var(--stemma,url("USSEcoat.png"));opacity:.22}
+.wc.fisc{background:#fff;border-color:#c6dccf}
+.wc.fisc .h{background:linear-gradient(135deg,#074a28,#0b7a4b 60%,#14a566);border-bottom-color:#fff}
+.wc.fisc::before{background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(11,122,75,.07) 5px 6px)}
+.wc.fisc::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%230b7a4b' stroke-width='3.5' stroke-linecap='round'%3E%3Ccircle cx='50' cy='50' r='45'/%3E%3Ccircle cx='50' cy='50' r='37'/%3E%3Cpath d='M64 36a20 20 0 1 0 0 28M32 45h26M32 55h26'/%3E%3C/g%3E%3C/svg%3E")}
+.wc.fisc .mrz{background:#e3f0e8;border-top-color:#9cc7b0}
+.wc.elet{background:#f3f4fd;border-color:#c3c8ec}
+.wc.elet .h{background:linear-gradient(135deg,#1b1f6b,#2f3fb5 60%,#4f63e0)}
+.wc.elet::before{background:repeating-linear-gradient(115deg,transparent 0 6px,rgba(47,63,181,.07) 6px 7px),repeating-linear-gradient(65deg,transparent 0 11px,rgba(184,146,31,.09) 11px 12px)}
+.wc.elet::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%232f3fb5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='14' y='50' width='72' height='38' rx='4'/%3E%3Cpath d='M36 50V44h28v6M30 12h40v30H30zM40 27l7 7 14-15'/%3E%3C/g%3E%3C/svg%3E")}
+.wc.elet .mrz{background:#e2e5f8;border-top-color:#a9b1e6}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--blue)}
 </style></head><body>
@@ -63,21 +83,26 @@ function resid(m){return m.residenzaNome||m.residenza||((m.stato||"")+(m.sezione
 function testa(m){var l=esc(String(m.nick||"?").charAt(0).toUpperCase()),k=m.uuid||m.nick;
   if(!k)return l;
   return'<img src="https://mc-heads.net/avatar/'+encodeURIComponent(k)+'/128" alt="'+esc(m.nick)+'" width="76" height="76" onerror="this.parentNode.classList.remove(\'sk\');this.outerHTML=\''+l+'\'">'}
-function carta(m){
-  var full=vista==="full",dots='<span class="dots">••••••••</span>',cl=function(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")};
-  var mrz="P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,"");
-  return'<div class="row" style="margin-top:6px"><button class="'+(full?"alt":"")+'" data-v="pub">Dati nascosti</button><button class="'+(full?"":"alt")+'" data-v="full">Dati completi</button></div>'+
-  '<div class="card"><div class="ch"><b>USSE · Carta d\'Identità</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="cb"><div class="av sk">'+testa(m)+'</div><div class="cf">'+
-  '<small>Nome in gioco</small><b>'+esc(m.nick)+'</b><small>ID Estji</small><b>'+esc(m.id)+'</b><small>Residenza elettorale</small><b>'+esc(resid(m))+'</b><small>Cariche e ruoli</small><b>'+esc((m.ruoli||[]).join(", ")||"Nessuna")+'</b>'+
-  '<small>Discord</small><b>'+(full&&m.discord?esc(m.discord):dots)+'</b><small>UUID di gioco</small><b>'+(full&&m.uuid?esc(m.uuid):dots)+'</b></div>'+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
+var wo=["fisc","elet","id"];
+function dt(v){if(v==null||v==="")return null;var d;if(typeof v==="number")d=new Date(v<1e12?v*1000:v);else{var s=String(v).trim(),r=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);d=r?new Date(+r[3],+r[2]-1,+r[1]):new Date(s)}return isNaN(d.getTime())?null:d}
+function fd(d){return d?("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear():"—"}
+function sca(m,k){var e=dt(m[k])||dt(m.emissione)||dt(m.registrazione)||dt(m.iscritto);if(!e)return"—";var f=new Date(e.getTime());f.setDate(f.getDate()+365);return"Fino al "+fd(f)+(f<new Date()?" (scaduta)":"")}
+function cl(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")}
+function f(l,v,x,s){return'<div'+(x?' class="'+x+'"':'')+'><small>'+l+'</small><b>'+v+'</b>'+(s?'<em>'+s+'</em>':'')+'</div>'}
+function wc(k,tit,body,mrz){return'<div class="wc '+k+'" data-k="'+k+'" role="button" tabindex="0" aria-label="'+esc(tit)+'"><div class="h"><b>'+esc(tit)+'</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="bd">'+body+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
+function wallet(m){
+  var full=vista==="full",dots='<span class="dots">••••••••</span>',foto='<div class="av sk">'+testa(m)+'</div>',cup=full&&m.cup?esc(m.cup):dots,reg=fd(dt(m.registrazione||m.registrato||m.iscritto));
+  var C={};
+  C.id=wc("id","USSE · Carta d\'Identità",foto+'<div class="g">'+f("NickName",esc(m.nick))+f("Estji ID",esc(m.id))+f("Residenza",esc(resid(m)))+f("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+f("Data di registrazione",esc(reg))+f("Validità",esc(sca(m,"emissioneId")))+f("Discord",full&&m.discord?esc(m.discord):dots)+f("UUID di gioco",full&&m.uuid?esc(m.uuid):dots,"u")+'</div>',"P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,""));
+  C.fisc=wc("fisc","USSE · Tessera fiscale",'<div class="lc">'+foto+'<div class="chip"></div></div><div class="g">'+f("Intestatario",esc(m.nick))+f("Stato",m.verificato?"Verificato":"In verifica")+f("Codice fiscale (CUP)",cup,"s2")+f("Residenza fiscale",esc(resid(m)),"s2",esc(m.indirizzo||m.indirizzoResidenza||""))+f("Iscritto dal",esc(fd(dt(m.iscrittoFisc||m.iscritto))))+f("Validità",esc(sca(m,"emissioneFisc")))+'</div>',"F<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
+  C.elet=wc("elet","USSE · Tessera elettorale",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Nome",esc(m.nick),"s2")+f("Sezione",esc(resid(m)),"s2")+f("Codice elettorale",cup)+f("Validità",esc(sca(m,"emissioneElet")))+'</div>',"E<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
+  var cards=wo.map(function(k,i){return C[k].replace('class="wc ','style="top:'+i*11+'cqw;z-index:'+i+'" class="wc ')}).join("");
+  return'<div class="row" style="margin-top:0"><button class="'+(full?"alt":"")+'" data-v="pub">Dati nascosti</button><button class="'+(full?"":"alt")+'" data-v="full">Dati completi</button></div><div class="wal"><div class="wi">'+cards+'</div></div>'}
+function fronte(c){var k=c.getAttribute("data-k");if(wo[wo.length-1]===k)return;wo=wo.filter(function(x){return x!==k});wo.push(k);wo.forEach(function(x,i){var e=document.querySelector('.wc[data-k="'+x+'"]');if(e){e.style.top=i*11+"cqw";e.style.zIndex=i}})}
 var UE=[["at","Austria"],["be","Belgio"],["bg","Bulgaria"],["hr","Croazia"],["cy","Cipro"],["cz","Cechia"],["dk","Danimarca"],["ee","Estonia"],["fi","Finlandia"],["fr","Francia"],["de","Germania"],["gr","Grecia"],["hu","Ungheria"],["ie","Irlanda"],["it","Italia"],["lv","Lettonia"],["lt","Lituania"],["lu","Lussemburgo"],["mt","Malta"],["nl","Paesi Bassi"],["pl","Polonia"],["pt","Portogallo"],["ro","Romania"],["sk","Slovacchia"],["si","Slovenia"],["es","Spagna"],["se","Svezia"]];
 function optUE(){return UE.map(function(c){return'<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join("")}
 function deleg(m){var v=String(m.delegazione||"").toLowerCase();for(var i=0;i<UE.length;i++)if(UE[i][0]===v||UE[i][1].toLowerCase()===v)return UE[i];return null}
 function bandiera(c){return c.toUpperCase().replace(/./g,function(x){return String.fromCodePoint(127397+x.charCodeAt(0))})}
-function campo(l,v){return"<small>"+l+"</small><b>"+v+"</b>"}
-function cartaFisc(m){var full=vista==="full",z=function(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")};
-  var cup=full?esc(m.cup):'<span class="dots">••••••••</span>',mrz="F<EST<"+z(m.nick)+"<<"+(full?z(m.cup):"<<<<<<<<");
-  return'<div class="card fisc"><div class="ch"><b>USSE · Tessera fiscale</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="cb"><div class="av sk">'+testa(m)+'</div><div class="cf">'+campo("Intestatario",esc(m.nick))+campo("Codice fiscale (CUP)",cup)+campo("Residenza fiscale",esc(resid(m)))+campo("Iscritto dal",esc(m.iscritto))+campo("Stato",m.verificato?"Verificato":"In verifica")+'</div></div><div class="mrz">'+esc(mrz)+'</div></div>'}
 var LUOGHI=null,LERR=null;
 function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
 function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
@@ -98,7 +123,7 @@ function render(){uuidMc();
   if(!me){
     h+='<div class="row"><button class="'+(tab==="in"?"":"alt")+'" data-t="in">Accedi</button><button class="'+(tab==="reg"?"":"alt")+'" data-t="reg">Registrati</button></div><div class="p" style="margin-top:12px">';
     if(tab==="in")h+='<label for="n">Nome in gioco</label><input id="n" autocomplete="username" value="'+esc(localStorage.getItem("estji_id_nick")||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><button id="go">Accedi</button>';
-    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
+    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="ind">Indirizzo di residenza</label><input id="ind" maxlength="80" autocomplete="off"><label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
     $("#app").innerHTML=h+msg()+"</div>";bind();return;
   }
   if(R){
@@ -112,7 +137,7 @@ function render(){uuidMc();
     }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
     h+='</div>';
   }
-  h+='<div class="p">'+carta(me)+cartaFisc(me)+'</div>'+
+  h+='<div class="p">'+wallet(me)+'</div>'+
    '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
@@ -122,7 +147,8 @@ function bind(){
   document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){tab=b.getAttribute("data-t");M=null;render()}});
   if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){try{localStorage.setItem("estji_id_nick",g("n").value.trim())}catch(e){}tok=d.token;localStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
   if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
-    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d").value,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,password:g("pw").value})}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d").value,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,indirizzo:g("ind").value,password:g("pw").value})}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+  document.querySelectorAll(".wc").forEach(function(c){c.onclick=function(){fronte(c)};c.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();fronte(c)}}});
   document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){vista=b.getAttribute("data-v");render()}});
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
