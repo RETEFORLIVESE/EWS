@@ -18,7 +18,12 @@ ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-betw
 <header><h1>Estji ID · Identità digitale USSE</h1></header><main id="app"></main>
 <script>
 var $=function(s){return document.querySelector(s)},esc=function(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
-var STATI={"EstjiFall":["Sezione 01","Sezione 02","Sezione 03"],"EstjiKuro":["Sezione 01","Sezione 02"],"Ile de USSE":["Sezione 01"]};
+var LUOGHI=null,LERR=null;
+function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
+function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
+function caricaLuoghi(){return fetch("/api/organi",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){var o=[];raccogli(j&&j.luoghi,"",o);LUOGHI=o}).catch(function(e){LERR=e.message}).then(render)}
+function optLuoghi(){var gr={},ord=[];LUOGHI.forEach(function(l){var g=l.gruppo||"";if(!gr[g]){gr[g]=[];ord.push(g)}gr[g].push(l)});
+  return ord.map(function(g){var o=gr[g].map(function(l){return'<option value="'+esc(l.id)+'">'+esc(l.nome)+'</option>'}).join("");return g?'<optgroup label="'+esc(g.replace(/_/g," "))+'">'+o+'</optgroup>':o}).join("")}
 var R=new URLSearchParams(location.search).get("r"),tok=sessionStorage.getItem("estji_id_tok"),me=null,sso=null,tab="in",M=null,done=null;
 function api(u,b){return fetch(u,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},tok?{Authorization:"Bearer "+tok}:{}),body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok){var e=new Error(d.error||"Errore "+r.status);e.status=r.status;throw e}return d})})}
 function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
@@ -33,7 +38,7 @@ function render(){
   if(!me){
     h+='<div class="row"><button class="'+(tab==="in"?"":"alt")+'" data-t="in">Accedi</button><button class="'+(tab==="reg"?"":"alt")+'" data-t="reg">Registrati</button></div><div class="p" style="margin-top:12px">';
     if(tab==="in")h+='<h2>Accedi</h2><label for="n">Nome in gioco</label><input id="n" autocomplete="username"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><button id="go">Accedi</button>';
-    else h+='<h2>Nuova identità</h2><label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label><select id="s">'+Object.keys(STATI).map(function(k){return STATI[k].map(function(x){return'<option value="'+esc(k+"|"+x)+'">'+esc(k+" – "+x)+'</option>'}).join("")}).join("")+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><p class="mute">Cariche, ruoli e CUP li assegna il sistema. La verifica in gioco la conferma lo staff.</p><button id="reg">Crea identità</button>';
+    else h+='<h2>Nuova identità</h2><label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><p class="mute">Cariche, ruoli e CUP li assegna il sistema. La verifica in gioco la conferma lo staff.</p><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
     $("#app").innerHTML=h+msg()+"</div>";bind();return;
   }
   if(R){
@@ -49,7 +54,7 @@ function render(){
   }
   h+='<div class="p"><h2>Il mio profilo</h2><p class="mute">Dati e ruoli sono in sola lettura: li gestisce lo staff.</p><ul>'+
    '<li><span>Nome in gioco</span><b>'+esc(me.nick)+'</b></li><li><span>ID Estji</span><b>'+esc(me.id)+'</b></li><li><span>CUP</span><b class="cup">'+esc(me.cup)+'</b></li>'+
-   '<li><span>Residenza</span><b>'+esc(me.stato+" · "+me.sezione)+'</b></li><li><span>Iscritto dal</span><b>'+esc(me.iscritto)+'</b></li>'+
+   '<li><span>Residenza</span><b>'+esc(me.residenzaNome||me.residenza||(me.stato+" · "+me.sezione))+'</b></li><li><span>Iscritto dal</span><b>'+esc(me.iscritto)+'</b></li>'+
    '<li><span>Stato</span><b>'+(me.verificato?"Verificato":"In verifica")+'</b></li><li><span>Cariche</span><b>'+esc(me.ruoli.join(", ")||"Nessuna")+'</b></li></ul></div>'+
    '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
@@ -59,8 +64,8 @@ function bind(){
   var g=function(i){return document.getElementById(i)};
   document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){tab=b.getAttribute("data-t");M=null;render()}});
   if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){tok=d.token;sessionStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
-  if(g("reg"))g("reg").onclick=function(){var s=g("s").value.split("|");if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
-    ask(function(){return api("/api/estji",{azione:"registra",nick:g("n").value,discord:g("d").value,stato:s[0],sezione:s[1],password:g("pw").value}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+  if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
+    ask(function(){return api("/api/estji",{azione:"registra",nick:g("n").value,discord:g("d").value,residenza:lu.id,residenzaNome:lu.nome,password:g("pw").value}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
     ask(function(){return api("/api/estji",{azione:"cambia-password",attuale:g("cp").value,nuova:g("n1").value}).then(function(){M=["ok","Password aggiornata."]})})};
@@ -69,5 +74,5 @@ function bind(){
   if(g("ok"))g("ok").onclick=function(){fin("approva")};if(g("no"))g("no").onclick=function(){fin("rifiuta")};
   document.querySelectorAll("[data-n]").forEach(function(b){b.onclick=function(){fin("approva",{scelta:+b.getAttribute("data-n")})}});
 }
-carica();
+caricaLuoghi();carica();
 </script></body></html>
