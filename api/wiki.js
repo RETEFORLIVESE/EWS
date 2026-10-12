@@ -11,6 +11,7 @@
 import { timingSafeEqual } from 'crypto';
 import { leggiFileJson, scriviFileJson } from './_github.js';
 import { creaToken, sessioneDaRichiesta } from './_sessione.js';
+import { verificaIdToken, haScope } from './_estji-verifica.js';
 
 const FILE = 'wiki.json';
 
@@ -50,7 +51,19 @@ export default async function handler(req, res) {
             return fine(200, { success: true, token: creaToken(u) });
         }
 
-        const sessione = sessioneDaRichiesta(req);
+        // Accesso con Estji ID (QR): il browser invia l'id_token ricevuto dal widget, qui si verifica la firma RS256,
+        // il portale (aud = 'wiki') e il permesso 'wiki.edit' (concesso solo a identità verificate con ruolo Redattore Wiki).
+        if (corpo.azione === 'estji') {
+            let c;
+            try { c = await verificaIdToken(corpo.id_token, 'wiki'); }
+            catch (e) { return fine(502, { message: 'Estji ID non raggiungibile: riprova tra poco.' }); }
+            if (!c || !c.nick) return fine(401, { success: false, message: 'Accesso Estji ID non valido o scaduto.' });
+            if (!haScope(c, 'wiki.edit')) return fine(403, { success: false, message: 'Questa identità non è abilitata alla redazione della Wiki.' });
+            // token con ambito 'wiki': vale solo per questa API, non apre le altre redazioni
+            return fine(200, { success: true, token: creaToken(c.nick, 'wiki'), username: c.nick });
+        }
+
+        const sessione = sessioneDaRichiesta(req, 'wiki');
         if (!sessione) return fine(401, { message: 'Sessione scaduta: effettua di nuovo il login.' });
 
         // rilegge il file ad ogni scrittura: si modifica solo la pagina interessata, senza sovrascrivere il lavoro altrui
