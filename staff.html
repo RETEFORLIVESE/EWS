@@ -1,278 +1,108 @@
 <!DOCTYPE html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex"><link rel="manifest" href="id-manifest.webmanifest"><meta name="theme-color" content="#043a96"><link rel="apple-touch-icon" href="id-icon-512.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Estji ID"><title>Estji ID</title>
+<meta name="robots" content="noindex"><meta name="theme-color" content="#043a96"><title>Estji ID · Pannello staff</title>
 <style>
 :root{--bg:#eaf0fb;--p:#fff;--ink:#0a1f44;--mute:#566684;--blue:#043a96;--blue2:#0a56d6;--line:#d3dcee;--ok:#0b7a4b;--bad:#b3261e;--gold:#b8921f;--r:12px}
 @media(prefers-color-scheme:dark){:root{--bg:#050d20;--p:#0d1b3b;--ink:#e8eefc;--mute:#9aaccf;--blue:#6b97ff;--blue2:#8fb0ff;--line:#22365f;--ok:#4cd08f;--bad:#ff8a80;--gold:#e0b84a}}
-/* ===== DISEGNI DELLE CARTE (filigrana) — cambiali qui =====
-   Tessera fiscale: --disegno-fisc · Tessera elettorale: --disegno-elet
-   Valori: url("immagine.png"), un data-URI SVG, oppure none. (La carta d'identità usa --stemma.) */
-:root{--disegno-fisc:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cpath id='t' d='M13.5 50A36.5 36.5 0 0 1 86.5 50'/%3E%3Cpath id='b' d='M7 50A43 43 0 0 0 93 50'/%3E%3C/defs%3E%3Cg fill='none' stroke='%230b7a4b' stroke-width='2' stroke-linejoin='round'%3E%3Ccircle cx='50' cy='50' r='48'/%3E%3Ccircle cx='50' cy='50' r='32'/%3E%3C/g%3E%3Cg fill='%230b7a4b' font-family='Helvetica,Arial,sans-serif' font-weight='700'%3E%3Ctext font-size='6.6' letter-spacing='.7' text-anchor='middle'%3E%3CtextPath href='%23t' xlink:href='%23t' startOffset='50%25'%3EAGENZIA DELLE ENTRATE%3C/textPath%3E%3C/text%3E%3Ctext font-size='6.6' letter-spacing='1.6' text-anchor='middle'%3E%3CtextPath href='%23b' xlink:href='%23b' startOffset='50%25'%3EUSSE%3C/textPath%3E%3C/text%3E%3Cpath d='M50 30.5 72 43.5H28Z'/%3E%3Crect x='28' y='45' width='44' height='3'/%3E%3Crect x='32' y='50' width='5' height='14'/%3E%3Crect x='42' y='50' width='5' height='14'/%3E%3Crect x='53' y='50' width='5' height='14'/%3E%3Crect x='63' y='50' width='5' height='14'/%3E%3Crect x='28' y='65.5' width='44' height='3'/%3E%3Crect x='25' y='70' width='50' height='3'/%3E%3C/g%3E%3Ccircle cx='50' cy='38.5' r='2.6' fill='%23fff'/%3E%3C/svg%3E");--disegno-elet:url("USSEunion.png")}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-header{position:relative;background:linear-gradient(135deg,#032a6e,#043a96 55%,#0a56d6);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 22px;border-bottom:3px solid var(--gold)}
-header h1{margin:0 auto;max-width:520px;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:700;font-size:1.3rem;line-height:1.3;letter-spacing:.02em;-webkit-font-smoothing:antialiased}
-main{max-width:520px;margin:0 auto;padding:18px 16px calc(48px + env(safe-area-inset-bottom,0px))}
-.p{background:var(--p);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
-h2{margin:0 0 10px;font:700 1.1rem/1.3 "Helvetica Neue",Helvetica,Arial,sans-serif}
-label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 5px}
-input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;transition:border-color .15s,box-shadow .15s}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(135deg,#032a6e,#043a96 55%,#0a56d6);color:#fff;padding:calc(16px + env(safe-area-inset-top,0px)) 20px 18px;border-bottom:3px solid var(--gold)}
+header div{max-width:880px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.2rem}header a{color:#fff;font-size:.9rem}
+main{max-width:880px;margin:0 auto;padding:16px 14px 48px}
+.p{background:var(--p);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+h2{margin:0 0 8px;font-size:1.05rem}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
 input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent)}
-button{margin-top:14px;padding:12px 16px;border:1px solid transparent;border-radius:8px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer;min-height:44px;transition:background .15s,transform .1s}
+button{padding:9px 14px;border:1px solid transparent;border-radius:8px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer;min-height:40px}
 @media(prefers-color-scheme:dark){button:not(.alt){color:#04112b}}
-button:hover{background:var(--blue2)}button:active{transform:scale(.98)}
-button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-button:disabled{opacity:.5;cursor:not-allowed}
-button.alt{background:transparent;color:var(--blue);border-color:var(--blue)}
-button.alt:hover{background:color-mix(in srgb,var(--blue) 12%,transparent)}
-button#out{width:100%;margin-top:4px}
-.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1;margin-top:0}
-.m{margin:12px 0;padding:10px 12px;border-left:4px solid var(--blue);background:var(--bg);border-radius:6px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
-ul{list-style:none;margin:0;padding:0}li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}li:last-child{border-bottom:0}
-input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transform:scale(1.2)}
-.wal{container-type:inline-size;margin:14px 0 4px}
-.wi{display:flex;flex-direction:column;gap:4.5cqw}
-.wc{position:relative;flex:none;height:63.05cqw;border-radius:3.6cqw;overflow:hidden;border:1px solid #bfcbe6;background:#f4f7fd;color:#0a1f44;box-shadow:0 .8cqw 2.4cqw rgba(4,30,90,.22);isolation:isolate}
-.wc:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.wc::before{content:"";position:absolute;inset:0;z-index:-1}
-.wc::after{content:"";position:absolute;z-index:0;right:-6cqw;bottom:-12cqw;width:54cqw;height:54cqw;opacity:.2;pointer-events:none;background:center/contain no-repeat}
-.wc .h{position:relative;z-index:2;height:11cqw;display:flex;align-items:center;justify-content:space-between;gap:2cqw;padding:0 4cqw;color:#fff;border-bottom:.7cqw solid #c9a227}
-.wc .h b{font-size:4.1cqw;white-space:nowrap}
-.wc .h small{font-size:2.2cqw;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:#fff}
-.wc .bd{position:absolute;z-index:1;top:11cqw;bottom:5.5cqw;left:0;right:0;padding:2.8cqw 4cqw 0;display:flex;gap:3.5cqw;overflow:hidden}
-.wc .mrz{position:absolute;z-index:1;left:0;right:0;bottom:0;height:5.5cqw;display:flex;align-items:center;padding:0 3cqw;font:700 2.1cqw ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;border-top:1px dashed #9db0d6;background:#dfe7f7}
-.wc .g{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:1.6cqw 3cqw;align-content:start;position:relative;z-index:1}
-.wc .g>div{min-width:0}
-.wc .s2{grid-column:1/-1}
-.wc small{display:block;font-size:2.2cqw;line-height:1.2;color:#566684}
-.wc .g b{display:block;font-size:3.1cqw;line-height:1.25;overflow-wrap:anywhere}
-.wc .g em{display:block;font-style:normal;font-size:2.1cqw;line-height:1.25;color:#566684;overflow-wrap:anywhere}
-.wc .u b{font:600 2.6cqw/1.3 ui-monospace,Menlo,monospace}
-.wc .dots{letter-spacing:.4cqw;color:#566684;font-weight:400}
-.wc .lc{flex:none;width:21cqw;display:flex;flex-direction:column;gap:2.5cqw;position:relative;z-index:1}
-.wc .av{flex:none;width:21cqw;height:21cqw;border-radius:2cqw;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:8cqw;font-weight:700;display:flex;align-items:center;justify-content:center;border:.5cqw solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 .8cqw 2cqw rgba(0,0,0,.18);overflow:hidden;position:relative;z-index:1}
-.wc .av.sk{background:#dfe7f7}
-.wc .av img{display:block;width:100%;height:100%;image-rendering:pixelated}
-.wc .bars{height:6cqw;opacity:.75;background:repeating-linear-gradient(90deg,#1b1f6b 0 .5cqw,transparent .5cqw 1.1cqw,#1b1f6b 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
-.wc.id .h{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6)}
-.wc.id::before{background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
-.wc.id::after{background-image:var(--stemma,url("USSEcoat.png"));opacity:.22}
-.wc.fisc{background:#fff;border-color:#c6dccf}
-.wc.fisc .h{background:linear-gradient(135deg,#074a28,#0b7a4b 60%,#14a566);border-bottom-color:#fff}
-.wc.fisc::before{background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(11,122,75,.07) 5px 6px)}
-.wc.fisc::after{background-image:var(--disegno-fisc)}
-.wc.fisc .mrz{background:#e3f0e8;border-top-color:#9cc7b0}
-.wc.elet{background:#fffbea;border-color:#e6d27a}
-.wc.elet .h{background:linear-gradient(135deg,#f2b705,#ffd23f 60%,#ffe27a);color:#3b2e00;border-bottom-color:#8a6d12}
-.wc.elet .h small{color:#5a4600;opacity:1}
-.wc.elet::before{background:repeating-linear-gradient(115deg,transparent 0 6px,rgba(184,146,31,.10) 6px 7px),repeating-linear-gradient(65deg,transparent 0 11px,rgba(138,109,18,.08) 11px 12px)}
-.wc.elet::after{background-image:var(--disegno-elet);width:74cqw;height:36.5cqw;right:-6cqw;bottom:4cqw;opacity:.28}
-.wc.elet .mrz{background:#fbefb5;border-top-color:#e0c95a}
-.wc.elet .bars{background:repeating-linear-gradient(90deg,#3b2e00 0 .5cqw,transparent .5cqw 1.1cqw,#3b2e00 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--blue)}
+button:hover{background:var(--blue2)}button:disabled{opacity:.5;cursor:not-allowed}
+button.alt{background:transparent;color:var(--blue);border-color:var(--blue)}button.alt:hover{background:color-mix(in srgb,var(--blue) 12%,transparent)}
+button.bad{background:var(--bad);color:#fff}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.tabs,.bar,.acts{display:flex;gap:8px;flex-wrap:wrap}.tabs{margin-bottom:12px}.bar{margin-bottom:12px}.bar input{flex:2 1 200px}.bar select{flex:1 1 140px}
+.mute{color:var(--mute);font-size:.85rem}.m{margin:10px 0;padding:9px 12px;border-left:4px solid var(--blue);background:var(--bg);border-radius:6px;font-size:.9rem}.m.ok{border-color:var(--ok)}.m.bad{border-color:var(--bad)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border-bottom:0}.row b{font-size:1rem}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:.75rem;font-weight:700;border:1px solid var(--line);margin-left:4px}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.bad{color:var(--bad);border-color:var(--bad)}.tag.st{color:var(--gold);border-color:var(--gold)}
+.det{margin:6px 0 12px;padding:12px;border:1px solid var(--blue);border-radius:10px;background:var(--bg)}
+.det h3{margin:14px 0 6px;font-size:.9rem;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 14px}.kv small{display:block;color:var(--mute);font-size:.75rem}.kv b{overflow-wrap:anywhere;font-size:.9rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.cards .p{margin:0;text-align:center}.cards b{display:block;font-size:1.6rem}
+.mono{font-family:ui-monospace,Menlo,monospace;font-weight:700;background:var(--p);border:1px dashed var(--blue);padding:8px 10px;border-radius:8px;display:inline-block;user-select:all}
+table{width:100%;border-collapse:collapse;font-size:.85rem}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 [hidden]{display:none!important}
-.qrb{text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
-.qrb h2{margin-bottom:4px}.qrb .oppure{margin:16px 0 0;font-size:.85rem;color:var(--mute)}
-#estji-login{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;margin:12px 0}
-#estji-login>*{margin-left:auto;margin-right:auto}
-#estji-login canvas,#estji-login img,#estji-login svg{display:block;margin:0 auto;max-width:100%;height:auto;background:#fff;padding:10px;border-radius:10px}
-#estji-login button{width:auto;margin-top:0}
-#scn{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center}
-#scn video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.scn-fr{position:relative;width:min(70vw,320px);aspect-ratio:1;border:3px solid var(--gold);border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
-.scn-b{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff}
-.scn-b p{margin:0 0 8px;font-size:.95rem}.scn-b button{min-width:50%;background:rgba(255,255,255,.14);color:#fff;border-color:#fff}
-details>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;font:700 1.1rem/1.3 "Helvetica Neue",Helvetica,Arial,sans-serif;min-height:28px;-webkit-tap-highlight-color:transparent}
-details>summary::-webkit-details-marker{display:none}
-details>summary::after{content:"+";font-size:1.4rem;line-height:1;color:var(--blue)}
-details[open]>summary::after{content:"\2212"}
-details[open]>summary{margin-bottom:10px}
-details>summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px;border-radius:6px}
-details.sub{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 </style></head><body>
-<header><h1>Estji ID · Identità digitale USSE</h1></header><main id="app"></main>
-<div id="scn" hidden role="dialog" aria-modal="true" aria-label="Scansiona QR"><video id="scv" playsinline muted></video><div class="scn-fr"></div><div class="scn-b"><p id="scs"></p><button class="alt" id="scx" type="button">Annulla</button></div></div>
-<script src="https://ews-rose.vercel.app/estji-login.js"></script>
-<link rel="apple-touch-icon" href="id-icon-512.png">
-<link rel="icon" type="image/png" href="id-icon-512.png">
+<header><div><h1>Estji ID · Pannello staff</h1><a href="id.html">← Torna a Estji ID</a></div></header>
+<main id="app"><div class="p">Caricamento…</div></main>
 <script>
-var $=function(s){return document.querySelector(s)},esc=function(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
-var vista="pub",ip=null;
-if("serviceWorker" in navigator)navigator.serviceWorker.register("id-sw.js").catch(function(){});
-function risolvi(n){n=String(n||"").trim();if(!n)return Promise.resolve(null);var k="estji_uuid_"+n.toLowerCase();
-  try{var c=localStorage.getItem(k);if(c)return Promise.resolve(JSON.parse(c))}catch(e){}
-  return fetch("https://playerdb.co/api/player/minecraft/"+encodeURIComponent(n)).then(function(r){return r.json()}).then(function(j){var p=j&&j.success&&j.data&&j.data.player;if(!p)return null;var o={uuid:p.id,nome:p.username};try{localStorage.setItem(k,JSON.stringify(o))}catch(e){}return o}).catch(function(){return undefined})}
-function uuidMc(){if(!me||me.uuid||me._ur)return;me._ur=1;risolvi(me.nick).then(function(r){if(r&&r.uuid&&me){me.uuid=r.uuid;render()}})}
-var STMAP={},ALIAS={TRD:"TDR",EBHAN:"EBHN",BSHSX:"BSHS"};
-function statoDaId(id){var p=String(id||"").split("-")[0];p=ALIAS[p]||p;var s=STMAP[p];return typeof s==="string"?s:(s&&s.nome)||""}
-function statoDi(m){return statoDaId(m.residenza)}
-function dettResid(m){return esc(m.indirizzo||m.indirizzoResidenza||"")}
-function resid(m){var n=m.residenzaNome||m.residenza||((m.stato||"")+(m.sezione?" · "+m.sezione:"")),s=statoDi(m);return n+(s?" · "+s:"")}
-function testa(m){var l=esc(String(m.nick||"?").charAt(0).toUpperCase()),k=m.uuid||m.nick;
-  if(!k)return l;
-  return'<img src="https://mc-heads.net/avatar/'+encodeURIComponent(k)+'/128" alt="'+esc(m.nick)+'" width="76" height="76" onerror="this.parentNode.classList.remove(\'sk\');this.outerHTML=\''+l+'\'">'}
-function dt(v){if(v==null||v==="")return null;var d;if(typeof v==="number")d=new Date(v<1e12?v*1000:v);else{var s=String(v).trim(),r=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);d=r?new Date(+r[3],+r[2]-1,+r[1]):new Date(s)}return isNaN(d.getTime())?null:d}
-function fd(d){return d?("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear():"—"}
-function sca(m,k){if(m.revocati&&m.revocati[k])return"Revocata dallo staff";var e=dt(m[k])||dt(m.emissione)||dt(m.registrazione)||dt(m.iscritto);if(!e)return"—";var f=new Date(e.getTime());f.setDate(f.getDate()+365);return"Fino al "+fd(f)+(f<new Date()?" (scaduta)":"")}
-function cl(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")}
-function f(l,v,x,s){return'<div'+(x?' class="'+x+'"':'')+'><small>'+l+'</small><b>'+v+'</b>'+(s?'<em>'+s+'</em>':'')+'</div>'}
-function wc(k,tit,body,mrz){return'<div class="wc '+k+'" data-k="'+k+'" role="group" aria-label="'+esc(tit)+'"><div class="h"><b>'+esc(tit)+'</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="bd">'+body+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
-function wallet(m){
-  var full=vista==="full",dots='<span class="dots">••••••••</span>',foto='<div class="av sk">'+testa(m)+'</div>',cup=full&&m.cup?esc(m.cup):dots,reg=fd(dt(m.registrazione||m.registrato||m.iscritto));
-  var C={};
-  C.id=wc("id","USSE · Carta d\'Identità",foto+'<div class="g">'+f("NickName",esc(m.nick))+f("Estji ID",esc(m.id))+f("Residenza",esc(resid(m)),"",dettResid(m))+f("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+f("Data di registrazione",esc(reg))+f("Validità",esc(sca(m,"emissioneId")))+f("Discord",full&&m.discord?esc(m.discord):dots)+f("UUID di gioco",full&&m.uuid?esc(m.uuid):dots,"u")+'</div>',"P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,""));
-  C.fisc=wc("fisc","USSE · Tessera fiscale",'<div class="lc">'+foto+'</div><div class="g">'+f("Intestatario",esc(m.nick))+f("Stato",m.verificato?"Verificato":"In verifica")+f("Codice fiscale (CUP)",cup,"s2")+f("Residenza fiscale",esc(resid(m)),"s2",dettResid(m))+f("Iscritto dal",esc(fd(dt(m.iscrittoFisc||m.iscritto))))+f("Validità",esc(sca(m,"emissioneFisc")))+'</div>',"F<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
-  C.elet=wc("elet","USSE · Tessera elettorale",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Nome",esc(m.nick),"s2")+f("Residenza elettorale",esc(resid(m)),"s2",dettResid(m))+f("Codice elettorale",cup)+f("Validità",esc(sca(m,"emissioneElet")))+'</div>',"E<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
-  var cards=["id","fisc","elet"].map(function(k){return C[k]}).join("");
-  return'<div class="row" style="margin-top:0"><button class="'+(full?"alt":"")+'" data-v="pub">Dati nascosti</button><button class="'+(full?"":"alt")+'" data-v="full">Dati completi</button></div><div class="wal"><div class="wi">'+cards+'</div></div>'}
-var UE=[["at","Austria"],["be","Belgio"],["bg","Bulgaria"],["hr","Croazia"],["cy","Cipro"],["cz","Cechia"],["dk","Danimarca"],["ee","Estonia"],["fi","Finlandia"],["fr","Francia"],["de","Germania"],["gr","Grecia"],["hu","Ungheria"],["ie","Irlanda"],["it","Italia"],["lv","Lettonia"],["lt","Lituania"],["lu","Lussemburgo"],["mt","Malta"],["nl","Paesi Bassi"],["pl","Polonia"],["pt","Portogallo"],["ro","Romania"],["sk","Slovacchia"],["si","Slovenia"],["es","Spagna"],["se","Svezia"]];
-function optUE(){return UE.map(function(c){return'<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join("")}
-function deleg(m){var v=String(m.delegazione||"").toLowerCase();for(var i=0;i<UE.length;i++)if(UE[i][0]===v||UE[i][1].toLowerCase()===v)return UE[i];return null}
-function bandiera(c){return c.toUpperCase().replace(/./g,function(x){return String.fromCodePoint(127397+x.charCodeAt(0))})}
-var LUOGHI=null,LERR=null;
-function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
-function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v)){var st=String((v&&typeof v==="object"&&(v.stato||v.statoSociale||v.stato_sociale))||statoDaId(k)||"").replace(/_/g," ");out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:st,stato:st})}else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
-function caricaLuoghi(){return fetch("/api/organi",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){var o=[];STMAP=(j&&j.luoghi&&j.luoghi.livello_statale)||{};raccogli(j&&j.luoghi,"",o);LUOGHI=o}).catch(function(e){LERR=e.message}).then(render)}
-function optLuoghi(sel){var gr={},ord=[];LUOGHI.forEach(function(l){var g=l.gruppo||"";if(!gr[g]){gr[g]=[];ord.push(g)}gr[g].push(l)});
-  return ord.map(function(g){var o=gr[g].map(function(l){return'<option value="'+esc(l.id)+'"'+(l.id===sel?' selected':'')+'>'+esc(l.nome)+'</option>'}).join("");return g?'<optgroup label="'+esc(g.replace(/_/g," "))+'">'+o+'</optgroup>':o}).join("")}
-var R=new URLSearchParams(location.search).get("r"),tok=localStorage.getItem("estji_id_tok"),me=null,sso=null,tab="in",M=null,done=null;
-function api(u,b){return fetch(u,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},tok?{Authorization:"Bearer "+tok}:{}),body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok){var e=new Error(d.error||"Errore "+r.status);e.status=r.status;throw e}return d})})}
-function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
-var MS=null;
-var DOCS=[["id","Carta d'Identità","emissioneId"],["fisc","Tessera fiscale","emissioneFisc"],["elet","Tessera elettorale","emissioneElet"]];
-var OPEN={res:false,rin:false,pw:false,ses:false};
-var DCON=false,DCT="",DCN="",REGF={},SIC=null,SICL=0;
-try{REGF=JSON.parse(sessionStorage.getItem("estji_regf")||"{}")}catch(e){}
-function fdt(t){var d=new Date(t);return fd(d)+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
-function discordCampo(){if(!DCON)return'<input id="d" maxlength="40" autocomplete="off">';
-  return DCT?'<div class="m ok">Discord verificato: <b>'+esc(DCN)+'</b> ✓</div>':'<button class="alt" id="dcv" type="button" style="width:100%;margin-top:0">Verifica con Discord</button><p class="mute">Accedi a Discord per confermare che l\'account è tuo.</p>'}
-function discordRiga(m){var st=m.discordVerificato?'<span class="cup">✓ verificato</span>':'<span class="mute">non verificato</span>';
-  return'<p style="margin:0 0 6px">Discord: <b>'+esc(m.discord||"—")+'</b> '+st+'</p>'+((DCON&&!m.discordVerificato)?'<button class="alt" id="dcl" style="width:100%;margin-top:4px">Collega e verifica Discord</button>':'')}
-function staffLink(m){return m.staff?'<a class="p" href="staff.html" style="display:block;text-decoration:none;color:var(--blue);font-weight:700">Pannello staff →</a>':''}
-function dcVai(scopo){try{sessionStorage.setItem("estji_regf",JSON.stringify(REGF))}catch(e){}
-  api("/api/idx",{azione:"discord-avvia",scopo:scopo}).then(function(d){location.href=d.url},function(e){M=["bad",e.message];render()})}
-function caricaSic(){api("/api/idx",{azione:"sicurezza"}).then(function(d){SIC=d;render()}).catch(function(e){SICL=0;SIC=null;if(e.status===401&&me){esci();render()}})}
-function sessioniBlocco(){
-  var h='<details class="sub" data-d="ses"'+ap('ses')+'><summary>Sessioni e avvisi'+(SIC&&SIC.avvisi.length?' ('+SIC.avvisi.length+')':'')+'</summary>';
-  if(!SIC)return h+'<p class="mute">Caricamento…</p></details>';
-  if(SIC.avvisi.length)h+='<p class="mute"><b>Avvisi di sicurezza</b></p><ul>'+SIC.avvisi.map(function(a){return'<li><span>'+esc(a.testo)+'<br><span class="mute">'+esc(fdt(a.t))+'</span></span></li>'}).join("")+'</ul><button class="alt" id="avc" style="width:100%">Cancella avvisi</button>';
-  h+='<p class="mute" style="margin-top:14px"><b>Dispositivi con accesso attivo</b></p><ul>'+SIC.sessioni.map(function(s){return'<li><span><b>'+esc(s.etichetta)+'</b>'+(s.corrente?' · <span class="cup">questa sessione</span>':'')+'<br><span class="mute">IP '+esc(s.ip)+' · '+esc(s.metodo)+' · '+esc(fdt(s.creata))+'</span></span></li>'}).join("")+'</ul>';
-  h+='<div class="row"><button class="alt" id="sxa">Esci dagli altri dispositivi</button><button class="alt" id="sxt">Esci da tutti i dispositivi</button></div>';
-  h+='<label><input type="checkbox" id="avt"'+(me&&me.avvisiTutti?" checked":"")+'>Avvisami a ogni accesso, non solo da dispositivi nuovi</label>';
-  return h+'<p class="mute">Gli avvisi compaiono qui'+(me&&me.discordVerificato?' e arrivano anche in privato su Discord (se il bot è attivo)':'; con Discord verificato potrai riceverli anche lì')+'.</p></details>'}
-function ap(k){return OPEN[k]?' open':''}
-function msgS(k){return MS&&MS[2]===k?'<div class="m '+MS[0]+'">'+esc(MS[1])+'</div>':""}
-function askS(k,fn){MS=null;return fn().catch(function(e){MS=["bad",e.message,k];if(e.status===401&&me)esci()}).then(render)}
-function servizi(m){
-  var h='<details class="p" data-d="res"'+ap('res')+'><summary>Cambio di residenza</summary><p class="mute">Attuale: <b>'+esc(resid(m))+'</b>'+(m.indirizzo?' · '+esc(m.indirizzo):'')+'</p>';
-  if(LUOGHI&&LUOGHI.length)h+='<label for="rs">Nuova residenza</label><select id="rs">'+optLuoghi(m.residenza)+'</select><label for="rind">Indirizzo di residenza</label><input id="rind" maxlength="80" autocomplete="off" value="'+esc(m.indirizzo||"")+'"><button id="rsv">Aggiorna residenza</button>';
-  else h+='<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):"Caricamento dei luoghi…")+'</div>';
-  h+=msgS('res')+'</details><details class="p" data-d="rin"'+ap('rin')+'><summary>Rinnovo documenti</summary><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS('rin')+'</details>';
-  return h}
-function esci(){MS=null;tok=null;me=null;sso=null;SIC=null;SICL=0;localStorage.removeItem("estji_id_tok")}
-function carica(){
-  if(!tok)return render();
-  api("/api/estji",{azione:"profilo"}).then(function(d){me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){sso=null;done=["bad",e.message]}):0}).catch(function(e){if(e.status===401)esci();else M=["bad",e.message]}).then(render);
-}
-function render(){uuidMc();
-  var h="";
-  if(R&&!done&&!me)h+='<div class="m">Per confermare l\'accesso al portale, accedi con la tua identità.</div>';
-  if(!me){
-    h+='<div class="row"><button class="'+(tab==="in"?"":"alt")+'" data-t="in">Accedi</button><button class="'+(tab==="reg"?"":"alt")+'" data-t="reg">Registrati</button></div><div class="p" style="margin-top:12px">';
-    if(tab==="in")h+=qrBlocco()+'<label for="n">Nome in gioco</label><input id="n" autocomplete="username" value="'+esc(localStorage.getItem("estji_id_nick")||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><button id="go">Accedi</button>';
-    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off" value="'+esc(REGF.n||"")+'"><label for="d">Account Discord</label>'+discordCampo()+'<label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="ind">Indirizzo di residenza</label><input id="ind" maxlength="80" autocomplete="off" value="'+esc(REGF.ind||"")+'"><label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
-    $("#app").innerHTML=h+msg()+"</div>";bind();return;
-  }
-  if(R){
-    h+='<div class="p"><h2>Richiesta di accesso</h2>';
-    if(done)h+='<div class="m '+done[0]+'">'+esc(done[1])+'</div>';
-    else if(sso){
-      h+='<p>Vuoi accedere a <b>'+esc(sso.portale)+'</b>?<br><span class="mute">Richiesta da: '+esc(sso.da||"browser")+'</span></p><p class="mute">Il portale vedrà:</p><ul>'+sso.permessi.map(function(x){return"<li>"+esc(x)+"</li>"}).join("")+'</ul>';
-      if(sso.numero)h+='<p><b>Scegli il numero che vedi sul PC.</b></p><div class="row">'+sso.numero.map(function(n){return'<button class="alt" data-n="'+n+'">'+n+'</button>'}).join("")+'</div>';
-      else h+='<button id="ok" style="width:100%">Conferma accesso</button>';
-      h+='<button class="alt" id="no" style="width:100%">Non sono io</button>';
-    }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
-    h+='</div>';
-  }
-  if(!SIC&&!SICL){SICL=1;caricaSic()}
-  h+=scanBtn();
-  h+='<div class="p">'+wallet(me)+'</div>'+servizi(me)+staffLink(me)+
-   '<div class="p"><h2>Sicurezza</h2>'+discordRiga(me)+'<label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><details class=\"sub\" data-d=\"pw\"'+ap('pw')+'><summary>Cambia password</summary><label for=\"cp\">Password attuale</label><input id=\"cp\" type=\"password\" autocomplete=\"current-password\"><label for=\"n1\">Nuova password</label><input id=\"n1\" type=\"password\" autocomplete=\"new-password\"><label for=\"n2\">Ripeti la nuova password</label><input id=\"n2\" type=\"password\" autocomplete=\"new-password\"><button id="sv">Salva password</button></details>'+sessioniBlocco()+msg()+'</div><button class="alt" id="out">Esci</button>';
-  $("#app").innerHTML=h;bind();
-}
-function ask(fn){M=null;return fn().catch(function(e){M=["bad",e.message];if(e.status===401&&me){esci()}}).then(render)}
-function bind(){
-  var g=function(i){return document.getElementById(i)};
-  qrAccesso();document.querySelectorAll("[data-scan]").forEach(function(b){b.onclick=scansiona});
-  document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){tab=b.getAttribute("data-t");M=null;render()}});
-  if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){try{localStorage.setItem("estji_id_nick",g("n").value.trim())}catch(e){}tok=d.token;localStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
-  if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(DCON&&!DCT){M=["bad","Verifica prima il tuo account Discord."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
-    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d")?g("d").value:"",discordTicket:DCT,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,indirizzo:g("ind").value,password:g("pw").value})}).then(function(d){tab="in";DCT="";DCN="";REGF={};try{sessionStorage.removeItem("estji_regf")}catch(e){}M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
-  document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){vista=b.getAttribute("data-v");render()}});
-  if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
-  if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
-    ask(function(){return api("/api/estji",{azione:"cambia-password",attuale:g("cp").value,nuova:g("n1").value}).then(function(){M=["ok","Password aggiornata."]})})};
-  document.querySelectorAll("details[data-d]").forEach(function(d){d.addEventListener("toggle",function(){OPEN[d.getAttribute("data-d")]=d.open})});
-  if(g("rsv"))g("rsv").onclick=function(){askS("res",function(){return api("/api/estji",{azione:"cambia-residenza",residenza:g("rs").value,indirizzo:g("rind").value}).then(function(d){me=d.profilo;MS=["ok","Residenza aggiornata.","res"]})})};
-  document.querySelectorAll("[data-rin]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-rin");askS("rin",function(){return api("/api/estji",{azione:"rinnova",documento:k}).then(function(d){me=d.profilo;var x=DOCS.filter(function(z){return z[0]===k})[0];MS=["ok",x[1]+" rinnovata. "+sca(me,x[2])+".","rin"]})})}});
-  if(g("out"))g("out").onclick=function(){esci();M=null;render()};
-  if(g("dcv"))g("dcv").onclick=function(){dcVai("reg")};
-  if(g("dcl"))g("dcl").onclick=function(){dcVai("link")};
-  if(g("sxa"))g("sxa").onclick=function(){ask(function(){return api("/api/idx",{azione:"sessioni-esci",modo:"altre"}).then(function(d){M=["ok","Disconnesso da "+d.chiuse+" altri dispositivi."];SIC=null;SICL=0})})};
-  if(g("sxt"))g("sxt").onclick=function(){if(!confirm("Uscire da tutti i dispositivi, compreso questo?"))return;
-    api("/api/idx",{azione:"sessioni-esci",modo:"tutte"}).then(function(){esci();M=["ok","Sei uscito da tutti i dispositivi."];render()},function(e){M=["bad",e.message];render()})};
-  if(g("avc"))g("avc").onclick=function(){ask(function(){return api("/api/idx",{azione:"avvisi-svuota"}).then(function(){SIC=null;SICL=0})})};
-  if(g("avt"))g("avt").onchange=function(){ask(function(){return api("/api/idx",{azione:"avvisi-impostazione",tutti:g("avt").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
-  if(tab==="reg"&&!me)["n","ind","s","dg"].forEach(function(k){var el=g(k);if(!el)return;if(REGF[k])el.value=REGF[k];var sv=function(){REGF[k]=el.value};el.addEventListener("input",sv);el.addEventListener("change",sv)});
-  var fin=function(a,extra){ask(function(){return api("/api/estji",Object.assign({azione:a,id:R},extra||{})).then(function(){done=a==="approva"?["ok","Fatto: torna al PC, l'accesso è confermato."]:["ok","Richiesta rifiutata: nessun accesso concesso."]},function(e){done=["bad",e.message]})})};
-  if(g("ok"))g("ok").onclick=function(){fin("approva")};if(g("no"))g("no").onclick=function(){fin("rifiuta")};
-  document.querySelectorAll("[data-n]").forEach(function(b){b.onclick=function(){fin("approva",{scelta:+b.getAttribute("data-n")})}});
-}
-/* ---- Accesso con QR (mostra il QR) + scanner (bottone Scansiona) ---- */
-function scanBtn(){return'<button data-scan style="width:100%;margin:0 0 16px">Scansiona QR</button>'}
-function qrBlocco(){return(typeof EstjiLogin!=="undefined"&&!R)?'<div class="qrb"><h2>Accedi con l\'app Estji ID</h2><p class="mute">Sul telefono apri l\'app, premi <b>Scansiona</b> e inquadra questo QR.</p><div id="qrslot"></div><p class="mute">Hai un QR da confermare?</p><button class="alt" data-scan style="width:100%;margin-top:0">Scansiona un QR</button><p class="oppure">oppure usa nome e password</p></div>':""}
-var qrBox=null,qrT=0;
-function qrAccesso(){var s=document.getElementById("qrslot");if(!s||typeof EstjiLogin==="undefined")return;
-  if(qrBox&&Date.now()-qrT<100000){s.appendChild(qrBox);return}
-  qrBox=document.createElement("div");qrBox.id="estji-login";qrT=Date.now();s.appendChild(qrBox);
-  EstjiLogin.mount("#estji-login",{clientId:"id",scopes:["id.session"],onLogin:function(r){qrBox=null;
-    api("/api/estji",{azione:"accedi-qr",id_token:r&&r.id_token}).then(function(d){tok=d.token;localStorage.setItem("estji_id_tok",tok);M=null;carica()},function(e){M=["bad",e.message];render()})}})}
-var SC=null;
-function idDaQr(t){t=String(t||"").trim();var m=null;try{m=new URL(t,location.href).searchParams.get("r")}catch(e){}m=m||t;return/^[A-Za-z0-9_-]{20,32}$/.test(m)?m:null}
-function scanStato(t){var e=document.getElementById("scs");if(e)e.textContent=t}
-function scanStop(){if(SC){SC.on=false;clearTimeout(SC.tm);if(SC.stream)SC.stream.getTracks().forEach(function(t){t.stop()});SC=null}
-  var o=document.getElementById("scn"),v=document.getElementById("scv");if(o)o.hidden=true;if(v)v.srcObject=null}
-function jsQRcarica(){if(window.jsQR)return Promise.resolve();return new Promise(function(ok,ko){var e=document.createElement("script");e.src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";e.onload=ok;e.onerror=function(){ko(new Error("Lettore QR non disponibile: controlla la connessione."))};document.head.appendChild(e)})}
-function apriRichiesta(id){R=id;done=null;sso=null;M=null;tab="in";try{history.replaceState(null,"","?r="+encodeURIComponent(id))}catch(e){}carica()}
-function scansiona(){
-  if(SC)return;
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){M=["bad","Fotocamera non disponibile: apri Estji ID da un telefono, in HTTPS."];return render()}
-  var o=document.getElementById("scn"),v=document.getElementById("scv"),det=null;
-  try{if("BarcodeDetector" in window)det=new BarcodeDetector({formats:["qr_code"]})}catch(e){det=null}
-  var cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
-  SC={on:true};o.hidden=false;scanStato("Avvio fotocamera…");
-  (det?Promise.resolve():jsQRcarica()).then(function(){return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false})}).then(function(st){
-    if(!SC){st.getTracks().forEach(function(t){t.stop()});return}
-    SC.stream=st;v.srcObject=st;return v.play().then(function(){scanStato("Inquadra il QR mostrato sul PC");giro()})
-  }).catch(function(e){scanStop();M=["bad",e&&e.name==="NotAllowedError"?"Permesso alla fotocamera negato: abilitalo dalle impostazioni del browser.":(e&&e.message)||"Impossibile avviare la fotocamera."];render()});
-  function giro(){if(!SC||!SC.on)return;var p;
-    if(det)p=det.detect(v).then(function(r){return r&&r[0]?r[0].rawValue:null});
-    else if(!v.videoWidth)p=Promise.resolve(null);
-    else{var k=Math.min(1,640/v.videoWidth);cv.width=Math.round(v.videoWidth*k);cv.height=Math.round(v.videoHeight*k);cx.drawImage(v,0,0,cv.width,cv.height);var im=cx.getImageData(0,0,cv.width,cv.height),q=window.jsQR(im.data,im.width,im.height,{inversionAttempts:"dontInvert"});p=Promise.resolve(q?q.data:null)}
-    p.catch(function(){return null}).then(function(t){if(!SC||!SC.on)return;
-      if(t){var id=idDaQr(t);if(id){scanStop();apriRichiesta(id);return}scanStato("QR non riconosciuto: inquadra quello di Estji ID.")}
-      SC.tm=setTimeout(giro,160)})}
-}
-document.getElementById("scx").onclick=scanStop;
-document.addEventListener("keydown",function(e){if(e.key==="Escape"&&SC)scanStop()});
-/* ritorno da Discord (?dcreg=ticket&dcn=nome | ?dcok=1 | ?dcerr=messaggio) */
-(function(){var q=new URLSearchParams(location.search),ks=["dcreg","dcn","dcerr","dcok"],hit=ks.some(function(k){return q.has(k)});
-  if(q.get("dcreg")){DCT=q.get("dcreg");DCN=q.get("dcn")||"";tab="reg";M=["ok","Discord verificato: completa la registrazione."]}
-  else if(q.get("dcerr")){M=["bad",q.get("dcerr")];if(!tok)tab="reg"}
-  else if(q.get("dcok"))M=["ok","Discord collegato e verificato."];
-  if(hit){ks.forEach(function(k){q.delete(k)});var s=q.toString();try{history.replaceState(null,"",location.pathname+(s?"?"+s:""))}catch(e){}}})();
-api("/api/idx",{azione:"discord-stato"}).then(function(d){DCON=!!d.attivo;render()}).catch(function(){});
-caricaLuoghi();carica();
+var tok=null;try{tok=localStorage.getItem("estji_id_tok")}catch(e){}
+var $=function(s,r){return(r||document).querySelector(s)},esc=function(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+var S={tab:"id",q:"",filtro:"tutti",pag:0,lista:null,aperto:null,det:null,stat:null,reg:null,msg:null,temp:null};
+function api(b){return fetch("/api/idx",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+tok},body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok){var e=new Error(d.error||"Errore "+r.status);e.status=r.status;throw e}return d})})}
+function dt(t){var d=new Date(t),z=function(n){return("0"+n).slice(-2)};return z(d.getDate())+"/"+z(d.getMonth()+1)+"/"+d.getFullYear()+" "+z(d.getHours())+":"+z(d.getMinutes())}
+function msg(){return S.msg?'<div class="m '+S.msg[0]+'">'+esc(S.msg[1])+'</div>':""}
+function negato(m){$("#app").innerHTML='<div class="p"><h2>Accesso non consentito</h2><p>'+esc(m)+'</p><p><a href="id.html">Accedi a Estji ID</a> con un account dello staff e riapri questa pagina.</p></div>'}
+function fail(e){if(e.status===401||e.status===403)return negato(e.message);S.msg=["bad",e.message];draw()}
+function azione(b,ok){S.msg=null;return api(b).then(function(d){if(ok)S.msg=["ok",ok(d)];return d}).catch(function(e){if(e.status===401)return negato(e.message);S.msg=["bad",e.message]})}
+
+function carica(){return api({azione:"staff-lista",q:S.q,filtro:S.filtro,pagina:S.pag}).then(function(d){S.lista=d;draw()}).catch(fail)}
+function apri(id){if(S.aperto===id){S.aperto=null;S.det=null;return draw()}S.aperto=id;S.det=null;S.temp=null;S.msg=null;draw();
+  api({azione:"staff-dettaglio",id:id}).then(function(d){S.det=d.identita;draw()}).catch(fail)}
+function rinfresca(){var id=S.aperto;return Promise.all([carica(),id?api({azione:"staff-dettaglio",id:id}).then(function(d){S.det=d.identita}):0]).then(draw).catch(fail)}
+
+function tag(x){return(x.verificato?'<span class="tag ok">verificata</span>':'<span class="tag">da verificare</span>')+(x.sospeso?'<span class="tag bad">sospesa</span>':'')+(x.staff?'<span class="tag st">staff</span>':'')+(x.discordVerificato?'<span class="tag ok">Discord ✓</span>':'')}
+function dettaglio(x){
+  if(!x)return'<div class="det"><span class="mute">Caricamento…</span></div>';
+  var D=[["id","Carta d\'Identità","emissioneId"],["fisc","Tessera fiscale","emissioneFisc"],["elet","Tessera elettorale","emissioneElet"]];
+  var h='<div class="det"><div class="kv">'+[["Estji ID",x.id],["CUP",x.cup||"—"],["Nome in gioco",x.nick],["UUID",x.uuid||"—"],["Discord",(x.discord||"—")+(x.discordVerificato?" ✓":" (non verificato)")],["Discord ID",x.discordId||"—"],["Residenza",x.residenzaNome+(x.indirizzo?" · "+x.indirizzo:"")],["Delegazione",x.delegazione||"—"],["Iscritto",x.iscritto||"—"],["2FA",x.tf?"attiva":"no"]].map(function(k){return'<div><small>'+k[0]+'</small><b>'+esc(k[1])+'</b></div>'}).join("")+'</div>';
+  if(x.sospeso)h+='<div class="m bad">Sospesa: '+esc(x.sospesoMotivo||"nessun motivo indicato")+'</div>';
+  h+='<h3>Verifica e stato</h3><div class="acts"><button data-a="verifica" data-v="'+(x.verificato?0:1)+'">'+(x.verificato?"Rimuovi verifica":"Verifica identità")+'</button></div>';
+  h+='<div class="acts" style="margin-top:8px"><input id="mot" placeholder="Motivo (per la sospensione)" maxlength="120" value="'+esc(x.sospesoMotivo||"")+'" style="flex:1 1 200px;width:auto"><button class="'+(x.sospeso?"alt":"bad")+'" data-a="sospendi" data-v="'+(x.sospeso?0:1)+'">'+(x.sospeso?"Riattiva":"Sospendi")+'</button></div>';
+  h+='<h3>Ruoli e cariche</h3><div class="acts"><input id="ruo" value="'+esc((x.ruoli||[]).join(", "))+'" placeholder="es. Redattore Wiki, Delegato" style="flex:1 1 220px;width:auto"><button data-a="ruoli">Salva ruoli</button></div><p class="mute">Separati da virgola. "Staff" e "Generale" li assegna solo un super-amministratore.</p>';
+  h+='<h3>Documenti</h3>'+D.map(function(d){var rev=x.revocati&&x.revocati[d[2]];return'<div class="row" style="cursor:default"><span><b>'+d[1]+'</b>'+(rev?' <span class="tag bad">revocato</span>':'')+'<br><span class="mute">emesso il '+esc(x[d[2]]||x.iscritto||"—")+'</span></span><span class="acts"><button class="alt" data-a="doc" data-d="'+d[0]+'" data-o="'+(rev?"ripristina":"revoca")+'">'+(rev?"Ripristina":"Revoca")+'</button><button class="alt" data-a="doc" data-d="'+d[0]+'" data-o="rinnova">Rinnova</button></span></div>'}).join("");
+  h+='<h3>Sicurezza</h3><p class="mute">Sessioni attive: '+(x.sessioni.length?x.sessioni.map(function(s){return esc(s.etichetta)+" ("+esc(s.ip)+", "+dt(s.creata)+")"}).join("; "):"nessuna")+'</p><div class="acts"><button class="alt" data-a="sessioni">Chiudi tutte le sessioni</button><button class="alt" data-a="reset">Reimposta password</button></div>';
+  if(S.temp)h+='<div class="m ok">Password temporanea (mostrata una sola volta, comunicala all\'utente e fagliela cambiare):<br><span class="mono">'+esc(S.temp)+'</span></div>';
+  return h+'</div>'}
+function vistaId(){
+  var L=S.lista,h='<div class="bar"><input id="q" type="search" placeholder="Cerca nome, ID, Discord, CUP, residenza…" value="'+esc(S.q)+'"><select id="f">'+[["tutti","Tutte"],["non-verificati","Da verificare"],["sospesi","Sospese"],["staff","Staff"],["senza-discord","Senza Discord verificato"]].map(function(o){return'<option value="'+o[0]+'"'+(S.filtro===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("")+'</select></div>'+msg();
+  if(!L)return h+'<div class="p">Caricamento…</div>';
+  h+='<div class="p"><p class="mute" style="margin-top:0">'+L.totale+' identità</p>'+(L.righe.length?L.righe.map(function(x){return'<div><div class="row" data-open="'+esc(x.id)+'"><span><b>'+esc(x.nick)+'</b>'+tag(x)+'<br><span class="mute">'+esc(x.id)+' · '+esc(x.residenzaNome)+(x.ruoli.length?' · '+esc(x.ruoli.join(", ")):'')+'</span></span><span class="mute">'+(S.aperto===x.id?"▲":"▼")+'</span></div>'+(S.aperto===x.id?dettaglio(S.det):"")+'</div>'}).join(""):'<p class="mute">Nessun risultato.</p>');
+  var np=Math.ceil(L.totale/L.perPagina);
+  if(np>1)h+='<div class="acts" style="margin-top:10px"><button class="alt" data-pg="-1"'+(S.pag<=0?" disabled":"")+'>← Prec.</button><span class="mute" style="align-self:center">Pagina '+(S.pag+1)+' di '+np+'</span><button class="alt" data-pg="1"'+(S.pag>=np-1?" disabled":"")+'>Succ. →</button></div>';
+  return h+'</div>'}
+function vistaStat(){var s=S.stat;if(!s)return'<div class="p">Caricamento…</div>';
+  return'<div class="cards">'+[["Identità",s.totale],["Verificate",s.verificate||s.verificati],["Da verificare",s.nonVerificati],["Sospese",s.sospesi],["Staff",s.staff],["Discord ✓",s.discordVerificato],["Con 2FA",s.conTf],["Nuove (7 g)",s.nuovi7g]].map(function(c){return'<div class="p"><b>'+c[1]+'</b><span class="mute">'+c[0]+'</span></div>'}).join("")+'</div><div class="p" style="margin-top:12px"><h2>Residenze più frequenti</h2><table>'+s.perResidenza.map(function(r){return'<tr><td>'+esc(r[0])+'</td><td><b>'+r[1]+'</b></td></tr>'}).join("")+'</table></div>'}
+function vistaReg(){var r=S.reg;if(!r)return'<div class="p">Caricamento…</div>';
+  return'<div class="p"><h2>Registro delle azioni staff</h2>'+(r.length?'<table><tr><th>Quando</th><th>Chi</th><th>Azione</th><th>Su</th><th>Dettaglio</th></tr>'+r.map(function(v){return'<tr><td>'+dt(v.t)+'</td><td>'+esc(v.da)+'</td><td>'+esc(String(v.azione).replace("staff-",""))+'</td><td>'+esc(v.id)+'</td><td>'+esc(v.dettaglio)+'</td></tr>'}).join("")+'</table>':'<p class="mute">Ancora nessuna azione registrata.</p>')+'<p class="mute">Ultime 100 azioni. Ogni modifica compare anche nei commit di ide.json.</p></div>'}
+function draw(){
+  var h='<div class="tabs">'+[["id","Identità"],["stat","Statistiche"],["reg","Registro"]].map(function(t){return'<button class="'+(S.tab===t[0]?"":"alt")+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</div>';
+  h+=S.tab==="id"?vistaId():S.tab==="stat"?msg()+vistaStat():msg()+vistaReg();
+  var fq=document.activeElement&&document.activeElement.id==="q",pos=fq?document.activeElement.selectionStart:0;
+  $("#app").innerHTML=h;if(fq){var q=$("#q");q.focus();q.setSelectionRange(pos,pos)}}
+function tab(t){S.tab=t;S.msg=null;draw();
+  if(t==="stat")api({azione:"staff-statistiche"}).then(function(d){S.stat=d;draw()}).catch(fail);
+  if(t==="reg")api({azione:"staff-registro"}).then(function(d){S.reg=d.voci;draw()}).catch(fail)}
+
+var tm=null;
+document.addEventListener("input",function(e){if(e.target.id==="q"){S.q=e.target.value;S.pag=0;clearTimeout(tm);tm=setTimeout(carica,300)}});
+document.addEventListener("change",function(e){if(e.target.id==="f"){S.filtro=e.target.value;S.pag=0;carica()}});
+document.addEventListener("click",function(e){
+  var t=e.target.closest("[data-tab],[data-open],[data-pg],[data-a]");if(!t)return;
+  if(t.dataset.tab)return tab(t.dataset.tab);
+  if(t.dataset.open)return apri(t.dataset.open);
+  if(t.dataset.pg){S.pag+=+t.dataset.pg;S.aperto=null;S.det=null;return carica()}
+  var a=t.dataset.a,id=S.aperto,x=S.det;if(!id||!x)return;var go=function(b,ok){return azione(Object.assign({id:id},b),ok).then(rinfresca)};
+  if(a==="verifica")go({azione:"staff-verifica",valore:t.dataset.v==="1"},function(){return t.dataset.v==="1"?"Identità verificata.":"Verifica rimossa."});
+  else if(a==="sospendi"){var sosp=t.dataset.v==="1";if(sosp&&!confirm("Sospendere "+x.nick+"? Verrà disconnesso e non potrà più accedere."))return;
+    go({azione:"staff-sospendi",valore:sosp,motivo:$("#mot").value},function(){return sosp?"Identità sospesa.":"Identità riattivata."})}
+  else if(a==="ruoli")go({azione:"staff-ruoli",ruoli:$("#ruo").value.split(",").map(function(r){return r.trim()}).filter(Boolean)},function(){return"Ruoli aggiornati."});
+  else if(a==="doc"){var o=t.dataset.o;if(o==="revoca"&&!confirm("Revocare il documento? L\'utente non potrà rinnovarlo."))return;
+    go({azione:"staff-documento",documento:t.dataset.d,op:o},function(){return"Documento: "+o+" eseguito."})}
+  else if(a==="sessioni"){if(!confirm("Chiudere tutte le sessioni di "+x.nick+"?"))return;go({azione:"staff-revoca-sessioni"},function(d){return d.chiuse+" sessioni chiuse."})}
+  else if(a==="reset"){if(!confirm("Reimpostare la password di "+x.nick+"? Le sue sessioni verranno chiuse."))return;
+    azione({azione:"staff-reset-password",id:id},function(){return"Password reimpostata."}).then(function(d){if(d&&d.password)S.temp=d.password;rinfresca()})}
+});
+if(!tok)negato("Non hai effettuato l\'accesso.");else carica();
 </script></body></html>
