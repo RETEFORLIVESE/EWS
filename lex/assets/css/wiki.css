@@ -330,3 +330,9 @@ body.red .site{max-width:1500px}
 #alBar .al-sep{margin-left:10px;padding-left:10px;border-left:1px solid rgba(160,200,255,.3)}
 #alBar input[type=text]{flex:1 1 120px;min-width:100px;min-height:30px;padding:3px 6px;font-size:13px}
 @media(max-width:720px){#alBar input[type=text]{min-height:38px;font-size:16px}#alBar .al-sep{margin-left:0;padding-left:0;border-left:0;flex:1 1 100%}}
+
+/* ===== Allineamento delle righe dentro l'infobox ===== */
+.wk table.ib tr.al-s>*{text-align:left}.wk table.ib tr.al-c>*{text-align:center}.wk table.ib tr.al-d>*{text-align:right}
+.wk table.ib tr.al-s .ib-imgs{justify-content:flex-start}.wk table.ib tr.al-d .ib-imgs{justify-content:flex-end}
+.wk table.ib .ib-row{padding:6px 9px;text-align:left;font-size:14px;color:#e8f4ff}
+.wk table.ib .ib-row .al-row{margin:0}

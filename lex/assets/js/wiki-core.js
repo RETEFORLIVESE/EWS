@@ -297,13 +297,21 @@ const Wiki = {
     const imgRiga = /^(!\[[^\]]*\]\(https?:\/\/[^)\s]+\)\s*)+$/;
     const infobox = (tit, righe) => {
       inIb = true;
-      const rows = righe.map(x => {
+      const fila = x => {
         let m;
         if (/^(!\[[^\]]*\]\(https?:\/\/\)\s*)+$/.test(x)) return '';   // segnaposto del modello non ancora compilato
         if (imgRiga.test(x)) return `<tr><td colspan="2" class="ib-img"><div class="ib-imgs">${inl(x)}</div></td></tr>`;
         if ((m = /^#{2,3}\s+(.*)/.exec(x))) return `<tr><th colspan="2" class="ib-h">${inl(m[1])}</th></tr>`;
         if ((m = /^(.+?):(?:\s+(.*))?$/.exec(x))) return (m[2] || '').trim() ? `<tr><th class="ib-l" scope="row">${inl(m[1])}</th><td class="ib-v">${inl(m[2])}</td></tr>` : '';
         return `<tr><td colspan="2" class="ib-c">${inl(x)}</td></tr>`;
+      };
+      // {sx} {centro} {dx} a inizio riga allineano la riga · {sx}A {dx}B: due (o tre) parti sulla stessa riga
+      const rows = righe.map(x => {
+        let m, a = '';
+        if (!/^(#{2,3}\s|>|---+$)/.test(x) && (m = x.match(TAG)) && (m.length > 1 || x.search(TAG) > 0)) return `<tr><td colspan="2" class="ib-c ib-row">${riga(x)}</td></tr>`;
+        if ((m = /^\{(sx|sinistra|dx|destra|centro|centrato)\}\s*/i.exec(x))) { a = ALN[m[1].toLowerCase()]; x = x.slice(m[0].length); if (!x) return ''; }
+        const h = fila(x);
+        return a && h ? h.replace('<tr>', `<tr class="al-${a}">`) : h;
       }).join('');
       inIb = false;
       return `<table class="ib">${tit ? `<caption class="ib-t">${inl(tit)}</caption>` : ''}<colgroup><col style="width:38%"><col></colgroup><tbody>${rows}</tbody></table>`;
@@ -431,7 +439,7 @@ Wiki._blocchi = L => {   // intervalli {{infobox|tabella … }} (t:'b') e {{sx|c
     const t = L[i].trim().replace(/^\{(?:sx|sinistra|dx|destra|centro|centrato)\}\s*/i, '');
     if (/^\{\{\s*(infobox|tabella)\b/i.test(t)) {
       let e = i; if (!/\}\}\s*$/.test(t)) { e = i + 1; while (e < L.length && L[e].trim() !== '}}') e++; if (e >= L.length) e = L.length - 1; }
-      bl.push({ t: 'b', s: i, e }); i = e; continue;
+      bl.push({ t: 'b', k: /^\{\{\s*infobox/i.test(t) ? 'i' : 't', s: i, e }); i = e; continue;
     }
     if (/^\{\{\s*(sx|sinistra|dx|destra|centro|centrato)\s*$/i.test(L[i].trim())) { w = { t: 'w', s: i, e: L.length - 1, chiuso: false }; continue; }
     if (w && L[i].trim() === '}}') { w.e = i; w.chiuso = true; bl.push(w); w = null; }
@@ -449,21 +457,46 @@ Wiki._parti = l => {   // riga con più parti? -> { s, c, d } altrimenti null (s
   return seg;
 };
 // al = 's' | 'c' | 'd' | '' (toglie). Restituisce { ini, fine, testo }: sostituire v.slice(ini, fine) con testo.
+//  · parte di una riga selezionata -> la riga si divide: prima a sinistra, selezione dove scegli, resto a destra (stessa riga)
+//  · righe dentro un infobox       -> si spostano solo quelle righe, non tutto l'infobox
+//  · altrove                       -> blocchi interi (paragrafi, titoli, tabelle, infobox, {{centro … }})
 Wiki.allineaTesto = (v, a, b, al) => {
   const { L, off } = Wiki._righe(v), bl = Wiki._blocchi(L), NM = { s: 'sx', c: 'centro', d: 'dx' };
   const lineOf = p => { let i = 0; while (i + 1 < L.length && off[i + 1] <= p) i++; return i; };
-  let i0 = lineOf(a), i1 = lineOf(b > a && v[b - 1] === '\n' ? b - 1 : b), x;
+  const ra = lineOf(a), rb = lineOf(b > a && v[b - 1] === '\n' ? b - 1 : b);
   const inB = i => bl.find(y => y.t === 'b' && i >= y.s && i <= y.e);
-  if ((x = inB(i0))) i0 = x.s; if ((x = inB(i1))) i1 = x.e;
   const fin = (r0, r1, righe) => ({ ini: off[r0], fine: off[r1] + L[r1].length, testo: righe.join('\n') });
+  const TAG1 = /\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i;
+  const clean = t => t.replace(Wiki._TAGg, ' ').replace(/ {2,}/g, ' ').trim();
+  const strip = l => TAG1.test(l) ? clean(l) : l;
+  const B0 = inB(ra), B1 = inB(rb);
+
+  // 1) selezionata solo una parte di una riga
+  if (al && b > a && ra === rb) {
+    const l = L[ra], x0 = a - off[ra], x1 = b - off[ra], sel = clean(l.slice(x0, x1)), tutto = clean(l);
+    const dato = B0 && B0.k === 'i' && ra > B0.s && ra < B0.e && /^(.+?):(?:\s+(.*))?$/.test(tutto);   // riga "Etichetta: valore" dell'infobox
+    if (sel && sel !== tutto && !(B0 && B0.k === 't') && !dato && !/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(tutto)) {
+      const Z = { s: [], c: [], d: [] }, put = (z, t) => { t = clean(t); if (t) Z[z].push(t); };
+      put('s', l.slice(0, x0)); put(al, l.slice(x0, x1)); put('d', l.slice(x1));
+      return fin(ra, ra, [['s', 'c', 'd'].filter(z => Z[z].length).map(z => `{${NM[z]}}${Z[z].join(' ')}`).join(' ')]);
+    }
+  }
+
+  // 2) righe dentro un infobox: solo quelle righe
+  if (B0 && B0 === B1 && B0.k === 'i' && B0.s < B0.e && ra > B0.s) {
+    const r1 = Math.min(rb, B0.e - 1);
+    if (ra <= r1) return fin(ra, r1, L.slice(ra, r1 + 1).map(l => { const c = strip(l); return c.trim() && al ? `{${NM[al]}} ${c}` : c; }));
+  }
+
+  // 3) blocchi interi
+  let i0 = ra, i1 = rb, x;
+  if ((x = inB(i0))) i0 = x.s; if ((x = inB(i1))) i1 = x.e;
   // selezionato un intero blocco {{centro … }} (o cursore sulla sua prima riga): cambio/tolgo quel blocco
   const W = bl.find(y => y.t === 'w' && y.s === i0 && (y.e === i1 || i0 === i1));
   if (W) {
     const fine = W.e, inner = L.slice(W.s + 1, W.chiuso ? fine : fine + 1);
     return fin(W.s, fine, al ? [`{{${NM[al]}`, ...inner, ...(W.chiuso ? ['}}'] : [])] : inner);
   }
-  const TAG1 = /\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i;
-  const strip = l => TAG1.test(l) ? l.replace(Wiki._TAGg, ' ').replace(/ {2,}/g, ' ').trim() : l;
   const isH = t => /^#{2,3}\s/.test(t.trim()), isHr = t => /^---+$/.test(t.trim());
   const wrapLine = k => bl.some(y => y.t === 'w' && (y.s === k || (y.chiuso && y.e === k)));
   const out = [];
@@ -483,7 +516,7 @@ Wiki.allineaRiga = (v, pos, s, c, d) => {
   if (!parti) return null;
   let i = 0; while (i + 1 < L.length && off[i + 1] <= pos) i++;
   if (Wiki._parti(L[i])) return { ini: off[i], fine: off[i] + L[i].length, testo: parti };
-  const b = bl.find(y => y.t === 'b' && i >= y.s && i <= y.e), e = b ? b.e : i, sep = (parti.match(/\{/g) || []).length < 2 && (L[e + 1] || '').trim() ? '\n' : '';
+  const b = bl.find(y => y.t === 'b' && i >= y.s && i <= y.e), e = !b ? i : (b.k === 'i' && b.s < b.e) ? Math.min(i, b.e - 1) : b.e, sep = (parti.match(/\{/g) || []).length < 2 && (L[e + 1] || '').trim() ? '\n' : '';
   return { ini: off[e] + L[e].length, fine: off[e] + L[e].length, testo: '\n' + parti + sep };
 };
 
