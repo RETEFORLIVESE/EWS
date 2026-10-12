@@ -31,7 +31,6 @@ input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transf
 .card::before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
 .card .ch{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6);color:#fff;padding:13px 16px;border-bottom:3px solid #c9a227}
 .card.fisc .ch{background:linear-gradient(135deg,#074a28,#0b7a4b 60%,#14a566)}
-.card.deleg .ch{background:linear-gradient(135deg,#6b0f0a,#b3261e 60%,#d9483c)}
 .card .ch b{display:block;font:700 1.02rem/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif}.card .ch small{opacity:.85;font-size:.72rem}
 .card .cb{display:flex;gap:16px;padding:16px;position:relative}
 .card .av{flex:none;width:80px;height:100px;border-radius:10px;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:2.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 3px 8px rgba(0,0,0,.18)}
@@ -76,8 +75,6 @@ function optUE(){return UE.map(function(c){return'<option value="'+c[0]+'">'+esc
 function deleg(m){var v=String(m.delegazione||"").toLowerCase();for(var i=0;i<UE.length;i++)if(UE[i][0]===v||UE[i][1].toLowerCase()===v)return UE[i];return null}
 function bandiera(c){return c.toUpperCase().replace(/./g,function(x){return String.fromCodePoint(127397+x.charCodeAt(0))})}
 function campo(l,v){return"<small>"+l+"</small><b>"+v+"</b>"}
-function cartaDeleg(m){var d=deleg(m);
-  return'<div class="card deleg"'+(d?' style="--stemma:url(stemmi/'+d[0]+'.png)"':"")+'><div class="ch"><b>USSE · Delegazione nazionale</b><small>Gruppo nazionale del server</small></div><div class="cb"><div class="av">'+(d?bandiera(d[0]):"?")+'</div><div class="cf">'+campo("Delegato",esc(m.nick))+campo("Delegazione",d?esc(d[1]):"Non assegnata")+campo("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+'</div></div></div>'}
 function cartaFisc(m){var full=vista==="full",z=function(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")};
   var cup=full?esc(m.cup):'<span class="dots">••••••••</span>',mrz="F<EST<"+z(m.nick)+"<<"+(full?z(m.cup):"<<<<<<<<");
   return'<div class="card fisc"><div class="ch"><b>USSE · Tessera fiscale</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="cb"><div class="av sk">'+testa(m)+'</div><div class="cf">'+campo("Intestatario",esc(m.nick))+campo("Codice fiscale (CUP)",cup)+campo("Residenza fiscale",esc(resid(m)))+campo("Iscritto dal",esc(m.iscritto))+campo("Stato",m.verificato?"Verificato":"In verifica")+'</div></div><div class="mrz">'+esc(mrz)+'</div></div>'}
@@ -115,7 +112,7 @@ function render(){uuidMc();
     }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
     h+='</div>';
   }
-  h+='<div class="p">'+carta(me)+cartaFisc(me)+cartaDeleg(me)+'</div>'+
+  h+='<div class="p">'+carta(me)+cartaFisc(me)+'</div>'+
    '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
