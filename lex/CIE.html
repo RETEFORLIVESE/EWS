@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Identità Digitale USSE – Prototipo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap">
+<style>
+:root{--bg:#eef2fa;--panel:#fff;--ink:#0a1f44;--mute:#5a6a8a;--blue:#043a96;--line:#cfd8ea;--gold:#b8901f;--ok:#0b7a4b;--bad:#b3261e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07122b;--panel:#0e1d3f;--ink:#e6edfb;--mute:#93a3c6;--blue:#5b8cff;--line:#243660;--gold:#e0b84a;--ok:#4cd08f;--bad:#ff8a80}}
+:root[data-theme="dark"]{--bg:#07122b;--panel:#0e1d3f;--ink:#e6edfb;--mute:#93a3c6;--blue:#5b8cff;--line:#243660;--gold:#e0b84a;--ok:#4cd08f;--bad:#ff8a80}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,sans-serif;line-height:1.5}
+header{background:#043a96;color:#fff;padding:18px 20px}
+header h1{margin:0;font-size:1.25rem;font-weight:700;font-stretch:110%}
+header p{margin:2px 0 0;font-size:.85rem;opacity:.8}
+nav{display:flex;gap:4px;padding:0 12px;background:#032d75;overflow-x:auto}
+nav button{background:none;border:0;color:#cfdcff;padding:12px 14px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button[aria-selected=true]{color:#fff;border-color:var(--gold)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:20px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
+h2{margin:0 0 4px;font-size:1.1rem}
+.sub{color:var(--mute);font-size:.88rem;margin:0 0 14px}
+label{display:block;font-size:.85rem;font-weight:600;margin:12px 0 4px}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+.btn{display:inline-block;margin-top:14px;padding:10px 16px;border:0;border-radius:6px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.btn.alt{background:none;color:var(--blue);border:1px solid var(--blue)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.msg{margin-top:12px;padding:10px 12px;border-radius:6px;font-size:.9rem;border-left:4px solid var(--blue);background:var(--bg)}
+.msg.ok{border-color:var(--ok)}.msg.bad{border-color:var(--bad)}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:1.3rem;letter-spacing:.12em;font-weight:700;color:var(--blue)}
+/* ID card */
+.card{position:relative;max-width:440px;margin:0 auto;border-radius:14px;overflow:hidden;background:#f5f8ff;color:#0a1f44;border:1px solid #9fb2d9;box-shadow:0 10px 30px rgba(4,58,150,.25)}
+.card:before{content:"";position:absolute;inset:0;background:repeating-radial-gradient(circle at 80% 30%,transparent 0 7px,rgba(4,58,150,.07) 7px 8px);pointer-events:none}
+.card .top{background:#043a96;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:relative}
+.card .top b{font-size:.95rem;font-stretch:112%}
+.card .top small{font-size:.7rem;opacity:.85;display:block}
+.card .body{display:flex;gap:14px;padding:16px;position:relative}
+.photo{width:92px;height:116px;border-radius:6px;background:linear-gradient(160deg,#043a96,#3d6bd6);color:#fff;display:grid;place-items:center;font-size:2.6rem;font-weight:800;flex:none}
+.f{margin:0 0 7px}.f span{display:block;font-size:.68rem;color:#5a6a8a;font-weight:600}.f b{font-size:.98rem;word-break:break-word}
+.f .hid{letter-spacing:.2em;color:#8a98b8}
+.seal{position:absolute;right:14px;bottom:44px;width:66px;height:66px;border-radius:50%;border:3px double var(--gold);color:var(--gold);display:grid;place-items:center;text-align:center;font-size:.58rem;font-weight:800;transform:rotate(-12deg);line-height:1.15}
+.seal.no{border-color:#b3261e;color:#b3261e}
+.mrz{background:#e1e8f8;padding:8px 14px;font:600 .72rem ui-monospace,Menlo,monospace;letter-spacing:.06em;word-break:break-all;color:#223;position:relative}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:0 0 14px}
+.seg button{border:0;background:var(--panel);color:var(--ink);padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);color:#fff}
+ul.clean{list-style:none;margin:0;padding:0}
+ul.clean li{padding:9px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;font-size:.92rem}
+ul.clean li button{background:none;border:0;color:var(--blue);font:inherit;font-weight:600;cursor:pointer;text-align:left;padding:0}
+.tag{font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.no{color:var(--bad);border-color:var(--bad)}
+.bar{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin:4px 0 10px}.bar i{display:block;height:100%;background:var(--blue)}
+.note{font-size:.8rem;color:var(--mute);margin-top:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+.phone{max-width:300px;margin:12px auto 0;border:6px solid var(--ink);border-radius:26px;padding:16px;background:var(--bg)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.card .seal{position:static;margin:14px auto 0}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;font-size:.72rem;overflow-x:auto;max-height:260px}
+details{margin-top:14px;font-size:.88rem}summary{cursor:pointer;font-weight:600}
+.panel .btn+.btn{margin-left:8px}
+</style>
+</head>
+<body>
+<header>
+<h1>Anagrafe Digitale dell'Unione</h1>
+<p>Prototipo · Estji Web System · I dati sono simulati e restano nella pagina</p>
+</header>
+<nav role="tablist" id="tabs"></nav>
+<main id="app"></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+var WALLET_API="";
+var STATI={"EstjiFall":["Sezione 01","Sezione 02","Sezione 03"],"EstjiKuro":["Sezione 01","Sezione 02"],"Ile de USSE":["Sezione 01"]};
+var ELEZ=["Assemblea di Sezione","Congresso Distrettuale","Congresso Statale","Referendum"];
+var P=[
+ {id:"EST-2026-000001",nick:"Terlin_Mayor",discord:"terlin#0001",uuid:"a1f3…92c1",stato:"EstjiFall",sez:"Sezione 01",ruoli:["Presidente Assemblea di Sezione"],verified:true,joined:"2025-05-05"},
+ {id:"EST-2026-000002",nick:"KuroEngineer",discord:"kuro#0042",uuid:"7be0…11d8",stato:"EstjiKuro",sez:"Sezione 02",ruoli:["Dirigente RSGI","Redattore Wiki"],verified:true,joined:"2025-06-18"}
+];
+var S={tab:"reg",cur:null,view:"public",votes:{},pending:null,msg:null,vmsg:null};
+var TABS=[["reg","1 · Registrazione"],["card","2 · Scheda cittadino"],["vote","3 · Registro elettorale"],["priv","4 · Visibilità dati"],["sso","5 · Accesso ai portali"]];
+var $=function(s){return document.querySelector(s)};
+function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function get(id){return P.filter(function(p){return p.id===id})[0]}
+function rnd(n,c){var s="";for(var i=0;i<n;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
+
+function tabs(){
+  $("#tabs").innerHTML=TABS.map(function(t){return '<button role="tab" aria-selected="'+(S.tab===t[0])+'" data-t="'+t[0]+'">'+t[1]+'</button>'}).join("");
+  $("#tabs").onclick=function(e){var t=e.target.getAttribute("data-t");if(t){S.tab=t;render()}};
+}
+
+function secOpts(sel){var o="";for(var st in STATI)STATI[st].forEach(function(s){var v=st+"|"+s;o+='<option value="'+v+'"'+(sel===v?" selected":"")+'>'+st+" – "+s+"</option>"});return o}
+
+function fd(s){var a=s.split("-");return a[2]+"/"+a[1]+"/"+a[0]}
+function exp(s){var a=s.split("-");return (+a[0]+5)+"-"+a[1]+"-"+a[2]}
+function cardHTML(p,view){
+  var staff=view==="staff";
+  var hid='<span class="hid">••••••••</span>';
+  return '<div class="card"><div class="top"><div><b>USSE · Carta d\'Identità</b><small>Union der Wohlfartsstaaten von Estji</small></div><span style="font-size:1.5rem">🪪</span></div>'+
+  '<div class="body"><div style="flex:none"><div class="photo">'+esc(p.nick.charAt(0).toUpperCase())+'</div><div class="seal'+(p.verified?"":" no")+'">'+(p.verified?"VERIFICATO<br>EWS":"NON<br>VERIFICATO")+'</div></div><div>'+
+  '<p class="f"><span>Nome in gioco</span><b>'+esc(p.nick)+'</b></p>'+
+  '<p class="f"><span>ID Estji</span><b>'+p.id+'</b></p>'+
+  '<p class="f"><span>Residenza elettorale</span><b>'+esc(p.stato)+' · '+esc(p.sez)+'</b></p>'+
+  '<div class="g2"><p class="f"><span>Cittadinanza</span><b>USSE</b></p><p class="f"><span>Stato anagrafico</span><b>'+(p.verified?"Attivo":"In verifica")+'</b></p><p class="f"><span>Iscritto dal</span><b>'+fd(p.joined)+'</b></p><p class="f"><span>Scade il</span><b>'+fd(exp(p.joined))+'</b></p></div>'+
+  '<p class="f"><span>Cariche e ruoli</span><b>'+(p.ruoli.length?p.ruoli.map(esc).join(", "):"Nessuna")+'</b></p>'+
+  '<p class="f"><span>Discord</span><b>'+(staff?esc(p.discord):hid)+'</b></p>'+
+  '<p class="f"><span>UUID di gioco</span><b>'+(staff?esc(p.uuid):hid)+'</b></p>'+
+  '</div></div>'+
+  '<div class="mrz">P&lt;EST&lt;'+esc(p.nick.toUpperCase().replace(/[^A-Z0-9]/g,"&lt;"))+'&lt;&lt;&lt;'+p.id.replace(/-/g,"&lt;")+'&lt;&lt;'+p.joined.replace(/-/g,"")+'</div></div>';
+}
+
+function pickList(){
+  return '<ul class="clean">'+P.map(function(p){return '<li><button data-pick="'+p.id+'">'+esc(p.nick)+'</button><span class="tag '+(p.verified?"ok":"no")+'">'+(p.verified?"verificato":"in attesa")+'</span></li>'}).join("")+"</ul>";
+}
+
+function vReg(){
+  var p=S.pending&&get(S.pending);
+  var h='<div class="grid"><div class="panel"><h2>Nuova registrazione</h2><p class="sub">Il cittadino sceglie una residenza elettorale e riceve un ID permanente.</p>'+
+  '<label for="n">Nome in gioco</label><input id="n" maxlength="20" autocomplete="off">'+
+  '<label for="d">Account Discord</label><input id="d" maxlength="24" placeholder="es. nome#0000" autocomplete="off">'+
+  '<label for="s">Residenza (Stato – Sezione)</label><select id="s">'+secOpts()+'</select>'+
+  '<button class="btn" id="go">Crea identità</button>';
+  if(S.msg)h+='<div class="msg '+S.msg[0]+'">'+S.msg[1]+'</div>';
+  h+='</div><div class="panel"><h2>Verifica dell\'account di gioco</h2>';
+  if(p&&!p.verified){
+    h+='<p class="sub">Collega l\'account in gioco per completare la registrazione.</p><p>Entra nel server ed esegui:</p><p class="code">/ews link '+p.code+'</p><p class="sub">Il codice è monouso e scade tra 10 minuti.</p><button class="btn" id="ver">Simula verifica in gioco</button>';
+  }else if(p){h+='<div class="msg ok">Identità <b>'+p.id+'</b> verificata.</div><button class="btn alt" id="tocard">Apri la scheda</button>'}
+  else h+='<p class="sub">Crea un\'identità per avviare la verifica.</p>';
+  h+='<h2 style="margin-top:22px">Anagrafe</h2>'+pickList()+'</div></div>';
+  return h;
+}
+
+function vCard(){
+  var h='<div class="panel"><h2>Scheda cittadino</h2><p class="sub">Scegli una persona dall\'anagrafe. La scheda pubblica è la pagina che vivrebbe su Estji Archive.</p><div class="row"><div>'+pickList()+'</div></div></div><div style="height:20px"></div>';
+  var p=S.cur&&get(S.cur);
+  if(!p)return h+'<div class="msg">Nessuna scheda selezionata. Scegli un nome dall\'elenco sopra.</div>';
+  h+='<div class="seg"><button data-v="public" aria-pressed="'+(S.view==="public")+'">Vista pubblica</button><button data-v="staff" aria-pressed="'+(S.view==="staff")+'">Vista staff</button></div>'+cardHTML(p,S.view);
+  h+='<p class="note" style="text-align:center">URL pubblico: ews-rose.vercel.app/p/'+p.id+'</p>';
+  h+=walletHTML(p);
+  return h;
+}
+
+function tally(el){var v=S.votes[el]||{},t={"Lista A":0,"Lista B":0,"Scheda bianca":0},n=0;for(var k in v){t[v[k]]++;n++}return{t:t,n:n}}
+function vVote(){
+  var sel=S.el||ELEZ[0];
+  var h='<div class="grid"><div class="panel"><h2>Voto</h2><p class="sub">La CEPU controlla l\'iscrizione al registro prima di consegnare la scheda.</p>'+
+  '<label for="e">Elezione</label><select id="e">'+ELEZ.map(function(x){return '<option'+(x===sel?" selected":"")+'>'+x+'</option>'}).join("")+'</select>'+
+  '<label for="vp">Elettore</label><select id="vp"><option value="">Scegli…</option>'+P.map(function(p){return '<option value="'+p.id+'"'+(S.vp===p.id?" selected":"")+'>'+esc(p.nick)+'</option>'}).join("")+'</select>';
+  var p=S.vp&&get(S.vp);
+  if(p){
+    var ok=p.verified,voted=S.votes[sel]&&S.votes[sel][p.id];
+    h+='<div class="msg '+(ok&&!voted?"ok":"bad")+'">'+(!ok?"Non ammesso: identità non verificata.":voted?"Non ammesso: ha già votato in questa elezione.":"Ammesso al voto in "+esc(p.stato)+" · "+esc(p.sez)+".")+'</div>';
+    if(ok&&!voted)h+='<div class="row" style="margin-top:6px"><button class="btn" data-b="Lista A">Lista A</button><button class="btn" data-b="Lista B">Lista B</button><button class="btn alt" data-b="Scheda bianca">Scheda bianca</button></div>';
+  }
+  if(S.vmsg)h+='<div class="msg ok">'+S.vmsg+'</div>';
+  h+='</div><div class="panel"><h2>Risultati: '+esc(sel)+'</h2><p class="sub">Si registra chi ha votato, non cosa. Gli scrutini sono anonimi.</p>';
+  var r=tally(sel);
+  for(var k in r.t){var pc=r.n?Math.round(r.t[k]/r.n*100):0;h+='<div><b>'+k+'</b> · '+r.t[k]+' ('+pc+'%)<div class="bar"><i style="width:'+pc+'%"></i></div></div>'}
+  h+='<p class="note">Votanti: '+r.n+' su '+P.filter(function(x){return x.verified}).length+' iscritti verificati. Un account Discord corrisponde a una sola identità, quindi i multi-account non possono votare due volte.</p></div></div>';
+  return h;
+}
+
+var SC={"profile.basic":["Nome e ID",1,"cittadino"],"profile.residence":["Residenza elettorale",1,"cittadino"],"vote.eligibility":["Idoneità al voto",2,"cittadino"],"wiki.edit":["Modifica della Wiki",2,"redattore_wiki"],"normaktiv.sign":["Firma di atti normativi",3,"delegato"],"agency.manage":["Gestione agenzia",2,"dirigente_agenzia"]};
+var PT={"CEPU":["profile.basic","profile.residence","vote.eligibility"],"NormAktiv":["profile.basic","normaktiv.sign"],"Estji Wiki":["profile.basic","wiki.edit"],"Kon.Et":["profile.basic","profile.residence"],"TETA":["profile.basic","agency.manage"]};
+var LOA=["","1 · password","2 · 2FA o telefono collegato","3 · QR + numero di controllo"];
+function isHard(pt){return PT[pt].some(function(k){return SC[k][1]>=3})}
+S.log=[];
+function rolesOf(p){var r=["cittadino"];p.ruoli.forEach(function(x){if(/Redattore/i.test(x))r.push("redattore_wiki");if(/Dirigente/i.test(x))r.push("dirigente_agenzia");if(/Presidente|Delegato/i.test(x))r.push("delegato")});return r}
+function vSso(){
+  var p=S.sp&&get(S.sp),pt=S.pt||"CEPU",me=S.me||"pw";
+  var h='<div class="grid"><div class="panel"><h2>Entra in un portale con l\'identità USSE</h2><p class="sub">Il portale chiede dei permessi. Li ottieni solo se hai il ruolo e il livello di accesso richiesti.</p>'+
+  '<label for="sp">Cittadino</label><select id="sp"><option value="">Scegli…</option>'+P.map(function(x){return '<option value="'+x.id+'"'+(S.sp===x.id?" selected":"")+'>'+esc(x.nick)+(x.verified?"":" (non verificato)")+'</option>'}).join("")+'</select>'+
+  '<label for="pt">Portale</label><select id="pt">'+Object.keys(PT).map(function(k){return '<option'+(k===pt?" selected":"")+'>'+k+'</option>'}).join("")+'</select>'+
+  '<label>Metodo di accesso</label><div class="seg"><button data-m="pw" aria-pressed="'+(me==="pw")+'">Password</button><button data-m="qr" aria-pressed="'+(me==="qr")+'">QR code</button></div>';
+  if(S.err)h+='<div class="msg bad">'+S.err+'</div>';
+  if(me==="pw"){
+    h+='<label for="pw">Password</label><input id="pw" type="password" autocomplete="off" placeholder="qualsiasi, è una simulazione"><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px">Codice a due fattori inserito</label><button class="btn" id="enter"'+(p?"":" disabled")+'>Entra</button>';
+  }else if(!S.qs){
+    h+='<p class="sub"><b>Sul PC</b>: la pagina di '+esc(pt)+' mostra questo QR.</p><div id="qrbox" style="width:170px;background:#fff;padding:8px;border-radius:6px"></div><p class="sub" style="margin-top:12px">Inquadralo con la fotocamera del telefono.</p><button class="btn" id="scan"'+(p?"":" disabled")+'>Simula la scansione dal telefono</button>';
+  }else{
+    var hd=isHard(pt),opts=[S.qrn,10+(S.qrn+17)%90,10+(S.qrn+53)%90].sort(function(a,b){return (a*7%11)-(b*7%11)});
+    h+='<div class="phone"><b>Estji ID</b><h3 style="margin:8px 0 2px;font-size:1.05rem">Vuoi accedere a '+esc(pt)+'?</h3><p class="sub" style="margin:0 0 8px">Ciao '+esc(p?p.nick:"")+'. Richiesta da: <b>Chrome su Windows · Bologna, IT</b></p><p style="margin:6px 0;font-size:.88rem">Il portale vedrà:</p><ul class="clean">'+PT[pt].map(function(k){return '<li>'+SC[k][0]+'</li>'}).join("")+'</ul>';
+    if(hd)h+='<p style="font-size:.88rem"><b>Scegli il numero che vedi sul PC.</b></p><div class="row">'+opts.map(function(n){return '<button class="btn alt" data-n="'+n+'">'+n+'</button>'}).join("")+'</div>';
+    else h+='<button class="btn" id="ok" style="width:100%">Conferma accesso</button>';
+    h+='<button class="btn alt" id="no" style="width:100%;margin:10px 0 0">Non sono io</button></div>';
+  }
+  h+='</div><div class="panel">';
+  if(me==="qr"&&S.qs&&isHard(pt))h+='<div class="msg">Schermo del PC · numero di controllo: <b class="code">'+S.qrn+'</b></div>';
+  if(S.res){
+    h+='<h2>Esito dell\'accesso a '+esc(S.res.pt)+'</h2><p class="sub">Livello ottenuto: <b>'+LOA[S.res.loa]+'</b></p><ul class="clean">'+S.res.rows.map(function(r){return '<li><span>'+r.name+'<br><small style="color:var(--mute)">'+r.why+'</small></span><span class="tag '+(r.ok?"ok":"no")+'">'+(r.ok?"concesso":"negato")+'</span></li>'}).join("")+'</ul>';
+  }else{
+    h+='<h2>Permessi richiesti da '+esc(pt)+'</h2><p class="sub">Ogni permesso ha un ruolo e un livello minimo.</p><ul class="clean">'+PT[pt].map(function(k){return '<li><span>'+SC[k][0]+'<br><small style="color:var(--mute)">ruolo: '+SC[k][2]+'</small></span><span class="tag">livello '+SC[k][1]+'</span></li>'}).join("")+'</ul>';
+  }
+  h+='<h2 style="margin-top:22px">Registro accessi</h2>'+(S.log.length?'<ul class="clean">'+S.log.slice(-5).reverse().map(function(l){return '<li><span>'+l.t+' · '+esc(l.n)+' → '+esc(l.pt)+'</span><span class="tag">'+l.m+' · '+l.k+'/'+l.tot+'</span></li>'}).join("")+'</ul>':'<p class="sub">Nessun accesso ancora.</p>')+'</div></div>';
+  return h;
+}
+function ssoFinish(loa,m){
+  var p=get(S.sp),pt=S.pt||"CEPU",rl=rolesOf(p),k=0;
+  var rows=PT[pt].map(function(sc){
+    var d=SC[sc],ok=false,why;
+    if(!p.verified)why="identità non verificata";
+    else if(rl.indexOf(d[2])<0)why="manca il ruolo "+d[2];
+    else if(loa<d[1])why="serve il livello "+d[1]+": entra con 2FA o QR";
+    else{ok=true;why="ruolo "+d[2]+", livello "+d[1]}
+    if(ok)k++;return{name:d[0],ok:ok,why:why};
+  });
+  S.res={pt:pt,loa:loa,rows:rows};S.err=null;S.qrn=null;S.qs=0;
+  S.log.push({t:new Date().toLocaleTimeString("it-IT"),n:p.nick,pt:pt,m:m,k:k,tot:rows.length});render();
+}
+function ssoBind(){
+  var g=function(i){return document.getElementById(i)};
+  g("sp").onchange=function(){S.sp=this.value;S.res=null;S.err=null;S.qs=0;render()};
+  g("pt").onchange=function(){S.pt=this.value;S.res=null;S.err=null;S.qs=0;render()};
+  document.querySelectorAll("[data-m]").forEach(function(b){b.onclick=function(){S.me=b.getAttribute("data-m");S.res=null;S.err=null;S.qs=0;render()}});
+  var qb=g("qrbox");
+  if(qb){try{var q=qrcode(0,"M");q.addData("https://ews-rose.vercel.app/approve?r=demo");q.make();qb.innerHTML=q.createSvgTag(4)}catch(e){}}
+  var en=g("enter");if(en)en.onclick=function(){var tf=g("tf").checked;ssoFinish(tf?2:1,tf?"pwd+2FA":"pwd")};
+  var sc=g("scan");if(sc)sc.onclick=function(){S.qrn=10+Math.floor(Math.random()*90);S.qs=1;render()};
+  var ok=g("ok");if(ok)ok.onclick=function(){ssoFinish(2,"QR")};
+  var no=g("no");if(no)no.onclick=function(){S.qs=0;S.qrn=null;S.err="Richiesta rifiutata dal telefono: nessun accesso concesso.";render()};
+  document.querySelectorAll("[data-n]").forEach(function(b){b.onclick=function(){
+    if(+b.getAttribute("data-n")!==S.qrn){S.res=null;S.qrn=null;S.qs=0;S.err="Numero errato: richiesta annullata. Se non hai avviato tu l'accesso, potrebbe essere un tentativo di phishing.";render()}
+    else ssoFinish(3,"QR+num")}});
+}
+function vPriv(){
+  var rows=[["Nome in gioco","Pubblico"],["ID Estji","Pubblico"],["Residenza (Stato, Sezione)","Pubblico"],["Cariche e ruoli","Pubblico"],["Partecipazione al voto (sì/no)","Pubblico"],["Contenuto del voto","Nessuno, mai registrato"],["Discord e UUID","Staff"],["Sanzioni e note di moderazione","Staff"]];
+  return '<div class="panel"><h2>Chi vede cosa</h2><p class="sub">Regole di visibilità proposte, da confermare con lo staff e adattare al GDPR.</p><ul class="clean">'+rows.map(function(r){var c=r[1]==="Pubblico"?"ok":r[1]==="Staff"?"":"no";return '<li><span>'+r[0]+'</span><span class="tag '+c+'">'+r[1]+'</span></li>'}).join("")+'</ul><p class="note">Ogni giocatore potrà chiedere l\'esportazione o la cancellazione dei propri dati dalla scheda.</p></div>';
+}
+
+function pageURL(p){return "https://ews-rose.vercel.app/p/"+p.id}
+function ruoliTxt(p){return p.ruoli.length?p.ruoli.join(", "):"Nessuna carica"}
+function applePass(p){return{formatVersion:1,passTypeIdentifier:"pass.me.ei.estjibundes.id",teamIdentifier:"TEAMID",organizationName:"USSE – Union der Wohlfartsstaaten von Estji",serialNumber:p.id,description:"Carta d'Identità USSE",backgroundColor:"rgb(4,58,150)",foregroundColor:"rgb(255,255,255)",labelColor:"rgb(184,205,255)",barcodes:[{format:"PKBarcodeFormatQR",message:pageURL(p),messageEncoding:"iso-8859-1"}],generic:{primaryFields:[{key:"nick",label:"Cittadino",value:p.nick}],secondaryFields:[{key:"res",label:"Residenza",value:p.stato+" · "+p.sez},{key:"st",label:"Stato",value:p.verified?"Verificato":"Non verificato"}],auxiliaryFields:[{key:"roles",label:"Cariche",value:ruoliTxt(p)},{key:"since",label:"Iscritto dal",value:fd(p.joined)},{key:"exp",label:"Scade il",value:fd(exp(p.joined))}],backFields:[{key:"id",label:"ID Estji",value:p.id},{key:"citt",label:"Cittadinanza",value:"USSE"},{key:"stato",label:"Stato anagrafico",value:p.verified?"Attivo":"In verifica"}]}}}
+function walletHTML(p){
+  var d=p.verified?"":" disabled";
+  return '<div class="panel" style="max-width:440px;margin:18px auto 0"><h2>Aggiungi al Wallet</h2><p class="sub">Il pass contiene solo dati pubblici e un QR che apre la verifica online. Discord e UUID restano fuori.</p>'+
+  '<div class="row"><button class="btn" id="wA"'+d+'>Apple Wallet</button><button class="btn" id="wG"'+d+'>Google Wallet</button></div>'+
+  '<div style="margin-top:4px"><button class="btn alt" id="wP"'+d+'>Salva come immagine</button><button class="btn alt" id="wJ"'+d+'>Scarica pass.json</button></div>'+
+  (p.verified?"":'<div class="msg bad">Solo le identità verificate possono avere un pass. Completa la verifica in gioco.</div>')+
+  '<div id="wm"></div><details><summary>Dati del pass (formato Apple)</summary><pre>'+esc(JSON.stringify(applePass(p),null,1))+'</pre></details></div>';
+}
+function passPNG(p){return new Promise(function(res){
+  var W=1000,H=620,c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
+  x.fillStyle="#043a96";x.fillRect(0,0,W,H);
+  x.lineWidth=3;x.strokeStyle="rgba(255,255,255,.09)";for(var i=0;i<9;i++){x.beginPath();x.arc(850,100,40+i*34,0,7);x.stroke()}
+  var F="Archivo,system-ui,sans-serif";
+  x.fillStyle="#b8cdff";x.font="600 26px "+F;x.fillText("USSE · Carta d'Identità",50,70);
+  x.fillStyle="#fff";x.font="800 68px "+F;x.fillText(p.nick,50,180);
+  x.fillStyle="#b8cdff";x.font="600 26px "+F;x.fillText(p.id,50,228);
+  x.font="600 22px "+F;x.fillStyle="#b8cdff";x.fillText("Residenza",50,300);x.fillText("Iscritto dal",50,395);x.fillText("Scade il",330,395);x.fillText("Cariche",50,490);
+  x.fillStyle="#fff";x.font="700 34px "+F;x.fillText(p.stato+" · "+p.sez,50,340);x.fillText(fd(p.joined),50,435);x.fillText(fd(exp(p.joined)),330,435);
+  var r=ruoliTxt(p);if(r.length>34)r=r.slice(0,33)+"…";x.fillText(r,50,530);
+  x.textAlign="right";x.fillStyle=p.verified?"#e0b84a":"#ff8a80";x.font="800 26px "+F;x.fillText(p.verified?"Verificato EWS":"Non verificato",950,70);x.textAlign="left";
+  x.fillStyle="#fff";x.fillRect(700,330,250,250);
+  try{var q=qrcode(0,"M");q.addData(pageURL(p));q.make();var n=q.getModuleCount(),s=210/n;x.fillStyle="#0a1f44";for(var a=0;a<n;a++)for(var b=0;b<n;b++)if(q.isDark(a,b))x.fillRect(720+b*s,350+a*s,Math.ceil(s),Math.ceil(s))}catch(e){}
+  c.toBlob(res,"image/png");
+})}
+async function saveFile(name,data){
+  var m=$("#wm");
+  try{var d=window.claude&&await claude.use("downloads");
+    if(!d){m.innerHTML='<div class="msg bad">Il salvataggio non è disponibile in questa vista.</div>';return}
+    await d.save({filename:name,data:data});m.innerHTML='<div class="msg ok">File salvato.</div>';
+  }catch(e){m.innerHTML='<div class="msg bad">'+(e&&e.code==="declined"?"Salvataggio annullato.":"Salvataggio non riuscito.")+'</div>'}
+}
+function walletBind(){
+  var p=S.cur&&get(S.cur);if(!p)return;
+  function go(kind){return function(){
+    if(WALLET_API){location.href=WALLET_API+"/"+kind+"?id="+encodeURIComponent(p.id);return}
+    $("#wm").innerHTML='<div class="msg">Il pass va firmato dal server: '+(kind==="apple"?"serve un certificato Apple Developer (Pass Type ID).":"serve un account emittente Google Wallet.")+' Le funzioni per Vercel sono pronte (api/wallet). Nel frattempo puoi salvare la tessera come immagine.</div>';
+  }}
+  var a=$("#wA"),g=$("#wG"),i=$("#wP"),j=$("#wJ");
+  if(a)a.onclick=go("apple");if(g)g.onclick=go("google");
+  if(i)i.onclick=async function(){var b=await passPNG(p);saveFile("tessera-"+p.id+".png",b)};
+  if(j)j.onclick=function(){saveFile("pass-"+p.id+".json",JSON.stringify(applePass(p),null,2))};
+}
+function render(){
+  tabs();
+  var v={reg:vReg,card:vCard,vote:vVote,priv:vPriv,sso:vSso}[S.tab]();
+  $("#app").innerHTML=v;
+  bind();
+}
+
+function bind(){
+  var g=$("#go");
+  if(g)g.onclick=function(){
+    var n=$("#n").value.trim(),d=$("#d").value.trim().toLowerCase(),s=$("#s").value.split("|");
+    if(n.length<3){S.msg=["bad","Il nome in gioco deve avere almeno 3 caratteri."];return render()}
+    if(!d){S.msg=["bad","Inserisci l'account Discord."];return render()}
+    if(P.some(function(p){return p.discord.toLowerCase()===d})){S.msg=["bad","Questo account Discord ha già un'identità. Ogni persona può averne una sola."];return render()}
+    if(P.some(function(p){return p.nick.toLowerCase()===n.toLowerCase()})){S.msg=["bad","Il nome in gioco è già registrato."];return render()}
+    var id="EST-2026-"+("000000"+(P.length+1)).slice(-6);
+    var np={id:id,nick:n,discord:d,uuid:rnd(4,"abcdef0123456789")+"…"+rnd(4,"abcdef0123456789"),stato:s[0],sez:s[1],ruoli:[],verified:false,joined:new Date().toISOString().slice(0,10),code:rnd(6,"ABCDEFGHJKLMNPQRSTUVWXYZ23456789")};
+    P.push(np);S.pending=id;S.msg=["ok","Identità creata: <b>"+id+"</b>. Ora verifica l'account in gioco."];render();
+  };
+  var v=$("#ver");if(v)v.onclick=function(){get(S.pending).verified=true;S.msg=["ok","Verifica completata. L'identità è attiva."];S.cur=S.pending;render()};
+  var tc=$("#tocard");if(tc)tc.onclick=function(){S.cur=S.pending;S.tab="card";render()};
+  document.querySelectorAll("[data-pick]").forEach(function(b){b.onclick=function(){S.cur=b.getAttribute("data-pick");S.tab="card";render()}});
+  document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){S.view=b.getAttribute("data-v");render()}});
+  if(S.tab==="card")walletBind();
+  if(S.tab==="sso")ssoBind();
+  var e=$("#e");if(e)e.onchange=function(){S.el=e.value;S.vmsg=null;render()};
+  var vp=$("#vp");if(vp)vp.onchange=function(){S.vp=vp.value;S.vmsg=null;render()};
+  document.querySelectorAll("[data-b]").forEach(function(b){b.onclick=function(){
+    var el=S.el||ELEZ[0];S.votes[el]=S.votes[el]||{};S.votes[el][S.vp]=b.getAttribute("data-b");
+    S.vmsg="Voto registrato. La scheda è stata inserita nell'urna.";render();
+  }});
+}
+render();
+</script>
+</body>
+</html>
