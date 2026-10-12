@@ -40,7 +40,7 @@ input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transf
 .card .dots{letter-spacing:2px;color:#566684;font-weight:400}
 .card .mrz{background:#dfe7f7;border-top:1px dashed #9db0d6;font:700 .68rem ui-monospace,Menlo,monospace;padding:9px 12px;overflow:hidden;white-space:nowrap;color:#0a1f44}
 .card .cb{overflow:hidden}
-.card .cb::after{content:"";position:absolute;right:-96px;bottom:-96px;width:360px;height:360px;z-index:0;pointer-events:none;opacity:.22;background:url("USSEcoat.png") center/contain no-repeat}
+.card .cb::after{content:"";position:absolute;right:-96px;bottom:-96px;width:360px;height:360px;z-index:0;pointer-events:none;opacity:.22;background:var(--stemma,url("USSEcoat.png")) center/contain no-repeat}
 .card .cf{position:relative;z-index:1}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:380px){.card .cb{gap:12px}.card .av{width:68px}.card .av.sk{height:68px}}
@@ -69,6 +69,16 @@ function carta(m){
   '<div class="card"><div class="ch"><b>USSE · Carta d\'Identità</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="cb"><div class="av sk">'+testa(m)+'</div><div class="cf">'+
   '<small>Nome in gioco</small><b>'+esc(m.nick)+'</b><small>ID Estji</small><b>'+esc(m.id)+'</b><small>Residenza elettorale</small><b>'+esc(resid(m))+'</b><small>Cariche e ruoli</small><b>'+esc((m.ruoli||[]).join(", ")||"Nessuna")+'</b>'+
   '<small>Discord</small><b>'+(full&&m.discord?esc(m.discord):dots)+'</b><small>UUID di gioco</small><b>'+(full&&m.uuid?esc(m.uuid):dots)+'</b></div>'+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
+var UE=[["at","Austria"],["be","Belgio"],["bg","Bulgaria"],["hr","Croazia"],["cy","Cipro"],["cz","Cechia"],["dk","Danimarca"],["ee","Estonia"],["fi","Finlandia"],["fr","Francia"],["de","Germania"],["gr","Grecia"],["hu","Ungheria"],["ie","Irlanda"],["it","Italia"],["lv","Lettonia"],["lt","Lituania"],["lu","Lussemburgo"],["mt","Malta"],["nl","Paesi Bassi"],["pl","Polonia"],["pt","Portogallo"],["ro","Romania"],["sk","Slovacchia"],["si","Slovenia"],["es","Spagna"],["se","Svezia"]];
+function optUE(){return UE.map(function(c){return'<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join("")}
+function deleg(m){var v=String(m.delegazione||"").toLowerCase();for(var i=0;i<UE.length;i++)if(UE[i][0]===v||UE[i][1].toLowerCase()===v)return UE[i];return null}
+function bandiera(c){return c.toUpperCase().replace(/./g,function(x){return String.fromCodePoint(127397+x.charCodeAt(0))})}
+function campo(l,v){return"<small>"+l+"</small><b>"+v+"</b>"}
+function cartaDeleg(m){var d=deleg(m);
+  return'<div class="card"'+(d?' style="--stemma:url(stemmi/'+d[0]+'.png)"':"")+'><div class="ch"><b>USSE · Delegazione nazionale</b><small>Gruppo nazionale del server</small></div><div class="cb"><div class="av">'+(d?bandiera(d[0]):"?")+'</div><div class="cf">'+campo("Delegato",esc(m.nick))+campo("Delegazione",d?esc(d[1]):"Non assegnata")+campo("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+'</div></div></div>'}
+function cartaFisc(m){var full=vista==="full",z=function(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")};
+  var cup=full?esc(m.cup):'<span class="dots">••••••••</span>',mrz="F<EST<"+z(m.nick)+"<<"+(full?z(m.cup):"<<<<<<<<");
+  return'<div class="card"><div class="ch"><b>USSE · Tessera fiscale</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="cb"><div class="av sk">'+testa(m)+'</div><div class="cf">'+campo("Intestatario",esc(m.nick))+campo("Codice fiscale (CUP)",cup)+campo("Residenza fiscale",esc(resid(m)))+campo("Iscritto dal",esc(m.iscritto))+campo("Stato",m.verificato?"Verificato":"In verifica")+'</div></div><div class="mrz">'+esc(mrz)+'</div></div>'}
 var LUOGHI=null,LERR=null;
 function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
 function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
@@ -89,7 +99,7 @@ function render(){uuidMc();
   if(!me){
     h+='<div class="row"><button class="'+(tab==="in"?"":"alt")+'" data-t="in">Accedi</button><button class="'+(tab==="reg"?"":"alt")+'" data-t="reg">Registrati</button></div><div class="p" style="margin-top:12px">';
     if(tab==="in")h+='<label for="n">Nome in gioco</label><input id="n" autocomplete="username" value="'+esc(localStorage.getItem("estji_id_nick")||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"><button id="go">Accedi</button>';
-    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
+    else h+='<label for="n">Nome in gioco</label><input id="n" maxlength="16" autocomplete="off"><label for="d">Account Discord</label><input id="d" maxlength="40" autocomplete="off"><label for="s">Residenza</label>'+(LUOGHI&&LUOGHI.length?'<select id="s">'+optLuoghi()+'</select>':'<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):LUOGHI?"Nessun luogo disponibile.":"Caricamento dei luoghi…")+'</div>')+'<label for="dg">Delegazione</label><select id="dg">'+optUE()+'</select><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password"><label for="pw2">Ripeti la password</label><input id="pw2" type="password" autocomplete="new-password"><button id="reg"'+(LUOGHI&&LUOGHI.length?"":" disabled")+'>Crea identità</button>';
     $("#app").innerHTML=h+msg()+"</div>";bind();return;
   }
   if(R){
@@ -103,7 +113,7 @@ function render(){uuidMc();
     }else h+='<div class="m bad">Richiesta non trovata o scaduta: generane una nuova sul PC.</div>';
     h+='</div>';
   }
-  h+='<div class="p">'+carta(me)+'<ul style="margin-top:12px"><li><span>CUP</span><b class="cup">'+esc(me.cup)+'</b></li><li><span>Iscritto dal</span><b>'+esc(me.iscritto)+'</b></li><li><span>Stato</span><b>'+(me.verificato?"Verificato":"In verifica")+'</b></li></ul></div>'+
+  h+='<div class="p">'+carta(me)+cartaDeleg(me)+cartaFisc(me)+'</div>'+
    '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
@@ -113,7 +123,7 @@ function bind(){
   document.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){tab=b.getAttribute("data-t");M=null;render()}});
   if(g("go"))g("go").onclick=function(){ask(function(){return api("/api/estji",{azione:"accedi",nick:g("n").value,password:g("pw").value}).then(function(d){try{localStorage.setItem("estji_id_nick",g("n").value.trim())}catch(e){}tok=d.token;localStorage.setItem("estji_id_tok",tok);me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){done=["bad",e.message]}):0})})};
   if(g("reg"))g("reg").onclick=function(){var lid=g("s")?g("s").value:"",lu=(LUOGHI||[]).filter(function(l){return l.id===lid})[0];if(!lu){M=["bad","Seleziona una residenza."];return render()}if(g("pw").value!==g("pw2").value){M=["bad","Le due password non coincidono."];return render()}
-    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d").value,residenza:lu.id,residenzaNome:lu.nome,password:g("pw").value})}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
+    ask(function(){return risolvi(g("n").value).then(function(r){if(r===null)throw new Error("Questo nome non esiste su Minecraft Java.");return api("/api/estji",{azione:"registra",nick:r?r.nome:g("n").value,uuid:r?r.uuid:undefined,discord:g("d").value,delegazione:g("dg").value,residenza:lu.id,residenzaNome:lu.nome,password:g("pw").value})}).then(function(d){tab="in";M=["ok","Identità creata: "+d.id+" · CUP "+d.cup+". Ora puoi accedere."]})})};
   document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){vista=b.getAttribute("data-v");render()}});
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
