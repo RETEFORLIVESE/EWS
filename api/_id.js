@@ -3,7 +3,7 @@
 //   POST { azione: "accedi", nick, password }                        -> token di sessione personale
 //   POST { azione: "profilo" | "cambia-password" | "tf" } + Authorization: Bearer <token>
 // Ruolo, CUP, verificato, uuid NON si leggono mai dalla richiesta: li decide il sistema / lo staff (ide.json).
-import { trovaLuogo, leggiIde, scriviIde, trovaId, nuovoHash, passwordOk, nuovoCup, creaSessioneId, sessioneId,
+import { verificaJwt, redis, trovaLuogo, leggiIde, scriviIde, trovaId, nuovoHash, passwordOk, nuovoCup, creaSessioneId, sessioneId,
          limite, ipDi, ruoliTecnici, corpoJson } from './_idstore.js';
 
 const str = (v, max) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
@@ -39,6 +39,15 @@ export default async function handler(req, res) {
       const p = (await leggiIde()).identita.find(x => x.nick.toLowerCase() === nick);
       if (!passwordOk(c.password, p && p.password)) return err(401, 'Nome o password errati.');
       return res.status(200).json({ ok: true, token: creaSessioneId(p.id), profilo: profilo(p) });
+    }
+    if (c.azione === 'accedi-qr') {   // il token arriva dal widget QR (client "id"), dopo l'approvazione dal telefono con numero
+      if (!(await limite('qr:' + ipDi(req), 20, 600))) return err(429, 'Troppi tentativi: riprova tra qualche minuto.');
+      const t = verificaJwt(c.id_token, 'id');
+      if (!t || !t.jti || !String(t.scope || '').split(' ').includes('id.session')) return err(401, 'Accesso con QR non valido o scaduto: genera un nuovo QR.');
+      if ((await redis('SET', 'idtok:' + t.jti, '1', 'NX', 'EX', 700)) !== 'OK') return err(401, 'Questo accesso è già stato utilizzato.');
+      const q = trovaId(await leggiIde(), t.sub);
+      if (!q) return err(401, 'Identità non trovata.');
+      return res.status(200).json({ ok: true, token: creaSessioneId(q.id), profilo: profilo(q) });
     }
     const s = sessioneId(req);
     if (!s) return err(401, 'Sessione scaduta: accedi di nuovo.');

@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       const p = trovaId(await leggiIde(), r.sub);
       if (!p) return err(401, 'Identità non trovata.');
       const iat = Math.floor(Date.now() / 1000);
-      const claims = { iss: ISS, aud: r.c, sub: p.id, nick: p.nick, scope: scopeConcessi(p, r.s, r.loa).join(' '), loa: r.loa,
+      const claims = { iss: ISS, aud: r.c, sub: p.id, jti: crypto.randomBytes(12).toString('base64url'), nick: p.nick, scope: scopeConcessi(p, r.s, r.loa).join(' '), loa: r.loa,
         roles: ruoliTecnici(p), vote_eligible: !!p.verificato, iat, exp: iat + 600 };
       return res.status(200).json({ stato: 'approvata', claims, id_token: firmaJwt(claims) });
     }

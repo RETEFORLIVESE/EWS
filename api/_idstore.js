@@ -16,6 +16,7 @@ export const STATI = {
 
 // permesso: [livello minimo, ruolo richiesto, descrizione]
 export const SCOPES = {
+  'id.session': [3, 'cittadino', "Accesso a Estji ID (sessione personale)"],
   'profile.basic': [1, 'cittadino', 'Nome e ID'],
   'profile.residence': [1, 'cittadino', 'Residenza elettorale'],
   'vote.eligibility': [2, 'cittadino', 'Idoneità al voto'],
@@ -29,6 +30,7 @@ export const SCOPES = {
 
 const SITI = ['https://ews-rose.vercel.app', 'https://rtf-rose.vercel.app'];
 export const PORTALI = {
+  id:        { nome: 'Estji ID', origins: SITI, scopes: ['id.session'] },
   archive:   { nome: 'Estji Archive', origins: SITI, scopes: ['profile.basic'] },
   cepu:      { nome: 'CEPU', origins: SITI, scopes: ['profile.basic', 'profile.residence', 'vote.eligibility'] },
   normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'] },
@@ -129,7 +131,7 @@ export function ruoliTecnici(p) {
 export function scopeConcessi(p, richiesti, loa) {
   const r = ruoliTecnici(p);
   const generale = r.includes('generale');   // il ruolo "Generale" soddisfa il ruolo richiesto da qualsiasi permesso
-  return richiesti.filter(s => SCOPES[s] && p.verificato && (generale || r.includes(SCOPES[s][1])) && loa >= SCOPES[s][0]);
+  return richiesti.filter(s => SCOPES[s] && (p.verificato || s === 'id.session') && (generale || r.includes(SCOPES[s][1])) && loa >= SCOPES[s][0]);
 }
 
 /* ---------- sessione personale (diversa da quella delle redazioni) ---------- */
@@ -162,6 +164,19 @@ function chiavePrivata() {
 export function jwkPubblica() {
   const jwk = crypto.createPublicKey(chiavePrivata()).export({ format: 'jwk' });
   return { ...jwk, kid: crypto.createHash('sha256').update(jwk.n).digest('base64url').slice(0, 16), alg: 'RS256', use: 'sig' };
+}
+// Verifica locale (senza rete) di un token emesso da Estji ID per il portale "aud". Restituisce i claim o null.
+export function verificaJwt(token, aud) {
+  const p = typeof token === 'string' ? token.split('.') : [];
+  if (p.length !== 3) return null;
+  try {
+    const h = JSON.parse(Buffer.from(p[0], 'base64url').toString());
+    const c = JSON.parse(Buffer.from(p[1], 'base64url').toString());
+    if (!h || h.alg !== 'RS256' || !c) return null;
+    const ok = crypto.verify('RSA-SHA256', Buffer.from(p[0] + '.' + p[1]), crypto.createPublicKey(chiavePrivata()), Buffer.from(p[2], 'base64url'));
+    if (!ok || c.iss !== ISS || ![].concat(c.aud).includes(aud) || !(c.exp * 1000 > Date.now())) return null;
+    return c;
+  } catch (e) { return null; }
 }
 export function firmaJwt(claims) {
   const b = o => Buffer.from(JSON.stringify(o)).toString('base64url');
