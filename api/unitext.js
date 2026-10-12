@@ -1,7 +1,8 @@
 // api/unitext.js — un solo endpoint per UniText (unitext.html e unitext-redazione.html):
 //   GET                                            -> lettura pubblica di unitext.json (solo testi "Pubblicato")
 //   GET  + Authorization: Bearer <token>           -> lettura completa per la redazione (bozze incluse)
-//   POST { azione: "login", username, password }   -> login redazione
+//   POST { azione: "login", username, password }   -> login redazione (password)
+//   POST { azione: "login-estji", id_token }       -> login redazione con Estji ID (QR)
 //   POST { azione: "salva", testi: [...] }          -> salvataggio (richiede Authorization: Bearer <token>)
 //
 // Stessa struttura di api/ctsu.js: usa gli helper condivisi già funzionanti
@@ -99,10 +100,61 @@ function validaTesti(testi) {
   return null;
 }
 
+// ---- Login con Estji ID (QR) ----
+// Verifica il token firmato (RS256) con la chiave pubblica di Estji ID: nessun segreto nel codice,
+// quindi va bene anche con la repo pubblica. Il token deve essere per questo portale ("unitext")
+// e contenere il permesso unitext.edit (che Estji ID concede solo a chi ha il ruolo redattore_unitext).
+const ESTJI_ISS = process.env.ESTJI_ISS || 'https://ews-rose.vercel.app';
+const ESTJI_AUD = process.env.ESTJI_CLIENT_ID || 'unitext';
+const ESTJI_SCOPE = 'unitext.edit';
+let jwksCache = { chiavi: null, fino: 0 };
+
+async function chiaviEstji(forza) {
+  if (!forza && jwksCache.chiavi && Date.now() < jwksCache.fino) return jwksCache.chiavi;
+  const r = await fetch(ESTJI_ISS + '/api/estji');
+  if (!r.ok) throw new Error('JWKS non raggiungibile');
+  const j = await r.json();
+  jwksCache = { chiavi: j.keys || [], fino: Date.now() + 10 * 60 * 1000 };
+  return jwksCache.chiavi;
+}
+
+async function verificaIdToken(token) {
+  const p = typeof token === 'string' ? token.split('.') : [];
+  if (p.length !== 3) return null;
+  let h, c;
+  try {
+    h = JSON.parse(Buffer.from(p[0], 'base64url').toString());
+    c = JSON.parse(Buffer.from(p[1], 'base64url').toString());
+  } catch (e) { return null; }
+  if (!h || h.alg !== 'RS256' || !c) return null;
+  const trova = ks => ks.find(x => !h.kid || x.kid === h.kid);
+  let k = trova(await chiaviEstji(false));
+  if (!k) k = trova(await chiaviEstji(true));   // chiave ruotata
+  if (!k) return null;
+  const ok = crypto.verify('RSA-SHA256', Buffer.from(p[0] + '.' + p[1]),
+    crypto.createPublicKey({ key: k, format: 'jwk' }), Buffer.from(p[2], 'base64url'));
+  if (!ok) return null;
+  const aud = Array.isArray(c.aud) ? c.aud : [c.aud];
+  if (c.iss !== ESTJI_ISS || !aud.includes(ESTJI_AUD) || !(c.exp * 1000 > Date.now())) return null;
+  return c;
+}
+
+async function gestisciLoginEstji(corpo, res) {
+  let c = null;
+  try { c = await verificaIdToken(corpo.id_token); }
+  catch (e) { return res.status(502).json({ success: false, error: 'Verifica Estji ID non disponibile: riprova.' }); }
+  if (!c) { await pausa(700); return res.status(401).json({ success: false, error: 'Accesso Estji ID non valido o scaduto' }); }
+  if (!String(c.scope || '').split(' ').includes(ESTJI_SCOPE)) {
+    return res.status(403).json({ success: false, error: 'Per la redazione serve il ruolo di redattore UniText.' });
+  }
+  const nome = String(c.nick || c.sub);
+  return res.status(200).json({ success: true, message: 'Login effettuato', token: creaToken(nome, 'unitext'), username: nome });
+}
+
 async function gestisciGet(req, res) {
   // Se arriva un token deve essere valido: mai una lista parziale a chi sta per salvare.
   const conToken = !!(req.headers && req.headers.authorization);
-  const sessione = conToken ? sessioneDaRichiesta(req) : null;
+  const sessione = conToken ? sessioneDaRichiesta(req, 'unitext') : null;
   if (conToken && !sessione) return res.status(401).json({ error: 'Sessione scaduta: effettua di nuovo il login.' });
   try {
     const registro = await leggiFileJson(FILE, { testi: [] });
@@ -124,7 +176,7 @@ async function gestisciLogin(corpo, res) {
 }
 
 async function gestisciSalva(req, corpo, res) {
-  const sessione = sessioneDaRichiesta(req);
+  const sessione = sessioneDaRichiesta(req, 'unitext');
   if (!sessione) return res.status(401).json({ error: 'Sessione scaduta: effettua di nuovo il login.' });
   const errore = validaTesti(corpo.testi);
   if (errore) return res.status(400).json({ error: errore });
@@ -153,8 +205,9 @@ export default async function handler(req, res) {
     }
     corpo = corpo && typeof corpo === 'object' ? corpo : {};
     if (corpo.azione === 'login') return gestisciLogin(corpo, res);
+    if (corpo.azione === 'login-estji') return gestisciLoginEstji(corpo, res);
     if (corpo.azione === 'salva') return gestisciSalva(req, corpo, res);
-    return res.status(400).json({ error: 'Azione non riconosciuta: atteso "login" o "salva".' });
+    return res.status(400).json({ error: 'Azione non riconosciuta: atteso "login", "login-estji" o "salva".' });
   }
 
   res.setHeader('Allow', 'GET, POST');
