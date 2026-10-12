@@ -6,12 +6,12 @@
 @media(prefers-color-scheme:dark){:root{--bg:#050d20;--p:#0d1b3b;--ink:#e8eefc;--mute:#9aaccf;--blue:#6b97ff;--blue2:#8fb0ff;--line:#22365f;--ok:#4cd08f;--bad:#ff8a80;--gold:#e0b84a}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 header{position:relative;background:linear-gradient(135deg,#032a6e,#043a96 55%,#0a56d6);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 22px;border-bottom:3px solid var(--gold)}
 header h1{margin:0 auto;max-width:520px;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:700;font-size:1.3rem;line-height:1.3;letter-spacing:.02em;-webkit-font-smoothing:antialiased}
 main{max-width:520px;margin:0 auto;padding:18px 16px calc(48px + env(safe-area-inset-bottom,0px))}
 .p{background:var(--p);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
-h2{margin:0 0 10px;font:700 1.1rem/1.3 ui-serif,Georgia,serif}
+h2{margin:0 0 10px;font:700 1.1rem/1.3 "Helvetica Neue",Helvetica,Arial,sans-serif}
 label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 5px}
 input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent)}
@@ -30,7 +30,7 @@ input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transf
 .card{position:relative;background:#f4f7fd;color:#0a1f44;border:1px solid #bfcbe6;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(4,58,150,.28),0 1px 0 #fff inset;margin:14px 0 8px;isolation:isolate;animation:rise .5s ease-out both}
 .card::before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-radial-gradient(circle at 85% 110%,transparent 0 7px,rgba(4,58,150,.06) 7px 8px),repeating-radial-gradient(circle at 10% -10%,transparent 0 9px,rgba(184,146,31,.07) 9px 10px)}
 .card .ch{background:linear-gradient(135deg,#032a6e,#043a96 60%,#0a56d6);color:#fff;padding:13px 16px;border-bottom:3px solid #c9a227}
-.card .ch b{display:block;font:700 1.02rem/1.2 ui-serif,Georgia,serif}.card .ch small{opacity:.85;font-size:.72rem}
+.card .ch b{display:block;font:700 1.02rem/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif}.card .ch small{opacity:.85;font-size:.72rem}
 .card .cb{display:flex;gap:16px;padding:16px;position:relative}
 .card .av{flex:none;width:80px;height:100px;border-radius:10px;background:linear-gradient(160deg,#043a96,#3d6fd6);color:#fff;font-size:2.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1px #bfcbe6,0 3px 8px rgba(0,0,0,.18)}
 .card .av.sk{height:80px;background:#dfe7f7;overflow:hidden}
