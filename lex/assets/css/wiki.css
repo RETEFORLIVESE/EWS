@@ -317,3 +317,16 @@ body.red .site{max-width:1500px}
 .wk table.ib.al-c{float:none;clear:both;margin:6px auto 14px}
 .wk table.ib.al-d{float:right;clear:right;margin:4px 0 12px 18px}
 @container (max-width:560px){.wk table.ib.al-s,.wk table.ib.al-c,.wk table.ib.al-d{float:none;width:100%;margin:6px 0 14px}}
+
+/* ===== Più parti sulla stessa riga: {sx}A {centro}B {dx}C ===== */
+.wk .al-row{display:flex;align-items:baseline;gap:10px;margin:10px 0}
+.wk .al-row>span{min-width:0;overflow-wrap:anywhere}
+.wk .al-row>.al-s{flex:1 1 0;text-align:left}
+.wk .al-row>.al-d{flex:1 1 0;text-align:right}
+.wk .al-row>.al-c{flex:0 1 auto;text-align:center}
+
+/* ===== Redazione: barra "Allinea" sopra l'editor ===== */
+#alBar{margin:0 0 8px}
+#alBar .al-sep{margin-left:10px;padding-left:10px;border-left:1px solid rgba(160,200,255,.3)}
+#alBar input[type=text]{flex:1 1 120px;min-width:100px;min-height:30px;padding:3px 6px;font-size:13px}
+@media(max-width:720px){#alBar input[type=text]{min-height:38px;font-size:16px}#alBar .al-sep{margin-left:0;padding-left:0;border-left:0;flex:1 1 100%}}

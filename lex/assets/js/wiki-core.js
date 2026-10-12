@@ -264,6 +264,7 @@ const Wiki = {
      > citazione · --- linea · [testo](https://...) · ![didascalia](https://immagine) · [[Altra pagina]] · [[Altra pagina|testo]]
      {{infobox Titolo … }} scheda laterale stile Wikipedia (vedi sotto)
      {{tabella … }} tabelle con celle unite e colorate (vedi Wiki.tabParse)
+     PIÙ PARTI SULLA STESSA RIGA:  {sx}[<(Costituente)](link) {dx}(I Lex) >   ·   {sx}A {centro}B {dx}C
      ALLINEAMENTO (titoli, paragrafi, citazioni, elenchi, tabelle, infobox):
        {centro} Testo…   {sx} Testo…   {dx} Testo…     a inizio riga: vale per quel blocco (anche se la riga è da sola, vale per il blocco dopo)
        {{centro            ·  {{sx  ·  {{dx            su una riga da sole, chiusi da }}: valgono per tutto ciò che sta in mezzo */
@@ -330,12 +331,19 @@ const Wiki = {
     const ALN = { sx: 's', sinistra: 's', centro: 'c', centrato: 'c', dx: 'd', destra: 'd' };
     let blocco = '', pend = '', la = '';
     const allinea = (h, a) => h.replace(/^<(\w+)([^>]*)>/, (m, t, at) => /\bclass="/.test(at) ? `<${t}${at.replace('class="', `class="al-${a} `)}>` : `<${t}${at} class="al-${a}">`);
+    const TAG = /\{(sx|sinistra|dx|destra|centro|centrato)\}/gi;
+    const riga = t => {   // una riga con più parti: {sx}A {centro}B {dx}C  ->  A a sinistra, B al centro, C a destra, sulla stessa riga
+      const seg = { s: [], c: [], d: [] }; let a = 's';
+      t.split(TAG).forEach((x, k) => { if (k % 2) a = ALN[x.toLowerCase()]; else if (x.trim()) seg[a].push(x.trim()); });
+      return `<div class="al-row">${['s', 'c', 'd'].map(k => `<span class="al-${k}">${inl(seg[k].join(' '))}</span>`).join('')}</div>`;
+    };
     const add = h => { const a = la || pend || blocco; pend = ''; out.push(a && !/^<hr/.test(h) ? allinea(h, a) : h); };
     for (let i = 0; i < L.length; i++) {
       let r = L[i].trim(), m; la = '';
       if (!r) continue;
       if (r === '}}' && blocco) { blocco = ''; continue; }
       if ((m = /^\{\{\s*(sx|sinistra|dx|destra|centro|centrato)\s*$/i.exec(r))) { blocco = ALN[m[1].toLowerCase()]; continue; }
+      if (!/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(r) && (m = r.match(TAG)) && (m.length > 1 || r.search(TAG) > 0)) { out.push(riga(r)); pend = ''; continue; }
       if ((m = /^\{(sx|sinistra|dx|destra|centro|centrato)\}\s*/i.exec(r))) { la = ALN[m[1].toLowerCase()]; r = L[i] = r.slice(m[0].length); if (!r) { pend = la; continue; } }
       if (/^\{\{\s*infobox\b/i.test(r)) {
         const tit = r.replace(/^\{\{\s*infobox\b\s*/i, '').replace(/\}\}\s*$/, ''), righe = [];
@@ -353,7 +361,7 @@ const Wiki = {
       else if (/^([-*]|\d+\.)\s/.test(r)) {
         const ol = /^\d/.test(r), it = []; while (i < L.length && /^([-*]|\d+\.)\s/.test(L[i].trim())) it.push(`<li>${inl(L[i++].trim().replace(/^([-*]|\d+\.)\s+/, ''))}</li>`); i--;
         add(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
-      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|\}\}$|\{(?:sx|sinistra|dx|destra|centro|centrato)\}|([-*]|\d+\.)\s)/.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; add(`<p>${p.join('<br>')}</p>`); }
+      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|\}\}$|\{(?:sx|sinistra|dx|destra|centro|centrato)\}|([-*]|\d+\.)\s)/.test(L[i].trim()) && !/\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i.test(L[i])) p.push(inl(L[i++].trim())); i--; add(`<p>${p.join('<br>')}</p>`); }
     }
     return out.join('\n');
   },
@@ -411,3 +419,112 @@ Wiki.mobileSidebar = function () {
   head.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
 };
 document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', () => Wiki.mobileSidebar()) : Wiki.mobileSidebar();
+
+/* ---------- redazione: pulsanti per l'allineamento (niente codice da scrivere) ----------
+   Compare da sola sopra l'editor (#fTesto). Funzioni di testo pure sotto, la barra in Wiki.barraAllinea. */
+Wiki._TAGg = /\{(sx|sinistra|dx|destra|centro|centrato)\}/gi;
+Wiki._ALN = { sx: 's', sinistra: 's', centro: 'c', centrato: 'c', dx: 'd', destra: 'd' };
+Wiki._righe = v => { const L = String(v).split('\n'), off = []; let o = 0; L.forEach(l => { off.push(o); o += l.length + 1; }); return { L, off }; };
+Wiki._blocchi = L => {   // intervalli {{infobox|tabella … }} (t:'b') e {{sx|centro|dx … }} (t:'w')
+  const bl = []; let w = null;
+  for (let i = 0; i < L.length; i++) {
+    const t = L[i].trim().replace(/^\{(?:sx|sinistra|dx|destra|centro|centrato)\}\s*/i, '');
+    if (/^\{\{\s*(infobox|tabella)\b/i.test(t)) {
+      let e = i; if (!/\}\}\s*$/.test(t)) { e = i + 1; while (e < L.length && L[e].trim() !== '}}') e++; if (e >= L.length) e = L.length - 1; }
+      bl.push({ t: 'b', s: i, e }); i = e; continue;
+    }
+    if (/^\{\{\s*(sx|sinistra|dx|destra|centro|centrato)\s*$/i.test(L[i].trim())) { w = { t: 'w', s: i, e: L.length - 1, chiuso: false }; continue; }
+    if (w && L[i].trim() === '}}') { w.e = i; w.chiuso = true; bl.push(w); w = null; }
+  }
+  if (w) bl.push(w);
+  return bl;
+};
+Wiki._parti = l => {   // riga con più parti? -> { s, c, d } altrimenti null (stessa regola di Wiki.render)
+  const t = l.trim();
+  if (/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(t)) return null;
+  const m = t.match(Wiki._TAGg);
+  if (!m || !(m.length > 1 || t.search(Wiki._TAGg) > 0)) return null;
+  const seg = { s: '', c: '', d: '' }; let a = 's';
+  t.split(Wiki._TAGg).forEach((x, k) => { if (k % 2) a = Wiki._ALN[x.toLowerCase()]; else if (x.trim()) seg[a] += (seg[a] ? ' ' : '') + x.trim(); });
+  return seg;
+};
+// al = 's' | 'c' | 'd' | '' (toglie). Restituisce { ini, fine, testo }: sostituire v.slice(ini, fine) con testo.
+Wiki.allineaTesto = (v, a, b, al) => {
+  const { L, off } = Wiki._righe(v), bl = Wiki._blocchi(L), NM = { s: 'sx', c: 'centro', d: 'dx' };
+  const lineOf = p => { let i = 0; while (i + 1 < L.length && off[i + 1] <= p) i++; return i; };
+  let i0 = lineOf(a), i1 = lineOf(b > a && v[b - 1] === '\n' ? b - 1 : b), x;
+  const inB = i => bl.find(y => y.t === 'b' && i >= y.s && i <= y.e);
+  if ((x = inB(i0))) i0 = x.s; if ((x = inB(i1))) i1 = x.e;
+  const fin = (r0, r1, righe) => ({ ini: off[r0], fine: off[r1] + L[r1].length, testo: righe.join('\n') });
+  // selezionato un intero blocco {{centro … }} (o cursore sulla sua prima riga): cambio/tolgo quel blocco
+  const W = bl.find(y => y.t === 'w' && y.s === i0 && (y.e === i1 || i0 === i1));
+  if (W) {
+    const fine = W.e, inner = L.slice(W.s + 1, W.chiuso ? fine : fine + 1);
+    return fin(W.s, fine, al ? [`{{${NM[al]}`, ...inner, ...(W.chiuso ? ['}}'] : [])] : inner);
+  }
+  const TAG1 = /\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i;
+  const strip = l => TAG1.test(l) ? l.replace(Wiki._TAGg, ' ').replace(/ {2,}/g, ' ').trim() : l;
+  const isH = t => /^#{2,3}\s/.test(t.trim()), isHr = t => /^---+$/.test(t.trim());
+  const wrapLine = k => bl.some(y => y.t === 'w' && (y.s === k || (y.chiuso && y.e === k)));
+  const out = [];
+  for (let k = i0; k <= i1; k++) {
+    const bk = inB(k), cur = strip(L[k]);
+    if ((bk && k !== bk.s) || wrapLine(k) || !cur.trim() || isHr(cur)) { out.push(bk && k !== bk.s ? L[k] : cur); continue; }
+    const prev = k > 0 ? strip(L[k - 1]) : '';
+    const inizio = k === 0 || !prev.trim() || isH(prev) || isHr(prev) || isH(cur) || !!inB(k - 1) || wrapLine(k - 1);
+    out.push(inizio && al ? `{${NM[al]}} ${cur.trimStart()}` : cur);
+  }
+  return fin(i0, i1, out);
+};
+// riga a più parti: inserisce (o aggiorna, se il cursore è già su una riga a più parti) {sx}A {centro}B {dx}C
+Wiki.allineaRiga = (v, pos, s, c, d) => {
+  const { L, off } = Wiki._righe(v), bl = Wiki._blocchi(L);
+  const parti = [['sx', s], ['centro', c], ['dx', d]].filter(p => (p[1] || '').trim()).map(p => `{${p[0]}}${p[1].trim().replace(/\s*\n\s*/g, ' ')}`).join(' ');
+  if (!parti) return null;
+  let i = 0; while (i + 1 < L.length && off[i + 1] <= pos) i++;
+  if (Wiki._parti(L[i])) return { ini: off[i], fine: off[i] + L[i].length, testo: parti };
+  const b = bl.find(y => y.t === 'b' && i >= y.s && i <= y.e), e = b ? b.e : i, sep = (parti.match(/\{/g) || []).length < 2 && (L[e + 1] || '').trim() ? '\n' : '';
+  return { ini: off[e] + L[e].length, fine: off[e] + L[e].length, testo: '\n' + parti + sep };
+};
+
+Wiki.barraAllinea = function () {
+  const ta = document.getElementById('fTesto'); if (!ta || ta.dataset.al) return; ta.dataset.al = '1';
+  const bar = document.createElement('div'); bar.className = 'tb-grp'; bar.id = 'alBar';
+  bar.innerHTML = '<span>Allinea</span>' +
+    '<button type="button" class="btn" data-al="s" title="Allinea a sinistra la riga/e selezionata/e">⬅ Sinistra</button>' +
+    '<button type="button" class="btn" data-al="c" title="Centra">↔ Centro</button>' +
+    '<button type="button" class="btn" data-al="d" title="Allinea a destra">Destra ➡</button>' +
+    '<button type="button" class="btn" data-al="" title="Torna all\'allineamento normale">✖ Togli</button>' +
+    '<span class="al-sep">Stessa riga</span>' +
+    '<input type="text" id="alS" placeholder="Parte a sinistra" aria-label="Parte a sinistra">' +
+    '<input type="text" id="alC" placeholder="Parte al centro" aria-label="Parte al centro">' +
+    '<input type="text" id="alD" placeholder="Parte a destra" aria-label="Parte a destra">' +
+    '<button type="button" class="btn" id="alRiga" title="Inserisce una riga con le parti negli spazi compilati">Inserisci riga</button>';
+  const cont = ta.closest('.edcols') || ta.closest('.ed') || ta;
+  cont.parentNode.insertBefore(bar, cont);
+  const $ = id => document.getElementById(id), btn = $('alRiga');
+  const applica = r => {   // sostituisce il tratto di testo mantenendo annulla (Ctrl+Z) e aggiornamento dei colori/anteprima
+    if (!r) return;
+    ta.focus(); ta.setSelectionRange(r.ini, r.fine);
+    if (!document.execCommand || !document.execCommand('insertText', false, r.testo)) { ta.setRangeText(r.testo, r.ini, r.fine, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true })); }
+    ta.setSelectionRange(r.ini, r.ini + r.testo.length);
+  };
+  const sync = () => {   // cursore su una riga a più parti: riempie i tre campi e il pulsante diventa "Aggiorna riga"
+    const { L, off } = Wiki._righe(ta.value); let i = 0; while (i + 1 < L.length && off[i + 1] <= ta.selectionStart) i++;
+    const p = Wiki._parti(L[i]);
+    if (p) { $('alS').value = p.s; $('alC').value = p.c; $('alD').value = p.d; }
+    btn.textContent = p ? 'Aggiorna riga' : 'Inserisci riga';
+  };
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'alRiga') applica(Wiki.allineaRiga(ta.value, ta.selectionStart, $('alS').value, $('alC').value, $('alD').value));
+    else if (b.hasAttribute('data-al')) applica(Wiki.allineaTesto(ta.value, ta.selectionStart, ta.selectionEnd, b.dataset.al));
+    sync();
+  });
+  ['keyup', 'click', 'focus'].forEach(ev => ta.addEventListener(ev, sync));
+};
+if (typeof document !== 'undefined') {
+  const avviaBarra = () => Wiki.barraAllinea();
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', avviaBarra) : avviaBarra();
+  window.addEventListener('load', avviaBarra);
+}
