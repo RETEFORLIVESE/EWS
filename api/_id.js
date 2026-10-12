@@ -8,6 +8,7 @@ import { verificaJwt, redis, trovaLuogo, leggiIde, scriviIde, trovaId, nuovoHash
 
 const str = (v, max) => (typeof v === 'string' ? v.trim() : '').slice(0, max);
 const profilo = p => ({ id: p.id, cup: p.cup, nick: p.nick, discord: p.discord, stato: p.stato, sezione: p.sezione, residenza: p.residenza, residenzaNome: p.residenzaNome, uuid: p.uuid,
+  indirizzo: p.indirizzo || '', delegazione: p.delegazione || '', emissioneId: p.emissioneId, emissioneFisc: p.emissioneFisc, emissioneElet: p.emissioneElet,
   ruoli: p.ruoli || [], ruoliTecnici: ruoliTecnici(p), verificato: !!p.verificato, iscritto: p.iscritto, tf: !!p.tf, haPassword: !!p.password });
 
 export default async function handler(req, res) {
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
       if (ide.identita.some(p => p.discord === discord)) return err(409, 'Questo account Discord ha già un\'identità.');
       if (ide.identita.some(p => p.nick.toLowerCase() === nick.toLowerCase())) return err(409, 'Il nome in gioco è già registrato.');
       const p = { id: 'EST-' + new Date().getFullYear() + '-' + String(ide.identita.length + 1).padStart(6, '0'), cup: '', nick, discord, uuid: '',
-        residenza: luogo.id, residenzaNome: luogo.nome, stato: luogo.nome, sezione: '', ruoli: [], verificato: false, iscritto: new Date().toISOString().slice(0, 10), password: nuovoHash(c.password), tf: false };
+        residenza: luogo.id, residenzaNome: luogo.nome, stato: luogo.nome, sezione: '', indirizzo: str(c.indirizzo, 80), delegazione: str(c.delegazione, 2).toLowerCase(), ruoli: [], verificato: false, iscritto: new Date().toISOString().slice(0, 10), password: nuovoHash(c.password), tf: false };
       p.cup = nuovoCup(p, ide);
       ide.identita.push(p);
       await scriviIde(ide, 'Nuova identità ' + p.id);
@@ -64,6 +65,24 @@ export default async function handler(req, res) {
     if (c.azione === 'tf') {
       p.tf = !!c.attiva;
       await scriviIde(ide, 'Impostazione 2FA ' + p.id);
+      return res.status(200).json({ ok: true, profilo: profilo(p) });
+    }
+    if (c.azione === 'cambia-residenza') {
+      if (!(await limite('res:' + p.id, 5, 86400))) return err(429, 'Hai cambiato residenza troppe volte oggi: riprova domani.');
+      const luogo = await trovaLuogo(str(c.residenza, 80));
+      if (!luogo) return err(400, 'Residenza non valida.');
+      if (luogo.id !== p.residenza) { p.sezione = ''; p.residenzaDal = new Date().toISOString().slice(0, 10); }
+      p.residenza = luogo.id; p.residenzaNome = luogo.nome; p.stato = luogo.nome;   // il CUP non cambia: lo decide il sistema
+      p.indirizzo = str(c.indirizzo, 80);
+      await scriviIde(ide, 'Cambio residenza ' + p.id);
+      return res.status(200).json({ ok: true, profilo: profilo(p) });
+    }
+    if (c.azione === 'rinnova') {
+      const campo = { id: 'emissioneId', fisc: 'emissioneFisc', elet: 'emissioneElet' }[c.documento];
+      if (!campo) return err(400, 'Documento non valido.');
+      if (!(await limite('rin:' + p.id, 10, 86400))) return err(429, 'Troppi rinnovi oggi: riprova domani.');
+      p[campo] = new Date().toISOString().slice(0, 10);
+      await scriviIde(ide, 'Rinnovo ' + c.documento + ' ' + p.id);
       return res.status(200).json({ ok: true, profilo: profilo(p) });
     }
     return err(400, 'Azione non riconosciuta.');

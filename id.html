@@ -126,12 +126,22 @@ var LUOGHI=null,LERR=null;
 function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
 function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
 function caricaLuoghi(){return fetch("/api/organi",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){var o=[];raccogli(j&&j.luoghi,"",o);LUOGHI=o}).catch(function(e){LERR=e.message}).then(render)}
-function optLuoghi(){var gr={},ord=[];LUOGHI.forEach(function(l){var g=l.gruppo||"";if(!gr[g]){gr[g]=[];ord.push(g)}gr[g].push(l)});
-  return ord.map(function(g){var o=gr[g].map(function(l){return'<option value="'+esc(l.id)+'">'+esc(l.nome)+'</option>'}).join("");return g?'<optgroup label="'+esc(g.replace(/_/g," "))+'">'+o+'</optgroup>':o}).join("")}
+function optLuoghi(sel){var gr={},ord=[];LUOGHI.forEach(function(l){var g=l.gruppo||"";if(!gr[g]){gr[g]=[];ord.push(g)}gr[g].push(l)});
+  return ord.map(function(g){var o=gr[g].map(function(l){return'<option value="'+esc(l.id)+'"'+(l.id===sel?' selected':'')+'>'+esc(l.nome)+'</option>'}).join("");return g?'<optgroup label="'+esc(g.replace(/_/g," "))+'">'+o+'</optgroup>':o}).join("")}
 var R=new URLSearchParams(location.search).get("r"),tok=localStorage.getItem("estji_id_tok"),me=null,sso=null,tab="in",M=null,done=null;
 function api(u,b){return fetch(u,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},tok?{Authorization:"Bearer "+tok}:{}),body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok){var e=new Error(d.error||"Errore "+r.status);e.status=r.status;throw e}return d})})}
 function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
-function esci(){tok=null;me=null;sso=null;localStorage.removeItem("estji_id_tok")}
+var MS=null;
+function msgS(){return MS?'<div class="m '+MS[0]+'">'+esc(MS[1])+'</div>':""}
+function askS(fn){MS=null;return fn().catch(function(e){MS=["bad",e.message];if(e.status===401&&me)esci()}).then(render)}
+var DOCS=[["id","Carta d'Identità","emissioneId"],["fisc","Tessera fiscale","emissioneFisc"],["elet","Tessera elettorale","emissioneElet"]];
+function servizi(m){
+  var h='<div class="p"><h2>Cambio di residenza</h2><p class="mute">Attuale: <b>'+esc(resid(m))+'</b>'+(m.indirizzo?' · '+esc(m.indirizzo):'')+'</p>';
+  if(LUOGHI&&LUOGHI.length)h+='<label for="rs">Nuova residenza</label><select id="rs">'+optLuoghi(m.residenza)+'</select><label for="rind">Indirizzo di residenza</label><input id="rind" maxlength="80" autocomplete="off" value="'+esc(m.indirizzo||"")+'"><button id="rsv">Aggiorna residenza</button>';
+  else h+='<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):"Caricamento dei luoghi…")+'</div>';
+  h+='</div><div class="p"><h2>Rinnovo documenti</h2><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS()+'</div>';
+  return h}
+function esci(){MS=null;tok=null;me=null;sso=null;localStorage.removeItem("estji_id_tok")}
 function carica(){
   if(!tok)return render();
   api("/api/estji",{azione:"profilo"}).then(function(d){me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){sso=null;done=["bad",e.message]}):0}).catch(function(e){if(e.status===401)esci();else M=["bad",e.message]}).then(render);
@@ -157,7 +167,7 @@ function render(){uuidMc();
     h+='</div>';
   }
   h+=scanBtn();
-  h+='<div class="p">'+wallet(me)+'</div>'+
+  h+='<div class="p">'+wallet(me)+'</div>'+servizi(me)+
    '<div class="p"><h2>Sicurezza</h2><label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><h2 style="margin-top:16px">Cambia password</h2><label for="cp">Password attuale</label><input id="cp" type="password" autocomplete="current-password"><label for="n1">Nuova password</label><input id="n1" type="password" autocomplete="new-password"><label for="n2">Ripeti la nuova password</label><input id="n2" type="password" autocomplete="new-password"><button id="sv">Salva password</button>'+msg()+'</div><button class="alt" id="out">Esci</button>';
   $("#app").innerHTML=h;bind();
 }
@@ -174,6 +184,8 @@ function bind(){
   if(g("tf"))g("tf").onchange=function(){ask(function(){return api("/api/estji",{azione:"tf",attiva:g("tf").checked}).then(function(d){me=d.profilo;M=["ok","Impostazione salvata."]})})};
   if(g("sv"))g("sv").onclick=function(){if(g("n1").value!==g("n2").value){M=["bad","Le due nuove password non coincidono."];return render()}
     ask(function(){return api("/api/estji",{azione:"cambia-password",attuale:g("cp").value,nuova:g("n1").value}).then(function(){M=["ok","Password aggiornata."]})})};
+  if(g("rsv"))g("rsv").onclick=function(){askS(function(){return api("/api/estji",{azione:"cambia-residenza",residenza:g("rs").value,indirizzo:g("rind").value}).then(function(d){me=d.profilo;MS=["ok","Residenza aggiornata."]})})};
+  document.querySelectorAll("[data-rin]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-rin");askS(function(){return api("/api/estji",{azione:"rinnova",documento:k}).then(function(d){me=d.profilo;var x=DOCS.filter(function(z){return z[0]===k})[0];MS=["ok",x[1]+" rinnovata. "+sca(me,x[2])+"."]})})}});
   if(g("out"))g("out").onclick=function(){esci();M=null;render()};
   var fin=function(a,extra){ask(function(){return api("/api/estji",Object.assign({azione:a,id:R},extra||{})).then(function(){done=a==="approva"?["ok","Fatto: torna al PC, l'accesso è confermato."]:["ok","Richiesta rifiutata: nessun accesso concesso."]},function(e){done=["bad",e.message]})})};
   if(g("ok"))g("ok").onclick=function(){fin("approva")};if(g("no"))g("no").onclick=function(){fin("rifiuta")};
