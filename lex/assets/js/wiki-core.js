@@ -384,7 +384,7 @@ const Wiki = {
     if (this._s.token) h.Authorization = 'Bearer ' + this._s.token;
     const res = await fetch('/api/wiki', { method: 'POST', headers: h, body: JSON.stringify(corpo) });
     const d = await res.json().catch(() => ({}));
-    if (res.status === 401 && corpo.azione !== 'login') this.clearCredentials();
+    if (res.status === 401 && corpo.azione !== 'login' && corpo.azione !== 'estji') this.clearCredentials();
     if (!res.ok) throw new Error(d.message || 'HTTP ' + res.status);
     return d;
   },
@@ -398,6 +398,12 @@ const Wiki = {
     if (!d.success) throw new Error(d.message || 'Credenziali errate');
     this._s = { token: d.token, username }; try { sessionStorage.setItem('wiki_sessione', JSON.stringify(this._s)); } catch (e) {}
     return d;
+  },
+  async loginEstji(id_token) {   // accesso con Estji ID (QR): restituisce il nome dell'utente
+    const d = await this._post({ azione: 'estji', id_token });
+    if (!d.success) throw new Error(d.message || 'Accesso non riuscito');
+    this._s = { token: d.token, username: d.username }; try { sessionStorage.setItem('wiki_sessione', JSON.stringify(this._s)); } catch (e) {}
+    return d.username;
   },
   salvaPagina(pagina, idPrecedente) { return this._post({ azione: 'salva', pagina, idPrecedente }); },
   eliminaPagina(id) { return this._post({ azione: 'elimina', id }); }
