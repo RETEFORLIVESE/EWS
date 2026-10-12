@@ -8,7 +8,7 @@
 //   AUTH_SECRET -> stringa lunga e casuale, es. generata con:
 //                  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const DURATA_MS = 4 * 60 * 60 * 1000; // 4 ore di sessione
 
@@ -20,7 +20,8 @@ function segreto() {
 
 export function creaToken(username) {
     const scadenza = Date.now() + DURATA_MS;
-    const payload = `${username}.${scadenza}`;
+    // il nome è codificato: un nome con "." (es. "mario.rossi") non deve rompere il token
+    const payload = `${Buffer.from(String(username), 'utf-8').toString('base64url')}.${scadenza}`;
     const firma = createHmac('sha256', segreto()).update(payload).digest('hex');
     return Buffer.from(`${payload}.${firma}`).toString('base64url');
 }
@@ -31,12 +32,13 @@ export function verificaToken(token) {
         const testo = Buffer.from(token, 'base64url').toString('utf-8');
         const parti = testo.split('.');
         if (parti.length !== 3) return null;
-        const [username, scadenzaStr, firma] = parti;
-        const payload = `${username}.${scadenzaStr}`;
+        const [nomeCodificato, scadenzaStr, firma] = parti;
+        const payload = `${nomeCodificato}.${scadenzaStr}`;
         const firmaAttesa = createHmac('sha256', segreto()).update(payload).digest('hex');
-        if (firma !== firmaAttesa) return null;
+        const a = Buffer.from(firma), b = Buffer.from(firmaAttesa);
+        if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
         if (Date.now() > Number(scadenzaStr)) return null;
-        return { username };
+        return { username: Buffer.from(nomeCodificato, 'base64url').toString('utf-8') };
     } catch (e) {
         return null;
     }
