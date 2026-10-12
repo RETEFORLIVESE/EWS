@@ -102,7 +102,10 @@ export async function trovaLuogo(id) {
   };
   const t = cerca(dati && dati.luoghi, '');
   if (!t) return null;
-  const v = t.v, stato = (typeof v === 'object' && (v.stato || v.statoSociale || v.stato_sociale)) || t.g || '';
+  // Lo stato si ricava dal prefisso dell'ID (ELIN-TLN-NII-TEG -> ELIN -> livello_statale), mai dal gruppo ("assemblee_locali" non è uno stato).
+  const ALIAS = { TRD: 'TDR', EBHAN: 'EBHN', BSHSX: 'BSHS' };   // prefissi con refusi presenti in organi.json
+  const pre = String(id).split('-')[0], sv = ((dati.luoghi || {}).livello_statale || {})[ALIAS[pre] || pre];
+  const v = t.v, stato = (typeof v === 'object' && (v.stato || v.statoSociale || v.stato_sociale)) || (typeof sv === 'string' ? sv : sv && sv.nome) || '';
   return { id, nome: typeof v === 'string' ? v : v.nome, stato: String(stato).replace(/_/g, ' ') };
 }
 

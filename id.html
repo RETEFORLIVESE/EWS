@@ -105,9 +105,11 @@ function risolvi(n){n=String(n||"").trim();if(!n)return Promise.resolve(null);va
   try{var c=localStorage.getItem(k);if(c)return Promise.resolve(JSON.parse(c))}catch(e){}
   return fetch("https://playerdb.co/api/player/minecraft/"+encodeURIComponent(n)).then(function(r){return r.json()}).then(function(j){var p=j&&j.success&&j.data&&j.data.player;if(!p)return null;var o={uuid:p.id,nome:p.username};try{localStorage.setItem(k,JSON.stringify(o))}catch(e){}return o}).catch(function(){return undefined})}
 function uuidMc(){if(!me||me.uuid||me._ur)return;me._ur=1;risolvi(me.nick).then(function(r){if(r&&r.uuid&&me){me.uuid=r.uuid;render()}})}
-function statoDi(m){if(m.statoSociale)return m.statoSociale;var l=(LUOGHI||[]).filter(function(x){return x.id===m.residenza})[0];return l&&l.stato||""}
-function dettResid(m){var a=m.indirizzo||m.indirizzoResidenza||"",s=statoDi(m);return(a?esc(a):"")+(a&&s?"<br>":"")+(s?"Stato sociale: "+esc(s):"")}
-function resid(m){return m.residenzaNome||m.residenza||((m.stato||"")+(m.sezione?" · "+m.sezione:""))}
+var STMAP={},ALIAS={TRD:"TDR",EBHAN:"EBHN",BSHSX:"BSHS"};
+function statoDaId(id){var p=String(id||"").split("-")[0];p=ALIAS[p]||p;var s=STMAP[p];return typeof s==="string"?s:(s&&s.nome)||""}
+function statoDi(m){return statoDaId(m.residenza)}
+function dettResid(m){return esc(m.indirizzo||m.indirizzoResidenza||"")}
+function resid(m){var n=m.residenzaNome||m.residenza||((m.stato||"")+(m.sezione?" · "+m.sezione:"")),s=statoDi(m);return n+(s?" · "+s:"")}
 function testa(m){var l=esc(String(m.nick||"?").charAt(0).toUpperCase()),k=m.uuid||m.nick;
   if(!k)return l;
   return'<img src="https://mc-heads.net/avatar/'+encodeURIComponent(k)+'/128" alt="'+esc(m.nick)+'" width="76" height="76" onerror="this.parentNode.classList.remove(\'sk\');this.outerHTML=\''+l+'\'">'}
@@ -131,8 +133,8 @@ function deleg(m){var v=String(m.delegazione||"").toLowerCase();for(var i=0;i<UE
 function bandiera(c){return c.toUpperCase().replace(/./g,function(x){return String.fromCodePoint(127397+x.charCodeAt(0))})}
 var LUOGHI=null,LERR=null;
 function eVoce(v){return typeof v==="string"||(v&&typeof v==="object"&&typeof v.nome==="string")}
-function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v))out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:g,stato:String((v&&typeof v==="object"&&(v.stato||v.statoSociale||v.stato_sociale))||g||"").replace(/_/g," ")});else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
-function caricaLuoghi(){return fetch("/api/organi",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){var o=[];raccogli(j&&j.luoghi,"",o);LUOGHI=o}).catch(function(e){LERR=e.message}).then(render)}
+function raccogli(c,g,out){Object.keys(c||{}).forEach(function(k){var v=c[k];if(eVoce(v)){var st=String((v&&typeof v==="object"&&(v.stato||v.statoSociale||v.stato_sociale))||statoDaId(k)||"").replace(/_/g," ");out.push({id:k,nome:typeof v==="string"?v:v.nome,gruppo:st,stato:st})}else if(v&&typeof v==="object")raccogli(v,g||k,out)})}
+function caricaLuoghi(){return fetch("/api/organi",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){var o=[];STMAP=(j&&j.luoghi&&j.luoghi.livello_statale)||{};raccogli(j&&j.luoghi,"",o);LUOGHI=o}).catch(function(e){LERR=e.message}).then(render)}
 function optLuoghi(sel){var gr={},ord=[];LUOGHI.forEach(function(l){var g=l.gruppo||"";if(!gr[g]){gr[g]=[];ord.push(g)}gr[g].push(l)});
   return ord.map(function(g){var o=gr[g].map(function(l){return'<option value="'+esc(l.id)+'"'+(l.id===sel?' selected':'')+'>'+esc(l.nome)+'</option>'}).join("");return g?'<optgroup label="'+esc(g.replace(/_/g," "))+'">'+o+'</optgroup>':o}).join("")}
 var R=new URLSearchParams(location.search).get("r"),tok=localStorage.getItem("estji_id_tok"),me=null,sso=null,tab="in",M=null,done=null;
@@ -145,7 +147,7 @@ function ap(k){return OPEN[k]?' open':''}
 function msgS(k){return MS&&MS[2]===k?'<div class="m '+MS[0]+'">'+esc(MS[1])+'</div>':""}
 function askS(k,fn){MS=null;return fn().catch(function(e){MS=["bad",e.message,k];if(e.status===401&&me)esci()}).then(render)}
 function servizi(m){
-  var h='<details class="p" data-d="res"'+ap('res')+'><summary>Cambio di residenza</summary><p class="mute">Attuale: <b>'+esc(resid(m))+'</b>'+(m.indirizzo?' · '+esc(m.indirizzo):'')+(statoDi(m)?' · Stato sociale: '+esc(statoDi(m)):'')+'</p>';
+  var h='<details class="p" data-d="res"'+ap('res')+'><summary>Cambio di residenza</summary><p class="mute">Attuale: <b>'+esc(resid(m))+'</b>'+(m.indirizzo?' · '+esc(m.indirizzo):'')+'</p>';
   if(LUOGHI&&LUOGHI.length)h+='<label for="rs">Nuova residenza</label><select id="rs">'+optLuoghi(m.residenza)+'</select><label for="rind">Indirizzo di residenza</label><input id="rind" maxlength="80" autocomplete="off" value="'+esc(m.indirizzo||"")+'"><button id="rsv">Aggiorna residenza</button>';
   else h+='<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):"Caricamento dei luoghi…")+'</div>';
   h+=msgS('res')+'</details><details class="p" data-d="rin"'+ap('rin')+'><summary>Rinnovo documenti</summary><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS('rin')+'</details>';
