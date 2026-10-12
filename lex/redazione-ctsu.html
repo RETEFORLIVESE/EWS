@@ -287,6 +287,14 @@ main.container{padding-bottom:64px;}
 .admin-topbar button{background:transparent;border:1px solid var(--blu-700);color:var(--blu-700);padding:6px 14px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;transition:all .15s;}
 .admin-topbar button:hover{background:var(--blu-700);color:#fff;}
 
+/* ===== Accesso con Estji ID (QR) ===== */
+.estji-blocco{text-align:left;margin:0 0 1.4rem;padding-bottom:1.2rem;border-bottom:1px solid var(--bordo);}
+.estji-blocco p.sottotitolo{margin-bottom:.9rem;}
+#estji-login{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;text-align:center;}
+#estji-login > *{margin-left:auto;margin-right:auto;}
+#estji-login canvas,#estji-login img,#estji-login svg{display:block;margin:0 auto;max-width:100%;height:auto;}
+#estji-login button{width:auto;padding:.5rem 1rem;font-size:.85rem;}
+.estji-oppure{margin:1rem 0 0;font-family:var(--font-chrome);font-size:.82rem;color:var(--inchiostro-tenue);}
   </style>
 </head>
 <body>
@@ -298,6 +306,15 @@ main.container{padding-bottom:64px;}
     <div id="login-area" style="display:none;">
       <div class="login-wrap">
         <h2>&#128272; Accesso redazione</h2>
+
+        <!-- Accesso con Estji ID: resta nascosto finché il widget non è caricato -->
+        <div id="estji-blocco" class="estji-blocco" style="display:none;">
+          <label>Accedi con Estji ID</label>
+          <p class="sottotitolo">Inquadra il QR con il telefono e conferma l'accesso.</p>
+          <div id="estji-login"></div>
+          <p class="estji-oppure">oppure usa nome e password</p>
+        </div>
+
         <p class="sottotitolo">Inserisci il tuo nome e la password di accesso per modificare i progetti.</p>
 
         <label for="adminUsername">Nome</label>
@@ -326,6 +343,7 @@ main.container{padding-bottom:64px;}
 
   <div id="footer-root"></div>
 
+  <script src="https://ews-rose.vercel.app/estji-login.js"></script>
   <script src="assets/js/ctsu-core.js"></script>
   <script src="assets/js/redazione-ctsu.js"></script>
 </body>
