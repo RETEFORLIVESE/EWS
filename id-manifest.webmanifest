@@ -1,0 +1,14 @@
+{
+  "name": "Estji ID · Identità digitale USSE",
+  "short_name": "Estji ID",
+  "start_url": "id.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07122b",
+  "theme_color": "#043a96",
+  "lang": "it",
+  "icons": [
+    { "src": "id-icon-512.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "id-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
