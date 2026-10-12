@@ -1,6 +1,7 @@
 // api/ctsu.js — un solo endpoint per il sistema CTSU (ctsu.html, progetto.html, redazione-ctsu.html):
 //   GET                                            -> lettura pubblica di ctsu.json
 //   POST { azione: "login", username, password }   -> login redazione
+//   POST { azione: "estji", id_token }              -> login con Estji ID (QR)
 //   POST { azione: "salva", progetti: [...] }       -> salvataggio (richiede Authorization: Bearer <token>)
 //
 // Stessa struttura di api/atti.js: usa gli stessi helper condivisi
@@ -14,6 +15,7 @@
 import crypto from 'crypto';
 import { leggiFileJson, scriviFileJson } from './_github.js';
 import { creaToken, sessioneDaRichiesta } from './_sessione.js';
+import { verificaIdToken, haScope } from './_estji-verifica.js';
 
 const FILE = 'ctsu.json';
 const MAX_PROGETTI = 500;
@@ -74,8 +76,19 @@ async function gestisciLogin(corpo, res) {
   return res.status(200).json({ success: true, message: 'Login effettuato', token: creaToken(username), username });
 }
 
+// Accesso con Estji ID (QR): verifica firma RS256, portale (aud = 'ctsu') e permesso 'ctsu.edit'.
+// Il token emesso ha ambito 'ctsu': vale solo per questa API, non apre le altre redazioni.
+async function gestisciEstji(corpo, res) {
+  let c;
+  try { c = await verificaIdToken(corpo.id_token, 'ctsu'); }
+  catch (e) { return res.status(502).json({ success: false, error: 'Estji ID non raggiungibile: riprova tra poco.' }); }
+  if (!c || !c.nick) return res.status(401).json({ success: false, error: 'Accesso Estji ID non valido o scaduto.' });
+  if (!haScope(c, 'ctsu.edit')) return res.status(403).json({ success: false, error: 'Questa identità non è abilitata alla redazione CTSU.' });
+  return res.status(200).json({ success: true, token: creaToken(c.nick, 'ctsu'), username: c.nick });
+}
+
 async function gestisciSalva(req, corpo, res) {
-  const sessione = sessioneDaRichiesta(req);
+  const sessione = sessioneDaRichiesta(req, 'ctsu');
   if (!sessione) return res.status(401).json({ error: 'Sessione scaduta: effettua di nuovo il login.' });
   const errore = validaProgetti(corpo.progetti);
   if (errore) return res.status(400).json({ error: errore });
@@ -100,6 +113,7 @@ export default async function handler(req, res) {
     }
     corpo = corpo && typeof corpo === 'object' ? corpo : {};
     if (corpo.azione === 'login') return gestisciLogin(corpo, res);
+    if (corpo.azione === 'estji') return gestisciEstji(corpo, res);
     if (corpo.azione === 'salva') return gestisciSalva(req, corpo, res);
     return res.status(400).json({ error: 'Azione non riconosciuta: atteso "login" o "salva".' });
   }
