@@ -25,15 +25,17 @@ export const SCOPES = {
   'agency.manage': [2, 'dirigente_agenzia', 'Gestione agenzia'],
   'unitext.edit': [2, 'redattore', 'Redazione UniText'],
   'normaktiv.edit': [2, 'redattore', 'Redazione atti NormAktiv'],
-  'ctsu.edit': [2, 'redattore_ctsu', 'Redazione progetti CTSU']
+  'ctsu.edit': [2, 'redattore_ctsu', 'Redazione progetti CTSU'],
+  'cepu.edit': [2, 'redattore_cepu', 'Redazione elezioni CEPU']
 };
 
 const SITI = ['https://ews-rose.vercel.app', 'https://rtf-rose.vercel.app'];
+// codice: true -> l'accesso richiede sempre la verifica con il numero (come per i permessi di livello 3)
 export const PORTALI = {
   id:        { nome: 'Estji ID', origins: SITI, scopes: ['id.session'] },
   archive:   { nome: 'Estji Archive', origins: SITI, scopes: ['profile.basic'] },
-  cepu:      { nome: 'CEPU', origins: SITI, scopes: ['profile.basic', 'profile.residence', 'vote.eligibility'] },
-  normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'] },
+  cepu:      { nome: 'CEPU', origins: SITI, scopes: ['profile.basic', 'profile.residence', 'vote.eligibility', 'cepu.edit'], codice: true },
+  normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'], codice: true },
   wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'] },
   unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'] },
   ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'] }
@@ -122,6 +124,7 @@ export function ruoliTecnici(p) {
     if (/Redattore Wiki/i.test(x)) r.push('redattore_wiki');
     if (/^Redattore( UniText)?$/i.test(String(x).trim())) r.push('redattore');   // "Redattore" (e la vecchia etichetta "Redattore UniText")
     if (/Redattore CTSU/i.test(x)) r.push('redattore_ctsu');
+    if (/Redattore CEPU/i.test(x)) r.push('redattore_cepu');
     if (/^Generale$/i.test(String(x).trim())) r.push('generale');   // accesso a tutti i permessi (resta il livello minimo di sicurezza)
     if (/Dirigente/i.test(x)) r.push('dirigente_agenzia');
     if (/Presidente|Delegato/i.test(x)) r.push('delegato');

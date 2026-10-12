@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       if (!scopes.length || scopes.some(s => !portale.scopes.includes(s))) return err(400, 'Permessi non assegnati a questo portale.');
       if (typeof c.vh !== 'string' || !/^[a-f0-9]{64}$/.test(c.vh)) return err(400, 'Richiesta non valida.');
       if (!(await limite('sso:' + ipDi(req), 30, 600))) return err(429, 'Troppe richieste: riprova tra poco.');
-      const id = crypto.randomBytes(18).toString('base64url'), h = hard(scopes), numero = 10 + crypto.randomInt(90);
+      const id = crypto.randomBytes(18).toString('base64url'), h = hard(scopes) || !!portale.codice, numero = 10 + crypto.randomInt(90);
       await redis('SET', chiave(id), JSON.stringify({ c: c.client_id, s: scopes, vh: c.vh, st: 'attesa', n: h ? numero : 0,
         da: String(req.headers['user-agent'] || '').slice(0, 80) }), 'EX', TTL);
       return res.status(200).json({ id, qr_payload: ISS + '/id.html?r=' + id, expires_in: TTL, numero: h ? numero : null });
