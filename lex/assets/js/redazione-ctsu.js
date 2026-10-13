@@ -96,7 +96,8 @@
 
     // Accesso con Estji ID (QR): il blocco compare solo se il widget è stato caricato
     const blocco = document.getElementById('estji-blocco');
-    if (blocco && window.EstjiLogin) {
+    // come in redazione.html: il QR compare solo se il widget è caricato E APICtsu.loginEstji esiste
+    if (blocco && window.EstjiLogin && typeof APICtsu !== 'undefined' && typeof APICtsu.loginEstji === 'function') {
       blocco.style.display = 'block';
       EstjiLogin.mount('#estji-login', {
         clientId: 'ctsu',
