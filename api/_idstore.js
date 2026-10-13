@@ -32,13 +32,13 @@ export const SCOPES = {
 const SITI = ['https://ews-rose.vercel.app', 'https://rtf-rose.vercel.app'];
 // codice: true -> l'accesso richiede sempre la verifica con il numero (come per i permessi di livello 3)
 export const PORTALI = {
-  id:        { nome: 'Estji ID', origins: SITI, scopes: ['id.session'] },
-  archive:   { nome: 'Estji Archive', origins: SITI, scopes: ['profile.basic'] },
+  id:        { nome: 'Estji ID', origins: SITI, scopes: ['id.session'], codice: true },
+  archive:   { nome: 'Estji Archive', origins: SITI, scopes: ['profile.basic'], codice: true },
   cepu:      { nome: 'CEPU', origins: SITI, scopes: ['profile.basic', 'profile.residence', 'vote.eligibility', 'cepu.edit'], codice: true },
   normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'], codice: true },
-  wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'] },
-  unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'] },
-  ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'] }
+  wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'], codice: true },
+  unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'], codice: true },
+  ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'], codice: true }
 };
 
 /* ---------- Redis (Upstash, REST) ---------- */
