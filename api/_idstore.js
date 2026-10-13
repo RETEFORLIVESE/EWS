@@ -109,18 +109,33 @@ export async function trovaLuogo(id) {
   return { id, nome: typeof v === 'string' ? v : v.nome, stato: String(stato).replace(/_/g, ' ') };
 }
 
-/* ---------- CUP: LUOGO-SEZIONE-AAMMGG-PP-C ---------- */
-// Account vecchi: codice e sezione di STATI. Account nuovi: 3 lettere dall'ID del luogo e sezione "00".
+/* ---------- CUP: CCC-XXX-GG-M-AA-SSS ---------- */
+//   CCC = prime 3 consonanti del nick (senza vocali, numeri, simboli)
+//   XXX = prima parte dell'ID della residenza (es. ELIN, TDR)
+//   GG  = giorno di registrazione     M = lettera del mese (A = gennaio ... L = dicembre)
+//   AA  = anno di prima registrazione SSS = ultima parte dell'ID della residenza (es. TEG, TRN)
+// Il CUP si genera una volta sola: un cambio di residenza successivo non lo modifica.
+const MESI = 'ABCDEFGHIJKL';
+const ALIAS_STATO = { TRD: 'TDR', EBHAN: 'EBHN', BSHSX: 'BSHS' };   // stessi refusi di organi.json gestiti in trovaLuogo
 export function nuovoCup(p, ide) {
-  const leg = Object.prototype.hasOwnProperty.call(STATI, p.stato) ? STATI[p.stato] : null;
-  const cod = leg ? leg.cod : String(p.residenza || p.stato || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 3).padEnd(3, 'X');
-  const sez = (p.sezione || '').replace(/\D/g, '') || '00';
-  const pre = cod + '-' + sez + '-' + p.iscritto.slice(2).replace(/-/g, '');
-  const n = ide.identita.filter(x => x.cup && x.cup.indexOf(pre + '-') === 0).length + 1;
-  const corpo = pre + '-' + ('0' + n).slice(-2);
-  let t = 0; const c = corpo.replace(/-/g, '');
-  for (let i = 0; i < c.length; i++) t += parseInt(c[i], 36) * (i + 1);
-  return corpo + '-' + String.fromCharCode(65 + t % 26);
+  const cons = String(p.nick || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().replace(/[^BCDFGHJKLMNPQRSTVWXYZ]/g, '');
+  const parti = String(p.residenza || '').toUpperCase().split('-').filter(Boolean);
+  const stato = ALIAS_STATO[parti[0]] || parti[0] || 'XXX', sezione = parti[parti.length - 1] || 'XXX';
+  const [aaaa, mm, gg] = String(p.iscritto || new Date().toISOString().slice(0, 10)).split('-');
+  const coda = '-' + stato + '-' + gg + '-' + MESI[parseInt(mm, 10) - 1] + '-' + aaaa.slice(2) + '-' + sezione;
+  const usati = new Set(ide.identita.map(x => x.cup));
+  const piena = cons.padEnd(3, 'X');
+  // se il CUP esiste già, prova le tre consonanti successive del nick
+  for (let i = 0; i + 3 <= piena.length; i++) {
+    const cup = piena.slice(i, i + 3) + coda;
+    if (!usati.has(cup)) return cup;
+  }
+  // ultima risorsa: suffisso numerico
+  const base = piena.slice(0, 3) + coda;
+  let n = 2;
+  while (usati.has(base + '-' + n)) n++;
+  return base + '-' + n;
 }
 
 /* ---------- ruoli ---------- */
