@@ -4,7 +4,7 @@
 // Il PC tiene un segreto (verifier) che non lascia mai il browser: solo chi ha avviato la richiesta può ritirare il token.
 import crypto from 'crypto';
 import { ISS, SCOPES, PORTALI, redis, limite, ipDi, trovaId, leggiIde, sessioneId, scopeConcessi, ruoliTecnici,
-         firmaJwt, corpoJson } from './_idstore.js';
+         firmaJwt, corpoJson, avvisa, etichetta, maskIp } from './_idstore.js';
 
 const TTL = 120;
 const TUTTE_LE_ORIGINI = [...new Set(Object.values(PORTALI).flatMap(p => p.origins))];
@@ -33,7 +33,8 @@ export default async function handler(req, res) {
       if (!(await limite('sso:' + ipDi(req), 30, 600))) return err(429, 'Troppe richieste: riprova tra poco.');
       const id = crypto.randomBytes(18).toString('base64url'), h = hard(scopes) || !!portale.codice, numero = 10 + crypto.randomInt(90);
       await redis('SET', chiave(id), JSON.stringify({ c: c.client_id, s: scopes, vh: c.vh, st: 'attesa', n: h ? numero : 0,
-        da: String(req.headers['user-agent'] || '').slice(0, 80) }), 'EX', TTL);
+        da: String(req.headers['user-agent'] || '').slice(0, 80),
+        et: etichetta(req.headers['user-agent']), ip: maskIp(ipDi(req)) }), 'EX', TTL);
       return res.status(200).json({ id, qr_payload: ISS + '/id.html?r=' + id, expires_in: TTL, numero: h ? numero : null });
     }
     if (c.azione === 'stato') {
@@ -47,6 +48,9 @@ export default async function handler(req, res) {
       await redis('DEL', chiave(c.id));   // monouso
       const p = trovaId(await leggiIde(), r.sub);
       if (!p) return err(401, 'Identità non trovata.');
+      // Avviso di sicurezza: dice in quale sito è stato fatto l'accesso (stesso interruttore "avvisi su ogni accesso" del profilo)
+      if (p.avvisiTutti) await avvisa(p, 'accesso-portale', 'Accesso a ' + (PORTALI[r.c] ? PORTALI[r.c].nome : r.c) + ' con Estji ID (QR' + (r.n ? ' + codice' : '') + ')'
+        + (r.et ? ' da ' + r.et : '') + (r.ip ? ', IP ' + r.ip : '') + '. Se non sei stato tu, esci da tutti i dispositivi e cambia la password.');
       const iat = Math.floor(Date.now() / 1000);
       const claims = { iss: ISS, aud: r.c, sub: p.id, jti: crypto.randomBytes(12).toString('base64url'), nick: p.nick, scope: scopeConcessi(p, r.s, r.loa).join(' '), loa: r.loa,
         roles: ruoliTecnici(p), vote_eligible: !!p.verificato, iat, exp: iat + 600 };
