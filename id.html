@@ -70,6 +70,13 @@ input[type=checkbox]{width:auto;margin-right:8px;accent-color:var(--blue);transf
 .wc.elet::after{background-image:var(--disegno-elet);width:74cqw;height:36.5cqw;right:-6cqw;bottom:4cqw;opacity:.28}
 .wc.elet .mrz{background:#fbefb5;border-top-color:#e0c95a}
 .wc.elet .bars{background:repeating-linear-gradient(90deg,#3b2e00 0 .5cqw,transparent .5cqw 1.1cqw,#3b2e00 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
+.wc.par{background:#fff6f7;border-color:#e3b5bc}
+.wc.par .h{background:linear-gradient(135deg,color-mix(in srgb,var(--pc,#8e1b2e) 65%,#000),var(--pc,#8e1b2e));border-bottom-color:#fff}
+.wc.par::before{background:repeating-linear-gradient(45deg,transparent 0 6px,color-mix(in srgb,var(--pc,#8e1b2e) 8%,transparent) 6px 7px)}
+.wc.par::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%238e1b2e' d='M50 6l12.3 25.6 28 3.8-20.4 19.5 5.1 27.9L50 69l-25 13.8 5.1-27.9L9.7 35.4l28-3.8z'/%3E%3C/svg%3E");opacity:.12}
+.wc.par .mrz{background:#f6e1e4;border-top-color:#dcaab2}
+.wc.par .bars{background:repeating-linear-gradient(90deg,#5e0f1e 0 .5cqw,transparent .5cqw 1.1cqw,#5e0f1e 1.1cqw 2cqw,transparent 2cqw 2.4cqw)}
+.wc.par.rev{filter:grayscale(1);opacity:.7}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .mute{color:var(--mute);font-size:.85rem}.cup{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--blue)}
 [hidden]{display:none!important}
@@ -119,13 +126,19 @@ function sca(m,k){if(m.revocati&&m.revocati[k])return"Revocata dallo staff";var 
 function cl(t){return String(t==null?"":t).toUpperCase().replace(/[^A-Z0-9]+/g,"<")}
 function f(l,v,x,s){return'<div'+(x?' class="'+x+'"':'')+'><small>'+l+'</small><b>'+v+'</b>'+(s?'<em>'+s+'</em>':'')+'</div>'}
 function wc(k,tit,body,mrz){return'<div class="wc '+k+'" data-k="'+k+'" role="group" aria-label="'+esc(tit)+'"><div class="h"><b>'+esc(tit)+'</b><small>Union der Wohlfartsstaaten von Estji</small></div><div class="bd">'+body+'</div><div class="mrz">'+esc(mrz)+'</div></div>'}
+/* carte secondarie (es. tessera di partito): salvate in carte.json, collegate all'account tramite Estji ID */
+function caricaCarte(){api("/api/tessere",{azione:"carte"}).then(function(d){CARTE=d.carte||[];render()}).catch(function(e){CARTE=[];if(e.status===401&&me){esci();render()}})}
+function cartaPar(c,m,full,foto,dots){
+  var col=/^#[0-9a-fA-F]{6}$/.test(c.colore)?c.colore:"#8e1b2e",rev=c.stato==="revocata",o={emissionePar:c.emessa,revocati:rev?{emissionePar:1}:{}};
+  return wc("par",(c.emittente||"")+" · Tessera di partito",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Iscritto",esc(m.nick),"s2")+f("Partito",esc(c.nomeEmittente||c.emittente),"s2")+f("N. tessera",full?esc(c.numero):dots)+f("Validità",esc(sca(o,"emissionePar")))+'</div>',"T<"+cl(c.emittente)+"<"+cl(m.nick)+"<<"+(full?cl(c.numero):"<<<<<<<<"))
+    .replace('class="wc par"','class="wc par'+(rev?" rev":"")+'" style="--pc:'+col+'"')}
 function wallet(m){
   var full=vista==="full",dots='<span class="dots">••••••••</span>',foto='<div class="av sk">'+testa(m)+'</div>',cup=full&&m.cup?esc(m.cup):dots,reg=fd(dt(m.registrazione||m.registrato||m.iscritto));
   var C={};
   C.id=wc("id","USSE · Carta d\'Identità",foto+'<div class="g">'+f("NickName",esc(m.nick))+f("Estji ID",esc(m.id))+f("Residenza",esc(resid(m)),"",dettResid(m))+f("Cariche e ruoli",esc((m.ruoli||[]).join(", ")||"Nessuna"))+f("Data di registrazione",esc(reg))+f("Validità",esc(sca(m,"emissioneId")))+f("Discord",full&&m.discord?esc(m.discord):dots)+f("UUID di gioco",full&&m.uuid?esc(m.uuid):dots,"u")+'</div>',"P<EST<"+cl(m.nick)+"<<<"+cl(m.id)+"<<"+String(m.iscritto||"").replace(/\D/g,""));
   C.fisc=wc("fisc","USSE · Tessera fiscale",'<div class="lc">'+foto+'</div><div class="g">'+f("Intestatario",esc(m.nick))+f("Stato",m.verificato?"Verificato":"In verifica")+f("Codice fiscale (CUP)",cup,"s2")+f("Residenza fiscale",esc(resid(m)),"s2",dettResid(m))+f("Iscritto dal",esc(fd(dt(m.iscrittoFisc||m.iscritto))))+f("Validità",esc(sca(m,"emissioneFisc")))+'</div>',"F<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
   C.elet=wc("elet","USSE · Tessera elettorale",'<div class="lc">'+foto+'<div class="bars"></div></div><div class="g">'+f("Nome",esc(m.nick),"s2")+f("Residenza elettorale",esc(resid(m)),"s2",dettResid(m))+f("Codice elettorale",cup)+f("Validità",esc(sca(m,"emissioneElet")))+'</div>',"E<EST<"+cl(m.nick)+"<<"+(full?cl(m.cup):"<<<<<<<<"));
-  var cards=["id","fisc","elet"].map(function(k){return C[k]}).join("");
+  var cards=["id","fisc","elet"].map(function(k){return C[k]}).join("")+(CARTE||[]).map(function(c){return cartaPar(c,m,full,foto,dots)}).join("");
   return'<div class="row" style="margin-top:0"><button class="'+(full?"alt":"")+'" data-v="pub">Dati nascosti</button><button class="'+(full?"":"alt")+'" data-v="full">Dati completi</button></div><div class="wal"><div class="wi">'+cards+'</div></div>'}
 var UE=[["at","Austria"],["be","Belgio"],["bg","Bulgaria"],["hr","Croazia"],["cy","Cipro"],["cz","Cechia"],["dk","Danimarca"],["ee","Estonia"],["fi","Finlandia"],["fr","Francia"],["de","Germania"],["gr","Grecia"],["hu","Ungheria"],["ie","Irlanda"],["it","Italia"],["lv","Lettonia"],["lt","Lituania"],["lu","Lussemburgo"],["mt","Malta"],["nl","Paesi Bassi"],["pl","Polonia"],["pt","Portogallo"],["ro","Romania"],["sk","Slovacchia"],["si","Slovenia"],["es","Spagna"],["se","Svezia"]];
 function optUE(){return UE.map(function(c){return'<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join("")}
@@ -143,7 +156,7 @@ function msg(){return M?'<div class="m '+M[0]+'">'+esc(M[1])+'</div>':""}
 var MS=null;
 var DOCS=[["id","Carta d'Identità","emissioneId"],["fisc","Tessera fiscale","emissioneFisc"],["elet","Tessera elettorale","emissioneElet"]];
 var OPEN={res:false,rin:false,pw:false,ses:false};
-var DCON=false,DCT="",DCN="",REGF={},SIC=null,SICL=0;
+var DCON=false,DCT="",DCN="",REGF={},SIC=null,SICL=0,CARTE=null,CARL=0;
 try{REGF=JSON.parse(sessionStorage.getItem("estji_regf")||"{}")}catch(e){}
 function fdt(t){var d=new Date(t);return fd(d)+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
 function discordCampo(){if(!DCON)return'<input id="d" maxlength="40" autocomplete="off">';
@@ -171,7 +184,7 @@ function servizi(m){
   else h+='<div class="m '+(LERR?"bad":"")+'">'+(LERR?"Impossibile caricare i luoghi: "+esc(LERR):"Caricamento dei luoghi…")+'</div>';
   h+=msgS('res')+'</details><details class="p" data-d="rin"'+ap('rin')+'><summary>Rinnovo documenti</summary><p class="mute">Ogni documento vale 365 giorni dal rilascio. Rinnovando, la nuova validità parte da oggi.</p><ul>'+DOCS.map(function(d){return'<li><span><b>'+esc(d[1])+'</b><br><span class="mute">'+esc(sca(m,d[2]))+'</span></span><button class="alt" style="margin:0" data-rin="'+d[0]+'">Rinnova</button></li>'}).join("")+'</ul>'+msgS('rin')+'</details>';
   return h}
-function esci(){MS=null;tok=null;me=null;sso=null;SIC=null;SICL=0;localStorage.removeItem("estji_id_tok")}
+function esci(){MS=null;tok=null;me=null;sso=null;SIC=null;SICL=0;CARTE=null;CARL=0;localStorage.removeItem("estji_id_tok")}
 function carica(){
   if(!tok)return render();
   api("/api/estji",{azione:"profilo"}).then(function(d){me=d.profilo;return R?api("/api/estji",{azione:"info",id:R}).then(function(i){sso=i},function(e){sso=null;done=["bad",e.message]}):0}).catch(function(e){if(e.status===401)esci();else M=["bad",e.message]}).then(render);
@@ -197,6 +210,7 @@ function render(){uuidMc();
     h+='</div>';
   }
   if(!SIC&&!SICL){SICL=1;caricaSic()}
+  if(!CARTE&&!CARL){CARL=1;caricaCarte()}
   h+=scanBtn();
   h+='<div class="p">'+wallet(me)+'</div>'+servizi(me)+staffLink(me)+
    '<div class="p"><h2>Sicurezza</h2>'+discordRiga(me)+'<label><input type="checkbox" id="tf" style="width:auto;margin-right:6px"'+(me.tf?" checked":"")+'>Verifica a due fattori attiva (livello 2)</label><details class=\"sub\" data-d=\"pw\"'+ap('pw')+'><summary>Cambia password</summary><label for=\"cp\">Password attuale</label><input id=\"cp\" type=\"password\" autocomplete=\"current-password\"><label for=\"n1\">Nuova password</label><input id=\"n1\" type=\"password\" autocomplete=\"new-password\"><label for=\"n2\">Ripeti la nuova password</label><input id=\"n2\" type=\"password\" autocomplete=\"new-password\"><button id="sv">Salva password</button></details>'+sessioniBlocco()+msg()+'</div><button class="alt" id="out">Esci</button>';
