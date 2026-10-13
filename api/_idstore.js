@@ -235,18 +235,26 @@ export function maskIp(ip) {
   return p.length === 4 ? p[0] + '.' + p[1] + '.•.•' : '—';
 }
 async function dmDiscord(uid, testo) {
-  const H = { Authorization: 'Bot ' + process.env.DISCORD_BOT_TOKEN, 'Content-Type': 'application/json' };
-  const ch = await (await fetch('https://discord.com/api/v10/users/@me/channels', { method: 'POST', headers: H, body: JSON.stringify({ recipient_id: uid }) })).json();
-  if (ch && ch.id) await fetch('https://discord.com/api/v10/channels/' + ch.id + '/messages', { method: 'POST', headers: H, body: JSON.stringify({ content: testo }) });
+  const H = { Authorization: 'Bot ' + String(process.env.DISCORD_BOT_TOKEN).trim(), 'Content-Type': 'application/json' };
+  const r1 = await fetch('https://discord.com/api/v10/users/@me/channels', { method: 'POST', headers: H, body: JSON.stringify({ recipient_id: uid }) });
+  const ch = await r1.json().catch(() => ({}));
+  if (!r1.ok || !ch.id) throw new Error('Discord apri-DM ' + r1.status + ' ' + JSON.stringify(ch));
+  const r2 = await fetch('https://discord.com/api/v10/channels/' + ch.id + '/messages', { method: 'POST', headers: H, body: JSON.stringify({ content: testo }) });
+  if (!r2.ok) throw new Error('Discord invio-DM ' + r2.status + ' ' + (await r2.text()));
 }
 // Avviso di sicurezza: sempre nell'elenco dell'app; in più un messaggio privato su Discord se c'è DISCORD_BOT_TOKEN.
+// Gli errori vengono scritti nei log di Vercel ma non bloccano mai l'accesso.
 export async function avvisa(p, tipo, testo) {
   try {
     await redis('LPUSH', 'notif:' + p.id, JSON.stringify({ t: Date.now(), tipo, testo }));
     await redis('LTRIM', 'notif:' + p.id, 0, 29);
     await redis('EXPIRE', 'notif:' + p.id, 90 * 86400);
-    if (p.discordId && process.env.DISCORD_BOT_TOKEN) await Promise.race([dmDiscord(p.discordId, '🔔 Estji ID — ' + testo), new Promise(r => setTimeout(r, 2500))]);
-  } catch (e) { /* l'avviso non deve mai bloccare l'accesso */ }
+  } catch (e) { console.error('avviso app', e.message); }
+  if (!p.discordId) return;
+  if (!process.env.DISCORD_BOT_TOKEN) { console.error('DM Discord saltato: DISCORD_BOT_TOKEN non impostato'); return; }
+  try {
+    await Promise.race([dmDiscord(p.discordId, '🔔 Estji ID — ' + testo), new Promise((_, no) => setTimeout(() => no(new Error('timeout DM')), 6000))]);
+  } catch (e) { console.error('DM Discord fallito per ' + p.id + ':', e.message); }
 }
 export async function leggiAvvisi(id) {
   return ((await redis('LRANGE', 'notif:' + id, 0, 29)) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
