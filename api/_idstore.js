@@ -38,7 +38,8 @@ export const PORTALI = {
   normaktiv: { nome: 'NormAktiv', origins: SITI, scopes: ['profile.basic', 'normaktiv.edit', 'normaktiv.sign'], codice: true },
   wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'], codice: true },
   unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'], codice: true },
-  ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'], codice: true }
+  ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'], codice: true },
+  partito:   { nome: 'Alleanza Civica Estji', origins: SITI, scopes: ['profile.basic'], codice: true }
 };
 
 /* ---------- Redis (Upstash, REST) ---------- */
