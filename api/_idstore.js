@@ -39,7 +39,7 @@ export const PORTALI = {
   wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'], codice: true },
   unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'], codice: true },
   ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'], codice: true },
-  partito:   { nome: 'Alleanza Civica Estji', origins: SITI, scopes: ['profile.basic'], codice: true }
+  partito:   { nome: 'DIOPUTTANAAAA!!!A', origins: SITI, scopes: ['profile.basic'], codice: true }
 };
 
 /* ---------- Redis (Upstash, REST) ---------- */
