@@ -128,75 +128,6 @@ const Wiki = {
     return .2126 * v[0] + .7152 * v[1] + .0722 * v[2] > .3 ? '#10203a' : '#ffffff';
   },
 
-  /* ---------- MAPPE DELLE LINEE (stile "tabella stazioni" di Wikipedia) ----------
-     {{mappa Titolo (facoltativo)
-     @colore #c62828               colore predefinito delle linee      @piena = a tutta larghezza
-     ## Ramo Bovisa                riga d'intestazione
-     icone | km | testo            una riga: caselle del disegno, chilometrica, nome (accetta [[Pagina]] e [testo](https://…))
-     }}
-     ICONE = una casella per ogni parola, separate da spazio. Ogni casella è fatta di pezzi:
-       v = linea verticale · u = metà alta · d = metà bassa · h = linea orizzontale · l / r = metà sinistra / destra
-       \ = dal centro-alto di questa casella al centro-basso di quella a destra · / = dal centro-basso al centro-alto di quella a destra
-       S = stazione · H = fermata · O = interscambio (cerchio vuoto) · . = casella vuota
-       ~ = tratteggiata (galleria) · {#rrggbb} = colore della casella.   Esempi:  vS  ·  dS  ·  v\  ·  vS~{#1e65c8}
-     Le righe senza stazione (S/H/O) hanno il testo piccolo, come le note di Wikipedia. */
-  _mapSplit(r) {   // "icone | km | testo" senza spezzare i [[Pagina|testo]]
-    const s = r.replace(/\[\[[^\]]*\]\]/g, k => k.replace(/\|/g, '\u0001')), i = s.indexOf('|'), j = i < 0 ? -1 : s.indexOf('|', i + 1);
-    const p = i < 0 ? [s, '', ''] : j < 0 ? [s.slice(0, i), s.slice(i + 1), ''] : [s.slice(0, i), s.slice(i + 1, j), s.slice(j + 1)];
-    return p.map(x => x.replace(/\u0001/g, '|').trim());
-  },
-  mapParse(titolo, linee) {
-    const m = { titolo: titolo || '', colore: '#c62828', piena: false, righe: [] };
-    for (const l of linee) {
-      const r = l.trim(); if (!r) continue; let x;
-      if (/^@piena\b/i.test(r)) m.piena = true;
-      else if ((x = /^@colore\s+(#(?:[0-9a-f]{3}|[0-9a-f]{6}))\s*$/i.exec(r))) m.colore = x[1].toLowerCase();
-      else if ((x = /^#{2,3}\s+(.*)/.exec(r))) m.righe.push({ h: x[1] });
-      else { const p = Wiki._mapSplit(r); m.righe.push({ ic: p[0].split(/\s+/).filter(Boolean), km: p[1], t: p[2] }); }
-    }
-    return m;
-  },
-  mapSintassi(m) {
-    const o = ['{{mappa' + (m.titolo ? ' ' + String(m.titolo).replace(/\s+/g, ' ').trim() : '')];
-    if (m.colore && m.colore !== '#c62828') o.push('@colore ' + m.colore);
-    if (m.piena) o.push('@piena');
-    m.righe.forEach(r => o.push(r.h != null ? '## ' + String(r.h).replace(/\s+/g, ' ').trim() : (r.ic.length ? r.ic.join(' ') : '.') + ' | ' + (r.km || '') + ' | ' + String(r.t || '').replace(/\s*\n\s*/g, ' ').trim()));
-    o.push('}}');
-    return o.join('\n');
-  },
-  mapTok(t) {   // casella -> { p: pezzi (v e h espansi), t: tratteggiata, c: colore }
-    t = String(t || '').trim(); let c = '', m, p = '';
-    if ((m = /\{(#(?:[0-9a-f]{3}|[0-9a-f]{6}))\}$/i.exec(t))) { c = m[1].toLowerCase(); t = t.slice(0, m.index); }
-    for (const ch of t) { if (ch === 'v') p += 'ud'; else if (ch === 'h') p += 'lr'; else if ('udlr\\/SHO'.includes(ch)) p += ch; }
-    return { p: [...new Set(p)].join(''), t: t.includes('~'), c };
-  },
-  mapTokStr(o) {
-    const s = ch => o.p.includes(ch); let r = '';
-    r += s('u') && s('d') ? 'v' : (s('u') ? 'u' : '') + (s('d') ? 'd' : '');
-    r += s('l') && s('r') ? 'h' : (s('l') ? 'l' : '') + (s('r') ? 'r' : '');
-    r += (s('\\') ? '\\' : '') + (s('/') ? '/' : '') + (s('S') ? 'S' : s('H') ? 'H' : s('O') ? 'O' : '');
-    return (r || '.') + (o.t && r ? '~' : '') + (o.c ? '{' + o.c + '}' : '');
-  },
-  mapTile(tok) {
-    const o = Wiki.mapTok(tok), s = ch => o.p.includes(ch); let d = '';
-    d += s('u') && s('d') ? 'M12 0V24' : (s('u') ? 'M12 0V12' : '') + (s('d') ? 'M12 12V24' : '');
-    d += s('l') && s('r') ? 'M0 12H24' : (s('l') ? 'M0 12H12' : '') + (s('r') ? 'M12 12H24' : '');
-    d += (s('\\') ? 'M12 0L36 24' : '') + (s('/') ? 'M12 24L36 0' : '');
-    const pt = s('S') ? 'S' : s('H') ? 'H' : s('O') ? 'O' : '';
-    return `<span class="mp-k"${o.c ? ` style="--c:${o.c}"` : ''}>` + (d ? `<svg viewBox="0 0 24 24" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"${o.t ? ' class="tn"' : ''}/></svg>` : '') + (pt ? `<i class="mp-s mp-s${pt}"></i>` : '') + '</span>';
-  },
-  mapBlocchi(v) {   // blocchi {{mappa … }} nel testo, nello stesso ordine in cui li disegna Wiki.render
-    const r = []; let pos = 0, st = null;
-    String(v).split('\n').forEach(l => {
-      const t = l.trim();
-      if (st === null && /^\{\{\s*mappa\b/i.test(t)) { if (/\}\}\s*$/.test(t)) r.push({ i: pos, f: pos + l.length }); else st = pos; }
-      else if (st !== null && t === '}}') { r.push({ i: st, f: pos + l.length }); st = null; }
-      pos += l.length + 1;
-    });
-    if (st !== null) r.push({ i: st, f: String(v).length });
-    return r.map(x => ({ i: x.i, f: x.f, testo: String(v).slice(x.i, x.f) }));
-  },
-
   _ymd(v) {   // data -> "AAAA-MM-GG" (oppure il solo valore, se è un anno)
     const s = String(v == null ? '' : v).trim(); let m;
     if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[1] + '-' + m[2] + '-' + m[3];
@@ -339,7 +270,7 @@ const Wiki = {
        {{centro            ·  {{sx  ·  {{dx            su una riga da sole, chiusi da }}: valgono per tutto ciò che sta in mezzo */
   render(src, pagine) {
     const e = Wiki.esc, trova = n => (pagine || []).find(p => Wiki.norm(p.titolo) === Wiki.norm(n) || p.id === Wiki.slug(n));
-    let nImg = 0, inIb = false, nTab = 0, nMap = 0;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
+    let nImg = 0, inIb = false, nTab = 0;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
     const imm = (alt, url) => {
       const o = Wiki.imgOpz(alt), n = nImg++, va = { alto: 'text-top', medio: 'middle', basso: 'text-bottom', base: 'baseline' };
       const fit = o.fit === 'adatta' ? 'contain' : o.fit === 'riempi' ? 'cover' : '';
@@ -403,18 +334,6 @@ const Wiki = {
       }).join('') + '</tr>').join('');
       return `<div class="tw"><table class="tbl${t.piena ? ' tfull' : ''}" data-tb="${n}">${tit ? `<caption>${inl(tit)}</caption>` : ''}<tbody>${rows}</tbody></table></div>`;
     };
-    // MAPPA di linea: {{mappa Titolo … }}  (sintassi in Wiki.mapParse)
-    const mappa = (tit, linee) => {
-      const m = Wiki.mapParse(tit, linee), n = nMap++;
-      if (!m.righe.length) return '';
-      const N = Math.max(1, ...m.righe.map(r => (r.ic || []).length));
-      const rows = m.righe.map(r => {
-        if (r.h != null) return `<div class="mp-h">${inl(r.h)}</div>`;
-        const st = r.ic.some(k => /[SHO]/.test(Wiki.mapTok(k).p));
-        return `<div class="mp-r"><div class="mp-ic">${r.ic.map(Wiki.mapTile).join('')}</div><div class="mp-km">${e(r.km)}</div><div class="mp-tx${st ? '' : ' sm'}">${inl(r.t)}</div></div>`;
-      }).join('');
-      return `<div class="mp${m.piena ? ' mp-full' : ''}" data-mp="${n}" style="--n:${N};--c:${m.colore}">${tit ? `<div class="mp-t">${inl(tit)}</div>` : ''}${rows}</div>`;
-    };
     const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
     // ALLINEAMENTO del testo: {sx} {centro} {dx} a inizio riga (vale per quel blocco) · {{centro … }} per più blocchi (vedi sopra)
     const ALN = { sx: 's', sinistra: 's', centro: 'c', centrato: 'c', dx: 'd', destra: 'd' };
@@ -443,11 +362,6 @@ const Wiki = {
         const tit = r.replace(/^\{\{\s*tabella\b\s*/i, '').replace(/\}\}\s*$/, ''), linee = [];
         if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') linee.push(L[i++]); }
         add(tabella(tit, linee)); continue;
-      }
-      if (/^\{\{\s*mappa\b/i.test(r)) {
-        const tit = r.replace(/^\{\{\s*mappa\b\s*/i, '').replace(/\}\}\s*$/, ''), linee = [];
-        if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') linee.push(L[i++]); }
-        add(mappa(tit, linee)); continue;
       }
       if ((m = /^(#{2,3})\s+(.*)/.exec(r))) add(`<h${m[1].length} id="s-${Wiki.slug(m[2])}">${inl(m[2])}</h${m[1].length}>`);
       else if (/^---+$/.test(r)) add('<hr>');
@@ -529,7 +443,7 @@ Wiki._blocchi = L => {   // intervalli {{infobox|tabella … }} (t:'b') e {{sx|c
   const bl = []; let w = null;
   for (let i = 0; i < L.length; i++) {
     const t = L[i].trim().replace(/^\{(?:sx|sinistra|dx|destra|centro|centrato)\}\s*/i, '');
-    if (/^\{\{\s*(infobox|tabella|mappa)\b/i.test(t)) {
+    if (/^\{\{\s*(infobox|tabella)\b/i.test(t)) {
       let e = i; if (!/\}\}\s*$/.test(t)) { e = i + 1; while (e < L.length && L[e].trim() !== '}}') e++; if (e >= L.length) e = L.length - 1; }
       bl.push({ t: 'b', k: /^\{\{\s*infobox/i.test(t) ? 'i' : 't', s: i, e }); i = e; continue;
     }
