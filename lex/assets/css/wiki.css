@@ -64,11 +64,7 @@ background:linear-gradient(180deg,#3d4d66 0%,#1c2840 48%,#080f1c 52%,#121d30 100
 @media(hover:none){.sb-item:hover{filter:none}.sb-item:active{filter:brightness(1.35)}}
 
 /* =====================================================================
-   TABELLE  (tutte le regole delle tabelle sono qui)
-   .wk table        tabella normale del testo
-   .wk table.ib     infobox / scheda laterale
-   .wk table.tbl    {{tabella}} con celle unite e colorate
-   .tw              contenitore scorrevole (se la pagina lo genera)
+   TABELLE
    ===================================================================== */
 .wk{container-type:inline-size}
 .wk::after{content:"";display:block;clear:both}
@@ -106,11 +102,9 @@ background:linear-gradient(180deg,#1d2a40,#0a111f);box-shadow:inset 0 0 0 1px rg
 
 /* --- tabelle su mobile --- */
 @media(max-width:720px){
-  /* scorrimento orizzontale: funziona anche senza il contenitore .tw (l'infobox resta a parte) */
   .wk table:not(.ib){display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .wk .tw{margin:0 -4px}
   .wk .tw table:not(.ib){display:table;max-width:none;overflow:visible}
-  /* .wk su mobile ha overflow-wrap:anywhere: nelle celle spezzerebbe le parole lettera per lettera */
   .wk th,.wk td{overflow-wrap:break-word;word-break:normal;padding:4px 7px;font-size:14px;line-height:1.45}
   .wk table.tbl caption{font-size:16px;padding:5px 6px}
   .wk table:not(.ib) img{max-width:100%;height:auto}
@@ -156,14 +150,13 @@ img{max-width:100%}
 @container (max-width:560px){.wk .im-sx,.wk .im-dx{max-width:50%}}
 #anteprima [data-im]{cursor:pointer}
 #anteprima [data-im]:hover{outline:2px dashed #ffd84a;outline-offset:2px}
-/* pannello immagine nella redazione */
 .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 input[type=checkbox]{width:auto;min-height:0}
 label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cursor:pointer}
 #iCode{word-break:break-all;user-select:all}
 @media(max-width:720px){.cols3{grid-template-columns:1fr}input[type=checkbox]{width:20px;height:20px}}
 
-/* ===== Indice della pagina (colonna laterale della wiki): voci come testo normale dentro la "bolla" ===== */
+/* ===== Indice della pagina ===== */
 #toc{padding:2px 2px 4px}
 #toc .sb-item{align-items:flex-start;width:100%;margin:0 0 1px;padding:3px 6px;font-size:13px;line-height:1.35;color:#cfe9ff;
   background:none;border:0;border-radius:3px;box-shadow:none;text-shadow:none}
@@ -185,10 +178,9 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:10px 16px 0 0;cu
 .tf .tadd{flex:none;font-size:12px;padding:2px 6px}
 @media(max-width:720px){#tree{max-height:260px}}
 
-/* ===== Grafici delle elezioni (link CEPU nel testo: ![|centro|420|cap|scuro](…CEPU.html?tipo=…&data=…)) ===== */
+/* ===== Grafici delle elezioni ===== */
 main,.panel,.wk{min-width:0}
 .wk .wg{container-type:inline-size;box-sizing:border-box;max-width:100%;margin:6px 0}
-/* dentro una scheda (infobox) il grafico non è mai più largo della cella: si rimpicciolisce */
 .wk table.ib .wg{display:block;max-width:100%;margin:0 auto;float:none}
 .wk .ib-imgs .wg{flex:0 1 auto;min-width:0}
 .wk .wg.im-in{display:inline-block;vertical-align:middle;margin:2px 3px}
@@ -224,11 +216,9 @@ main,.panel,.wk{min-width:0}
 .wg-ref .b{display:block;height:14px;border-radius:3px;overflow:hidden;background:#C0392B}
 .wg-ref .b b{display:block;height:100%;background:#2E9E5B}
 .wg-ref .c{font-weight:900}
-/* mobile: a sinistra/destra il grafico non galleggia più (resta centrato, mai più largo dello schermo) */
 @container (max-width:560px){
   .wk .wg.im-sx,.wk .wg.im-dx{float:none;display:block;max-width:100%;margin:8px auto}
 }
-/* grafico stretto (telefono o larghezza piccola): barre su due righe, scritte più piccole */
 @container (max-width:340px){
   .wg-card{padding:8px}
   .wg-leg{font-size:11px;gap:3px 10px}
@@ -239,7 +229,7 @@ main,.panel,.wk{min-width:0}
 @media(max-width:720px){.wg-card{font-size:14px}.wg-leg{font-size:13px}}
 #gOpz{display:flex;flex-wrap:wrap;gap:0 18px}#gOpz .chk{margin-right:0}
 
-/* ===== Editor con colori (redazione): <pre> colorato dietro a una textarea trasparente ===== */
+/* ===== Editor con colori (redazione) ===== */
 .ed{position:relative;min-width:0;border:1px solid #000;border-radius:5px;background:#050b17;box-shadow:inset 0 0 0 1px rgba(150,200,255,.25)}
 .ed #hl,.ed #fTesto{margin:0;padding:7px 10px;border:0;border-radius:5px;font:14px/1.5 Consolas,monospace;letter-spacing:normal;tab-size:4;
   white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;overflow-y:scroll;overflow-x:hidden}
@@ -248,33 +238,31 @@ main,.panel,.wk{min-width:0}
 .ed #fTesto::selection{background:rgba(79,208,255,.35);color:transparent}
 .ed #fTesto::placeholder{color:#6b86a8}
 @media(max-width:720px){.ed #hl,.ed #fTesto{font-size:16px}}
-/* una sola casella: il riquadro è quello del contenitore, la textarea è senza bordo e senza contorno proprio */
 .edcols{align-items:start}
 .ed #fTesto:focus,.ed #fTesto:focus-visible{outline:0}
 .ed:focus-within{outline:2px solid #9ee6ff;outline-offset:2px}
-/* SOLO redazione: pannello più largo e editor più alto */
 body.red .site{max-width:1500px}
 @media(min-width:721px){
   body.red .edcols{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
   body.red .ed #fTesto{height:72vh;min-height:420px}
   body.red #anteprima{max-height:72vh!important}
 }
-#hl .h-img{color:#6ee7a0}                 /* immagini e grafici: verde */
-#hl .h-url{color:#5aa9ff}                 /* link a siti: blu */
-#hl .h-wk{color:#2dd4bf}                  /* [[pagine wiki]]: turchese */
-#hl .h-h2{color:#ff9f43;font-weight:700}  /* ## titoli */
-#hl .h-h3{color:#ffd166;font-weight:700}  /* ### sottotitoli */
-#hl .h-q{color:#b79cff}                   /* > citazioni */
-#hl .h-p{color:#f472b6}                   /* | tabelle */
-#hl .h-li{color:#facc15}                  /* - elenchi */
-#hl .h-b{color:#ff7b7b;font-weight:700}   /* **grassetto** */
-#hl .h-i{color:#f0abfc}                   /* *corsivo* */
-#hl .h-c{color:#ffd84a;background:rgba(255,216,74,.12)}  /* `codice` */
+#hl .h-img{color:#6ee7a0}
+#hl .h-url{color:#5aa9ff}
+#hl .h-wk{color:#2dd4bf}
+#hl .h-h2{color:#ff9f43;font-weight:700}
+#hl .h-h3{color:#ffd166;font-weight:700}
+#hl .h-q{color:#b79cff}
+#hl .h-p{color:#f472b6}
+#hl .h-li{color:#facc15}
+#hl .h-b{color:#ff7b7b;font-weight:700}
+#hl .h-i{color:#f0abfc}
+#hl .h-c{color:#ffd84a;background:rgba(255,216,74,.12)}
 #hl .h-hr{color:#7d8fa8}
-#hl .h-ib{color:#c084fc;font-weight:700}  /* {{infobox ... }} */
-#hl .h-lab{color:#f9a8d4}                 /* Etichetta: dentro la scheda */
+#hl .h-ib{color:#c084fc;font-weight:700}
+#hl .h-lab{color:#f9a8d4}
 
-/* ===== Editor delle tabelle (redazione) ===== */
+/* ===== Editor delle tabelle ===== */
 .tb-bar{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
 .tb-grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px 6px;border:1px solid rgba(160,200,255,.25);border-radius:6px;background:rgba(255,255,255,.04)}
 .tb-grp>span{font-size:11px;color:#9cc4ea;margin-right:2px}
@@ -294,7 +282,6 @@ body.red .site{max-width:1500px}
 #tbGrid textarea:focus,#tbGrid textarea:focus-visible{outline:0}
 @media(max-width:720px){#tbGrid textarea{font-size:16px}#tbGrid td{min-width:96px}.tb-grp .btn{min-height:36px}}
 
-/* ===== Mobile: "Articoli principali" nascosti, indice chiuso di default (apribile con un tap sull'intestazione) ===== */
 @media(max-width:720px){
   .solo-desk{display:none!important}
   .sb-toggle{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;width:100%;font:inherit;color:inherit}
@@ -303,7 +290,7 @@ body.red .site{max-width:1500px}
   .sb-group:not(.toc-open) #toc{display:none}
 }
 
-/* ===== Allineamento del testo: {sx} {centro} {dx} e {{centro … }} (classi messe da Wiki.render) ===== */
+/* ===== Allineamento del testo ===== */
 .wk :is(h2,h3,p,blockquote,ul,ol).al-s{text-align:left}
 .wk :is(h2,h3,p,blockquote,ul,ol).al-c{text-align:center}
 .wk :is(h2,h3,p,blockquote,ul,ol).al-d{text-align:right}
@@ -318,21 +305,44 @@ body.red .site{max-width:1500px}
 .wk table.ib.al-d{float:right;clear:right;margin:4px 0 12px 18px}
 @container (max-width:560px){.wk table.ib.al-s,.wk table.ib.al-c,.wk table.ib.al-d{float:none;width:100%;margin:6px 0 14px}}
 
-/* ===== Più parti sulla stessa riga: {sx}A {centro}B {dx}C ===== */
 .wk .al-row{display:flex;align-items:baseline;gap:10px;margin:10px 0}
 .wk .al-row>span{min-width:0;overflow-wrap:anywhere}
 .wk .al-row>.al-s{flex:1 1 0;text-align:left}
 .wk .al-row>.al-d{flex:1 1 0;text-align:right}
 .wk .al-row>.al-c{flex:0 1 auto;text-align:center}
 
-/* ===== Redazione: barra "Allinea" sopra l'editor ===== */
 #alBar{margin:0 0 8px}
 #alBar .al-sep{margin-left:10px;padding-left:10px;border-left:1px solid rgba(160,200,255,.3)}
 #alBar input[type=text]{flex:1 1 120px;min-width:100px;min-height:30px;padding:3px 6px;font-size:13px}
 @media(max-width:720px){#alBar input[type=text]{min-height:38px;font-size:16px}#alBar .al-sep{margin-left:0;padding-left:0;border-left:0;flex:1 1 100%}}
 
-/* ===== Allineamento delle righe dentro l'infobox ===== */
 .wk table.ib tr.al-s>*{text-align:left}.wk table.ib tr.al-c>*{text-align:center}.wk table.ib tr.al-d>*{text-align:right}
 .wk table.ib tr.al-s .ib-imgs{justify-content:flex-start}.wk table.ib tr.al-d .ib-imgs{justify-content:flex-end}
 .wk table.ib .ib-row{padding:6px 9px;text-align:left;font-size:14px;color:#e8f4ff}
 .wk table.ib .ib-row .al-row{margin:0}
+
+/* ===== Mappa Trasporti (Stile Wikipedia BSicons) ===== */
+.wk .routemap-wrap { background: linear-gradient(180deg,#1d2a40,#0a111f); border: 1px solid rgba(160,200,255,.25); border-radius: 5px; padding: 10px; margin: 10px auto; width: max-content; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.wk table.routemap { border-collapse: collapse; margin: 0 auto; background: transparent; font-size: 13px; line-height: 1.2; color: #cfe0f5; }
+.wk table.routemap caption { caption-side: top; padding: 6px 8px; font-size: 16px; font-weight: 700; color: #e8f4ff; background: rgba(255,255,255,.05); border-bottom: 1px solid rgba(160,200,255,.3); margin-bottom: 5px; }
+.wk table.routemap td { padding: 0; border: 0; vertical-align: middle; }
+.wk table.routemap tr:hover { background: rgba(79,208,255,.08); }
+
+/* Colonna distanza/progressiva chilometrica */
+.wk table.routemap td.rm-dist { text-align: right; font-size: 11px; color: #9cc4ea; padding-right: 12px; white-space: nowrap; }
+
+/* Celle delle icone BSicon */
+.wk table.routemap td.rm-icon { width: 20px; height: 20px; min-width: 20px; position: relative; text-align: center; }
+.wk table.routemap td.rm-icon img { display: block; width: 20px; height: 20px; margin: 0; border: 0; border-radius: 0; position: absolute; top: 0; left: 0; }
+/* Se c'è solo un'icona la fa scorrere nel flusso, se ce ne sono di più usa absolute per la sovrapposizione */
+.wk table.routemap td.rm-icon img:first-child:last-child { position: static; }
+
+/* Colonna testo / nomi stazioni */
+.wk table.routemap td.rm-text { padding-left: 12px; padding-top: 3px; padding-bottom: 3px; white-space: nowrap; }
+.wk table.routemap td.rm-text a { color: #4fd0ff; text-decoration: none; }
+.wk table.routemap td.rm-text a:hover { text-decoration: underline; }
+
+/* Editor Griglia Mappa (Redazione) */
+#mpGrid table th { font-size: 12px; color: #9cc4ea; padding: 4px; text-align: left; }
+#mpGrid table input { width:100%; min-height: 28px; border: 1px solid rgba(160,200,255,.2); background: transparent; border-radius: 3px; padding: 4px 6px; font-size: 13px; color: #e8f4ff; box-shadow:none; }
+#mpGrid table input:focus { outline: 1px solid #4fd0ff; background: rgba(255,255,255,.05); }
