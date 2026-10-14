@@ -93,38 +93,6 @@
   // Le icone di tratto continuo (STR, uSTR, tSTR, STR+l...) vengono ripetute in verticale quando la riga è più alta.
   const CTSU_MAPPA_RE_LINEA = /^[a-z]{0,4}STR(\+[a-z0-9]{1,3})?$/;
 
-  // Registra (una volta sola) i filtri di ricolorazione nell'<svg> nascosto del body.
-  const _ctsuMappaFiltriNote = new Set();
-  function ctsuMappaRegistraFiltri(colori) {
-    colori.forEach(c => _ctsuMappaFiltriNote.add(c));
-    const scrivi = () => {
-      if (!document.body) return false;
-      let svg = document.getElementById("mappa-trasporti-filtri");
-      if (!svg) {
-        svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("id", "mappa-trasporti-filtri");
-        svg.setAttribute("width", "0");
-        svg.setAttribute("height", "0");
-        svg.setAttribute("aria-hidden", "true");
-        svg.setAttribute("focusable", "false");
-        svg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;";
-        svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "defs"));
-        document.body.appendChild(svg);
-      }
-      const defs = svg.querySelector("defs");
-      _ctsuMappaFiltriNote.forEach(col => {
-        const id = "mappa-f-" + col.slice(1);
-        if (defs.querySelector("#" + id)) return;
-        const [r, g, b] = [1, 3, 5].map(i => (parseInt(col.slice(i, i + 2), 16) / 255).toFixed(3));
-        const holder = document.createElement("div");
-        holder.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg"><filter id="${id}" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 1 0"/></filter></svg>`;
-        defs.appendChild(document.importNode(holder.querySelector("filter"), true));
-      });
-      return true;
-    };
-    if (!scrivi()) document.addEventListener("DOMContentLoaded", scrivi);
-  }
-
   function ctsuMappaHtml(m) {
     if (!m || typeof m !== "object") return "";
     const righe = (Array.isArray(m.righe) ? m.righe : []).filter(r => r && typeof r === "object");
@@ -142,14 +110,12 @@
     const nCol = Math.max(1, ...righe.filter(r => r.tipo !== "ramo").map(r => ctsuMappaCodici(r.icone).length));
 
     // Per ricolorare le icone (sostituendo il rosso standard dei BSicon) si usa un filtro SVG: ogni pixel
-    // visibile prende il colore scelto, la trasparenza resta. I filtri stanno in un unico <svg> nascosto
-    // nel body (non dentro la mappa), con id fissi per colore: così non si perdono se l'HTML della mappa
-    // viene copiato, filtrato o riscritto dalla pagina.
-    const filtri = new Set();
+    // visibile prende il colore scelto, la trasparenza resta.
+    const filtri = new Map();
     const filtroPer = col => {
       if (!col) return "";
-      filtri.add(col);
-      return "mappa-f-" + col.slice(1);
+      if (!filtri.has(col)) filtri.set(col, uid + "-f" + filtri.size);
+      return filtri.get(col);
     };
 
     const htmlRighe = righe.map(r => {
@@ -178,7 +144,10 @@
       return `<div class="mappa__riga mappa__riga--${tipo}"><span class="mappa__icone">${icone}</span>${km}<span class="mappa__testo">${nomeHtml}${dettHtml}</span></div>`;
     }).join("");
 
-    ctsuMappaRegistraFiltri(filtri);
+    const defs = [...filtri.entries()].map(([col, id]) => {
+      const [r, g, b] = [1, 3, 5].map(i => (parseInt(col.slice(i, i + 2), 16) / 255).toFixed(3));
+      return `<filter id="${id}" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 1 0"/></filter>`;
+    }).join("");
 
     const titolo = (m.titolo || "").toString().trim();
     const didascalia = (m.didascalia || "").toString().trim();
@@ -186,6 +155,7 @@
 
     // Tutto su una riga: dentro i commi vale "white-space:pre-line" e gli a-capo diventerebbero spazi vuoti.
     return `<figure class="mappa-trasporti mappa--${allineamento}" style="${stile}">`
+      + (defs ? `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>${defs}</defs></svg>` : "")
       + (titolo ? `<div class="mappa__titolo">${ctsuEsc(titolo)}</div>` : "")
       + `<div class="mappa__corpo">${htmlRighe}</div>`
       + (didascalia ? `<figcaption class="mappa__didascalia">${ctsuEsc(didascalia)}</figcaption>` : "")
