@@ -257,25 +257,11 @@
     pdf.linea();
     pdf.spazio(3);
 
-    // Immagine o mappa: la mappa nel PDF diventa un elenco testuale (km, nome, dettaglio),
-    // perché le icone vengono scaricate da internet solo per la visualizzazione sul sito.
+    // Immagine o mappa: la mappa viene disegnata nel PDF (icone, km, nomi, rami, didascalia) da pdf.mappa().
     const pdfMedia = async g => {
-      if (!g || g.tipo !== "mappa") { await pdf.immagineDestra(g.url, g.didascalia); return; }
-      const righe = (Array.isArray(g.righe) ? g.righe : []).filter(r => r && typeof r === "object");
-      if (!righe.length) return;
-      pdf.spazio(2);
-      if ((g.titolo || "").toString().trim()) pdf.scrivi(g.titolo, { font: "helvetica", stile: "bold", size: 10.5, colore: C.scuro, dopo: 1.5 });
-      for (const r of righe) {
-        const nome = (r.nome || "").toString().trim();
-        if (r.tipo === "ramo") {
-          if (nome) pdf.scrivi(nome, { font: "helvetica", stile: "bold", size: 9.5, colore: C.blu, dopo: 1 });
-          continue;
-        }
-        const testo = [(r.km || "").toString().trim(), nome, (r.dettaglio || "").toString().trim()].filter(Boolean).join("   ");
-        if (testo) pdf.scrivi(testo, { x: r.tipo === "nota" ? 34 : 24, size: r.tipo === "nota" ? 8.5 : 9.5, colore: r.tipo === "nota" ? C.tenue : C.scuro, dopo: 0.8 });
-      }
-      if ((g.didascalia || "").toString().trim()) pdf.scrivi(g.didascalia, { size: 8.5, colore: C.tenue, dopo: 1.5 });
-      pdf.spazio(2);
+      if (!g) return;
+      if (g.tipo === "mappa") { await pdf.mappa(g); return; }
+      await pdf.immagineDestra(g.url, g.didascalia);
     };
 
     // --- Titoli, sezioni, commi, sottocommi e immagini ---
