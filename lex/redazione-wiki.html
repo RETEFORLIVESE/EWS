@@ -7,7 +7,7 @@
 <title>Estji Wiki — Redazione</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=8">
+<link rel="stylesheet" href="assets/css/wiki.css?v=9">
 </head>
 <body class="red">
 <div class="site">
@@ -67,7 +67,9 @@
             <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
             <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
             <button type="button" class="btn" id="btnGraf" title="Inserisce il grafico di un'elezione CEPU a partire dal suo link">📈 Grafico</button>
-            <button type="button" class="btn" id="btnTab" title="Crea una tabella, o modifica quella sotto il cursore">📊 Tabella</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
+            <button type="button" class="btn" id="btnTab" title="Crea una tabella, o modifica quella sotto il cursore">📊 Tabella</button>
+            <button type="button" class="btn" id="btnMappa" title="Crea una mappa dei trasporti">🚇 Mappa trasporti</button>
+            <button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
           </div>
           <div class="panel" id="imgPanel" hidden style="margin:6px 0 10px">
             <div class="bar" id="imgTit">Nuova immagine</div>
@@ -118,12 +120,27 @@
             <p class="note">Clic su una cella per scriverci (vale tutto: <code>**grassetto**</code>, <code>[[Pagina]]</code>, <code>![](https://…)</code>; Invio = a capo). <b>Trascina</b> o <b>Maiusc+clic</b> per selezionare più celle, poi <i>Unisci</i> o dai un colore a tutte. Puoi incollare un blocco copiato da Excel/Fogli nella cella di partenza.</p>
             <div class="chips"><button type="button" class="btn pri" data-ta="chiudi">Fatto</button><button type="button" class="btn del" data-ta="rimuovi">Rimuovi tabella</button></div>
           </div>
+          <div class="panel" id="mapPanel" hidden style="margin:6px 0 10px">
+            <div class="bar" id="mpTit">Mappa Trasporti</div>
+            <div class="cols">
+              <div><label for="mpTitolo">Titolo della mappa (facoltativo)</label><input id="mpTitolo" maxlength="150" autocomplete="off"></div>
+              <div><label>Dimensioni (Righe × Colonne Icone)</label><div style="display:flex;gap:6px;align-items:center"><input id="mpR" type="number" min="1" max="100" value="5"><span>×</span><input id="mpC" type="number" min="1" max="5" value="1"><button type="button" class="btn" id="mpSize">Applica</button></div></div>
+            </div>
+            <div class="tb-bar">
+              <div class="tb-grp"><span>Azioni</span><button type="button" class="btn" id="mpRowUp">＋ riga sopra</button><button type="button" class="btn" id="mpRowDn">＋ riga sotto</button><button type="button" class="btn del" id="mpRowDel">✕ elimina riga</button></div>
+            </div>
+            <p class="note">Nelle colonne <b>Icone</b> usa il nome <i>BSicon</i> (es. <code>BHF</code>, <code>STR</code>). Per sovrapporre più icone, separale con la virgola (es. <code>STR,BHF</code>). Lascia vuoto se non c'è icona.</p>
+            <div id="mpGrid" style="overflow:auto; max-height:300px; border:1px solid rgba(160,200,255,.3); border-radius:5px; padding:4px; margin:6px 0; background:#050b17;"></div>
+            <div class="bar" style="margin-top:15px">Anteprima</div>
+            <div id="mpPreview" class="wk" style="background:linear-gradient(180deg,#1d2a40,#0a111f); border:1px solid #000; border-radius:5px; padding:10px; min-height:100px; margin-bottom:10px; overflow-x:auto;"></div>
+            <div class="chips"><button type="button" class="btn pri" id="mpChiudi">Fatto</button><button type="button" class="btn del" id="mpRimuovi">Rimuovi mappa</button></div>
+          </div>
           <div class="cols edcols"><div class="ed"><pre id="hl" aria-hidden="true"></pre><textarea id="fTesto" rows="20" aria-label="Testo della pagina" spellcheck="false"></textarea></div><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
           <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Barre %</i> (<code>barre</code>), <i>Grafico scuro</i> (<code>scuro</code>) e <i>Solo emiciclo</i> (<code>noseggi</code>: niente legenda né seggi per partito, il totale sta al centro). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
           <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
-          <p class="note"><b>Tabelle</b>: 📊 apre l'editor a griglia (anche cliccando una tabella nell'anteprima). Nel testo è un blocco <code>{{tabella Titolo … }}</code>: <code>--</code> = nuova riga · <code>| testo</code> = cella · <code>! testo</code> = intestazione · opzioni <code>|{c2 r3 bg:#ffe599 tc:#000000 al:c va:m w:120 b i} testo</code> (c = colonne unite, r = righe unite, bg = sfondo di tutta la cella).</p>
+          <p class="note"><b>Tabelle e Mappe Trasporti</b>: 📊 e 🚇 aprono gli editor visuali. Nel testo vengono convertite in blocchi <code>{{tabella ...}}</code> o <code>{{mappa-trasporti ...}}</code>. Puoi modificarle anche cliccandole nell'anteprima.</p>
           <p id="msg" class="err"></p>
           <div class="chips">
             <button type="submit" class="btn pri" id="salva">💾 Salva sul database</button>
@@ -136,7 +153,7 @@
   </main>
 </div>
 <script src="https://ews-rose.vercel.app/estji-login.js"></script>
-<script src="assets/js/wiki-core.js?v=7"></script>
+<script src="assets/js/wiki-core.js?v=9"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
@@ -145,6 +162,8 @@
   const mostra = ok => { $('login-area').style.display = ok ? 'none' : 'block'; $('admin-content').style.display = ok ? 'block' : 'none'; };
   const vista = ed => { $('vElenco').hidden = ed; $('vEditor').hidden = !ed; window.scrollTo(0, 0); };
   const msg = (t, ok) => { $('msg').textContent = t || ''; $('msg').className = ok ? 'ok' : 'err'; };
+
+  const chiudiMappa = () => { $('mapPanel').hidden = true; mapSel = null; };
 
   /* ---------- login / logout (stesso schema della redazione CTSU) ---------- */
   function setupLogin() {
@@ -159,7 +178,6 @@
     ['adminUsername', 'adminPassword'].forEach(i => $(i).addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); } }));
     $('logoutBtn').addEventListener('click', () => { Wiki.clearCredentials(); location.reload(); });
 
-    // Accesso con Estji ID (QR): il blocco compare solo se il widget è stato caricato
     if (window.EstjiLogin && $('estji-login')) {
       $('estji-blocco').style.display = 'block';
       EstjiLogin.mount('#estji-login', {
@@ -186,7 +204,7 @@
 
   /* ---------- editor ---------- */
   function apri(p, titoloNuovo) {
-    idMod = p ? p.id : null; msg(''); chiudiImg(); chiudiTab();
+    idMod = p ? p.id : null; msg(''); chiudiImg(); chiudiTab(); chiudiMappa();
     $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
     $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
     $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
@@ -212,7 +230,7 @@
     let ib = false, tb = false, m;
     const out = $('fTesto').value.replace(/\r/g, '').split('\n').map(l => {
       const r = l.trim();
-      if (/^\{\{\s*tabella\b/i.test(r)) { tb = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
+      if (/^\{\{\s*(tabella|mappa-trasporti)\b/i.test(r)) { tb = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
       if (tb) {
         if (r === '}}') { tb = false; return `<span class="h-ib">${E(l)}</span>`; }
         if (/^---?$/.test(r)) return `<span class="h-hr">${E(l)}</span>`;
@@ -235,33 +253,33 @@
   $('fTesto').addEventListener('scroll', () => { $('hl').scrollTop = $('fTesto').scrollTop; $('hl').scrollLeft = $('fTesto').scrollLeft; });
   if (window.ResizeObserver) new ResizeObserver(evidenzia).observe($('fTesto'));
 
-  function inserisci(modello) { // "prima|selezione o segnaposto|dopo"
+  function inserisci(modello) { 
     const t = $('fTesto'), [a, m, d = ''] = modello.replace(/\\n/g, '\n').split('|'), i = t.selectionStart, f = t.selectionEnd;
     const sel = t.value.slice(i, f) || m || '';
     t.value = t.value.slice(0, i) + a + sel + d + t.value.slice(f);
     t.focus(); t.setSelectionRange(i + a.length, i + a.length + sel.length); anteprima();
   }
 
-  /* ---------- immagini: pannello di controllo (dimensione, posizione, altezza rispetto alle parole) ---------- */
+  /* ---------- immagini ---------- */
   const RE_IMG = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
-  let imgSel = null, tImg = null;   // imgSel = posizione {i,f} dell'immagine in modifica dentro il testo
+  let imgSel = null, tImg = null;
   const tutteImg = () => { const t = $('fTesto').value, r = []; let m; RE_IMG.lastIndex = 0; while ((m = RE_IMG.exec(t))) r.push({ i: m.index, f: m.index + m[0].length, alt: m[1], url: m[2] }); return r; };
   const chiudiImg = () => { $('imgPanel').hidden = true; imgSel = null; clearTimeout(tImg); };
 
   function leggiCampi() {
     const o = { didas: $('iDid').value.replace(/[|\[\]]/g, ' ').trim(), w: '', h: '', pos: $('iPos').value, va: $('iVa').value,
       y: parseInt($('iY').value, 10) || 0, cap: $('iCap').checked, nob: $('iNob').checked, fit: $('iFit').value, dark: false, ns: false, br: false };
-    const graf = Wiki.eGrafico($('iUrl').value.trim()); $('gOpz').hidden = !graf;   // scuro / noseggi esistono solo per i grafici CEPU
+    const graf = Wiki.eGrafico($('iUrl').value.trim()); $('gOpz').hidden = !graf; 
     if (graf) { o.dark = $('iScuro').checked; o.ns = $('iNoS').checked; o.br = $('iBarre').checked; }
-    $('iNoS').disabled = $('iBarre').checked;   // con le barre l'emiciclo non c'è
+    $('iNoS').disabled = $('iBarre').checked;
     const w = parseInt($('iW').value, 10); if (w > 0) o.w = w + $('iWu').value;
     const h = parseInt($('iH').value, 10); if (h > 0) o.h = String(h);
-    if (o.pos) o.va = '';                      // l'allineamento verticale vale solo per le immagini in riga
+    if (o.pos) o.va = '';
     $('iVa').disabled = !!o.pos;
     return o;
   }
   function apriImg(sel) {
-    chiudiTab();
+    chiudiTab(); chiudiMappa();
     imgSel = sel ? { i: sel.i, f: sel.f } : null;
     const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '', dark: false, ns: false };
     $('iUrl').value = sel ? sel.url : ''; $('iDid').value = o.didas;
@@ -273,7 +291,7 @@
     caricaAlbero();
     if (!sel) $('iUrl').focus();
   }
-  function applica() {          // scrive subito nel testo: l'anteprima si aggiorna mentre cambi i valori
+  function applica() { 
     const url = $('iUrl').value.trim(), o = leggiCampi();
     if (!/^https?:\/\/[^\s)]+$/.test(url)) return;
     const code = Wiki.imgSintassi(o, url), t = $('fTesto');
@@ -284,7 +302,7 @@
   const rinvia = () => { leggiCampi(); clearTimeout(tImg); tImg = setTimeout(applica, 300); };
 
   $('btnImg').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriImg(tutteImg().find(x => p >= x.i && p <= x.f) || null); });
-  $('btnGraf').addEventListener('click', async () => {      // grafico di un'elezione CEPU: si comporta come un'immagine (stesso pannello)
+  $('btnGraf').addEventListener('click', async () => { 
     const r = await Wiki.inserisciGrafico($('fTesto')); if (!r) return;
     const s = tutteImg().find(x => x.i >= r.i && x.url === r.url);
     if (s) { apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
@@ -292,17 +310,22 @@
   $('imgPanel').addEventListener('input', rinvia); $('imgPanel').addEventListener('change', rinvia);
   $('iChiudi').addEventListener('click', chiudiImg);
   $('iDel').addEventListener('click', () => { if (imgSel) { const t = $('fTesto'); t.value = t.value.slice(0, imgSel.i) + t.value.slice(imgSel.f); anteprima(); } chiudiImg(); });
-  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); if (!$('tabPanel').hidden) chiudiTab(); });   // se torni a scrivere, le posizioni nel testo cambiano: chiude il pannello
-  $('anteprima').addEventListener('click', e => {           // clic su un'immagine dell'anteprima = modificala
+  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); if (!$('tabPanel').hidden) chiudiTab(); if (!$('mapPanel').hidden) chiudiMappa(); });
+  
+  $('anteprima').addEventListener('click', e => { 
     const el = e.target.closest('[data-im]');
-    if (!el) { const tb = e.target.closest('table[data-tb]'); if (tb && !e.target.closest('a')) { const x = tutteTab()[+tb.dataset.tb]; if (x) { apriTab(x); $('tabPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } } return; }
+    if (!el) { 
+      const tb = e.target.closest('table[data-tb]'); 
+      if (tb && !e.target.closest('a')) { const x = tutteTab()[+tb.dataset.tb]; if (x) { apriTab(x); $('tabPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; } 
+      
+      const rm = e.target.closest('table[data-rm]');
+      if (rm && !e.target.closest('a')) { const x = tutteMappe()[+rm.dataset.rm]; if (x) { apriMappa(x); $('mapPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; }
+      return; 
+    }
     const s = tutteImg()[+el.dataset.im]; if (s) { e.preventDefault(); apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   });
 
-  /* ---------- TABELLE: editor a griglia ----------
-     Il testo contiene un blocco {{tabella … }}. La griglia lavora su un modello: ogni cella ha posizione (r,c), righe/colonne
-     occupate (rs,cs), testo e formato; la tabella è sempre completa (nessun buco). A ogni modifica il blocco viene riscritto
-     nel testo con Wiki.tabSintassi e l'anteprima si aggiorna. */
+  /* ---------- TABELLE ---------- */
   let tab = null, tabSel = null, tbA = { r: 0, c: 0 }, tbB = { r: 0, c: 0 }, tbDrag = null, tbMulti = false;
   const tbTds = new Map();
   const TB_BG = ['#ffffff', '#e8e8e8', '#9e9e9e', '#000000', '#ea9999', '#e53935', '#f9cb9c', '#ff9800', '#ffe599', '#ffd700', '#b6d7a8', '#009246', '#a4c2f4', '#1e90ff', '#043a96', '#b4a7d6', '#d5a6bd'];
@@ -320,7 +343,7 @@
   function tbFill() { const g = tbMap(); for (let r = 0; r < tab.R; r++) for (let c = 0; c < tab.C; c++) if (!g[r][c]) tab.cells.push(tbCell(r, c)); }
   const tbClamp = () => [tbA, tbB].forEach(p => { p.r = Math.max(0, Math.min(p.r, tab.R - 1)); p.c = Math.max(0, Math.min(p.c, tab.C - 1)); });
 
-  function tbParse(testo) {      // blocco di testo -> modello
+  function tbParse(testo) {
     const L = testo.split('\n'), tit = L[0].trim().replace(/^\{\{\s*tabella\b\s*/i, '').replace(/\}\}\s*$/, ''), lin = L.slice(1);
     if (lin.length && lin[lin.length - 1].trim() === '}}') lin.pop();
     const p = Wiki.tabParse(tit, lin), occ = new Set(), R = p.righe.length, cells = []; let C = 0;
@@ -336,17 +359,17 @@
     tab = { titolo: p.titolo, piena: p.piena, R: Math.max(R, 1), C: Math.max(C, 1), cells };
     tbFill();
   }
-  function tbSerialize() {       // modello -> blocco di testo
+  function tbSerialize() { 
     const righe = Array.from({ length: tab.R }, () => []);
     tab.cells.slice().sort((a, b) => a.c - b.c).forEach(x => righe[x.r].push(x));
     return Wiki.tabSintassi({ titolo: tab.titolo, piena: tab.piena, righe });
   }
-  function tbCommit() {          // scrive la tabella nel testo
+  function tbCommit() { 
     const code = tbSerialize(), t = $('fTesto');
     t.value = t.value.slice(0, tabSel.i) + code + t.value.slice(tabSel.f); tabSel.f = tabSel.i + code.length; anteprima();
   }
 
-  function tutteTab() {          // blocchi {{tabella}} presenti nel testo, nello stesso ordine in cui li disegna Wiki.render
+  function tutteTab() { 
     const v = $('fTesto').value, r = []; let pos = 0, st = null;
     v.split('\n').forEach(l => {
       const t = l.trim();
@@ -358,7 +381,6 @@
     return r.map(x => ({ i: x.i, f: x.f, testo: v.slice(x.i, x.f) }));
   }
 
-  // selezione: rettangolo tra tbA e tbB, allargato finché non taglia nessuna cella unita
   function tbRect() {
     let r1 = Math.min(tbA.r, tbB.r), r2 = Math.max(tbA.r, tbB.r), c1 = Math.min(tbA.c, tbB.c), c2 = Math.max(tbA.c, tbB.c);
     for (let ch = true; ch;) {
@@ -374,13 +396,11 @@
   }
   const tbSelCells = () => { const q = tbRect(); return tab.cells.filter(x => x.r <= q.r2 && x.r + x.rs - 1 >= q.r1 && x.c <= q.c2 && x.c + x.cs - 1 >= q.c1); };
 
-  // inserisce una riga ('r') o colonna ('c') prima della posizione at; le celle unite che la attraversano si allargano
   function tbIns(ax, at) {
     const s = ax === 'r' ? 'rs' : 'cs';
     tab.cells.forEach(x => { if (x[ax] >= at) x[ax]++; else if (x[ax] + x[s] > at) x[s]++; });
     tab[ax.toUpperCase()]++; tbFill();
   }
-  // elimina le righe/colonne da a1 a a2 (le celle unite si accorciano, quelle interamente dentro spariscono)
   function tbDel(ax, a1, a2) {
     const s = ax === 'r' ? 'rs' : 'cs', K = ax.toUpperCase(), n = a2 - a1 + 1;
     if (n >= tab[K]) return;
@@ -426,7 +446,7 @@
     });
     $('tbInfo').textContent = 'Selezione: ' + (sc.length > 1 ? (q.r2 - q.r1 + 1) + ' × ' + (q.c2 - q.c1 + 1) + ' (' + sc.length + ' celle)' : 'riga ' + (q.r1 + 1) + ', colonna ' + (q.c1 + 1));
   }
-  function tbSync() {            // porta nella barra gli strumenti i valori della cella attiva
+  function tbSync() { 
     const g = tbMap(), x = g[tbA.r] && g[tbA.r][tbA.c]; if (!x) return;
     $('tbBg').value = x.bg || '#ffffff'; $('tbTc').value = x.tc || (x.bg ? Wiki.tabContrasto(x.bg) : '#ffffff'); $('tbW').value = x.w ? parseInt(x.w, 10) : '';
     $('tabPanel').querySelectorAll('[data-ta="th"],[data-ta="b"],[data-ta="i"],[data-ta="al"],[data-ta="va"]').forEach(b => {
@@ -451,7 +471,7 @@
   }
 
   function apriTab(sel) {
-    chiudiImg(); const t = $('fTesto');
+    chiudiImg(); chiudiMappa(); const t = $('fTesto');
     if (sel) { tabSel = { i: sel.i, f: sel.f }; tbParse(sel.testo); }
     else {
       tab = { titolo: '', piena: true, R: 3, C: 3, cells: [] };
@@ -468,7 +488,6 @@
   }
   function chiudiTab() { $('tabPanel').hidden = true; tab = null; tabSel = null; tbDrag = null; tbTds.clear(); }
 
-  // azioni della barra strumenti
   function tbAz(a, v) {
     const sc = tbSelCells(), q = tbRect(), tutte = (f) => sc.every(f);
     let strutt = true;
@@ -517,10 +536,10 @@
     else if (id === 'tbTc') tbAz('tc', e.target.value);
     else if (id === 'tbW') tbAz('w', e.target.value);
   });
-  $('tabPanel').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault(); });   // Invio non deve salvare la pagina
+  $('tabPanel').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault(); });
 
   const grid = $('tbGrid');
-  grid.addEventListener('mousedown', e => {      // clic = seleziona · Maiusc+clic (o "selezione multipla") = estende · trascina = rettangolo
+  grid.addEventListener('mousedown', e => { 
     const td = e.target.closest('td'); if (!td || !td._x) return; const x = td._x;
     if (e.shiftKey || tbMulti) { e.preventDefault(); tbB = { r: x.r, c: x.c }; }
     else { tbA = { r: x.r, c: x.c }; tbB = { r: x.r, c: x.c }; tbDrag = x; }
@@ -535,7 +554,7 @@
     tbPaint(); tbSync();
   });
   document.addEventListener('mouseup', () => { tbDrag = null; });
-  grid.addEventListener('focusin', e => {        // Tab / frecce tra le celle: la selezione segue il cursore
+  grid.addEventListener('focusin', e => { 
     const x = e.target._x; if (!x || e.target.tagName !== 'TEXTAREA' || tbDrag || tbMulti) return;
     tbA = { r: x.r, c: x.c }; tbB = { r: x.r, c: x.c }; tbPaint(); tbSync();
   });
@@ -543,7 +562,7 @@
     const x = e.target._x; if (!x) return;
     x.t = e.target.value; e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; tbCommit();
   });
-  grid.addEventListener('paste', e => {          // incolla da Excel / Fogli (testo con tabulazioni): riempie le celle a partire da questa
+  grid.addEventListener('paste', e => { 
     const x = e.target._x, tx = e.clipboardData ? e.clipboardData.getData('text') : ''; if (!x || tx.indexOf('\t') < 0) return;
     e.preventDefault();
     const righe = tx.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t'));
@@ -552,8 +571,140 @@
     tbRebuild(true);
   });
 
-  /* ---------- albero delle immagini: repo pubblica GitHub RETEFORLIVESE/IMG ----------
-     clic sul nome = copia il link · ➕ = inserisce l'immagine nel testo (o ne cambia l'indirizzo se il pannello immagine è aperto) */
+  /* ---------- MAPPA TRASPORTI ---------- */
+  let mapData = { titolo: '', R: 5, C: 1, righe: [] };
+  let mapSel = null, mapRigaAttiva = 0;
+
+  function urlBSicon(nodi) {
+    return nodi.split(',').map(n => n.trim()).filter(Boolean).map(n => `<img src="https://commons.wikimedia.org/wiki/Special:FilePath/BSicon_${E(n)}.svg" alt="${E(n)}">`).join('');
+  }
+  
+  function tutteMappe() {
+    const v = $('fTesto').value, r = []; let pos = 0, st = null;
+    v.split('\n').forEach(l => {
+      const t = l.trim();
+      if (st === null && /^\{\{\s*mappa-trasporti\b/i.test(t)) { if (/\}\}\s*$/.test(t)) r.push({ i: pos, f: pos + l.length }); else st = pos; }
+      else if (st !== null && t === '}}') { r.push({ i: st, f: pos + l.length }); st = null; }
+      pos += l.length + 1;
+    });
+    if (st !== null) r.push({ i: st, f: v.length });
+    return r.map(x => ({ i: x.i, f: x.f, testo: v.slice(x.i, x.f) }));
+  }
+
+  function mpRebuild() {
+    const gr = $('mpGrid'); gr.innerHTML = '';
+    const tbl = document.createElement('table'); tbl.style.width = "100%"; tbl.style.borderCollapse = "collapse";
+    let trH = tbl.insertRow();
+    trH.innerHTML = `<th>Distanza</th>`;
+    for(let c=0; c<mapData.C; c++) trH.innerHTML += `<th>Icona ${c+1}</th>`;
+    trH.innerHTML += `<th>Testo/Stazione</th>`;
+    
+    for (let r = 0; r < mapData.R; r++) {
+      if (!mapData.righe[r]) mapData.righe[r] = { dist: '', icone: Array(mapData.C).fill(''), testo: '' };
+      const tr = tbl.insertRow();
+      tr.addEventListener('focusin', () => mapRigaAttiva = r);
+      
+      let tdD = tr.insertCell(); let inD = document.createElement('input'); inD.value = mapData.righe[r].dist;
+      inD.oninput = e => { mapData.righe[r].dist = e.target.value; mpAggiornaAnteprima(); }; tdD.appendChild(inD);
+      
+      for (let c = 0; c < mapData.C; c++) {
+        let tdI = tr.insertCell(); let inI = document.createElement('input'); inI.value = mapData.righe[r].icone[c] || '';
+        inI.placeholder = "es. STR"; inI.oninput = e => { mapData.righe[r].icone[c] = e.target.value; mpAggiornaAnteprima(); }; tdI.appendChild(inI);
+      }
+      
+      let tdT = tr.insertCell(); let inT = document.createElement('input'); inT.value = mapData.righe[r].testo;
+      inT.oninput = e => { mapData.righe[r].testo = e.target.value; mpAggiornaAnteprima(); }; tdT.appendChild(inT);
+    }
+    gr.appendChild(tbl);
+    $('mpR').value = mapData.R; $('mpC').value = mapData.C; $('mpTitolo').value = mapData.titolo;
+    mpAggiornaAnteprima();
+  }
+
+  function mpAggiornaAnteprima() {
+    let html = `<div class="tw routemap-wrap" style="margin:0"><table class="routemap">`;
+    if(mapData.titolo) html += `<caption>${E(mapData.titolo)}</caption>`;
+    mapData.righe.forEach(r => {
+      html += `<tr><td class="rm-dist">${E(r.dist)}</td>`;
+      for(let c=0; c<mapData.C; c++) html += `<td class="rm-icon">${urlBSicon(r.icone[c] || '')}</td>`;
+      html += `<td class="rm-text">${Wiki.render(r.testo, pagine).replace(/<p>|<\/p>/g, '')}</td></tr>`;
+    });
+    html += `</table></div>`;
+    $('mpPreview').innerHTML = html;
+    mpCommit();
+  }
+
+  function mpCommit() {
+    if(!mapSel) return;
+    let code = `{{mappa-trasporti ${mapData.titolo}\n@col ${mapData.C}\n`;
+    mapData.righe.forEach(r => {
+      code += `--\n| ${r.dist} | ${r.icone.join(' | ')} | ${r.testo}\n`;
+    });
+    code += `}}`;
+    const t = $('fTesto');
+    t.value = t.value.slice(0, mapSel.i) + code + t.value.slice(mapSel.f);
+    mapSel.f = mapSel.i + code.length;
+    anteprima();
+  }
+
+  function apriMappa(sel) {
+    chiudiImg(); chiudiTab(); const t = $('fTesto');
+    if (sel) {
+      mapSel = { i: sel.i, f: sel.f };
+      let linee = sel.testo.split('\n');
+      mapData.titolo = linee[0].replace(/\{\{\s*mappa-trasporti/i, '').trim();
+      let mCol = linee.find(l => l.trim().startsWith('@col'));
+      mapData.C = mCol ? (parseInt(mCol.replace('@col', '').trim()) || 1) : 1;
+      mapData.righe = [];
+      let currentR = -1;
+      linee.forEach(l => {
+        let trm = l.trim();
+        if(trm === '--') {
+          currentR++; mapData.righe[currentR] = { dist: '', icone: Array(mapData.C).fill(''), testo: '' };
+        } else if (trm.startsWith('|') && currentR >= 0) {
+          let parti = trm.split('|').slice(1).map(x => x.trim());
+          mapData.righe[currentR].dist = parti[0] || '';
+          for(let c=0; c<mapData.C; c++) mapData.righe[currentR].icone[c] = parti[c+1] || '';
+          mapData.righe[currentR].testo = parti[mapData.C+1] || '';
+        }
+      });
+      mapData.R = Math.max(1, mapData.righe.length);
+    } else {
+      mapData = { titolo: 'Linea 1', R: 5, C: 1, righe: Array.from({length:5}, ()=>({dist:'', icone:[''], testo:''})) };
+      const v = t.value, p = t.selectionEnd, pre = p && v[p - 1] !== '\n' ? '\n' : '', post = v[p] && v[p] !== '\n' ? '\n' : '';
+      let code = `{{mappa-trasporti ${mapData.titolo}\n@col 1\n`;
+      for(let r=0; r<5; r++) code += `--\n| | | \n`;
+      code += `}}`;
+      t.value = v.slice(0, p) + pre + code + post + v.slice(p);
+      mapSel = { i: p + pre.length, f: p + pre.length + code.length }; anteprima();
+    }
+    $('mapPanel').hidden = false;
+    $('mapPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    mpRebuild();
+  }
+
+  $('btnMappa').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriMappa(tutteMappe().find(x => p >= x.i && p <= x.f) || null); });
+  $('mpChiudi').addEventListener('click', chiudiMappa);
+  $('mpRimuovi').addEventListener('click', () => {
+    if(!confirm('Rimuovere questa mappa dal testo?')) return;
+    const t = $('fTesto'); t.value = t.value.slice(0, mapSel.i) + t.value.slice(mapSel.f + (t.value[mapSel.f] === '\n' ? 1 : 0)); anteprima(); chiudiMappa();
+  });
+  $('mpSize').addEventListener('click', () => {
+    mapData.R = Math.max(1, parseInt($('mpR').value) || 1);
+    let oldC = mapData.C;
+    mapData.C = Math.max(1, parseInt($('mpC').value) || 1);
+    mapData.righe.forEach(r => {
+      let newI = Array(mapData.C).fill('');
+      for(let i=0; i<Math.min(oldC, mapData.C); i++) newI[i] = r.icone[i];
+      r.icone = newI;
+    });
+    mpRebuild();
+  });
+  $('mpRowUp').addEventListener('click', () => { mapData.righe.splice(mapRigaAttiva, 0, {dist:'', icone:Array(mapData.C).fill(''), testo:''}); mapData.R++; mpRebuild(); });
+  $('mpRowDn').addEventListener('click', () => { mapData.righe.splice(mapRigaAttiva+1, 0, {dist:'', icone:Array(mapData.C).fill(''), testo:''}); mapData.R++; mpRebuild(); });
+  $('mpRowDel').addEventListener('click', () => { if(mapData.R > 1) { mapData.righe.splice(mapRigaAttiva, 1); mapData.R--; mpRebuild(); } });
+
+
+  /* ---------- albero delle immagini GitHub ---------- */
   const REPO_IMG = 'RETEFORLIVESE/IMG', EST_IMG = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
   let imgFiles = null, imgRamo = 'main', riep = '', tNota = 0;
   const urlImg = p => `https://raw.githubusercontent.com/${REPO_IMG}/${imgRamo}/` + p.split('/').map(s => encodeURIComponent(s).replace(/[()']/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
@@ -604,7 +755,7 @@
     clearTimeout(tNota); tNota = setTimeout(() => nota(riep), 2500);
   });
   $('tFiltro').addEventListener('input', () => { if (imgFiles) disegna(); });
-  $('tFiltro').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });   // Invio non deve salvare la pagina
+  $('tFiltro').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
   $('tRicarica').addEventListener('click', () => { try { sessionStorage.removeItem('wiki_img_albero'); } catch (e) {} caricaAlbero(true); });
 
   async function salva(e) {
@@ -634,7 +785,7 @@
   async function avvia() {
     try { pagine = await Wiki.load(); } catch (e) { $('msgElenco').textContent = 'Errore nel caricamento: ' + e.message; pagine = []; }
     elenco(); vista(false);
-    const n = new URLSearchParams(location.search).get('nuova'); // dal link rosso [[...]] della wiki
+    const n = new URLSearchParams(location.search).get('nuova');
     if (n != null) apri(null, n);
   }
 
@@ -645,7 +796,7 @@
   $('elimina').addEventListener('click', elimina);
   $('vEditor').addEventListener('submit', salva);
   $('fTesto').addEventListener('input', anteprima);
-  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg,#btnGraf,#btnTab')) e.preventDefault(); });
+  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg,#btnGraf,#btnTab,#btnMappa')) e.preventDefault(); });
   $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
   window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
 
