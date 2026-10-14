@@ -4,6 +4,9 @@
 //   { tipo: "sezione", titolo, testo, commi: [ ... ] }   // "tipo" assente = sezione
 //   { tipo: "titolo",  numero, titolo }                   // TITOLO I - NOME: raggruppa le sezioni che seguono
 //   { tipo: "immagine", url, didascalia }                 // immagine fra una sezione e l'altra
+//   { tipo: "mappa", titolo, righe: [...], ... }          // mappa di trasporti (vedi ctsuMappaHtml in ctsu-core.js)
+//
+// Le mappe, come comma o sottocomma, si comportano come le immagini: non consumano numeri.
 //
 // Un comma è  { testo, sottocommi: [ ... ] }  oppure  { tipo: "immagine", url, didascalia }.
 // Un sottocomma è  { testo }  oppure  { tipo: "immagine", url, didascalia }.
@@ -32,7 +35,7 @@
     let l = 0;
     return (Array.isArray(comma.sottocommi) ? comma.sottocommi : []).map(y => {
       if (!y || typeof y !== "object") return null;
-      if (y.tipo === "immagine") return { immagine: true, dati: y };
+      if (y.tipo === "immagine" || y.tipo === "mappa") return { immagine: true, dati: y };
       l++;
       return { immagine: false, n: l, dati: y };
     }).filter(Boolean);
@@ -43,7 +46,7 @@
     let c = 0;
     return (Array.isArray(sezione.commi) ? sezione.commi : []).map(x => {
       if (!x || typeof x !== "object") return null;
-      if (x.tipo === "immagine") return { immagine: true, dati: x };
+      if (x.tipo === "immagine" || x.tipo === "mappa") return { immagine: true, dati: x };
       c++;
       return { immagine: false, n: c, dati: x, sotto: leggiSottocommi(x) };
     }).filter(Boolean);
@@ -55,7 +58,7 @@
     return (Array.isArray(progetto.sezioni) ? progetto.sezioni : []).map(b => {
       if (!b || typeof b !== "object") return null;
       if (b.tipo === "titolo") { t++; return { tipo: "titolo", n: t, dati: b }; }
-      if (b.tipo === "immagine") return { tipo: "immagine", n: 0, dati: b };
+      if (b.tipo === "immagine" || b.tipo === "mappa") return { tipo: "immagine", n: 0, dati: b };
       s++;
       return { tipo: "sezione", n: s, dati: b, commi: leggiCommi(b) };
     }).filter(Boolean);
@@ -84,6 +87,7 @@
 
   // Immagine inserita nel testo (fra le sezioni, come comma o come sottocomma).
   function htmlImmagineTesto(g, progetto) {
+    if (g && g.tipo === "mappa") return typeof ctsuMappaHtml === "function" ? ctsuMappaHtml(g) : "";
     const src = urlSicuro(g.url);
     if (!src) return "";
     const didascalia = (g.didascalia || "").toString().trim();
@@ -253,6 +257,27 @@
     pdf.linea();
     pdf.spazio(3);
 
+    // Immagine o mappa: la mappa nel PDF diventa un elenco testuale (km, nome, dettaglio),
+    // perché le icone vengono scaricate da internet solo per la visualizzazione sul sito.
+    const pdfMedia = async g => {
+      if (!g || g.tipo !== "mappa") { await pdf.immagineDestra(g.url, g.didascalia); return; }
+      const righe = (Array.isArray(g.righe) ? g.righe : []).filter(r => r && typeof r === "object");
+      if (!righe.length) return;
+      pdf.spazio(2);
+      if ((g.titolo || "").toString().trim()) pdf.scrivi(g.titolo, { font: "helvetica", stile: "bold", size: 10.5, colore: C.scuro, dopo: 1.5 });
+      for (const r of righe) {
+        const nome = (r.nome || "").toString().trim();
+        if (r.tipo === "ramo") {
+          if (nome) pdf.scrivi(nome, { font: "helvetica", stile: "bold", size: 9.5, colore: C.blu, dopo: 1 });
+          continue;
+        }
+        const testo = [(r.km || "").toString().trim(), nome, (r.dettaglio || "").toString().trim()].filter(Boolean).join("   ");
+        if (testo) pdf.scrivi(testo, { x: r.tipo === "nota" ? 34 : 24, size: r.tipo === "nota" ? 8.5 : 9.5, colore: r.tipo === "nota" ? C.tenue : C.scuro, dopo: 0.8 });
+      }
+      if ((g.didascalia || "").toString().trim()) pdf.scrivi(g.didascalia, { size: 8.5, colore: C.tenue, dopo: 1.5 });
+      pdf.spazio(2);
+    };
+
     // --- Titoli, sezioni, commi, sottocommi e immagini ---
     for (const b of leggiBlocchi(progetto)) {
       if (b.tipo === "titolo") {
@@ -264,7 +289,7 @@
         continue;
       }
       if (b.tipo === "immagine") {
-        await pdf.immagineDestra(b.dati.url, b.dati.didascalia);
+        await pdfMedia(b.dati);
         continue;
       }
 
@@ -275,14 +300,14 @@
 
       for (const c of b.commi) {
         if (c.immagine) {
-          await pdf.immagineDestra(c.dati.url, c.dati.didascalia);
+          await pdfMedia(c.dati);
           continue;
         }
         // immagine del comma: a destra, con il testo del comma che le scorre accanto
         if (c.dati.immagine) await pdf.immagineDestra(c.dati.immagine.url, c.dati.immagine.didascalia);
         pdf.scrivi(`${c.n}. ${c.dati.testo || ""}`, { dopo: 1.5 });
         for (const y of c.sotto) {
-          if (y.immagine) await pdf.immagineDestra(y.dati.url, y.dati.didascalia);
+          if (y.immagine) await pdfMedia(y.dati);
           else pdf.scrivi(`${lettera(y.n)}) ${y.dati.testo || ""}`, { x: 28, dopo: 1 });
         }
         pdf.spazio(1);

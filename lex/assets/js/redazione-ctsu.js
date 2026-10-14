@@ -1,8 +1,9 @@
 // assets/js/redazione-ctsu.js — redazione dei progetti tecnici CTSU.
 //
 // Struttura di un progetto (vedi anche progetto.js):
-//   sezioni: [ TITOLO | sezione | immagine ]   ->  sezione = { titolo, testo, commi: [ comma | immagine ] }
-//   comma    = { testo, sottocommi: [ sottocomma | immagine ] }
+//   sezioni: [ TITOLO | sezione | immagine | mappa ]   ->  sezione = { titolo, testo, commi: [ comma | immagine | mappa ] }
+//   comma    = { testo, sottocommi: [ sottocomma | immagine | mappa ] }
+//   mappa    = diagramma di linea/stazioni con icone BSicon di Wikimedia (vedi ctsuMappaHtml in ctsu-core.js)
 // I numeri (Sezione 1, Comma 2, lettera b, TITOLO I) non vengono salvati: si ricalcolano dall'ordine.
 (function () {
   let vista = "menu";
@@ -315,8 +316,135 @@
       </div>`;
   }
 
+  /* --- MAPPE DI TRASPORTI (editor) --- */
+  let ultimoCampoIcone = null;
+
+  const MAPPA_ALLINEAMENTI = { centro: "Centrata", destra: "A destra del testo", sinistra: "A sinistra del testo", intera: "A tutta larghezza" };
+
+  const MAPPA_NUOVA = () => ({
+    tipo: "mappa", titolo: "", didascalia: "", allineamento: "centro", larghezza: 420, dimensione_icone: 20, mostra_km: true,
+    righe: [
+      { tipo: "fermata", icone: "KBHFa", km: "", nome: "", dettaglio: "", url: "", colore: "" },
+      { tipo: "fermata", icone: "KBHFe", km: "", nome: "", dettaglio: "", url: "", colore: "" }
+    ]
+  });
+
+  const MAPPA_ESEMPIO = () => ({
+    titolo: "Stazioni e fermate", mostra_km: true,
+    righe: [
+      { tipo: "fermata", icone: "KBHFa", km: "0+000", nome: "Capolinea A", dettaglio: "* 1997" },
+      { tipo: "nota", icone: "STR", nome: "Linea merci per Nord" },
+      { tipo: "fermata", icone: "BHF", km: "2+400", nome: "Stazione B", dettaglio: "* 2002" },
+      { tipo: "fermata", icone: "ABZgr", km: "4+050", nome: "Bivio C" },
+      { tipo: "fermata", icone: "HST", km: "5+120", nome: "Fermata D" },
+      { tipo: "ramo", nome: "Ramo per E" },
+      { tipo: "fermata", icone: "KBHFe", km: "8+300", nome: "Capolinea E" }
+    ]
+  });
+
+  function campoColoreMappa(classe, valore, predefinito, etichetta) {
+    const v = ctsuMappaColore(valore);
+    return `<label class="rm-colore"><span>${etichetta}</span>` +
+      `<input type="color" class="${classe}" value="${v || predefinito}" data-default="${predefinito}" data-vuoto="${v ? 0 : 1}" />` +
+      `<button type="button" class="${BTN}" data-mappa="reset-colore" title="Torna al colore predefinito">↺</button></label>`;
+  }
+
+  function renderMappaRiga(r) {
+    r = r || {};
+    const tipo = r.tipo === "nota" || r.tipo === "ramo" ? r.tipo : "fermata";
+    const opz = (v, t) => `<option value="${v}" ${v === tipo ? "selected" : ""}>${t}</option>`;
+    return `
+      <div class="rm-riga" data-tipo-riga="${tipo}">
+        <div class="rm-riga__testa">
+          <select class="rm-tipo">${opz("fermata", "Fermata / stazione")}${opz("nota", "Nota / linea (testo piccolo)")}${opz("ramo", "Titolo di ramo (barra)")}</select>
+          <span class="rm-riga__tools">
+            <button type="button" class="${BTN}" data-mappa="su" title="Sposta su">↑</button>
+            <button type="button" class="${BTN}" data-mappa="giu" title="Sposta giù">↓</button>
+            <button type="button" class="${BTN}" data-mappa="dup" title="Duplica">⧉</button>
+            <button type="button" class="${BTN} redazione-btn--pericolo" data-mappa="rimuovi" title="Rimuovi riga">✕</button>
+          </span>
+        </div>
+        <div class="rm-riga__campi">
+          <input type="text" class="rm-icone rm-opz" placeholder="Icone: es. STR BHF STR+r (- = vuoto)" value="${escapeHtml(r.icone)}" />
+          <input type="text" class="rm-km rm-opz" placeholder="Km (es. 8+410)" value="${escapeHtml(r.km)}" />
+          <input type="text" class="rm-nome" placeholder="Nome" value="${escapeHtml(r.nome)}" />
+          <input type="text" class="rm-dett rm-opz" placeholder="Dettaglio (es. * 1997)" value="${escapeHtml(r.dettaglio)}" />
+          <input type="text" class="rm-url rm-opz" placeholder="Link del nome (https://...)" value="${escapeHtml(r.url)}" />
+          <span class="rm-opz">${campoColoreMappa("rm-col-riga", r.colore, "#be2d2c", "Colore icone")}</span>
+        </div>
+      </div>`;
+  }
+
+  function renderMappaCampi(m) {
+    m = m || MAPPA_NUOVA();
+    const allin = MAPPA_ALLINEAMENTI[m.allineamento] ? m.allineamento : "centro";
+    const opzAllin = Object.entries(MAPPA_ALLINEAMENTI)
+      .map(([k, v]) => `<option value="${k}" ${k === allin ? "selected" : ""}>${v}</option>`).join("");
+    const chips = CTSU_MAPPA_PALETTE.concat(["-"]).map(c => {
+      const url = c === "-" ? "" : ctsuMappaIconaUrl(c);
+      return `<button type="button" class="rm-chip" data-mappa="codice" data-codice="${escapeHtml(c)}" title="Aggiungi ${escapeHtml(c)}">` +
+        `<span class="mappa__ico" style="${url ? `background-image:url('${url}')` : ""}"></span><small>${c === "-" ? "vuoto" : escapeHtml(c)}</small></button>`;
+    }).join("");
+    return `
+      <div class="redazione-mappa">
+        <div class="redazione-campo">
+          <label>Titolo della mappa</label>
+          <input type="text" class="rm-titolo" placeholder="es. Stazioni e fermate" value="${escapeHtml(m.titolo)}" />
+        </div>
+        <div class="redazione-riga-campi">
+          <div class="redazione-campo"><label>Posizione</label><select class="rm-allineamento">${opzAllin}</select></div>
+          <div class="redazione-campo"><label>Larghezza massima (px)</label><input type="number" class="rm-larghezza" min="220" max="1000" step="10" value="${parseInt(m.larghezza, 10) || 420}" /></div>
+          <div class="redazione-campo"><label>Dimensione icone (px)</label><input type="number" class="rm-dim" min="12" max="40" step="1" value="${parseInt(m.dimensione_icone, 10) || 20}" /></div>
+        </div>
+        <div class="rm-colori">
+          ${campoColoreMappa("rm-col-linee", m.colore_linee, "#be2d2c", "Colore di tutte le icone")}
+          ${campoColoreMappa("rm-col-intest", m.colore_intestazione, "#eaecf0", "Sfondo titoli")}
+          ${campoColoreMappa("rm-col-sfondo", m.colore_sfondo, "#ffffff", "Sfondo mappa")}
+          <label class="rm-spunta"><input type="checkbox" class="rm-mostra-km" ${m.mostra_km === false ? "" : "checked"} /> Colonna chilometrica</label>
+        </div>
+        <div class="rm-righe">${(Array.isArray(m.righe) ? m.righe : []).map(renderMappaRiga).join("")}</div>
+        <div class="redazione-azioni-riga">
+          ${`<button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-mappa="aggiungi-fermata">+ Fermata</button>`}
+          ${`<button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-mappa="aggiungi-nota">+ Nota / linea</button>`}
+          ${`<button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-mappa="aggiungi-ramo">+ Titolo di ramo</button>`}
+          ${`<button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-mappa="esempio">Carica un esempio</button>`}
+        </div>
+        <details class="rm-palette">
+          <summary>Icone più usate (clic per aggiungerle alla riga selezionata)</summary>
+          <div class="rm-palette__chips">${chips}</div>
+        </details>
+        <p class="rm-aiuto">Le icone si scaricano da internet (pittogrammi BSicon di Wikimedia Commons, gli stessi di Wikipedia): non occupano spazio nel sito.
+          Scrivi i codici separati da spazio, uno per colonna; per altre icone vedi il
+          <a href="https://commons.wikimedia.org/wiki/BSicon/Catalogue" target="_blank" rel="noopener">catalogo dei codici</a>.
+          Puoi anche incollare l'indirizzo https:// di un'immagine tua.</p>
+        <div class="redazione-campo">
+          <label>Didascalia (facoltativa)</label>
+          <input type="text" class="rm-didascalia" value="${escapeHtml(m.didascalia)}" />
+        </div>
+        <div class="redazione-campo"><label>Anteprima</label><div class="rm-anteprima"></div></div>
+      </div>`;
+  }
+
+  const bloccoMappa = m => `
+      <div class="redazione-articolo redazione-blocco" data-tipo="mappa">
+        <div class="redazione-articolo__intestazione redazione-intestazione-blocco">
+          <span class="redazione-etichetta">Mappa</span>
+          ${BOTTONI_SPOSTA}
+          ${bottoneRimuovi("Rimuovi mappa", "margin-left:auto;")}
+        </div>
+        ${renderMappaCampi(m)}
+      </div>`;
+
   /* --- sottocomma --- */
   function renderSottocomma(y) {
+    if (y && y.tipo === "mappa") {
+      return `
+        <div class="redazione-sottocomma redazione-blocco" data-tipo="sottocomma-mappa">
+          <span class="redazione-sottocomma__lettera redazione-etichetta">🗺</span>
+          ${renderMappaCampi(y)}
+          <div class="redazione-sottocomma__strumenti">${BOTTONI_SPOSTA}${bottoneRimuovi("✕")}</div>
+        </div>`;
+    }
     if (y && y.tipo === "immagine") {
       return `
         <div class="redazione-sottocomma redazione-blocco" data-tipo="sottocomma-immagine">
@@ -338,6 +466,17 @@
 
   /* --- comma (di testo o immagine) --- */
   function renderComma(c) {
+    if (c && c.tipo === "mappa") {
+      return `
+        <div class="redazione-comma redazione-blocco" data-tipo="comma-mappa">
+          <div class="redazione-comma__intestazione redazione-intestazione-blocco">
+            <span class="redazione-etichetta">Mappa (comma)</span>
+            ${BOTTONI_SPOSTA}
+            ${bottoneRimuovi("Rimuovi", "margin-left:auto;")}
+          </div>
+          ${renderMappaCampi(c)}
+        </div>`;
+    }
     if (c && c.tipo === "immagine") {
       return `
         <div class="redazione-comma redazione-blocco" data-tipo="comma-immagine">
@@ -370,6 +509,7 @@
         <div class="redazione-azioni-riga">
           ${bottoneAggiungi("sottocomma", "+ Sottocomma")}
           ${bottoneAggiungi("sottocomma-immagine", "🖼 + Immagine come sottocomma")}
+          ${bottoneAggiungi("sottocomma-mappa", "🗺 + Mappa come sottocomma")}
         </div>
       </div>`;
   }
@@ -390,6 +530,7 @@
         <div class="redazione-azioni-riga">
           ${bottoneAggiungi("comma", "+ Comma")}
           ${bottoneAggiungi("comma-immagine", "🖼 + Immagine come comma")}
+          ${bottoneAggiungi("comma-mappa", "🗺 + Mappa come comma")}
         </div>
       </div>`;
   }
@@ -426,6 +567,7 @@
   function renderBlocco(b) {
     if (b && b.tipo === "titolo") return renderTitolo(b);
     if (b && b.tipo === "immagine") return renderImmagineBlocco(b);
+    if (b && b.tipo === "mappa") return bloccoMappa(b);
     return renderSezione(b || { titolo: "", testo: "", commi: [] });
   }
 
@@ -443,8 +585,8 @@
         const campo = b.querySelector(".redazione-titolo-numero");
         campo.placeholder = ctsuRomano(t) + " (auto)";
         if (et) et.textContent = "TITOLO " + (campo.value.trim() || ctsuRomano(t));
-      } else if (b.dataset.tipo === "immagine") {
-        if (et) et.textContent = "Immagine";
+      } else if (b.dataset.tipo === "immagine" || b.dataset.tipo === "mappa") {
+        if (et) et.textContent = b.dataset.tipo === "mappa" ? "Mappa" : "Immagine";
       } else {
         s++;
         if (et) et.textContent = "Sezione " + s;
@@ -452,12 +594,14 @@
         figliBlocco(b, ".redazione-commi").forEach(cb => {
           const etc = etichettaDi(cb);
           if (cb.dataset.tipo === "comma-immagine") { if (etc) etc.textContent = "Immagine (comma)"; return; }
+          if (cb.dataset.tipo === "comma-mappa") { if (etc) etc.textContent = "Mappa (comma)"; return; }
           c++;
           if (etc) etc.textContent = "Comma " + c;
           let l = 0;
           figliBlocco(cb, ".redazione-sottocommi").forEach(sb => {
             const ets = etichettaDi(sb);
             if (sb.dataset.tipo === "sottocomma-immagine") { if (ets) ets.textContent = "🖼"; return; }
+            if (sb.dataset.tipo === "sottocomma-mappa") { if (ets) ets.textContent = "🗺"; return; }
             l++;
             if (ets) ets.textContent = letteraDi(l) + ")";
           });
@@ -657,13 +801,14 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
         <p style="font-size:.82rem;color:var(--inchiostro-tenue);margin:0 0 10px;">
           Un <strong>TITOLO</strong> raggruppa le sezioni che lo seguono (es. &laquo;TITOLO I - FORMA DELLO STATO&raquo;).
           Ogni sezione può avere dei <strong>commi</strong>, e ogni comma dei <strong>sottocommi</strong> (a, b, c&hellip;).
-          Le immagini si possono inserire fra le sezioni, oppure come comma o sottocomma.
+          Le immagini e le mappe di trasporti si possono inserire fra le sezioni, oppure come comma o sottocomma.
         </p>
         <div id="redazione-sezioni">${blocchi.map(renderBlocco).join("")}</div>
         <div class="redazione-azioni-riga">
           <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-sezione">+ Aggiungi sezione</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-titolo">+ Aggiungi TITOLO</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-immagine">🖼 + Aggiungi immagine</button>
+          <button type="button" class="redazione-btn redazione-btn--secondario" id="redazione-aggiungi-mappa">🗺 + Aggiungi mappa di trasporti</button>
         </div>
 
         <h3 style="margin-top:28px;">Galleria fotografica</h3>
@@ -696,21 +841,62 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
     return { tipo: "immagine", url: valoreDi(el, ".redazione-img-url"), didascalia: valoreDi(el, ".redazione-img-didascalia") };
   }
 
+  function leggiColoreMappa(el, selettore) {
+    const c = el.querySelector(selettore);
+    return c && c.dataset.vuoto !== "1" ? c.value : "";
+  }
+
+  function leggiRigaMappa(riga) {
+    return {
+      tipo: valoreDi(riga, ".rm-tipo") || "fermata",
+      icone: valoreDi(riga, ".rm-icone"),
+      km: valoreDi(riga, ".rm-km"),
+      nome: valoreDi(riga, ".rm-nome"),
+      dettaglio: valoreDi(riga, ".rm-dett"),
+      url: valoreDi(riga, ".rm-url"),
+      colore: leggiColoreMappa(riga, ".rm-col-riga")
+    };
+  }
+
+  // "contenitore" = il blocco (.redazione-blocco) oppure direttamente l'editor .redazione-mappa
+  function leggiMappa(contenitore) {
+    const m = contenitore.classList.contains("redazione-mappa") ? contenitore : contenitore.querySelector(":scope > .redazione-mappa");
+    const num = (sel, def, min, max) => Math.max(min, Math.min(max, parseInt(valoreDi(m, sel), 10) || def));
+    return {
+      tipo: "mappa",
+      titolo: valoreDi(m, ".rm-titolo"),
+      didascalia: valoreDi(m, ".rm-didascalia"),
+      allineamento: valoreDi(m, ".rm-allineamento") || "centro",
+      larghezza: num(".rm-larghezza", 420, 220, 1000),
+      dimensione_icone: num(".rm-dim", 20, 12, 40),
+      mostra_km: !!m.querySelector(".rm-mostra-km").checked,
+      colore_linee: leggiColoreMappa(m, ".rm-col-linee"),
+      colore_intestazione: leggiColoreMappa(m, ".rm-col-intest"),
+      colore_sfondo: leggiColoreMappa(m, ".rm-col-sfondo"),
+      righe: [...m.querySelectorAll(".rm-righe > .rm-riga")].map(leggiRigaMappa)
+        .filter(r => r.nome || r.icone || r.km || r.dettaglio)
+    };
+  }
+
+  const mappaNonVuota = m => m.righe.length > 0;
+
   function leggiSottocommi(commaEl) {
     return figliBlocco(commaEl, ".redazione-sottocommi")
-      .map(el => el.dataset.tipo === "sottocomma-immagine" ? leggiImmagine(el) : { testo: testoDi(el) })
-      .filter(y => y.tipo === "immagine" ? y.url !== "" : y.testo !== "");
+      .map(el => el.dataset.tipo === "sottocomma-mappa" ? leggiMappa(el)
+        : el.dataset.tipo === "sottocomma-immagine" ? leggiImmagine(el) : { testo: testoDi(el) })
+      .filter(y => y.tipo === "mappa" ? mappaNonVuota(y) : y.tipo === "immagine" ? y.url !== "" : y.testo !== "");
   }
 
   function leggiCommi(sezioneEl) {
     return figliBlocco(sezioneEl, ".redazione-commi")
       .map(el => {
+        if (el.dataset.tipo === "comma-mappa") return leggiMappa(el);
         if (el.dataset.tipo === "comma-immagine") return leggiImmagine(el);
         const base = { testo: testoDi(el), sottocommi: leggiSottocommi(el) };
         const url = valoreDi(el, ".redazione-img-destra-url");
         return url ? { ...base, immagine: { url, didascalia: valoreDi(el, ".redazione-img-destra-didascalia") } } : base;
       })
-      .filter(c => c.tipo === "immagine" ? c.url !== "" : (c.testo !== "" || c.sottocommi.length > 0 || !!c.immagine));
+      .filter(c => c.tipo === "mappa" ? mappaNonVuota(c) : c.tipo === "immagine" ? c.url !== "" : (c.testo !== "" || c.sottocommi.length > 0 || !!c.immagine));
   }
 
   // Blocchi di primo livello nell'ordine in cui compaiono: TITOLI, sezioni (con commi) e immagini.
@@ -721,10 +907,12 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
           return { tipo: "titolo", numero: valoreDi(el, ".redazione-titolo-numero"), titolo: valoreDi(el, ".redazione-titolo-testo") };
         case "immagine":
           return leggiImmagine(el);
+        case "mappa":
+          return leggiMappa(el);
         default:
           return { tipo: "sezione", titolo: valoreDi(el, ".redazione-sez-titolo"), testo: testoDi(el), commi: leggiCommi(el) };
       }
-    }).filter(b => b.tipo !== "immagine" || b.url !== "");
+    }).filter(b => b.tipo === "mappa" ? mappaNonVuota(b) : (b.tipo !== "immagine" || b.url !== ""));
   }
 
   function leggiGalleria() {
@@ -830,8 +1018,67 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
     const root = document.getElementById("redazione-root");
     if (vista === "menu") root.innerHTML = renderMenu();
     else if (vista === "carica") root.innerHTML = renderCarica();
-    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); rinumera(); }
+    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); rinumera(); aggiornaAnteprime(root); }
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- MAPPE: ANTEPRIMA E AZIONI ---------- */
+
+  function aggiornaAnteprima(mappaEl) {
+    const box = mappaEl.querySelector(".rm-anteprima");
+    if (!box) return;
+    const m = leggiMappa(mappaEl);
+    const html = m.righe.length ? ctsuMappaHtml({ ...m, allineamento: "centro" }) : "";
+    box.innerHTML = html || `<span class="rm-anteprima-vuota">Aggiungi almeno una riga per vedere l'anteprima.</span>`;
+  }
+
+  function aggiornaAnteprime(radice) {
+    radice.querySelectorAll(".redazione-mappa").forEach(aggiornaAnteprima);
+  }
+
+  function aggiornaAnteprimaConRitardo(mappaEl) {
+    clearTimeout(mappaEl._timerAnteprima);
+    mappaEl._timerAnteprima = setTimeout(() => aggiornaAnteprima(mappaEl), 250);
+  }
+
+  function azioneMappa(btn) {
+    const az = btn.dataset.mappa;
+    const mappaEl = btn.closest(".redazione-mappa");
+    if (!mappaEl) return;
+    const righe = mappaEl.querySelector(".rm-righe");
+    const riga = btn.closest(".rm-riga");
+
+    if (az.startsWith("aggiungi-")) {
+      const tipo = az.slice(9);
+      righe.insertAdjacentHTML("beforeend", renderMappaRiga({ tipo, icone: tipo === "fermata" ? "BHF" : tipo === "nota" ? "STR" : "" }));
+      const nuova = righe.lastElementChild.querySelector(".rm-nome");
+      if (nuova) nuova.focus();
+    } else if (az === "esempio") {
+      const conTesto = [...righe.querySelectorAll(".rm-nome, .rm-km, .rm-dett")].some(i => i.value.trim());
+      if (conTesto && !confirm("Sostituire le righe attuali con l'esempio?")) return;
+      const ex = MAPPA_ESEMPIO();
+      righe.innerHTML = ex.righe.map(renderMappaRiga).join("");
+      const t = mappaEl.querySelector(".rm-titolo");
+      if (t && !t.value.trim()) t.value = ex.titolo;
+    } else if (az === "su" && riga && riga.previousElementSibling) {
+      righe.insertBefore(riga, riga.previousElementSibling);
+    } else if (az === "giu" && riga && riga.nextElementSibling) {
+      righe.insertBefore(riga.nextElementSibling, riga);
+    } else if (az === "dup" && riga) {
+      riga.insertAdjacentHTML("afterend", renderMappaRiga(leggiRigaMappa(riga)));
+    } else if (az === "rimuovi" && riga) {
+      riga.remove();
+    } else if (az === "reset-colore") {
+      const c = btn.parentElement.querySelector('input[type="color"]');
+      if (c) { c.value = c.dataset.default; c.dataset.vuoto = "1"; }
+    } else if (az === "codice") {
+      let campo = ultimoCampoIcone && mappaEl.contains(ultimoCampoIcone) ? ultimoCampoIcone : mappaEl.querySelector(".rm-icone");
+      if (!campo) { alert("Aggiungi prima una riga alla mappa."); return; }
+      const v = campo.value.trim();
+      campo.value = (v ? v + " " : "") + btn.dataset.codice;
+      campo.focus();
+    }
+    aggiornaAnteprima(mappaEl);
   }
 
   /* ---------- EVENTI ---------- */
@@ -840,6 +1087,9 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
     const root = document.getElementById("redazione-root");
 
     root.addEventListener("click", async e => {
+      const mapBtn = e.target.closest("[data-mappa]");
+      if (mapBtn) { azioneMappa(mapBtn); return; }
+
       const azione = e.target.closest("[data-azione]");
       if (azione) {
         const a = azione.getAttribute("data-azione");
@@ -909,7 +1159,8 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
         contenitore.insertAdjacentHTML("beforeend", html);
         rinumera();
         const nuovo = contenitore.lastElementChild;
-        const campo = nuovo && nuovo.querySelector(".redazione-sez-titolo, .redazione-testo-campo, .redazione-img-url, .redazione-titolo-testo");
+        const campo = nuovo && nuovo.querySelector(".redazione-sez-titolo, .redazione-testo-campo, .redazione-img-url, .redazione-titolo-testo, .rm-titolo");
+        aggiornaAnteprime(nuovo);
         if (campo) campo.focus();
       };
 
@@ -917,6 +1168,7 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
       const radice = document.getElementById("redazione-sezioni");
       if (e.target.id === "redazione-aggiungi-sezione") { aggiungi(radice, renderSezione({ titolo: "", testo: "", commi: [] })); return; }
       if (e.target.id === "redazione-aggiungi-titolo") { aggiungi(radice, renderTitolo({ numero: "", titolo: "" })); return; }
+      if (e.target.id === "redazione-aggiungi-mappa") { aggiungi(radice, bloccoMappa(MAPPA_NUOVA())); return; }
       if (e.target.id === "redazione-aggiungi-immagine") { aggiungi(radice, renderImmagineBlocco({ url: "", didascalia: "" })); return; }
 
       // Dentro una sezione (comma / immagine come comma) o dentro un comma (sottocomma / immagine come sottocomma)
@@ -928,6 +1180,8 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
         if (tipo === "comma") aggiungi(blocco.querySelector(":scope > .redazione-commi"), renderComma({ testo: "", sottocommi: [] }));
         else if (tipo === "comma-immagine") aggiungi(blocco.querySelector(":scope > .redazione-commi"), renderComma({ tipo: "immagine", url: "", didascalia: "" }));
         else if (tipo === "sottocomma") aggiungi(blocco.querySelector(":scope > .redazione-sottocommi"), renderSottocomma({ testo: "" }));
+        else if (tipo === "comma-mappa") aggiungi(blocco.querySelector(":scope > .redazione-commi"), renderComma({ ...MAPPA_NUOVA(), allineamento: "destra" }));
+        else if (tipo === "sottocomma-mappa") aggiungi(blocco.querySelector(":scope > .redazione-sottocommi"), renderSottocomma({ ...MAPPA_NUOVA(), allineamento: "destra" }));
         else if (tipo === "sottocomma-immagine") aggiungi(blocco.querySelector(":scope > .redazione-sottocommi"), renderSottocomma({ tipo: "immagine", url: "", didascalia: "" }));
         return;
       }
@@ -942,8 +1196,9 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
           alert("Deve rimanere almeno una sezione.");
           return;
         }
-        if (blocco.querySelector(".redazione-blocco") &&
-            !confirm("Questo blocco contiene commi, sottocommi o immagini: verranno rimossi insieme a lui. Continuare?")) {
+        const haMappaGrande = /mappa/.test(blocco.dataset.tipo) && blocco.querySelectorAll(".rm-riga").length > 2;
+        if ((blocco.querySelector(".redazione-blocco") || haMappaGrande) &&
+            !confirm("Questo blocco contiene commi, sottocommi, immagini o una mappa: verranno rimossi insieme a lui. Continuare?")) {
           return;
         }
         blocco.remove();
@@ -1008,7 +1263,18 @@ ${modo === "piano" ? campiPiano(progetto) : `        <div class="redazione-campo
       }
     });
 
+    root.addEventListener("focusin", e => {
+      if (e.target.classList && e.target.classList.contains("rm-icone")) ultimoCampoIcone = e.target;
+    });
+
     root.addEventListener("input", e => {
+      const mappaEl = e.target.closest && e.target.closest(".redazione-mappa");
+      if (mappaEl) {
+        if (e.target.type === "color") e.target.dataset.vuoto = "0";
+        if (e.target.classList.contains("rm-tipo")) e.target.closest(".rm-riga").dataset.tipoRiga = e.target.value;
+        aggiornaAnteprimaConRitardo(mappaEl);
+        return;
+      }
       if (e.target.classList && e.target.classList.contains("redazione-titolo-numero")) rinumera();
       if (e.target.id === "redazione-filtro") {
         const q = e.target.value.trim().toLowerCase();
