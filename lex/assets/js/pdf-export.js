@@ -97,6 +97,72 @@
     });
   }
 
+
+  /* ---------- MAPPE DI TRASPORTI ---------- */
+  // Stessi blocchi { tipo:"mappa", righe:[...] } usati dal sito (vedi ctsuMappaHtml in ctsu-core.js e
+  // mappa-trasporti.js). Nel PDF la mappa viene disegnata con le stesse icone BSicon di Wikimedia Commons
+  // (scaricate al momento dell'esportazione e inserite come immagini); se un'icona non è raggiungibile
+  // (rete assente o server che non consente l'uso, CORS) si ripiega su un disegno semplificato fatto
+  // con linee e cerchi, così la mappa compare comunque.
+  const PX = 0.2646;   // 1 px CSS in mm
+  const MAPPA_RE_LINEA = /^[a-z]{0,4}STR(\+[a-z0-9]{1,3})?$/;
+  const MAPPA_DEFAULT = [190, 45, 44];   // rosso standard dei BSicon
+
+  function mappaColore(c) {
+    c = (c || "").toString().trim();
+    if (!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return "";
+    return c.length === 4 ? ("#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]).toLowerCase() : c.toLowerCase();
+  }
+  const mappaRgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  function mappaTestoSu(bg) {
+    const [r, g, b] = mappaRgb(bg);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? [31, 42, 51] : [255, 255, 255];
+  }
+  const mappaCodici = t => (t || "").toString().split(/[\s,;]+/).filter(Boolean);
+  function mappaUrlWeb(u) {
+    u = (u || "").toString().trim();
+    return /^https?:\/\/[^\s"'<>()]+$/i.test(u) ? u : "";
+  }
+  function mappaIconaUrl(codice) {
+    if (/^https?:\/\//i.test(codice)) return mappaUrlWeb(codice);
+    const c = codice.replace(/[^\w+~.@-]/g, "");
+    return c ? "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent("BSicon_" + c + ".svg") : "";
+  }
+
+  // Icona -> PNG trasparente (ricolorata se serve, come il filtro SVG del sito). In cache per codice+colore.
+  const cacheIcone = new Map();
+  function caricaIcona(codice, colore) {
+    const chiave = codice + "|" + (colore || "");
+    if (cacheIcone.has(chiave)) return cacheIcone.get(chiave);
+    const p = new Promise(resolve => {
+      const url = mappaIconaUrl(codice);
+      if (!url) return resolve(null);
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      const timer = setTimeout(() => resolve(null), 15000);
+      img.onload = () => {
+        clearTimeout(timer);
+        try {
+          const S = 96;
+          const c = document.createElement("canvas");
+          c.width = S; c.height = S;
+          const ctx = c.getContext("2d");
+          ctx.drawImage(img, 0, 0, S, S);
+          if (colore) {
+            ctx.globalCompositeOperation = "source-in";
+            ctx.fillStyle = colore;
+            ctx.fillRect(0, 0, S, S);
+          }
+          resolve({ data: c.toDataURL("image/png"), chiave });
+        } catch (e) { resolve(null); }
+      };
+      img.onerror = () => { clearTimeout(timer); resolve(null); };
+      img.src = url;
+    });
+    cacheIcone.set(chiave, p);
+    return p;
+  }
+
   async function crea(opzioni) {
     const marca = (opzioni && opzioni.marca) || {};
     const jsPDF = await caricaJsPdf();
@@ -351,6 +417,188 @@
       posaDestra(img, didascalia, w, h);
     }
 
+    // Mappa di trasporti (diagramma di linea): titolo, righe con icone / km / nome / dettaglio, rami, didascalia.
+    // Va a tutta larghezza di blocco (non scorre il testo accanto) ed è allineata come da "allineamento".
+    // Se non entra nella pagina continua su quella successiva, chiudendo e riaprendo il riquadro.
+    async function mappa(m) {
+      if (!m || typeof m !== "object") return;
+      const righe = (Array.isArray(m.righe) ? m.righe : []).filter(r => r && typeof r === "object");
+      if (!righe.length) return;
+
+      const sz = Math.max(12, Math.min(40, parseInt(m.dimensione_icone, 10) || 20)) * PX;   // lato icona, mm
+      const larg = Math.max(220, Math.min(1000, parseInt(m.larghezza, 10) || 420));
+      const allin = ["destra", "sinistra", "centro", "intera"].includes(m.allineamento) ? m.allineamento : "centro";
+      const wMap = allin === "intera" ? W : Math.min(W, larg * PX);
+      const x0 = allin === "sinistra" || allin === "intera" ? MX : allin === "destra" ? PW - MX - wMap : MX + (W - wMap) / 2;
+      const coloreLinee = mappaColore(m.colore_linee);
+      const bgTitolo = mappaColore(m.colore_intestazione) || "#eaecf0";
+      const bgCorpo = mappaColore(m.colore_sfondo) || "#ffffff";
+      const mostraKm = m.mostra_km !== false && righe.some(r => r.tipo !== "ramo" && (r.km || "").toString().trim());
+      const nCol = Math.max(1, ...righe.filter(r => r.tipo !== "ramo").map(r => mappaCodici(r.icone).length));
+
+      const fs = Math.min(8.5, sz * 0.8 / MM);          // corpo del testo, pt
+      const BORDO = [162, 169, 177];
+      const xIcone = x0 + 1.6;
+      const kmW = mostraKm ? 14 : 0;
+      const xKm = xIcone + nCol * sz + 1;
+      const xTesto = xKm + kmW + 1;
+      const wTesto = Math.max(20, x0 + wMap - xTesto - 2.5);
+
+      // Scarica prima tutte le icone (in parallelo): il disegno poi è sincrono.
+      const icone = new Map();
+      const richieste = [];
+      righe.forEach(r => {
+        if (r.tipo === "ramo") return;
+        const col = mappaColore(r.colore) || coloreLinee;
+        mappaCodici(r.icone).forEach(c => {
+          if (c === "-" || c === "_") return;
+          const k = c + "|" + col;
+          if (!icone.has(k)) { icone.set(k, null); richieste.push(caricaIcona(c, col).then(ic => icone.set(k, ic))); }
+        });
+      });
+      await Promise.all(richieste);
+
+      // Disegno semplificato di riserva (icona non scaricabile).
+      const iconaDiRiserva = (codice, col, cx, cy) => {
+        const rgb = col ? mappaRgb(col) : MAPPA_DEFAULT;
+        doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+        doc.setLineWidth(Math.max(0.5, sz * 0.14));
+        doc.line(cx + sz / 2, cy, cx + sz / 2, cy + sz);
+        if (/BHF|HST/.test(codice)) {
+          doc.setFillColor(255, 255, 255);
+          doc.setLineWidth(Math.max(0.35, sz * 0.09));
+          doc.circle(cx + sz / 2, cy + sz / 2, sz * (/HST/.test(codice) ? 0.2 : 0.3), "FD");
+        }
+      };
+
+      const impostaTesto = (stile, size, colore) => {
+        doc.setFont("helvetica", stile); doc.setFontSize(size);
+        doc.setTextColor(colore[0], colore[1], colore[2]);
+      };
+
+      // Misura di una riga: righe di testo già spezzate. Altezza = multiplo del lato dell'icona,
+      // così le icone di tratto continuo si ripetono in verticale senza tagli.
+      const misura = r => {
+        const tipo = r.tipo === "nota" || r.tipo === "ramo" ? r.tipo : "fermata";
+        const nome = htmlInTesto(r.nome || "");
+        const dett = htmlInTesto(r.dettaglio || "");
+        if (tipo === "ramo") {
+          if (!nome) return null;
+          doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+          const linee = doc.splitTextToSize(nome, wMap - 6);
+          return { tipo, linee, h: linee.length * 4.2 + 2.6 };
+        }
+        const size = tipo === "nota" ? fs * 0.9 : fs;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(size);
+        const linee = nome ? doc.splitTextToSize(nome, wTesto) : [];
+        let dettInLinea = false;
+        if (dett) {
+          doc.setFont("helvetica", "normal"); doc.setFontSize(size * 0.85);
+          const wd = doc.getTextWidth(" " + dett);
+          doc.setFontSize(size);
+          const wUltima = linee.length ? doc.getTextWidth(linee[linee.length - 1]) : 0;
+          if (linee.length && wUltima + wd <= wTesto) dettInLinea = true;
+        }
+        const n = Math.max(1, linee.length + (dett && !dettInLinea ? 1 : 0));
+        return { tipo, nome, dett, linee, dettInLinea, size, n, h: n * sz };
+      };
+
+      const misure = righe.map(r => ({ r, m: misura(r) })).filter(x => x.m);
+      if (!misure.length) return;
+      const titolo = htmlInTesto(m.titolo || "");
+      let hTitolo = 0, lineeTitolo = [];
+      if (titolo) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+        lineeTitolo = doc.splitTextToSize(titolo, wMap - 6);
+        hTitolo = lineeTitolo.length * 4.6 + 3;
+      }
+
+      if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
+      y += 2;
+      nuovaPaginaSe(hTitolo + misure[0].m.h + 4);
+
+      let segY = y;
+      const chiudiSegmento = () => {
+        doc.setDrawColor(BORDO[0], BORDO[1], BORDO[2]); doc.setLineWidth(0.25);
+        doc.rect(x0, segY, wMap, y - segY, "S");
+      };
+
+      if (titolo) {
+        const bg = mappaRgb(bgTitolo), tc = mappaTestoSu(bgTitolo);
+        doc.setFillColor(bg[0], bg[1], bg[2]); doc.rect(x0, y, wMap, hTitolo, "F");
+        impostaTesto("bold", 10, tc);
+        lineeTitolo.forEach((l, i) => doc.text(l, x0 + wMap / 2, y + 1.5 + (i + 1) * 4.6 - 1, { align: "center" }));
+        y += hTitolo;
+        doc.setDrawColor(BORDO[0], BORDO[1], BORDO[2]); doc.setLineWidth(0.25);
+        doc.line(x0, y, x0 + wMap, y);
+      }
+
+      const bc = mappaRgb(bgCorpo);
+      for (const { r, m: mi } of misure) {
+        if (y + mi.h > PH - MB) { chiudiSegmento(); nuovaPagina(); segY = y; }
+
+        if (mi.tipo === "ramo") {
+          const bg = mappaRgb(bgTitolo), tc = mappaTestoSu(bgTitolo);
+          doc.setFillColor(bg[0], bg[1], bg[2]); doc.rect(x0, y, wMap, mi.h, "F");
+          doc.setDrawColor(BORDO[0], BORDO[1], BORDO[2]); doc.setLineWidth(0.25);
+          doc.line(x0, y, x0 + wMap, y); doc.line(x0, y + mi.h, x0 + wMap, y + mi.h);
+          impostaTesto("bold", 9, tc);
+          mi.linee.forEach((l, i) => doc.text(l, x0 + wMap / 2, y + 1.3 + (i + 1) * 4.2 - 0.9, { align: "center" }));
+          y += mi.h;
+          continue;
+        }
+
+        doc.setFillColor(bc[0], bc[1], bc[2]); doc.rect(x0, y, wMap, mi.h, "F");
+
+        // icone (anche sulle note), ripetute in verticale se di tratto continuo
+        const col = mappaColore(r.colore) || coloreLinee;
+        mappaCodici(r.icone).forEach((c, j) => {
+          if (c === "-" || c === "_") return;
+          const ic = icone.get(c + "|" + col);
+          const continua = MAPPA_RE_LINEA.test(c);
+          for (let k = 0; k < (continua ? mi.n : 1); k++) {
+            const cx = xIcone + j * sz, cy = y + k * sz;
+            if (ic) doc.addImage(ic.data, "PNG", cx, cy, sz, sz, ic.chiave);
+            else iconaDiRiserva(c, col, cx, cy);
+          }
+        });
+
+        // chilometrica
+        const km = mostraKm ? htmlInTesto(r.km || "") : "";
+        if (km) {
+          impostaTesto("normal", fs * 0.9, COLORI.tenue);
+          doc.text(km, xKm + kmW - 1.5, y + sz / 2 + fs * 0.9 * MM * 0.33, { align: "right" });
+        }
+
+        // nome (con eventuale collegamento) e dettaglio
+        const url = mappaUrlWeb(r.url);
+        const colNome = mi.tipo === "nota" ? COLORI.tenue : (url ? [6, 69, 173] : COLORI.scuro);
+        mi.linee.forEach((l, i) => {
+          impostaTesto("normal", mi.size, colNome);
+          const ty = y + i * sz + sz / 2 + mi.size * MM * 0.33;
+          if (url) doc.textWithLink(l, xTesto, ty, { url }); else doc.text(l, xTesto, ty);
+        });
+        if (mi.dett) {
+          const iLinea = mi.dettInLinea ? mi.linee.length - 1 : mi.linee.length;
+          const ty = y + iLinea * sz + sz / 2 + mi.size * MM * 0.33;
+          let dx = xTesto;
+          if (mi.dettInLinea) {
+            impostaTesto("normal", mi.size, colNome);
+            dx += doc.getTextWidth(mi.linee[mi.linee.length - 1] + " ");
+          }
+          impostaTesto("normal", mi.size * 0.85, COLORI.tenue);
+          doc.text(mi.dett, dx, ty);
+        }
+        y += mi.h;
+      }
+      chiudiSegmento();
+      y += 2;
+
+      const dida = htmlInTesto(m.didascalia || "");
+      if (dida) scrivi(dida, { font: "helvetica", stile: "italic", size: 8, colore: COLORI.tenue, align: "center", x: x0, larghezza: wMap, dopo: 3 });
+      else y += 2;
+    }
+
     // Testo cliccabile che apre un indirizzo.
     function link(testo, url, o = {}) {
       const { size = 10, x = MX } = o;
@@ -403,7 +651,7 @@
       doc.save(nomeFile);
     }
 
-    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, link, salva };
+    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva };
   }
 
   function nomeFile(titolo, predefinito) {
