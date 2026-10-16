@@ -4,653 +4,148 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#043a96">
-<title>Estji Wiki — Redazione</title>
+<title>Estji Wiki</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=8">
+<link rel="stylesheet" href="assets/css/wiki.css?v=13">
 </head>
-<body class="red">
+<body>
 <div class="site">
   <header>
     <div class="flag"><i></i><i></i><i></i><i></i></div>
-    <div><h1>Redazione Wiki</h1><p>Scrivi e modifica le pagine</p></div>
-    <nav><a class="btn" href="wiki.html">📖 Wiki</a></nav>
+    <div><h1>Estji Wiki</h1><p>L'enciclopedia della fazione</p></div>
+    <nav><a class="btn" href="../archive.html">Estji Archive</a><a class="btn" href="redazione-wiki.html">✍️ Redazione</a></nav>
   </header>
+  <div class="layout">
+  <aside aria-label="Articoli principali">
+    <div class="sb-group"><span class="sb-head">Articoli principali</span><div id="principali"></div></div>
+    <div class="sb-group" id="sbToc" hidden><span class="sb-head">In questa pagina</span><div id="toc"></div></div>
+  </aside>
   <main>
-    <section id="login-area">
-      <div class="bar">🔐 Accesso redazione</div>
-      <div class="panel" style="max-width:420px;margin-inline:auto">
-        <div id="estji-blocco" style="display:none;text-align:center;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid rgba(150,200,255,.25)">
-          <label>Accedi con Estji ID</label>
-          <p class="note">Inquadra il QR con il telefono e conferma l'accesso.</p>
-          <div id="estji-login" style="display:flex;flex-direction:column;align-items:center;gap:8px"></div>
-          <p class="note">oppure usa nome e password</p>
-        </div>
-        <p class="note">Inserisci il tuo nome e la password per modificare la wiki.</p>
-        <label for="adminUsername">Nome</label><input id="adminUsername" autocomplete="username">
-        <label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password">
-        <p id="loginError" class="err"></p>
-        <button type="button" class="btn pri" id="loginBtn">Accedi</button>
+    <div id="vCerca">
+      <div class="bar">Cerca nella wiki</div>
+      <div class="panel">
+        <input type="search" id="q" placeholder="Cerca per titolo, tag o contenuto…" autocomplete="off" aria-label="Cerca nella wiki">
+        <div class="chips" id="cats"></div>
+        <div class="note" id="count">Caricamento…</div>
+        <div id="lista"></div>
       </div>
-    </section>
-
-    <section id="admin-content" style="display:none">
-      <div class="row"><span>👤 Connesso come <b id="adminUsernameLabel">—</b></span><button type="button" class="btn" id="logoutBtn">Esci</button></div>
-
-      <div id="vElenco">
-        <div class="bar">Pagine della wiki</div>
-        <div class="panel">
-          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></div>
-          <p id="msgElenco" class="note"></p>
-          <div id="elenco"></div>
-        </div>
+    </div>
+    <article id="vPagina" hidden>
+      <div class="bar" id="pTitolo"></div>
+      <div class="panel">
+        <p><a href="#" id="indietro">&larr; Torna alla ricerca</a></p>
+        <div class="meta" id="pMeta"></div>
+        <div class="wk" id="pTesto"></div>
+        <div id="pLink"></div>
       </div>
-
-      <form id="vEditor" hidden novalidate>
-        <div class="bar" id="eTitolo">Nuova pagina</div>
-        <div class="panel">
-          <label for="fTitolo">Titolo</label><input id="fTitolo" required maxlength="150">
-          <div class="cols">
-            <div><label for="fCat">Categoria</label><input id="fCat" list="cats" maxlength="60"><datalist id="cats"></datalist></div>
-            <div><label for="fTag">Tag (separati da virgola)</label><input id="fTag" placeholder="storia, leggi, luoghi"></div>
-          </div>
-          <label for="fSomm">Sommario (mostrato nei risultati di ricerca)</label><textarea id="fSomm" rows="2" maxlength="400" style="font-family:inherit"></textarea>
-          <div class="cols">
-            <div><label for="fImg">Immagine in testa (indirizzo web)</label><input id="fImg" placeholder="https://..."></div>
-            <div><label for="fId">Identificativo URL (id)</label><input id="fId" placeholder="generato dal titolo se vuoto"></div>
-          </div>
-          <label for="fTesto">Testo</label>
-          <div class="chips" id="tools" style="padding-top:0">
-            <button type="button" class="btn" data-w="## |Titolo sezione">H2</button><button type="button" class="btn" data-w="### |Sottotitolo">H3</button>
-            <button type="button" class="btn" data-w="**|grassetto|**"><b>B</b></button><button type="button" class="btn" data-w="*|corsivo|*"><i>I</i></button>
-            <button type="button" class="btn" data-w="- |elemento">• Elenco</button><button type="button" class="btn" data-w="> |citazione">❝</button>
-            <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
-            <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
-            <button type="button" class="btn" id="btnGraf" title="Inserisce il grafico di un'elezione CEPU a partire dal suo link">📈 Grafico</button>
-            <button type="button" class="btn" id="btnTab" title="Crea una tabella, o modifica quella sotto il cursore">📊 Tabella</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
-          </div>
-          <div class="panel" id="imgPanel" hidden style="margin:6px 0 10px">
-            <div class="bar" id="imgTit">Nuova immagine</div>
-            <div class="cols">
-              <div><label for="iUrl">Indirizzo dell'immagine</label><input id="iUrl" placeholder="https://..." autocomplete="off"></div>
-              <div><label for="iDid">Didascalia / testo alternativo</label><input id="iDid" maxlength="150"></div>
-            </div>
-            <div class="cols3">
-              <div><label for="iW">Larghezza</label><div style="display:flex;gap:6px"><input id="iW" type="number" min="1" max="2000" placeholder="auto"><select id="iWu" style="width:84px"><option value="px">px</option><option value="%">%</option></select></div></div>
-              <div><label for="iH">Altezza (px)</label><input id="iH" type="number" min="1" max="2000" placeholder="auto"></div>
-              <div><label for="iFit">Se larghezza e altezza sono fisse</label><select id="iFit"><option value="">Stira</option><option value="adatta">Adatta (senza ritagliare)</option><option value="riempi">Riempi (ritaglia)</option></select></div>
-              <div><label for="iPos">Posizione</label><select id="iPos"><option value="">In riga, in mezzo alle parole</option><option value="sx">A sinistra, testo intorno</option><option value="dx">A destra, testo intorno</option><option value="c">Centrata, su riga propria</option></select></div>
-              <div><label for="iVa">Altezza rispetto alle parole (in riga)</label><select id="iVa"><option value="">Sulla linea di base</option><option value="alto">In alto</option><option value="medio">Al centro</option><option value="basso">In basso</option></select></div>
-              <div><label for="iY">Sposta in verticale (px: − su, + giù)</label><input id="iY" type="number" min="-500" max="500" placeholder="0"></div>
-            </div>
-            <label class="chk"><input type="checkbox" id="iCap"> Mostra la didascalia sotto</label><label class="chk"><input type="checkbox" id="iNob"> Senza bordo</label>
-            <span id="gOpz" hidden><label class="chk"><input type="checkbox" id="iScuro"> Grafico scuro</label><label class="chk"><input type="checkbox" id="iNoS"> Solo emiciclo (senza legenda)</label><label class="chk"><input type="checkbox" id="iBarre"> Barre %</label></span>
-            <div id="albero">
-              <div style="display:flex;gap:6px;margin-top:12px"><input id="tFiltro" type="search" placeholder="Cerca nelle immagini della repo…" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn" id="tRicarica" title="Ricarica l'elenco da GitHub">↻</button></div>
-              <p class="note" id="tNote"></p>
-              <div id="tree"></div>
-            </div>
-            <div class="chips"><button type="button" class="btn pri" id="iChiudi">Fatto</button><button type="button" class="btn del" id="iDel" hidden>Rimuovi immagine</button></div>
-          </div>
-          <div class="panel" id="tabPanel" hidden style="margin:6px 0 10px">
-            <div class="bar" id="tbTit">Tabella</div>
-            <div class="cols">
-              <div><label for="tbTitolo">Titolo della tabella (facoltativo)</label><input id="tbTitolo" maxlength="150" autocomplete="off"></div>
-              <div><label for="tbR">Righe × colonne</label><div style="display:flex;gap:6px;align-items:center"><input id="tbR" type="number" min="1" max="60"><span>×</span><input id="tbC" type="number" min="1" max="20"><button type="button" class="btn" data-ta="size">Applica</button></div></div>
-            </div>
-            <label class="chk"><input type="checkbox" id="tbPiena"> Larghezza piena</label>
-            <div class="tb-bar">
-              <div class="tb-grp"><span>Celle</span><button type="button" class="btn" data-ta="merge" title="Unisce le celle selezionate in una sola">⛶ Unisci</button><button type="button" class="btn" data-ta="split" title="Divide una cella unita">▦ Dividi</button><button type="button" class="btn" data-ta="multi" title="Per il telefono: con questo attivo ogni tocco estende la selezione dalla cella di partenza">▭ Selez. multipla</button></div>
-              <div class="tb-grp"><span>Righe</span><button type="button" class="btn" data-ta="rowUp">＋ sopra</button><button type="button" class="btn" data-ta="rowDn">＋ sotto</button><button type="button" class="btn del" data-ta="rowDel">✕ elimina</button></div>
-              <div class="tb-grp"><span>Colonne</span><button type="button" class="btn" data-ta="colL">＋ sinistra</button><button type="button" class="btn" data-ta="colR">＋ destra</button><button type="button" class="btn del" data-ta="colDel">✕ elimina</button></div>
-            </div>
-            <div class="tb-bar">
-              <div class="tb-grp"><span>Formato</span><button type="button" class="btn" data-ta="th" title="Cella d'intestazione">Intest.</button><button type="button" class="btn" data-ta="b"><b>B</b></button><button type="button" class="btn" data-ta="i"><i>I</i></button>
-                <button type="button" class="btn" data-ta="al" data-v="s" title="Testo a sinistra">⇤</button><button type="button" class="btn" data-ta="al" data-v="c" title="Testo al centro">↔</button><button type="button" class="btn" data-ta="al" data-v="d" title="Testo a destra">⇥</button>
-                <button type="button" class="btn" data-ta="va" data-v="a" title="In alto">⤒</button><button type="button" class="btn" data-ta="va" data-v="m" title="Al centro in verticale">↕</button><button type="button" class="btn" data-ta="va" data-v="b" title="In basso">⤓</button>
-                <input id="tbW" type="number" min="1" max="2000" placeholder="largh. px" title="Larghezza della cella in px (vuoto = automatica)" style="width:92px"></div>
-              <div class="tb-grp"><span>Sfondo cella</span><input type="color" id="tbBg" value="#ffffff" title="Scegli un colore"><span id="tbSwBg" class="tb-sws"></span><button type="button" class="btn" data-ta="bg" data-v="" title="Nessuno sfondo">∅</button></div>
-              <div class="tb-grp"><span>Colore testo</span><input type="color" id="tbTc" value="#000000" title="Scegli un colore"><span id="tbSwTc" class="tb-sws"></span><button type="button" class="btn" data-ta="tc" data-v="" title="Automatico (scuro o chiaro in base allo sfondo)">auto</button></div>
-              <div class="tb-grp"><button type="button" class="btn" data-ta="clear" title="Toglie colori, grassetto, allineamenti dalle celle selezionate">🧹 Pulisci formato</button></div>
-            </div>
-            <p class="note" id="tbInfo"></p>
-            <div id="tbGrid"></div>
-            <p class="note">Clic su una cella per scriverci (vale tutto: <code>**grassetto**</code>, <code>[[Pagina]]</code>, <code>![](https://…)</code>; Invio = a capo). <b>Trascina</b> o <b>Maiusc+clic</b> per selezionare più celle, poi <i>Unisci</i> o dai un colore a tutte. Puoi incollare un blocco copiato da Excel/Fogli nella cella di partenza.</p>
-            <div class="chips"><button type="button" class="btn pri" data-ta="chiudi">Fatto</button><button type="button" class="btn del" data-ta="rimuovi">Rimuovi tabella</button></div>
-          </div>
-          <div class="cols edcols"><div class="ed"><pre id="hl" aria-hidden="true"></pre><textarea id="fTesto" rows="20" aria-label="Testo della pagina" spellcheck="false"></textarea></div><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
-          <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
-          <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
-          <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Barre %</i> (<code>barre</code>), <i>Grafico scuro</i> (<code>scuro</code>) e <i>Solo emiciclo</i> (<code>noseggi</code>: niente legenda né seggi per partito, il totale sta al centro). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
-          <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
-          <p class="note"><b>Tabelle</b>: 📊 apre l'editor a griglia (anche cliccando una tabella nell'anteprima). Nel testo è un blocco <code>{{tabella Titolo … }}</code>: <code>--</code> = nuova riga · <code>| testo</code> = cella · <code>! testo</code> = intestazione · opzioni <code>|{c2 r3 bg:#ffe599 tc:#000000 al:c va:m w:120 b i} testo</code> (c = colonne unite, r = righe unite, bg = sfondo di tutta la cella).</p>
-          <p id="msg" class="err"></p>
-          <div class="chips">
-            <button type="submit" class="btn pri" id="salva">💾 Salva sul database</button>
-            <button type="button" class="btn" id="annulla">Annulla</button>
-            <button type="button" class="btn del" id="elimina" hidden>Elimina pagina</button>
-          </div>
-        </div>
-      </form>
-    </section>
+    </article>
   </main>
+  </div>
 </div>
-<script src="https://ews-rose.vercel.app/estji-login.js"></script>
-<script src="assets/js/wiki-core.js?v=7"></script>
+<script src="assets/js/wiki-core.js?v=11"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
-  let pagine = [], idMod = null;
+  let pagine = [], cat = '';
 
-  const mostra = ok => { $('login-area').style.display = ok ? 'none' : 'block'; $('admin-content').style.display = ok ? 'block' : 'none'; };
-  const vista = ed => { $('vElenco').hidden = ed; $('vEditor').hidden = !ed; window.scrollTo(0, 0); };
-  const msg = (t, ok) => { $('msg').textContent = t || ''; $('msg').className = ok ? 'ok' : 'err'; };
+  // ARTICOLI PRINCIPALI della barra laterale: modifica solo questo elenco.
+  //   id     = id della pagina wiki (quello dopo "#" nell'indirizzo)
+  //   titolo = testo mostrato nella barra
+  //   ic     = emoji (facoltativo)      img = indirizzo di un'immagine al posto dell'emoji (facoltativo)
+  const PRINCIPALI = [
+    { id: 'usse',               titolo: 'USSE',               ic: '🌐' },
+    { id: 'stati-membri',       titolo: 'Stati Membri',       ic: '🏛️' },
+    { id: 'sistema-amministrativo',       titolo: 'Sistema Amministrativo',       ic: '📜' },
+    { id: 'congresso-unitario', titolo: 'Congresso Unitario', ic: '🗳️' },
+    { id: 'ctsu',               titolo: 'CTSU',               ic: '🛠️' },
+    { id: 'città',             titolo: 'Città',             ic: '🏙️' }
+  ];
+  function sidebar() {
+    const corrente = decodeURIComponent(location.hash.slice(1));
+    $('principali').innerHTML = PRINCIPALI.map(a => {
+      const manca = pagine.length && !pagine.some(p => p.id === a.id);   // pagina non ancora scritta
+      const icona = a.img ? `<img src="${E(a.img)}" alt="">` : E(a.ic || '📄');
+      return `<a class="sb-item${a.id === corrente ? ' on' : ''}${manca ? ' nopage' : ''}" href="#${E(a.id)}"${manca ? ' title="Pagina non ancora scritta"' : ''}><span class="ic">${icona}</span>${E(a.titolo)}</a>`;
+    }).join('');
+  }
 
-  /* ---------- login / logout (stesso schema della redazione CTSU) ---------- */
-  function setupLogin() {
-    const btn = $('loginBtn'), err = $('loginError');
-    btn.addEventListener('click', async () => {
-      err.textContent = ''; btn.disabled = true; btn.textContent = 'Accesso…';
-      const u = $('adminUsername').value.trim();
-      try { await Wiki.login(u, $('adminPassword').value); $('adminUsernameLabel').textContent = u; mostra(true); await avvia(); }
-      catch (e) { err.textContent = '❌ ' + (e.message || 'Errore di accesso'); }
-      finally { btn.disabled = false; btn.textContent = 'Accedi'; }
-    });
-    ['adminUsername', 'adminPassword'].forEach(i => $(i).addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); } }));
-    $('logoutBtn').addEventListener('click', () => { Wiki.clearCredentials(); location.reload(); });
-
-    // Accesso con Estji ID (QR): il blocco compare solo se il widget è stato caricato
-    if (window.EstjiLogin && $('estji-login')) {
-      $('estji-blocco').style.display = 'block';
-      EstjiLogin.mount('#estji-login', {
-        clientId: 'wiki',
-        scopes: ['profile.basic', 'wiki.edit'],
-        onLogin: async res => {
-          err.textContent = '';
-          try { const nome = await Wiki.loginEstji(res.id_token); $('adminUsernameLabel').textContent = nome || ''; mostra(true); await avvia(); }
-          catch (e) { err.textContent = '❌ ' + (e.message || 'Accesso non riuscito'); }
-        }
-      });
+  // punteggio: titolo pesa più dei tag, che pesano più del sommario e del contenuto
+  function punteggio(p, parole) {
+    const t = Wiki.norm(p.titolo), g = Wiki.norm((p.tag || []).join(' ') + ' ' + p.categoria), s = Wiki.norm(p.sommario), c = Wiki.norm(p.contenuto);
+    let tot = 0;
+    for (const w of parole) {
+      const x = (t.startsWith(w) ? 12 : 0) + (t.includes(w) ? 8 : 0) + (g.includes(w) ? 5 : 0) + (s.includes(w) ? 3 : 0) + (c.includes(w) ? 1 : 0);
+      if (!x) return 0; // tutte le parole devono comparire
+      tot += x;
     }
+    return tot;
+  }
+  function evidenzia(testo, parole) {
+    let h = E(testo);
+    parole.forEach(w => { if (w.length > 1) h = h.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i'), '<mark>$1</mark>'); });
+    return h;
+  }
+  function estratto(p, parole) {
+    if (p.sommario) return p.sommario;
+    const c = String(p.contenuto || '').replace(/\{\{\s*(?:infobox|mappa)[\s\S]*?\}\}/gi, ' ').replace(/[#>*`|\[\]]/g, ' ').replace(/\s+/g, ' '), i = parole.length ? Wiki.norm(c).indexOf(parole[0]) : 0;
+    return (i > 60 ? '…' : '') + c.slice(Math.max(0, i - 60), Math.max(0, i - 60) + 180) + '…';
   }
 
-  /* ---------- elenco ---------- */
-  function elenco() {
-    const q = Wiki.norm($('filtro').value);
-    const l = [...pagine].sort((a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo))).filter(p => Wiki.norm(p.titolo + ' ' + p.categoria).includes(q));
-    $('elenco').innerHTML = l.map(p => `<div class="row"><div>${p.categoria ? `<span class="tag">${E(p.categoria)}</span> ` : ''}<b>${E(p.titolo)}</b>
-      <div class="note">${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</div></div>
-      <div><a class="btn" href="wiki.html#${E(p.id)}" target="_blank" rel="noopener">Apri</a> <button type="button" class="btn" data-mod="${E(p.id)}">Modifica</button></div></div>`).join('') || '<p class="note">Nessuna pagina.</p>';
-    $('cats').innerHTML = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].map(c => `<option value="${E(c)}">`).join('');
+  function cerca() {
+    const q = $('q').value.trim(), parole = Wiki.norm(q).split(/\s+/).filter(Boolean);
+    let ris = pagine.filter(p => !cat || p.categoria === cat).map(p => ({ p, s: parole.length ? punteggio(p, parole) : 1 })).filter(r => r.s > 0);
+    ris.sort((a, b) => parole.length ? b.s - a.s : Wiki.norm(a.p.titolo).localeCompare(Wiki.norm(b.p.titolo)));
+    $('count').textContent = ris.length + (ris.length === 1 ? ' pagina' : ' pagine') + (q ? ` per “${q}”` : ' nella wiki');
+    $('lista').innerHTML = ris.length ? ris.map(({ p }) => `
+      <a class="card" href="#${E(p.id)}"><div class="meta">${p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : ''}${(p.tag || []).slice(0, 4).map(t => `<span>#${E(t)}</span>`).join('')}</div>
+      <h3>${evidenzia(p.titolo, parole)}</h3><p>${evidenzia(estratto(p, parole), parole)}</p></a>`).join('')
+      : `<div class="note" style="text-align:center;padding:18px">Nessun risultato. <a href="redazione-wiki.html?nuova=${encodeURIComponent(q)}">Scrivi la pagina “${E(q || 'nuova')}”</a></div>`;
+    const u = new URL(location.href); q ? u.searchParams.set('q', q) : u.searchParams.delete('q'); history.replaceState(null, '', u);
   }
 
-  /* ---------- editor ---------- */
-  function apri(p, titoloNuovo) {
-    idMod = p ? p.id : null; msg(''); chiudiImg(); chiudiTab();
-    $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
-    $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
-    $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
-    $('fImg').value = p ? p.immagine : ''; $('fId').value = p ? p.id : ''; $('fTesto').value = p ? p.contenuto : '';
-    $('elimina').hidden = !p; anteprima(); vista(true);
-    (p ? $('fTesto') : $('fTitolo')).focus();
-  }
-  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; evidenzia(); };
-
-  /* ---------- colori nell'editor: un livello colorato dietro la casella di testo (testo normale = bianco) ---------- */
-  const RX = /(!\[[^\]\n]*\]\([^)\s\n]*\))|(\[\[[^\]\n]*\]\])|(\[[^\]\n]*\]\([^)\s\n]*\))|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(`[^`\n]+`)/g;
-  const CL = ['', 'h-img', 'h-wk', 'h-url', 'h-b', 'h-i', 'h-c', 'h-p'];
-  const tok = s => {
-    const re = RX; re.lastIndex = 0; let o = '', k = 0, m;
-    while ((m = re.exec(s))) {
-      o += E(s.slice(k, m.index));
-      o += `<span class="${CL[m.findIndex((x, i) => i > 0 && x !== undefined)]}">${E(m[0])}</span>`;
-      k = m.index + m[0].length;
-    }
-    return o + E(s.slice(k));
-  };
-  function evidenzia() {
-    let ib = false, tb = false, m;
-    const out = $('fTesto').value.replace(/\r/g, '').split('\n').map(l => {
-      const r = l.trim();
-      if (/^\{\{\s*tabella\b/i.test(r)) { tb = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
-      if (tb) {
-        if (r === '}}') { tb = false; return `<span class="h-ib">${E(l)}</span>`; }
-        if (/^---?$/.test(r)) return `<span class="h-hr">${E(l)}</span>`;
-        if (r[0] === '@') return `<span class="h-lab">${E(l)}</span>`;
-        if (!/^\s*!\[/.test(l) && (m = /^(\s*[|!](?:\{[^}]*\})?)(.*)$/.exec(l))) return `<span class="h-p">${E(m[1])}</span>` + tok(m[2]);
-        return tok(l);
-      }
-      if (/^\{\{\s*infobox\b/i.test(r)) { ib = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
-      if (ib && r === '}}') { ib = false; return `<span class="h-ib">${E(l)}</span>`; }
-      if (/^#{2,3}\s/.test(r)) return `<span class="${r[2] === '#' ? 'h-h3' : 'h-h2'}">${tok(l)}</span>`;
-      if (ib && (m = /^(\s*[^:!\[\s][^:]*:)(\s.*)?$/.exec(l))) return `<span class="h-lab">${E(m[1])}</span>` + tok(m[2] || '');
-      if (/^---+$/.test(r)) return `<span class="h-hr">${E(l)}</span>`;
-      if (r[0] === '>') return `<span class="h-q">${tok(l)}</span>`;
-      if ((m = /^(\s*(?:[-*]|\d+\.))(\s.*)$/.exec(l))) return `<span class="h-li">${E(m[1])}</span>` + tok(m[2]);
-      return tok(l);
-    });
-    const h = $('hl'); h.innerHTML = out.join('\n') + '\n ';
-    h.scrollTop = $('fTesto').scrollTop; h.scrollLeft = $('fTesto').scrollLeft;
-  }
-  $('fTesto').addEventListener('scroll', () => { $('hl').scrollTop = $('fTesto').scrollTop; $('hl').scrollLeft = $('fTesto').scrollLeft; });
-  if (window.ResizeObserver) new ResizeObserver(evidenzia).observe($('fTesto'));
-
-  function inserisci(modello) { // "prima|selezione o segnaposto|dopo"
-    const t = $('fTesto'), [a, m, d = ''] = modello.replace(/\\n/g, '\n').split('|'), i = t.selectionStart, f = t.selectionEnd;
-    const sel = t.value.slice(i, f) || m || '';
-    t.value = t.value.slice(0, i) + a + sel + d + t.value.slice(f);
-    t.focus(); t.setSelectionRange(i + a.length, i + a.length + sel.length); anteprima();
+  function chips() {
+    const cs = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].sort();
+    $('cats').innerHTML = cs.length > 1 ? ['Tutte', ...cs].map((c, i) => `<button type="button" class="chip${(i ? c : '') === cat ? ' on' : ''}" data-c="${i ? E(c) : ''}">${E(c)}</button>`).join('') : '';
   }
 
-  /* ---------- immagini: pannello di controllo (dimensione, posizione, altezza rispetto alle parole) ---------- */
-  const RE_IMG = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
-  let imgSel = null, tImg = null;   // imgSel = posizione {i,f} dell'immagine in modifica dentro il testo
-  const tutteImg = () => { const t = $('fTesto').value, r = []; let m; RE_IMG.lastIndex = 0; while ((m = RE_IMG.exec(t))) r.push({ i: m.index, f: m.index + m[0].length, alt: m[1], url: m[2] }); return r; };
-  const chiudiImg = () => { $('imgPanel').hidden = true; imgSel = null; clearTimeout(tImg); };
+  // INDICE della pagina aperta: costruito dai titoli ## e ### del testo, mostrato nella colonna laterale
+  function indice() {
+    const hs = [...$('pTesto').querySelectorAll('h2, h3')], usati = {};
+    hs.forEach(h => { const b = h.id || 'sezione'; usati[b] = (usati[b] || 0) + 1; if (usati[b] > 1) h.id = b + '-' + usati[b]; });
+    $('toc').innerHTML = hs.map(h => `<a class="sb-item t${h.tagName[1]}" href="#" data-s="${E(h.id)}"><span>${E(h.textContent)}</span></a>`).join('');
+    $('sbToc').hidden = !hs.length;
+  }
 
-  function leggiCampi() {
-    const o = { didas: $('iDid').value.replace(/[|\[\]]/g, ' ').trim(), w: '', h: '', pos: $('iPos').value, va: $('iVa').value,
-      y: parseInt($('iY').value, 10) || 0, cap: $('iCap').checked, nob: $('iNob').checked, fit: $('iFit').value, dark: false, ns: false, br: false };
-    const graf = Wiki.eGrafico($('iUrl').value.trim()); $('gOpz').hidden = !graf;   // scuro / noseggi esistono solo per i grafici CEPU
-    if (graf) { o.dark = $('iScuro').checked; o.ns = $('iNoS').checked; o.br = $('iBarre').checked; }
-    $('iNoS').disabled = $('iBarre').checked;   // con le barre l'emiciclo non c'è
-    const w = parseInt($('iW').value, 10); if (w > 0) o.w = w + $('iWu').value;
-    const h = parseInt($('iH').value, 10); if (h > 0) o.h = String(h);
-    if (o.pos) o.va = '';                      // l'allineamento verticale vale solo per le immagini in riga
-    $('iVa').disabled = !!o.pos;
-    return o;
+  function route() {
+    const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id);
+    sidebar();
+    $('vCerca').hidden = !!p; $('vPagina').hidden = !p;
+    if (!p) { document.title = 'Estji Wiki'; $('sbToc').hidden = true; return; }
+    document.title = p.titolo + ' — Estji Wiki';
+    $('pTitolo').textContent = p.titolo;
+    $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
+      `<span>Ultima modifica: ${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</span>`;
+    $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
+    const rif = pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
+    $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
+    indice(); window.scrollTo(0, 0);
   }
-  function apriImg(sel) {
-    chiudiTab();
-    imgSel = sel ? { i: sel.i, f: sel.f } : null;
-    const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '', dark: false, ns: false };
-    $('iUrl').value = sel ? sel.url : ''; $('iDid').value = o.didas;
-    $('iW').value = o.w ? parseInt(o.w, 10) : ''; $('iWu').value = /%$/.test(o.w) ? '%' : 'px'; $('iH').value = o.h;
-    $('iFit').value = o.fit; $('iPos').value = o.pos === 'in' ? '' : o.pos; $('iVa').value = o.va; $('iY').value = o.y || '';
-    $('iCap').checked = o.cap; $('iNob').checked = o.nob; $('iScuro').checked = !!o.dark; $('iNoS').checked = !!o.ns; $('iBarre').checked = !!o.br;
-    $('imgTit').textContent = sel ? 'Modifica immagine' : 'Nuova immagine'; $('iDel').hidden = !sel;
-    $('imgPanel').hidden = false; leggiCampi();
-    caricaAlbero();
-    if (!sel) $('iUrl').focus();
-  }
-  function applica() {          // scrive subito nel testo: l'anteprima si aggiorna mentre cambi i valori
-    const url = $('iUrl').value.trim(), o = leggiCampi();
-    if (!/^https?:\/\/[^\s)]+$/.test(url)) return;
-    const code = Wiki.imgSintassi(o, url), t = $('fTesto');
-    if (imgSel) { t.value = t.value.slice(0, imgSel.i) + code + t.value.slice(imgSel.f); imgSel.f = imgSel.i + code.length; }
-    else { const p = t.selectionEnd; t.value = t.value.slice(0, p) + code + t.value.slice(p); imgSel = { i: p, f: p + code.length }; $('iDel').hidden = false; $('imgTit').textContent = 'Modifica immagine'; }
-    anteprima();
-  }
-  const rinvia = () => { leggiCampi(); clearTimeout(tImg); tImg = setTimeout(applica, 300); };
 
-  $('btnImg').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriImg(tutteImg().find(x => p >= x.i && p <= x.f) || null); });
-  $('btnGraf').addEventListener('click', async () => {      // grafico di un'elezione CEPU: si comporta come un'immagine (stesso pannello)
-    const r = await Wiki.inserisciGrafico($('fTesto')); if (!r) return;
-    const s = tutteImg().find(x => x.i >= r.i && x.url === r.url);
-    if (s) { apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  $('q').addEventListener('input', cerca);
+  $('cats').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { cat = b.dataset.c; chips(); cerca(); } });
+  $('indietro').addEventListener('click', e => { e.preventDefault(); history.pushState(null, '', location.pathname + location.search); route(); });
+  $('pMeta').addEventListener('click', e => { const a = e.target.closest('[data-t]'); if (a) { e.preventDefault(); history.pushState(null, '', location.pathname); $('q').value = a.dataset.t; route(); cerca(); } });
+  $('toc').addEventListener('click', e => {   // niente "#id" nell'indirizzo: l'hash serve a scegliere la pagina
+    const a = e.target.closest('[data-s]'); if (!a) return; e.preventDefault();
+    const h = document.getElementById(a.dataset.s); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-  $('imgPanel').addEventListener('input', rinvia); $('imgPanel').addEventListener('change', rinvia);
-  $('iChiudi').addEventListener('click', chiudiImg);
-  $('iDel').addEventListener('click', () => { if (imgSel) { const t = $('fTesto'); t.value = t.value.slice(0, imgSel.i) + t.value.slice(imgSel.f); anteprima(); } chiudiImg(); });
-  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); if (!$('tabPanel').hidden) chiudiTab(); });   // se torni a scrivere, le posizioni nel testo cambiano: chiude il pannello
-  $('anteprima').addEventListener('click', e => {           // clic su un'immagine dell'anteprima = modificala
-    const el = e.target.closest('[data-im]');
-    if (!el) { const tb = e.target.closest('table[data-tb]'); if (tb && !e.target.closest('a')) { const x = tutteTab()[+tb.dataset.tb]; if (x) { apriTab(x); $('tabPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } } return; }
-    const s = tutteImg()[+el.dataset.im]; if (s) { e.preventDefault(); apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-  });
+  window.addEventListener('hashchange', route);
 
-  /* ---------- TABELLE: editor a griglia ----------
-     Il testo contiene un blocco {{tabella … }}. La griglia lavora su un modello: ogni cella ha posizione (r,c), righe/colonne
-     occupate (rs,cs), testo e formato; la tabella è sempre completa (nessun buco). A ogni modifica il blocco viene riscritto
-     nel testo con Wiki.tabSintassi e l'anteprima si aggiorna. */
-  let tab = null, tabSel = null, tbA = { r: 0, c: 0 }, tbB = { r: 0, c: 0 }, tbDrag = null, tbMulti = false;
-  const tbTds = new Map();
-  const TB_BG = ['#ffffff', '#e8e8e8', '#9e9e9e', '#000000', '#ea9999', '#e53935', '#f9cb9c', '#ff9800', '#ffe599', '#ffd700', '#b6d7a8', '#009246', '#a4c2f4', '#1e90ff', '#043a96', '#b4a7d6', '#d5a6bd'];
-  const TB_TC = ['#ffffff', '#000000', '#e53935', '#1e90ff', '#009246'];
-  const TB_AL = { s: 'left', c: 'center', d: 'right' };
-  const tbCell = (r, c, o) => Object.assign({ r, c, rs: 1, cs: 1, t: '', th: false, bg: '', tc: '', al: '', va: '', w: '', b: false, i: false }, o);
-  const tbSw = (az, l) => l.map(c => `<button type="button" class="tb-sw" style="background:${c}" data-ta="${az}" data-v="${c}" title="${c}"></button>`).join('');
-  $('tbSwBg').innerHTML = tbSw('bg', TB_BG); $('tbSwTc').innerHTML = tbSw('tc', TB_TC);
-
-  function tbMap() {
-    const g = Array.from({ length: tab.R }, () => Array(tab.C).fill(null));
-    tab.cells.forEach(x => { for (let r = x.r; r < x.r + x.rs && r < tab.R; r++) for (let c = x.c; c < x.c + x.cs && c < tab.C; c++) g[r][c] = x; });
-    return g;
-  }
-  function tbFill() { const g = tbMap(); for (let r = 0; r < tab.R; r++) for (let c = 0; c < tab.C; c++) if (!g[r][c]) tab.cells.push(tbCell(r, c)); }
-  const tbClamp = () => [tbA, tbB].forEach(p => { p.r = Math.max(0, Math.min(p.r, tab.R - 1)); p.c = Math.max(0, Math.min(p.c, tab.C - 1)); });
-
-  function tbParse(testo) {      // blocco di testo -> modello
-    const L = testo.split('\n'), tit = L[0].trim().replace(/^\{\{\s*tabella\b\s*/i, '').replace(/\}\}\s*$/, ''), lin = L.slice(1);
-    if (lin.length && lin[lin.length - 1].trim() === '}}') lin.pop();
-    const p = Wiki.tabParse(tit, lin), occ = new Set(), R = p.righe.length, cells = []; let C = 0;
-    p.righe.forEach((riga, r) => {
-      let c = 0;
-      riga.forEach(x => {
-        while (occ.has(r + ',' + c)) c++;
-        x.rs = Math.min(x.rs, R - r);
-        for (let i = r; i < r + x.rs; i++) for (let j = c; j < c + x.cs; j++) occ.add(i + ',' + j);
-        cells.push(tbCell(r, c, x)); c += x.cs; C = Math.max(C, c);
-      });
-    });
-    tab = { titolo: p.titolo, piena: p.piena, R: Math.max(R, 1), C: Math.max(C, 1), cells };
-    tbFill();
-  }
-  function tbSerialize() {       // modello -> blocco di testo
-    const righe = Array.from({ length: tab.R }, () => []);
-    tab.cells.slice().sort((a, b) => a.c - b.c).forEach(x => righe[x.r].push(x));
-    return Wiki.tabSintassi({ titolo: tab.titolo, piena: tab.piena, righe });
-  }
-  function tbCommit() {          // scrive la tabella nel testo
-    const code = tbSerialize(), t = $('fTesto');
-    t.value = t.value.slice(0, tabSel.i) + code + t.value.slice(tabSel.f); tabSel.f = tabSel.i + code.length; anteprima();
-  }
-
-  function tutteTab() {          // blocchi {{tabella}} presenti nel testo, nello stesso ordine in cui li disegna Wiki.render
-    const v = $('fTesto').value, r = []; let pos = 0, st = null;
-    v.split('\n').forEach(l => {
-      const t = l.trim();
-      if (st === null && /^\{\{\s*tabella\b/i.test(t)) { if (/\}\}\s*$/.test(t)) r.push({ i: pos, f: pos + l.length }); else st = pos; }
-      else if (st !== null && t === '}}') { r.push({ i: st, f: pos + l.length }); st = null; }
-      pos += l.length + 1;
-    });
-    if (st !== null) r.push({ i: st, f: v.length });
-    return r.map(x => ({ i: x.i, f: x.f, testo: v.slice(x.i, x.f) }));
-  }
-
-  // selezione: rettangolo tra tbA e tbB, allargato finché non taglia nessuna cella unita
-  function tbRect() {
-    let r1 = Math.min(tbA.r, tbB.r), r2 = Math.max(tbA.r, tbB.r), c1 = Math.min(tbA.c, tbB.c), c2 = Math.max(tbA.c, tbB.c);
-    for (let ch = true; ch;) {
-      ch = false;
-      tab.cells.forEach(x => {
-        if (x.r <= r2 && x.r + x.rs - 1 >= r1 && x.c <= c2 && x.c + x.cs - 1 >= c1) {
-          if (x.r < r1) { r1 = x.r; ch = true; } if (x.r + x.rs - 1 > r2) { r2 = x.r + x.rs - 1; ch = true; }
-          if (x.c < c1) { c1 = x.c; ch = true; } if (x.c + x.cs - 1 > c2) { c2 = x.c + x.cs - 1; ch = true; }
-        }
-      });
-    }
-    return { r1, r2, c1, c2 };
-  }
-  const tbSelCells = () => { const q = tbRect(); return tab.cells.filter(x => x.r <= q.r2 && x.r + x.rs - 1 >= q.r1 && x.c <= q.c2 && x.c + x.cs - 1 >= q.c1); };
-
-  // inserisce una riga ('r') o colonna ('c') prima della posizione at; le celle unite che la attraversano si allargano
-  function tbIns(ax, at) {
-    const s = ax === 'r' ? 'rs' : 'cs';
-    tab.cells.forEach(x => { if (x[ax] >= at) x[ax]++; else if (x[ax] + x[s] > at) x[s]++; });
-    tab[ax.toUpperCase()]++; tbFill();
-  }
-  // elimina le righe/colonne da a1 a a2 (le celle unite si accorciano, quelle interamente dentro spariscono)
-  function tbDel(ax, a1, a2) {
-    const s = ax === 'r' ? 'rs' : 'cs', K = ax.toUpperCase(), n = a2 - a1 + 1;
-    if (n >= tab[K]) return;
-    tab.cells = tab.cells.filter(x => {
-      const a = x[ax], b = x[ax] + x[s] - 1;
-      if (a >= a1 && b <= a2) return false;
-      const ov = Math.max(0, Math.min(b, a2) - Math.max(a, a1) + 1);
-      if (a > a2) x[ax] -= n; else if (a >= a1) { x[ax] = a1; x[s] -= ov; } else x[s] -= ov;
-      return true;
-    });
-    tab[K] -= n;
-  }
-  function tbSize(R, C) {
-    R = Math.max(1, Math.min(60, R | 0)); C = Math.max(1, Math.min(20, C | 0));
-    while (tab.R < R) tbIns('r', tab.R);
-    if (tab.R > R) tbDel('r', R, tab.R - 1);
-    while (tab.C < C) tbIns('c', tab.C);
-    if (tab.C > C) tbDel('c', C, tab.C - 1);
-  }
-  function tbMerge() {
-    const q = tbRect(), cs = tbSelCells().sort((a, b) => a.r - b.r || a.c - b.c); if (cs.length < 2) return;
-    const o = cs[0], txt = cs.map(x => x.t.trim()).filter(Boolean).join('\n');
-    tab.cells = tab.cells.filter(x => cs.indexOf(x) < 0);
-    tab.cells.push(Object.assign(o, { r: q.r1, c: q.c1, rs: q.r2 - q.r1 + 1, cs: q.c2 - q.c1 + 1, t: txt }));
-    tbA = { r: q.r1, c: q.c1 }; tbB = { r: q.r1, c: q.c1 };
-  }
-  function tbSplit() {
-    tbSelCells().forEach(x => {
-      for (let r = x.r; r < x.r + x.rs; r++) for (let c = x.c; c < x.c + x.cs; c++) if (r !== x.r || c !== x.c) tab.cells.push(tbCell(r, c, { th: x.th, bg: x.bg, tc: x.tc, al: x.al, va: x.va, b: x.b, i: x.i }));
-      x.rs = 1; x.cs = 1;
-    });
-  }
-
-  function tbAuto() { document.querySelectorAll('#tbGrid textarea').forEach(a => { a.style.height = 'auto'; a.style.height = a.scrollHeight + 'px'; }); }
-  function tbPaint() {
-    const q = tbRect(), g = tbMap(), act = g[tbA.r] && g[tbA.r][tbA.c], sc = tbSelCells();
-    tbTds.forEach((td, x) => {
-      td.classList.toggle('sel', sc.length > 1 && sc.indexOf(x) >= 0); td.classList.toggle('act', x === act);
-      td.style.background = x.bg || (x.th ? 'rgba(79,208,255,.15)' : '');
-      td.style.color = x.tc || (x.bg ? Wiki.tabContrasto(x.bg) : '');
-      td.style.textAlign = x.al ? TB_AL[x.al] : (x.th ? 'center' : '');
-      td.style.fontWeight = x.b || x.th ? '700' : ''; td.style.fontStyle = x.i ? 'italic' : '';
-    });
-    $('tbInfo').textContent = 'Selezione: ' + (sc.length > 1 ? (q.r2 - q.r1 + 1) + ' × ' + (q.c2 - q.c1 + 1) + ' (' + sc.length + ' celle)' : 'riga ' + (q.r1 + 1) + ', colonna ' + (q.c1 + 1));
-  }
-  function tbSync() {            // porta nella barra gli strumenti i valori della cella attiva
-    const g = tbMap(), x = g[tbA.r] && g[tbA.r][tbA.c]; if (!x) return;
-    $('tbBg').value = x.bg || '#ffffff'; $('tbTc').value = x.tc || (x.bg ? Wiki.tabContrasto(x.bg) : '#ffffff'); $('tbW').value = x.w ? parseInt(x.w, 10) : '';
-    $('tabPanel').querySelectorAll('[data-ta="th"],[data-ta="b"],[data-ta="i"],[data-ta="al"],[data-ta="va"]').forEach(b => {
-      const a = b.dataset.ta; b.classList.toggle('pri', a === 'th' ? x.th : a === 'b' ? x.b : a === 'i' ? x.i : x[a] === b.dataset.v);
-    });
-  }
-  function tbRebuild(salva) {
-    const gr = $('tbGrid'), sx = gr.scrollLeft, sy = gr.scrollTop; tbTds.clear(); tbClamp();
-    const rows = Array.from({ length: tab.R }, () => []); tab.cells.forEach(x => rows[x.r].push(x));
-    const tbl = document.createElement('table'); tbl.style.width = tab.C * 130 + 'px';
-    rows.forEach(rw => {
-      const tr = tbl.insertRow();
-      rw.sort((a, b) => a.c - b.c).forEach(x => {
-        const td = tr.insertCell(), ta = document.createElement('textarea');
-        td.rowSpan = x.rs; td.colSpan = x.cs; td._x = x; ta._x = x; ta.value = x.t; ta.rows = 1; ta.spellcheck = false;
-        ta.setAttribute('aria-label', 'Cella riga ' + (x.r + 1) + ', colonna ' + (x.c + 1)); td.appendChild(ta); tbTds.set(x, td);
-      });
-    });
-    gr.replaceChildren(tbl); tbAuto(); tbPaint(); tbSync(); gr.scrollLeft = sx; gr.scrollTop = sy;
-    $('tbR').value = tab.R; $('tbC').value = tab.C;
-    if (salva) tbCommit();
-  }
-
-  function apriTab(sel) {
-    chiudiImg(); const t = $('fTesto');
-    if (sel) { tabSel = { i: sel.i, f: sel.f }; tbParse(sel.testo); }
-    else {
-      tab = { titolo: '', piena: true, R: 3, C: 3, cells: [] };
-      for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) tab.cells.push(tbCell(r, c, r ? {} : { th: true, t: 'Colonna ' + (c + 1) }));
-      const v = t.value, p = t.selectionEnd, pre = p && v[p - 1] !== '\n' ? '\n' : '', post = v[p] && v[p] !== '\n' ? '\n' : '', code = tbSerialize();
-      t.value = v.slice(0, p) + pre + code + post + v.slice(p);
-      tabSel = { i: p + pre.length, f: p + pre.length + code.length }; anteprima();
-    }
-    tbA = { r: 0, c: 0 }; tbB = { r: 0, c: 0 }; tbMulti = false;
-    $('tabPanel').querySelector('[data-ta="multi"]').classList.remove('pri');
-    $('tbTit').textContent = sel ? 'Modifica tabella' : 'Nuova tabella'; $('tbTitolo').value = tab.titolo; $('tbPiena').checked = tab.piena;
-    $('tabPanel').hidden = false; tbRebuild(false);
-    $('tabPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
-  function chiudiTab() { $('tabPanel').hidden = true; tab = null; tabSel = null; tbDrag = null; tbTds.clear(); }
-
-  // azioni della barra strumenti
-  function tbAz(a, v) {
-    const sc = tbSelCells(), q = tbRect(), tutte = (f) => sc.every(f);
-    let strutt = true;
-    switch (a) {
-      case 'merge': tbMerge(); break;
-      case 'split': tbSplit(); break;
-      case 'rowUp': tbIns('r', q.r1); tbA.r++; tbB.r++; break;
-      case 'rowDn': tbIns('r', q.r2 + 1); break;
-      case 'colL': tbIns('c', q.c1); tbA.c++; tbB.c++; break;
-      case 'colR': tbIns('c', q.c2 + 1); break;
-      case 'rowDel': tbDel('r', q.r1, q.r2); break;
-      case 'colDel': tbDel('c', q.c1, q.c2); break;
-      case 'size': tbSize(+$('tbR').value || 1, +$('tbC').value || 1); break;
-      default: strutt = false;
-    }
-    if (!strutt) {
-      if (a === 'th') { const on = !tutte(x => x.th); sc.forEach(x => { x.th = on; }); }
-      else if (a === 'b') { const on = !tutte(x => x.b); sc.forEach(x => { x.b = on; }); }
-      else if (a === 'i') { const on = !tutte(x => x.i); sc.forEach(x => { x.i = on; }); }
-      else if (a === 'al' || a === 'va') { const off = tutte(x => x[a] === v); sc.forEach(x => { x[a] = off ? '' : v; }); }
-      else if (a === 'bg' || a === 'tc') sc.forEach(x => { x[a] = v || ''; });
-      else if (a === 'w') sc.forEach(x => { const n = parseInt(v, 10); x.w = n > 0 ? n + 'px' : ''; });
-      else if (a === 'clear') sc.forEach(x => { x.bg = x.tc = x.al = x.va = ''; x.b = x.i = x.th = false; });
-      tbPaint(); tbSync(); tbCommit(); return;
-    }
-    tbFill(); tbRebuild(true);
-  }
-
-  $('btnTab').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriTab(tutteTab().find(x => p >= x.i && p <= x.f) || null); });
-  $('tabPanel').addEventListener('click', e => {
-    const b = e.target.closest('[data-ta]'); if (!b || !tab) return;
-    const a = b.dataset.ta;
-    if (a === 'chiudi') { chiudiTab(); return; }
-    if (a === 'rimuovi') {
-      if (!confirm('Rimuovere questa tabella dal testo?')) return;
-      const t = $('fTesto'); t.value = t.value.slice(0, tabSel.i) + t.value.slice(tabSel.f + (t.value[tabSel.f] === '\n' ? 1 : 0)); anteprima(); chiudiTab(); return;
-    }
-    if (a === 'multi') { tbMulti = !tbMulti; b.classList.toggle('pri', tbMulti); return; }
-    tbAz(a, b.dataset.v);
-  });
-  $('tabPanel').addEventListener('input', e => {
-    if (!tab) return; const id = e.target.id;
-    if (id === 'tbTitolo') { tab.titolo = e.target.value; tbCommit(); }
-    else if (id === 'tbPiena') { tab.piena = e.target.checked; tbCommit(); }
-    else if (id === 'tbBg') tbAz('bg', e.target.value);
-    else if (id === 'tbTc') tbAz('tc', e.target.value);
-    else if (id === 'tbW') tbAz('w', e.target.value);
-  });
-  $('tabPanel').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault(); });   // Invio non deve salvare la pagina
-
-  const grid = $('tbGrid');
-  grid.addEventListener('mousedown', e => {      // clic = seleziona · Maiusc+clic (o "selezione multipla") = estende · trascina = rettangolo
-    const td = e.target.closest('td'); if (!td || !td._x) return; const x = td._x;
-    if (e.shiftKey || tbMulti) { e.preventDefault(); tbB = { r: x.r, c: x.c }; }
-    else { tbA = { r: x.r, c: x.c }; tbB = { r: x.r, c: x.c }; tbDrag = x; }
-    tbPaint(); tbSync();
-  });
-  grid.addEventListener('mouseover', e => {
-    if (!tbDrag) return; const td = e.target.closest('td'); if (!td || !td._x) return;
-    if (td._x === tbDrag && tbA.r === tbB.r && tbA.c === tbB.c) return;
-    tbB = { r: td._x.r, c: td._x.c };
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    if (window.getSelection) window.getSelection().removeAllRanges();
-    tbPaint(); tbSync();
-  });
-  document.addEventListener('mouseup', () => { tbDrag = null; });
-  grid.addEventListener('focusin', e => {        // Tab / frecce tra le celle: la selezione segue il cursore
-    const x = e.target._x; if (!x || e.target.tagName !== 'TEXTAREA' || tbDrag || tbMulti) return;
-    tbA = { r: x.r, c: x.c }; tbB = { r: x.r, c: x.c }; tbPaint(); tbSync();
-  });
-  grid.addEventListener('input', e => {
-    const x = e.target._x; if (!x) return;
-    x.t = e.target.value; e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; tbCommit();
-  });
-  grid.addEventListener('paste', e => {          // incolla da Excel / Fogli (testo con tabulazioni): riempie le celle a partire da questa
-    const x = e.target._x, tx = e.clipboardData ? e.clipboardData.getData('text') : ''; if (!x || tx.indexOf('\t') < 0) return;
-    e.preventDefault();
-    const righe = tx.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t'));
-    tbSize(Math.max(tab.R, x.r + righe.length), Math.max(tab.C, x.c + Math.max.apply(null, righe.map(r => r.length))));
-    const g = tbMap(); righe.forEach((rw, i) => rw.forEach((v, j) => { const y = g[x.r + i] && g[x.r + i][x.c + j]; if (y) y.t = v.trim(); }));
-    tbRebuild(true);
-  });
-
-  /* ---------- albero delle immagini: repo pubblica GitHub RETEFORLIVESE/IMG ----------
-     clic sul nome = copia il link · ➕ = inserisce l'immagine nel testo (o ne cambia l'indirizzo se il pannello immagine è aperto) */
-  const REPO_IMG = 'RETEFORLIVESE/IMG', EST_IMG = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
-  let imgFiles = null, imgRamo = 'main', riep = '', tNota = 0;
-  const urlImg = p => `https://raw.githubusercontent.com/${REPO_IMG}/${imgRamo}/` + p.split('/').map(s => encodeURIComponent(s).replace(/[()']/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
-  const nota = (t, ok) => { const n = $('tNote'); n.textContent = t; n.className = 'note' + (ok ? ' ok' : ''); };
-
-  async function caricaAlbero(forza) {
-    if (imgFiles && !forza) return;
-    if (!forza) { try { const c = JSON.parse(sessionStorage.getItem('wiki_img_albero') || 'null'); if (c && c.f) { imgFiles = c.f; imgRamo = c.b; disegna(); return; } } catch (e) {} }
-    nota('Carico le immagini da GitHub…');
-    try {
-      const gh = async u => { const r = await fetch('https://api.github.com/repos/' + REPO_IMG + u, { headers: { Accept: 'application/vnd.github+json' } }); if (!r.ok) throw new Error('GitHub HTTP ' + r.status + (r.status === 403 ? " (limite di richieste, riprova tra un po')" : '')); return r.json(); };
-      imgRamo = (await gh('')).default_branch || 'main';
-      const t = await gh('/git/trees/' + encodeURIComponent(imgRamo) + '?recursive=1');
-      imgFiles = t.tree.filter(x => x.type === 'blob' && EST_IMG.test(x.path)).map(x => x.path);
-      try { sessionStorage.setItem('wiki_img_albero', JSON.stringify({ b: imgRamo, f: imgFiles })); } catch (e) {}
-      disegna(); if (t.truncated) nota('Attenzione: GitHub ha troncato l\'elenco (repo molto grande).');
-    } catch (e) { nota('Errore: ' + e.message); }
-  }
-
-  function disegna() {
-    const q = $('tFiltro').value.trim().toLowerCase(), radice = { d: {}, f: [] };
-    imgFiles.forEach(p => { const s = p.split('/'); let n = radice; s.slice(0, -1).forEach(k => { n = n.d[k] || (n.d[k] = { d: {}, f: [] }); }); n.f.push({ nome: s[s.length - 1], path: p }); });
-    const cmp = (a, b) => a.localeCompare(b, 'it', { numeric: true });
-    const nodo = n => {
-      let h = '', tot = 0;
-      Object.keys(n.d).sort(cmp).forEach(k => { const r = nodo(n.d[k]); if (r.tot) { tot += r.tot; h += `<details${q ? ' open' : ''}><summary>📁 ${E(k)} <small>(${r.tot})</small></summary>${r.h}</details>`; } });
-      n.f.filter(f => !q || f.nome.toLowerCase().includes(q)).sort((a, b) => cmp(a.nome, b.nome)).forEach(f => {
-        tot++; h += `<div class="tf"><button type="button" class="tcp" data-p="${E(f.path)}" title="Copia il link"><img loading="lazy" alt="" src="${E(urlImg(f.path))}"><span>${E(f.nome)}</span></button><button type="button" class="btn tadd" data-p="${E(f.path)}" title="Inserisci nel testo">➕</button></div>`;
-      });
-      return { h, tot };
-    };
-    const r = nodo(radice);
-    $('tree').innerHTML = r.h || '<p class="note">Nessuna immagine trovata.</p>';
-    riep = (q ? r.tot + ' risultati' : imgFiles.length + ' immagini') + ' · clic sul nome per copiare il link'; nota(riep);
-  }
-
-  async function copia(testo) {
-    try { await navigator.clipboard.writeText(testo); return true; } catch (e) {}
-    const t = document.createElement('textarea'); t.value = testo; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
-    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} t.remove(); return ok;
-  }
-
-  $('tree').addEventListener('click', async e => {
-    const b = e.target.closest('[data-p]'); if (!b) return;
-    const url = urlImg(b.dataset.p), nome = b.dataset.p.split('/').pop();
-    if (b.classList.contains('tadd')) { if ($('imgPanel').hidden) apriImg(null); $('iUrl').value = url; applica(); nota('➕ Inserita nel testo: ' + nome, true); }
-    else { const ok = await copia(url); nota(ok ? '✅ Link copiato: ' + nome : 'Copia non riuscita, riprova', ok); }
-    clearTimeout(tNota); tNota = setTimeout(() => nota(riep), 2500);
-  });
-  $('tFiltro').addEventListener('input', () => { if (imgFiles) disegna(); });
-  $('tFiltro').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });   // Invio non deve salvare la pagina
-  $('tRicarica').addEventListener('click', () => { try { sessionStorage.removeItem('wiki_img_albero'); } catch (e) {} caricaAlbero(true); });
-
-  async function salva(e) {
-    e.preventDefault();
-    if (!$('fTitolo').value.trim()) { msg('Inserisci almeno il titolo.'); return; }
-    const pagina = { titolo: $('fTitolo').value, categoria: $('fCat').value, tag: $('fTag').value.split(','), sommario: $('fSomm').value,
-      immagine: $('fImg').value, id: $('fId').value, contenuto: $('fTesto').value };
-    const b = $('salva'); b.disabled = true; b.textContent = 'Salvataggio…'; msg('');
-    try {
-      const d = await Wiki.salvaPagina(pagina, idMod);
-      pagine = pagine.filter(p => p.id !== idMod && p.id !== d.pagina.id); pagine.push(d.pagina);
-      idMod = d.pagina.id; $('fId').value = idMod; $('elimina').hidden = false; elenco();
-      msg('✅ Salvato sul database. La pagina è visibile a tutti.', true);
-    } catch (er) {
-      msg('Errore salvataggio: ' + er.message);
-      if (!Wiki.isAuthenticated()) { alert('Sessione scaduta: effettua di nuovo il login. Il testo non è stato perso, copialo prima di ricaricare.'); }
-    } finally { b.disabled = false; b.textContent = '💾 Salva sul database'; }
-  }
-
-  async function elimina() {
-    const p = pagine.find(x => x.id === idMod);
-    if (!p || !confirm(`Eliminare "${p.titolo}"?`)) return;
-    try { await Wiki.eliminaPagina(p.id); pagine = pagine.filter(x => x.id !== p.id); elenco(); vista(false); }
-    catch (er) { msg('Errore eliminazione: ' + er.message); }
-  }
-
-  async function avvia() {
-    try { pagine = await Wiki.load(); } catch (e) { $('msgElenco').textContent = 'Errore nel caricamento: ' + e.message; pagine = []; }
-    elenco(); vista(false);
-    const n = new URLSearchParams(location.search).get('nuova'); // dal link rosso [[...]] della wiki
-    if (n != null) apri(null, n);
-  }
-
-  $('filtro').addEventListener('input', elenco);
-  $('nuova').addEventListener('click', () => apri(null));
-  $('elenco').addEventListener('click', e => { const b = e.target.closest('[data-mod]'); if (b) apri(pagine.find(p => p.id === b.dataset.mod)); });
-  $('annulla').addEventListener('click', () => vista(false));
-  $('elimina').addEventListener('click', elimina);
-  $('vEditor').addEventListener('submit', salva);
-  $('fTesto').addEventListener('input', anteprima);
-  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg,#btnGraf,#btnTab')) e.preventDefault(); });
-  $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
-  window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
-
-  setupLogin();
-  if (Wiki.isAuthenticated()) { $('adminUsernameLabel').textContent = Wiki._s.username || ''; mostra(true); avvia(); } else mostra(false);
+  $('q').value = new URLSearchParams(location.search).get('q') || '';
+  sidebar();
+  Wiki.load().then(d => { pagine = d; chips(); cerca(); route(); })
+    .catch(e => { $('count').textContent = ''; $('lista').innerHTML = `<div class="err">Impossibile caricare la wiki (${E(e.message)}).</div>`; });
 })();
 </script>
 </body>
