@@ -277,7 +277,13 @@ const Wiki = {
       const dim = (w, h) => (w ? 'width:' + w + ';' : '') + (h ? 'height:' + h + 'px;' : '') + (fit && w && h ? 'object-fit:' + fit + ';' : '');
       const base = `src="${url}" alt="${o.didas}" loading="lazy"`;
       if (Wiki.eGrafico(url)) return Wiki.graficoHtml(o, n, url);   // link CEPU.html?tipo=…&data=… -> grafico dell'elezione
-      if (inIb) return `<img ${base} data-im="${n}"` + (o.w || o.h ? ` style="${o.w ? 'flex:none;' : ''}${dim(o.w, o.h)}${o.h ? 'max-height:none;' : ''}"` : '') + '>';
+      if (inIb) {   // dentro la scheda: larghezza e altezza sono sempre quelle scelte (annullano i limiti del CSS); se ne dai una sola, l'altra segue le proporzioni
+        const st = [];
+        if (o.w || o.h) st.push('flex:none', 'max-width:none', 'max-height:none', 'width:' + (o.w || 'auto'), 'height:' + (o.h ? o.h + 'px' : 'auto'));
+        if (o.w && o.h && fit) st.push('object-fit:' + fit);
+        if (o.y) st.push('position:relative', 'top:' + o.y + 'px');
+        return `<img ${base} data-im="${n}"${o.nob ? ' class="nb"' : ''}${st.length ? ` style="${st.join(';')}"` : ''}>`;
+      }
       if (o.pos === 'in' || (!o.pos && !o.cap)) {
         const s = dim(o.w, o.h) + (o.va ? 'vertical-align:' + va[o.va] + ';' : '') + (o.y ? 'position:relative;top:' + o.y + 'px;' : '') + (o.va || o.y ? 'margin:0 3px;' : '');
         return `<img ${base} data-im="${n}"${o.nob ? ' class="nb"' : ''}${s ? ` style="${s}"` : ''}>`;

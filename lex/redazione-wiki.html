@@ -554,7 +554,7 @@
 
   /* ---------- albero delle immagini: repo pubblica GitHub RETEFORLIVESE/IMG ----------
      clic sul nome = copia il link · ➕ = inserisce l'immagine nel testo (o ne cambia l'indirizzo se il pannello immagine è aperto) */
-  const REPO_IMG = 'RETEFORLIVESE/IMG', EST_IMG = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
+  const REPO_IMG = 'RETEFORLIVESE/IMG', EST_IMG = /\.(png|jpe?g|gif|webp|svg|avif|ico)$/i;
   let imgFiles = null, imgRamo = 'main', riep = '', tNota = 0;
   const urlImg = p => `https://raw.githubusercontent.com/${REPO_IMG}/${imgRamo}/` + p.split('/').map(s => encodeURIComponent(s).replace(/[()']/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
   const nota = (t, ok) => { const n = $('tNote'); n.textContent = t; n.className = 'note' + (ok ? ' ok' : ''); };
