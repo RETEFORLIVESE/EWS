@@ -336,3 +336,56 @@ body.red .site{max-width:1500px}
 .wk table.ib tr.al-s .ib-imgs{justify-content:flex-start}.wk table.ib tr.al-d .ib-imgs{justify-content:flex-end}
 .wk table.ib .ib-row{padding:6px 9px;text-align:left;font-size:14px;color:#e8f4ff}
 .wk table.ib .ib-row .al-row{margin:0}
+/* =====================================================================
+   PORTALE  ({{portale … }}: pagina-vetrina a riquadri, come Portale:Messico di Wikipedia)
+   .pt          il portale (colori dal testo: --pt = colore, --ptc = colore del testo sopra di esso)
+   .pt-ban      banner con logo, titolo e presentazione
+   .pt-grid     riquadri in colonne (1, 2 o 3: classi pt-c1 / pt-c2 / pt-c3)
+   .pt-box      riquadro (.largo = a tutta larghezza) · .pt-h barra del titolo · .pt-b contenuto
+   ===================================================================== */
+.wk .pt{--pt:#2b9cf2;--ptc:#fff;margin:6px 0 10px}
+.wk .pt-ban{display:flex;align-items:center;gap:16px;padding:14px 16px;margin-bottom:12px;border:1px solid #000;border-radius:8px;color:var(--ptc);
+  background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(0,0,0,.22)),var(--pt);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+.wk .pt-logo{flex:none;width:auto;height:auto;max-width:110px;max-height:110px;margin:0;border:0;border-radius:0;object-fit:contain}
+.wk .pt-bt{flex:1;min-width:0}
+.wk .pt-lab{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.wk .pt-tit{display:block;font-size:30px;line-height:1.15;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.wk .pt-intro p{margin:6px 0 0}
+.wk .pt-intro a{color:inherit;text-decoration:underline}
+.wk .pt-grid{column-count:2;column-gap:12px}
+.wk .pt-c1 .pt-grid{column-count:1}
+.wk .pt-c3 .pt-grid{column-count:3}
+.wk .pt-box{break-inside:avoid;margin:0 0 12px;border:1px solid #000;border-radius:8px;overflow:hidden;
+  background:linear-gradient(180deg,#16233a,#070d18);box-shadow:inset 0 0 0 1px rgba(150,200,255,.3)}
+.wk .pt-box.largo{column-span:all}
+.wk .pt-h{margin:0;padding:6px 12px;font-size:16px;font-weight:700;color:var(--ptc);text-shadow:0 1px 2px rgba(0,0,0,.4);
+  background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(0,0,0,.2)),var(--pt)}
+.wk .pt-h a{color:inherit}
+.wk .pt-b{display:flow-root;padding:6px 12px 10px;overflow-wrap:anywhere}
+.wk .pt-b>:first-child{margin-top:4px}
+.wk .pt-b p:last-child,.wk .pt-b ul:last-child,.wk .pt-b ol:last-child{margin-bottom:0}
+.wk .pt-b h2,.wk .pt-b h3{font-size:16px;margin:12px 0 6px}
+.wk .pt-b ul,.wk .pt-b ol{padding-left:20px}
+/* dentro un riquadro la scheda e le tabelle non galleggiano: occupano la larghezza del riquadro */
+.wk .pt-b table.ib{float:none;clear:both;width:100%;margin:6px 0 10px}
+.wk .pt-b .im-sx,.wk .pt-b .im-dx{max-width:50%}
+/* schermi stretti (o anteprima della redazione): una sola colonna */
+@container (max-width:640px){
+  .wk .pt-grid{column-count:1!important}
+  .wk .pt-ban{flex-wrap:wrap;padding:12px}
+  .wk .pt-tit{font-size:24px}
+  .wk .pt-logo{max-width:80px;max-height:80px}
+}
+/* redazione: clic su banner o barra del titolo = apre il pannello del portale */
+#anteprima .pt-ban,#anteprima .pt-h{cursor:pointer}
+#anteprima .pt-ban:hover,#anteprima .pt-h:hover{outline:2px dashed #ffd84a;outline-offset:2px}
+/* pannello portale (redazione) */
+#ptBoxes .pt-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(160,200,255,.2)}
+#ptBoxes .pt-row input[type=text]{flex:1 1 170px;min-width:0}
+#ptBoxes .pt-row select{width:auto;flex:none}
+#ptBoxes .pt-row input[type=color]{width:36px;min-height:30px;height:30px;padding:0;border:1px solid #000;border-radius:4px;background:none;cursor:pointer;flex:none}
+#ptBoxes .pt-row .btn{padding:3px 9px;min-height:30px}
+#ptPanel input[type=color]{width:36px;min-height:30px;height:30px;padding:0;border:1px solid #000;border-radius:4px;background:none;cursor:pointer}
+@media(max-width:720px){#ptBoxes .pt-row .btn{min-height:38px}#ptBoxes .pt-row input[type=color]{min-height:38px;height:38px}}
+#hl .h-pt{color:#38bdf8;font-weight:700}   /* {{portale … }} */
+#hl .h-box{color:#fb923c;font-weight:700}  /* === riquadro */
