@@ -7,7 +7,7 @@
 <title>Estji Wiki</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=14">
+<link rel="stylesheet" href="assets/css/wiki.css?v=15">
 </head>
 <body>
 <div class="site">
@@ -28,6 +28,7 @@
         <input type="search" id="q" placeholder="Cerca per titolo, tag o contenuto…" autocomplete="off" aria-label="Cerca nella wiki">
         <div class="chips" id="portali" hidden></div>
         <div class="chips" id="cats"></div>
+        <p class="note"><a href="#categorie">📂 Sfoglia tutte le categorie</a></p>
         <div class="note" id="count">Caricamento…</div>
         <div id="lista"></div>
       </div>
@@ -38,13 +39,14 @@
         <p><a href="#" id="indietro">&larr; Torna alla ricerca</a></p>
         <div class="meta" id="pMeta"></div>
         <div class="wk" id="pTesto"></div>
+        <div id="pCat"></div>
         <div id="pLink"></div>
       </div>
     </article>
   </main>
   </div>
 </div>
-<script src="assets/js/wiki-core.js?v=12"></script>
+<script src="assets/js/wiki-core.js?v=13"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
@@ -75,7 +77,7 @@
 
   // punteggio: titolo pesa più dei tag, che pesano più del sommario e del contenuto
   function punteggio(p, parole) {
-    const t = Wiki.norm(p.titolo), g = Wiki.norm((p.tag || []).join(' ') + ' ' + p.categoria), s = Wiki.norm(p.sommario), c = Wiki.norm(p.contenuto);
+    const t = Wiki.norm(p.titolo), g = Wiki.norm((p.tag || []).join(' ') + ' ' + Wiki.catDi(p).join(' ')), s = Wiki.norm(p.sommario), c = Wiki.norm(p.contenuto);
     let tot = 0;
     for (const w of parole) {
       const x = (t.startsWith(w) ? 12 : 0) + (t.includes(w) ? 8 : 0) + (g.includes(w) ? 5 : 0) + (s.includes(w) ? 3 : 0) + (c.includes(w) ? 1 : 0);
@@ -91,13 +93,13 @@
   }
   function estratto(p, parole) {
     if (p.sommario) return p.sommario;
-    const c = String(p.contenuto || '').replace(/\{\{\s*(?:infobox|mappa)[\s\S]*?\}\}/gi, ' ').replace(/^\s*@\w+\s.*$/gm, ' ').replace(/^\s*===\s*/gm, '').replace(/\{\{\s*portale\b/gi, '').replace(/\{[^{}\n]*\}/g, ' ').replace(/[#>*`|\[\]]/g, ' ').replace(/\s+/g, ' '), i = parole.length ? Wiki.norm(c).indexOf(parole[0]) : 0;
+    const c = String(p.contenuto || '').replace(/\{\{\s*(?:infobox|mappa)[\s\S]*?\}\}/gi, ' ').replace(/^\s*@\w+\s.*$/gm, ' ').replace(/^\s*===\s*/gm, '').replace(/\{\{\s*portale\b/gi, '').replace(/\{[^{}\n]*\}/g, ' ').replace(/\[\[\s*categoria\s*:[^\]]*\]\]/gi, ' ').replace(/[#>*`|\[\]]/g, ' ').replace(/\s+/g, ' '), i = parole.length ? Wiki.norm(c).indexOf(parole[0]) : 0;
     return (i > 60 ? '…' : '') + c.slice(Math.max(0, i - 60), Math.max(0, i - 60) + 180) + '…';
   }
 
   function cerca() {
     const q = $('q').value.trim(), parole = Wiki.norm(q).split(/\s+/).filter(Boolean);
-    let ris = pagine.filter(p => !cat || p.categoria === cat).map(p => ({ p, s: parole.length ? punteggio(p, parole) : 1 })).filter(r => r.s > 0);
+    let ris = pagine.filter(p => !cat || Wiki.catDi(p).some(n => Wiki.norm(n) === Wiki.norm(cat))).map(p => ({ p, s: parole.length ? punteggio(p, parole) : 1 })).filter(r => r.s > 0);
     ris.sort((a, b) => parole.length ? b.s - a.s : Wiki.norm(a.p.titolo).localeCompare(Wiki.norm(b.p.titolo)));
     $('count').textContent = ris.length + (ris.length === 1 ? ' pagina' : ' pagine') + (q ? ` per “${q}”` : ' nella wiki');
     $('lista').innerHTML = ris.length ? ris.map(({ p }) => `
@@ -108,7 +110,7 @@
   }
 
   function chips() {
-    const cs = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].sort();
+    const cs = Wiki.catElenco(pagine).filter(c => c.membri.length).map(c => c.nome);   // categorie = campo "categoria" + [[Categoria:…]]
     const po = pagine.filter(ePortale).sort((a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo)));   // scorciatoie ai portali
     $('portali').innerHTML = po.length ? '<span class="note">🏠 Portali:</span>' + po.map(p => `<a class="chip" href="#${E(p.id)}">${E(p.titolo)}</a>`).join('') : '';
     $('portali').hidden = !po.length;
@@ -123,17 +125,30 @@
     $('sbToc').hidden = !hs.length;
   }
 
+  // #categorie = indice di tutte le categorie · #categoria-nome = pagina di una categoria anche se nessuno ha ancora scritto "Categoria:Nome"
+  function catVirtuale(id) {
+    if (id === 'categorie') return { titolo: 'Tutte le categorie', html: Wiki.catIndice(Wiki.catElenco(pagine)) };
+    if (!/^categoria-./.test(id)) return null;
+    const el = Wiki.catElenco(pagine), c = el.find(x => x.id === id) || { nome: id.replace(/^categoria-/, '').replace(/-/g, ' '), membri: [], pagina: null, id };
+    return { titolo: 'Categoria:' + c.nome, html: Wiki.catVista(c, el) + (c.pagina ? '' : `<p class="note"><a href="redazione-wiki.html?nuova=${encodeURIComponent('Categoria:' + c.nome)}">Scrivi la descrizione della categoria</a></p>`) };
+  }
   function route() {
-    const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id);
+    const id = decodeURIComponent(location.hash.slice(1)), p = pagine.find(x => x.id === id), v = !p && pagine.length ? catVirtuale(id) : null;
     sidebar();
-    $('vCerca').hidden = !!p; $('vPagina').hidden = !p;
-    if (!p) { document.title = 'Estji Wiki'; $('sbToc').hidden = true; return; }
+    $('vCerca').hidden = !!(p || v); $('vPagina').hidden = !(p || v);
+    if (!p && !v) { document.title = 'Estji Wiki'; $('sbToc').hidden = true; return; }
+    if (v) {
+      document.title = v.titolo + ' — Estji Wiki'; $('pTitolo').textContent = v.titolo; $('pMeta').innerHTML = '';
+      $('pTesto').innerHTML = ''; $('pCat').innerHTML = v.html; $('pLink').innerHTML = ''; $('sbToc').hidden = true; window.scrollTo(0, 0); return;
+    }
     document.title = p.titolo + ' — Estji Wiki';
     $('pTitolo').textContent = p.titolo;
     $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
       `<span>Ultima modifica: ${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</span>`;
     $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
-    const rif = pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
+    const eCat = /^\s*categoria\s*:/i.test(p.titolo), el = eCat ? Wiki.catElenco(pagine) : null;   // pagina di categoria: sotto il testo l'elenco automatico
+    $('pCat').innerHTML = (eCat ? Wiki.catVista(el.find(x => x.id === p.id) || { nome: p.titolo.replace(/^\s*categoria\s*:\s*/i, ''), membri: [] }, el) : '') + Wiki.catBox(Wiki.catDi(p), pagine);
+    const rif = eCat ? [] : pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
     $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
     indice(); window.scrollTo(0, 0);
   }
