@@ -7,7 +7,7 @@
 <title>Estji Wiki — Redazione</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=8">
+<link rel="stylesheet" href="assets/css/wiki.css?v=9">
 </head>
 <body class="red">
 <div class="site">
@@ -40,7 +40,7 @@
       <div id="vElenco">
         <div class="bar">Pagine della wiki</div>
         <div class="panel">
-          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></div>
+          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn" id="nuovoPort" title="Crea una pagina-vetrina a riquadri come Portale:Messico di Wikipedia">🏠 Nuovo portale</button><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></span></div>
           <p id="msgElenco" class="note"></p>
           <div id="elenco"></div>
         </div>
@@ -67,7 +67,7 @@
             <button type="button" class="btn" data-w="[|testo|](https://)">🔗 Link</button><button type="button" class="btn" data-w="[[|Nome pagina|]]">📄 Pagina wiki</button>
             <button type="button" class="btn" id="btnImg">🖼 Immagine</button>
             <button type="button" class="btn" id="btnGraf" title="Inserisce il grafico di un'elezione CEPU a partire dal suo link">📈 Grafico</button>
-            <button type="button" class="btn" id="btnTab" title="Crea una tabella, o modifica quella sotto il cursore">📊 Tabella</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
+            <button type="button" class="btn" id="btnTab" title="Crea una tabella, o modifica quella sotto il cursore">📊 Tabella</button><button type="button" class="btn" id="btnPort" title="Inserisce un portale (pagina-vetrina a riquadri), o modifica quello sotto il cursore">🏠 Portale</button><button type="button" class="btn" data-w="\n{{infobox |Titolo|\n![Bandiera](https://) ![Stemma](https://)\n![Mappa](https://)\nDidascalia della mappa\n## Dati amministrativi\nNome completo: \nCapitale: \nLingue ufficiali: \n## Politica\nForma di governo: \n}}\n">🗂 Scheda</button>
           </div>
           <div class="panel" id="imgPanel" hidden style="margin:6px 0 10px">
             <div class="bar" id="imgTit">Nuova immagine</div>
@@ -118,11 +118,29 @@
             <p class="note">Clic su una cella per scriverci (vale tutto: <code>**grassetto**</code>, <code>[[Pagina]]</code>, <code>![](https://…)</code>; Invio = a capo). <b>Trascina</b> o <b>Maiusc+clic</b> per selezionare più celle, poi <i>Unisci</i> o dai un colore a tutte. Puoi incollare un blocco copiato da Excel/Fogli nella cella di partenza.</p>
             <div class="chips"><button type="button" class="btn pri" data-ta="chiudi">Fatto</button><button type="button" class="btn del" data-ta="rimuovi">Rimuovi tabella</button></div>
           </div>
+          <div class="panel" id="ptPanel" hidden style="margin:6px 0 10px">
+            <div class="bar" id="ptTit">Portale</div>
+            <div class="cols">
+              <div><label for="ptTitolo">Titolo del portale (nel banner)</label><input id="ptTitolo" maxlength="150" autocomplete="off" placeholder="es. Messico"></div>
+              <div><label for="ptLogo">Logo del banner (indirizzo web, facoltativo)</label><input id="ptLogo" placeholder="https://..." autocomplete="off"></div>
+            </div>
+            <div class="cols3">
+              <div><label for="ptCol">Colonne dei riquadri</label><select id="ptCol"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+              <div><label for="ptColore">Colore del portale</label><div class="tb-grp"><input type="color" id="ptColore" value="#2b9cf2" title="Scegli un colore"><span id="ptSwC" class="tb-sws"></span></div></div>
+            </div>
+            <label for="ptIntro">Presentazione (sotto il titolo, nel banner)</label><textarea id="ptIntro" rows="3" style="font-family:inherit"></textarea>
+            <div class="bar" style="margin-top:12px">Riquadri</div>
+            <div id="ptBoxes"></div>
+            <div style="display:flex;gap:6px;margin-top:8px"><input id="ptNuovo" list="ptPreset" placeholder="Titolo del nuovo riquadro (es. Sapevi che…)" autocomplete="off" style="flex:1;min-width:0"><datalist id="ptPreset"><option value="In evidenza"><option value="Immagine in evidenza"><option value="Sapevi che…"><option value="Ricorrenze"><option value="Argomenti"><option value="Personaggi"><option value="Luoghi"><option value="Storia"><option value="Progetti collegati"><option value="Altri portali"></datalist><button type="button" class="btn" data-pa="add">＋ Aggiungi riquadro</button></div>
+            <p class="note">Qui si organizza il portale (titolo, colore, ordine e larghezza dei riquadri). Il <b>testo</b> di ogni riquadro si scrive nella casella grande: <i>✎ Testo</i> lo seleziona. Appena scrivi nel testo il pannello si chiude: per riaprirlo metti il cursore dentro il portale e premi 🏠.</p>
+            <div class="chips"><button type="button" class="btn pri" data-pa="fatto">Fatto</button><button type="button" class="btn del" data-pa="rimuovi">Rimuovi portale</button></div>
+          </div>
           <div class="cols edcols"><div class="ed"><pre id="hl" aria-hidden="true"></pre><textarea id="fTesto" rows="20" aria-label="Testo della pagina" spellcheck="false"></textarea></div><div class="wk" id="anteprima" aria-label="Anteprima" style="border:1px solid rgba(160,200,255,.3);border-radius:5px;max-height:480px;overflow:auto"></div></div>
           <p class="note">Collega le pagine con <code>[[Titolo della pagina]]</code>: se non esiste ancora il link diventa rosso e porta a crearla.</p>
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
           <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Barre %</i> (<code>barre</code>), <i>Grafico scuro</i> (<code>scuro</code>) e <i>Solo emiciclo</i> (<code>noseggi</code>: niente legenda né seggi per partito, il totale sta al centro). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
           <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
+          <p class="note"><b>Portale</b> (pagina-vetrina come Portale:Messico): 🏠 apre il pannello (anche cliccando banner o barre dei riquadri nell'anteprima). Nel testo è un blocco <code>{{portale Titolo … }}</code> con <code>@colore #2b9cf2</code>, <code>@logo https://…</code>, <code>@colonne 2</code>, poi la presentazione e i riquadri: <code>=== Titolo {largo bg:#c8102e}</code> (<code>largo</code> = a tutta larghezza, <code>bg</code> = colore della barra). Dentro i riquadri vale tutto: testo, elenchi, link, immagini, grafici, tabelle, schede. Su schermi stretti i riquadri vanno in una colonna.</p>
           <p class="note"><b>Tabelle</b>: 📊 apre l'editor a griglia (anche cliccando una tabella nell'anteprima). Nel testo è un blocco <code>{{tabella Titolo … }}</code>: <code>--</code> = nuova riga · <code>| testo</code> = cella · <code>! testo</code> = intestazione · opzioni <code>|{c2 r3 bg:#ffe599 tc:#000000 al:c va:m w:120 b i} testo</code> (c = colonne unite, r = righe unite, bg = sfondo di tutta la cella).</p>
           <p id="msg" class="err"></p>
           <div class="chips">
@@ -136,7 +154,7 @@
   </main>
 </div>
 <script src="https://ews-rose.vercel.app/estji-login.js"></script>
-<script src="assets/js/wiki-core.js?v=7"></script>
+<script src="assets/js/wiki-core.js?v=8"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
@@ -178,7 +196,7 @@
   function elenco() {
     const q = Wiki.norm($('filtro').value);
     const l = [...pagine].sort((a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo))).filter(p => Wiki.norm(p.titolo + ' ' + p.categoria).includes(q));
-    $('elenco').innerHTML = l.map(p => `<div class="row"><div>${p.categoria ? `<span class="tag">${E(p.categoria)}</span> ` : ''}<b>${E(p.titolo)}</b>
+    $('elenco').innerHTML = l.map(p => `<div class="row"><div>${p.categoria ? `<span class="tag">${E(p.categoria)}</span> ` : ''}<b>${/\{\{\s*portale\b/i.test(p.contenuto || '') ? '🏠 ' : ''}${E(p.titolo)}</b>
       <div class="note">${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</div></div>
       <div><a class="btn" href="wiki.html#${E(p.id)}" target="_blank" rel="noopener">Apri</a> <button type="button" class="btn" data-mod="${E(p.id)}">Modifica</button></div></div>`).join('') || '<p class="note">Nessuna pagina.</p>';
     $('cats').innerHTML = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].map(c => `<option value="${E(c)}">`).join('');
@@ -186,7 +204,7 @@
 
   /* ---------- editor ---------- */
   function apri(p, titoloNuovo) {
-    idMod = p ? p.id : null; msg(''); chiudiImg(); chiudiTab();
+    idMod = p ? p.id : null; msg(''); chiudiImg(); chiudiTab(); chiudiPt();
     $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
     $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
     $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
@@ -209,7 +227,7 @@
     return o + E(s.slice(k));
   };
   function evidenzia() {
-    let ib = false, tb = false, m;
+    let ib = false, tb = false, pt = false, wr = 0, m;
     const out = $('fTesto').value.replace(/\r/g, '').split('\n').map(l => {
       const r = l.trim();
       if (/^\{\{\s*tabella\b/i.test(r)) { tb = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
@@ -222,6 +240,11 @@
       }
       if (/^\{\{\s*infobox\b/i.test(r)) { ib = !/\}\}\s*$/.test(r); return `<span class="h-ib">${E(l)}</span>`; }
       if (ib && r === '}}') { ib = false; return `<span class="h-ib">${E(l)}</span>`; }
+      if (/^\{\{\s*portale\b/i.test(r)) { pt = !/\}\}\s*$/.test(r); return `<span class="h-pt">${E(l)}</span>`; }
+      if (!ib && /^\{\{\s*(?:sx|sinistra|dx|destra|centro|centrato)\s*$/i.test(r)) { wr++; return tok(l); }
+      if (!ib && r === '}}') { if (wr > 0) { wr--; return E(l); } if (pt) { pt = false; return `<span class="h-pt">${E(l)}</span>`; } }
+      if (pt && /^===/.test(r)) return `<span class="h-box">${E(l)}</span>`;
+      if (pt && /^@\w+\s/.test(r)) return `<span class="h-lab">${E(l)}</span>`;
       if (/^#{2,3}\s/.test(r)) return `<span class="${r[2] === '#' ? 'h-h3' : 'h-h2'}">${tok(l)}</span>`;
       if (ib && (m = /^(\s*[^:!\[\s][^:]*:)(\s.*)?$/.exec(l))) return `<span class="h-lab">${E(m[1])}</span>` + tok(m[2] || '');
       if (/^---+$/.test(r)) return `<span class="h-hr">${E(l)}</span>`;
@@ -261,7 +284,7 @@
     return o;
   }
   function apriImg(sel) {
-    chiudiTab();
+    chiudiTab(); chiudiPt();
     imgSel = sel ? { i: sel.i, f: sel.f } : null;
     const o = sel ? Wiki.imgOpz(sel.alt) : { didas: '', w: '', h: '', pos: '', va: '', y: 0, cap: false, nob: false, fit: '', dark: false, ns: false };
     $('iUrl').value = sel ? sel.url : ''; $('iDid').value = o.didas;
@@ -292,10 +315,13 @@
   $('imgPanel').addEventListener('input', rinvia); $('imgPanel').addEventListener('change', rinvia);
   $('iChiudi').addEventListener('click', chiudiImg);
   $('iDel').addEventListener('click', () => { if (imgSel) { const t = $('fTesto'); t.value = t.value.slice(0, imgSel.i) + t.value.slice(imgSel.f); anteprima(); } chiudiImg(); });
-  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); if (!$('tabPanel').hidden) chiudiTab(); });   // se torni a scrivere, le posizioni nel testo cambiano: chiude il pannello
+  $('fTesto').addEventListener('input', () => { if (!$('imgPanel').hidden) chiudiImg(); if (!$('tabPanel').hidden) chiudiTab(); if (!$('ptPanel').hidden) chiudiPt(); });   // se torni a scrivere, le posizioni nel testo cambiano: chiude il pannello
   $('anteprima').addEventListener('click', e => {           // clic su un'immagine dell'anteprima = modificala
     const el = e.target.closest('[data-im]');
-    if (!el) { const tb = e.target.closest('table[data-tb]'); if (tb && !e.target.closest('a')) { const x = tutteTab()[+tb.dataset.tb]; if (x) { apriTab(x); $('tabPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } } return; }
+    if (!el) {
+      const ph = e.target.closest('.pt-ban,.pt-h');
+      if (ph && !e.target.closest('a')) { const bl = ph.closest('[data-pt]'), s = bl && Wiki.ptTrova($('fTesto').value)[+bl.dataset.pt]; if (s) { apriPt(s); } return; }
+      const tb = e.target.closest('table[data-tb]'); if (tb && !e.target.closest('a')) { const x = tutteTab()[+tb.dataset.tb]; if (x) { apriTab(x); $('tabPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } } return; }
     const s = tutteImg()[+el.dataset.im]; if (s) { e.preventDefault(); apriImg(s); $('imgPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   });
 
@@ -451,7 +477,7 @@
   }
 
   function apriTab(sel) {
-    chiudiImg(); const t = $('fTesto');
+    chiudiImg(); chiudiPt(); const t = $('fTesto');
     if (sel) { tabSel = { i: sel.i, f: sel.f }; tbParse(sel.testo); }
     else {
       tab = { titolo: '', piena: true, R: 3, C: 3, cells: [] };
@@ -607,6 +633,97 @@
   $('tFiltro').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });   // Invio non deve salvare la pagina
   $('tRicarica').addEventListener('click', () => { try { sessionStorage.removeItem('wiki_img_albero'); } catch (e) {} caricaAlbero(true); });
 
+  /* ---------- PORTALE: pannello (titolo, colore, logo, colonne, riquadri) ----------
+     Nel testo è un blocco {{portale … }} con i riquadri "=== Titolo {largo bg:#…}". Il pannello lavora su un modello
+     (Wiki.ptDaTesto) e a ogni modifica riscrive il blocco (Wiki.ptSintassi). Il testo dei riquadri si scrive nella casella grande. */
+  let pt = null, ptSel = null;
+  const PT_COL = ['#2b9cf2', '#043a96', '#c8102e', '#009246', '#e07b39', '#7a4fa3', '#c9a227', '#0b3d6e', '#555555'];
+  const PT_BASE = [
+    { titolo: 'In evidenza', corpo: 'Scrivi qui la voce o il tema in evidenza.' },
+    { titolo: 'Immagine in evidenza', corpo: "Inserisci qui un'immagine con il pulsante 🖼 Immagine." },
+    { titolo: 'Sapevi che…', corpo: "- Una curiosità.\n- Un'altra curiosità." },
+    { titolo: 'Argomenti', corpo: '- [[Pagina collegata]]' },
+    { titolo: 'Ricorrenze', corpo: 'Date ed eventi importanti.' }
+  ];
+  $('ptSwC').innerHTML = PT_COL.map(c => `<button type="button" class="tb-sw" style="background:${c}" data-pa="col" data-v="${c}" title="${c}"></button>`).join('');
+  function chiudiPt() { $('ptPanel').hidden = true; pt = null; ptSel = null; }
+  function ptRows() {
+    $('ptBoxes').innerHTML = pt.boxes.map((b, k) => `<div class="pt-row" data-k="${k}">
+      <button type="button" class="btn" data-pa="up" title="Sposta su"${k ? '' : ' disabled'}>▲</button><button type="button" class="btn" data-pa="dn" title="Sposta giù"${k < pt.boxes.length - 1 ? '' : ' disabled'}>▼</button>
+      <input type="text" data-pf="t" value="${E(b.titolo)}" maxlength="120" placeholder="Titolo del riquadro" aria-label="Titolo del riquadro ${k + 1}">
+      <select data-pf="l" aria-label="Larghezza del riquadro ${k + 1}"><option value=""${b.largo ? '' : ' selected'}>In colonna</option><option value="1"${b.largo ? ' selected' : ''}>A tutta larghezza</option></select>
+      <input type="color" data-pf="bg" value="${b.bg || pt.colore || '#2b9cf2'}" title="Colore della barra del riquadro"><button type="button" class="btn" data-pa="bg0" title="Usa il colore del portale"${b.bg ? '' : ' disabled'}>∅</button>
+      <button type="button" class="btn" data-pa="go" title="Seleziona il testo di questo riquadro">✎ Testo</button><button type="button" class="btn del" data-pa="del" title="Elimina il riquadro">✕</button></div>`).join('') || '<p class="note">Nessun riquadro: aggiungine uno qui sotto.</p>';
+  }
+  function ptCommit() {          // riscrive il blocco nel testo
+    const code = Wiki.ptSintassi(pt), t = $('fTesto');
+    t.value = t.value.slice(0, ptSel.i) + code + t.value.slice(ptSel.f); ptSel.f = ptSel.i + code.length; anteprima();
+  }
+  function ptVai(k) {            // seleziona nella casella grande il testo del riquadro k
+    const t = $('fTesto'), blocco = t.value.slice(ptSel.i, ptSel.f), z = Wiki.ptIntest(blocco), h = z.box[k]; if (!h) return;
+    const a = Math.min(h.fine + 1, blocco.length), fineCorpo = z.box[k + 1] ? z.box[k + 1].ini - 1 : (z.chiude >= 0 ? z.chiude - 1 : blocco.length), b = Math.max(a, fineCorpo);
+    t.focus(); t.setSelectionRange(ptSel.i + a, ptSel.i + b);
+    const lh = parseFloat(getComputedStyle(t).lineHeight) || 21, riga = t.value.slice(0, ptSel.i + a).split('\n').length - 1;
+    t.scrollTop = Math.max(0, riga * lh - t.clientHeight / 3);
+  }
+  function apriPt(sel, nome) {
+    chiudiImg(); chiudiTab(); const t = $('fTesto');
+    if (sel) { ptSel = { i: sel.i, f: sel.f }; pt = Wiki.ptDaTesto(sel.testo); }
+    else {
+      pt = { titolo: (nome || $('fTitolo').value.replace(/^\s*Portale\s*:\s*/i, '')).trim(), colore: '', logo: '', col: 2, intro: 'Presentazione del portale.', boxes: PT_BASE.map(b => Object.assign({ largo: false, bg: '' }, b)) };
+      const v = t.value, p = t.selectionEnd, pre = p && v[p - 1] !== '\n' ? '\n' : '', post = v[p] && v[p] !== '\n' ? '\n' : '', code = Wiki.ptSintassi(pt);
+      t.value = v.slice(0, p) + pre + code + post + v.slice(p);
+      ptSel = { i: p + pre.length, f: p + pre.length + code.length }; anteprima();
+    }
+    $('ptTit').textContent = sel ? 'Modifica portale' : 'Nuovo portale';
+    $('ptTitolo').value = pt.titolo; $('ptLogo').value = pt.logo; $('ptCol').value = String(pt.col); $('ptIntro').value = pt.intro; $('ptColore').value = pt.colore || '#2b9cf2';
+    ptRows(); $('ptPanel').hidden = false; $('ptPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function nuovoPortale() {      // dall'elenco: pagina nuova "Portale:Nome" già con il portale dentro
+    const n = (prompt('Nome del portale (es. Messico):') || '').trim(); if (!n) return;
+    apri(null, 'Portale:' + n); $('fCat').value = 'Portale'; $('fSomm').value = 'Portale dedicato a ' + n + '.';
+    apriPt(null, n);
+  }
+  $('btnPort').addEventListener('click', () => { const p = $('fTesto').selectionStart; apriPt(Wiki.ptTrova($('fTesto').value).find(x => p >= x.i && p <= x.f) || null); });
+  $('nuovoPort').addEventListener('click', nuovoPortale);
+  $('ptPanel').addEventListener('input', e => {
+    if (!pt) return; const x = e.target, id = x.id, f = x.dataset.pf, r = x.closest('[data-k]'), k = r ? +r.dataset.k : -1;
+    if (id === 'ptTitolo') pt.titolo = x.value;
+    else if (id === 'ptLogo') pt.logo = /^https?:\/\/[^\s)"'<>]+$/i.test(x.value.trim()) ? x.value.trim() : '';
+    else if (id === 'ptIntro') pt.intro = x.value;
+    else if (id === 'ptColore') { pt.colore = x.value; ptRows(); }
+    else if (f === 't' && pt.boxes[k]) pt.boxes[k].titolo = x.value;
+    else if (f === 'bg' && pt.boxes[k]) { pt.boxes[k].bg = x.value; const d = r.querySelector('[data-pa="bg0"]'); if (d) d.disabled = false; }
+    else return;
+    ptCommit();
+  });
+  $('ptPanel').addEventListener('change', e => {
+    if (!pt) return; const x = e.target;
+    if (x.id === 'ptCol') pt.col = +x.value || 2;
+    else if (x.dataset.pf === 'l') { const r = x.closest('[data-k]'); if (!r || !pt.boxes[+r.dataset.k]) return; pt.boxes[+r.dataset.k].largo = x.value === '1'; }
+    else return;
+    ptCommit();
+  });
+  $('ptPanel').addEventListener('click', e => {
+    const b = e.target.closest('[data-pa]'), a = b && b.dataset.pa; if (!pt || !a) return;
+    const r = b.closest('[data-k]'), k = r ? +r.dataset.k : -1, bx = pt.boxes;
+    if (a === 'fatto') { chiudiPt(); return; }
+    if (a === 'rimuovi') {
+      if (!confirm('Rimuovere il portale (banner e riquadri) dal testo?')) return;
+      const t = $('fTesto'); t.value = t.value.slice(0, ptSel.i) + t.value.slice(ptSel.f + (t.value[ptSel.f] === '\n' ? 1 : 0)); anteprima(); chiudiPt(); return;
+    }
+    if (a === 'col') { pt.colore = b.dataset.v; $('ptColore').value = pt.colore; }
+    else if (a === 'add') { bx.push({ titolo: $('ptNuovo').value.trim() || 'Nuovo riquadro', largo: false, bg: '', corpo: 'Scrivi qui.' }); $('ptNuovo').value = ''; }
+    else if (a === 'up' && k > 0) bx.splice(k - 1, 2, bx[k], bx[k - 1]);
+    else if (a === 'dn' && k >= 0 && k < bx.length - 1) bx.splice(k, 2, bx[k + 1], bx[k]);
+    else if (a === 'bg0' && bx[k]) bx[k].bg = '';
+    else if (a === 'go') { if (bx[k]) ptVai(k); return; }
+    else if (a === 'del') { if (!bx[k] || (bx[k].corpo.trim() && !confirm('Eliminare il riquadro "' + bx[k].titolo + '" e il suo testo?'))) return; bx.splice(k, 1); }
+    else return;
+    ptRows(); ptCommit();
+  });
+  $('ptPanel').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault(); });   // Invio non deve salvare la pagina
+
   async function salva(e) {
     e.preventDefault();
     if (!$('fTitolo').value.trim()) { msg('Inserisci almeno il titolo.'); return; }
@@ -645,7 +762,7 @@
   $('elimina').addEventListener('click', elimina);
   $('vEditor').addEventListener('submit', salva);
   $('fTesto').addEventListener('input', anteprima);
-  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg,#btnGraf,#btnTab')) e.preventDefault(); });
+  $('tools').addEventListener('mousedown', e => { if (e.target.closest('[data-w],#btnImg,#btnGraf,#btnTab,#btnPort')) e.preventDefault(); });
   $('tools').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) inserisci(b.dataset.w); });
   window.addEventListener('beforeunload', e => { if (!$('vEditor').hidden && $('fTesto').value && !$('salva').disabled && document.activeElement === $('fTesto')) { e.preventDefault(); } });
 
