@@ -7,7 +7,7 @@
 <title>Estji Wiki</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=13">
+<link rel="stylesheet" href="assets/css/wiki.css?v=14">
 </head>
 <body>
 <div class="site">
@@ -26,6 +26,7 @@
       <div class="bar">Cerca nella wiki</div>
       <div class="panel">
         <input type="search" id="q" placeholder="Cerca per titolo, tag o contenuto…" autocomplete="off" aria-label="Cerca nella wiki">
+        <div class="chips" id="portali" hidden></div>
         <div class="chips" id="cats"></div>
         <div class="note" id="count">Caricamento…</div>
         <div id="lista"></div>
@@ -43,11 +44,12 @@
   </main>
   </div>
 </div>
-<script src="assets/js/wiki-core.js?v=11"></script>
+<script src="assets/js/wiki-core.js?v=12"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
   let pagine = [], cat = '';
+  const ePortale = p => /\{\{\s*portale\b/i.test(p.contenuto || '');   // pagina che contiene un {{portale … }}
 
   // ARTICOLI PRINCIPALI della barra laterale: modifica solo questo elenco.
   //   id     = id della pagina wiki (quello dopo "#" nell'indirizzo)
@@ -60,6 +62,7 @@
     { id: 'congresso-unitario', titolo: 'Congresso Unitario', ic: '🗳️' },
     { id: 'ctsu',               titolo: 'CTSU',               ic: '🛠️' },
     { id: 'città',             titolo: 'Città',             ic: '🏙️' }
+    // un portale si aggiunge come le altre pagine, per esempio:  { id: 'portale-messico', titolo: 'Portale Messico', ic: '🏠' }
   ];
   function sidebar() {
     const corrente = decodeURIComponent(location.hash.slice(1));
@@ -88,7 +91,7 @@
   }
   function estratto(p, parole) {
     if (p.sommario) return p.sommario;
-    const c = String(p.contenuto || '').replace(/\{\{\s*(?:infobox|mappa)[\s\S]*?\}\}/gi, ' ').replace(/[#>*`|\[\]]/g, ' ').replace(/\s+/g, ' '), i = parole.length ? Wiki.norm(c).indexOf(parole[0]) : 0;
+    const c = String(p.contenuto || '').replace(/\{\{\s*(?:infobox|mappa)[\s\S]*?\}\}/gi, ' ').replace(/^\s*@\w+\s.*$/gm, ' ').replace(/^\s*===\s*/gm, '').replace(/\{\{\s*portale\b/gi, '').replace(/\{[^{}\n]*\}/g, ' ').replace(/[#>*`|\[\]]/g, ' ').replace(/\s+/g, ' '), i = parole.length ? Wiki.norm(c).indexOf(parole[0]) : 0;
     return (i > 60 ? '…' : '') + c.slice(Math.max(0, i - 60), Math.max(0, i - 60) + 180) + '…';
   }
 
@@ -99,13 +102,16 @@
     $('count').textContent = ris.length + (ris.length === 1 ? ' pagina' : ' pagine') + (q ? ` per “${q}”` : ' nella wiki');
     $('lista').innerHTML = ris.length ? ris.map(({ p }) => `
       <a class="card" href="#${E(p.id)}"><div class="meta">${p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : ''}${(p.tag || []).slice(0, 4).map(t => `<span>#${E(t)}</span>`).join('')}</div>
-      <h3>${evidenzia(p.titolo, parole)}</h3><p>${evidenzia(estratto(p, parole), parole)}</p></a>`).join('')
+      <h3>${ePortale(p) ? '🏠 ' : ''}${evidenzia(p.titolo, parole)}</h3><p>${evidenzia(estratto(p, parole), parole)}</p></a>`).join('')
       : `<div class="note" style="text-align:center;padding:18px">Nessun risultato. <a href="redazione-wiki.html?nuova=${encodeURIComponent(q)}">Scrivi la pagina “${E(q || 'nuova')}”</a></div>`;
     const u = new URL(location.href); q ? u.searchParams.set('q', q) : u.searchParams.delete('q'); history.replaceState(null, '', u);
   }
 
   function chips() {
     const cs = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].sort();
+    const po = pagine.filter(ePortale).sort((a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo)));   // scorciatoie ai portali
+    $('portali').innerHTML = po.length ? '<span class="note">🏠 Portali:</span>' + po.map(p => `<a class="chip" href="#${E(p.id)}">${E(p.titolo)}</a>`).join('') : '';
+    $('portali').hidden = !po.length;
     $('cats').innerHTML = cs.length > 1 ? ['Tutte', ...cs].map((c, i) => `<button type="button" class="chip${(i ? c : '') === cat ? ' on' : ''}" data-c="${i ? E(c) : ''}">${E(c)}</button>`).join('') : '';
   }
 
