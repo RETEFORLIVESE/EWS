@@ -7,7 +7,7 @@
 <title>Estji Wiki — Redazione</title>
 <link rel="icon" type="image/png" href="/Strnghld.png" />
 <link rel="apple-touch-icon" href="/Strnghld.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=9">
+<link rel="stylesheet" href="assets/css/wiki.css?v=10">
 </head>
 <body class="red">
 <div class="site">
@@ -40,7 +40,7 @@
       <div id="vElenco">
         <div class="bar">Pagine della wiki</div>
         <div class="panel">
-          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn" id="nuovoPort" title="Crea una pagina-vetrina a riquadri come Portale:Messico di Wikipedia">🏠 Nuovo portale</button><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></span></div>
+          <div class="row" style="border:0"><input id="filtro" placeholder="Filtra per titolo o categoria…" style="max-width:340px"><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn" id="nuovaCat" title="Crea la pagina di una categoria (come Categoria:Cinema italiano di Wikipedia)">📂 Nuova categoria</button><button type="button" class="btn" id="nuovoPort" title="Crea una pagina-vetrina a riquadri come Portale:Messico di Wikipedia">🏠 Nuovo portale</button><button type="button" class="btn pri" id="nuova">+ Nuova pagina</button></span></div>
           <p id="msgElenco" class="note"></p>
           <div id="elenco"></div>
         </div>
@@ -51,9 +51,11 @@
         <div class="panel">
           <label for="fTitolo">Titolo</label><input id="fTitolo" required maxlength="150">
           <div class="cols">
-            <div><label for="fCat">Categoria</label><input id="fCat" list="cats" maxlength="60"><datalist id="cats"></datalist></div>
+            <div><label for="fCat">Categoria principale</label><input id="fCat" list="cats" maxlength="60"><datalist id="cats"></datalist></div>
             <div><label for="fTag">Tag (separati da virgola)</label><input id="fTag" placeholder="storia, leggi, luoghi"></div>
           </div>
+          <label for="fCats">Altre categorie (separate da virgola): come <code>[[Categoria:Nome]]</code> su Wikipedia</label><input id="fCats" list="cats" placeholder="es. Cinema italiano, Storia" autocomplete="off">
+          <div class="chips" id="catSug" style="padding:6px 0 0"></div>
           <label for="fSomm">Sommario (mostrato nei risultati di ricerca)</label><textarea id="fSomm" rows="2" maxlength="400" style="font-family:inherit"></textarea>
           <div class="cols">
             <div><label for="fImg">Immagine in testa (indirizzo web)</label><input id="fImg" placeholder="https://..."></div>
@@ -140,6 +142,7 @@
           <p class="note"><b>Scheda (infobox)</b>: il pulsante 🗂 inserisce un modello. Righe: <code>![alt](url) ![alt](url)</code> = immagini affiancate · <code>## Sezione</code> = intestazione · <code>Etichetta: valore</code> = riga dati (se vuota non appare) · testo semplice = didascalia. Chiudi con <code>}}</code>.</p>
           <p class="note"><b>Grafici delle elezioni</b>: 📈 chiede il link di una pagina CEPU (es. <code>https://…/CEPU.html?tipo=K&amp;data=12%2F09%2F2023</code>) e inserisce il grafico, che si controlla come un'immagine: stesso pannello (anche cliccandolo nell'anteprima) e stessa sintassi <code>![didascalia|centro|420|cap](link CEPU)</code>. Nel pannello, per i grafici compaiono anche <i>Barre %</i> (<code>barre</code>), <i>Grafico scuro</i> (<code>scuro</code>) e <i>Solo emiciclo</i> (<code>noseggi</code>: niente legenda né seggi per partito, il totale sta al centro). Aggiungi <code>&amp;comune=…</code> al link per scegliere una sezione precisa.</p>
           <p class="note"><b>Immagini</b>: 🖼 apre il pannello (anche su un'immagine già nel testo, o cliccandola nell'anteprima). Le modifiche si vedono subito. Per <i>sx/dx</i> il punto in cui metti il codice nel testo decide a che altezza della pagina l'immagine si aggancia alle parole; “Sposta in verticale” la affina. Sintassi: <code>![didascalia|dx|300|h200|y-10|cap](https://…)</code>.</p>
+          <p class="note"><b>Categorie</b>: la <i>Categoria principale</i> e le <i>Altre categorie</i> (anche più di una) compaiono in fondo alla pagina e la mettono nell'elenco di ogni categoria. Nel testo sono righe <code>[[Categoria:Cinema italiano]]</code> (le sposta il campo, non serve scriverle). Per far comparire una pagina della categoria, scrivi una pagina intitolata <code>Categoria:Cinema italiano</code> (📂 Nuova categoria): sotto il testo l'elenco di sottocategorie e pagine si crea da solo. Per fare una sottocategoria, dai alla pagina <code>Categoria:…</code> una categoria genitore. <code>[[:Categoria:Nome]]</code> dentro una frase è solo un collegamento.</p>
           <p class="note"><b>Portale</b> (pagina-vetrina come Portale:Messico): 🏠 apre il pannello (anche cliccando banner o barre dei riquadri nell'anteprima). Nel testo è un blocco <code>{{portale Titolo … }}</code> con <code>@colore #2b9cf2</code>, <code>@logo https://…</code>, <code>@colonne 2</code>, poi la presentazione e i riquadri: <code>=== Titolo {largo bg:#c8102e}</code> (<code>largo</code> = a tutta larghezza, <code>bg</code> = colore della barra). Dentro i riquadri vale tutto: testo, elenchi, link, immagini, grafici, tabelle, schede. Su schermi stretti i riquadri vanno in una colonna.</p>
           <p class="note"><b>Tabelle</b>: 📊 apre l'editor a griglia (anche cliccando una tabella nell'anteprima). Nel testo è un blocco <code>{{tabella Titolo … }}</code>: <code>--</code> = nuova riga · <code>| testo</code> = cella · <code>! testo</code> = intestazione · opzioni <code>|{c2 r3 bg:#ffe599 tc:#000000 al:c va:m w:120 b i} testo</code> (c = colonne unite, r = righe unite, bg = sfondo di tutta la cella).</p>
           <p id="msg" class="err"></p>
@@ -154,7 +157,7 @@
   </main>
 </div>
 <script src="https://ews-rose.vercel.app/estji-login.js"></script>
-<script src="assets/js/wiki-core.js?v=8"></script>
+<script src="assets/js/wiki-core.js?v=9"></script>
 <script>
 (function () {
   const $ = id => document.getElementById(id), E = Wiki.esc;
@@ -199,7 +202,9 @@
     $('elenco').innerHTML = l.map(p => `<div class="row"><div>${p.categoria ? `<span class="tag">${E(p.categoria)}</span> ` : ''}<b>${/\{\{\s*portale\b/i.test(p.contenuto || '') ? '🏠 ' : ''}${E(p.titolo)}</b>
       <div class="note">${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</div></div>
       <div><a class="btn" href="wiki.html#${E(p.id)}" target="_blank" rel="noopener">Apri</a> <button type="button" class="btn" data-mod="${E(p.id)}">Modifica</button></div></div>`).join('') || '<p class="note">Nessuna pagina.</p>';
-    $('cats').innerHTML = [...new Set(pagine.map(p => p.categoria).filter(Boolean))].map(c => `<option value="${E(c)}">`).join('');
+    const nomiCat = Wiki.catElenco(pagine).map(c => c.nome);   // tutte le categorie: campo "categoria" + [[Categoria:…]]
+    $('cats').innerHTML = nomiCat.map(c => `<option value="${E(c)}">`).join('');
+    $('catSug').innerHTML = nomiCat.slice(0, 40).map(c => `<button type="button" class="chip" data-cs="${E(c)}">${E(c)}</button>`).join(''); segnaSug();
   }
 
   /* ---------- editor ---------- */
@@ -208,11 +213,11 @@
     $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
     $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
     $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
-    $('fImg').value = p ? p.immagine : ''; $('fId').value = p ? p.id : ''; $('fTesto').value = p ? p.contenuto : '';
+    $('fImg').value = p ? p.immagine : ''; $('fId').value = p ? p.id : ''; const ec = Wiki.catEstrai(p ? p.contenuto : ''); $('fTesto').value = ec.testo; $('fCats').value = ec.cats.join(', '); segnaSug();
     $('elimina').hidden = !p; anteprima(); vista(true);
     (p ? $('fTesto') : $('fTitolo')).focus();
   }
-  const anteprima = () => { $('anteprima').innerHTML = Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>'; evidenzia(); };
+  const anteprima = () => { $('anteprima').innerHTML = (Wiki.render($('fTesto').value, pagine) || '<p class="note">L\'anteprima appare qui.</p>') + Wiki.catBox(nomiPagina(), pagine, true); evidenzia(); };
 
   /* ---------- colori nell'editor: un livello colorato dietro la casella di testo (testo normale = bianco) ---------- */
   const RX = /(!\[[^\]\n]*\]\([^)\s\n]*\))|(\[\[[^\]\n]*\]\])|(\[[^\]\n]*\]\([^)\s\n]*\))|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(`[^`\n]+`)/g;
@@ -633,6 +638,23 @@
   $('tFiltro').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });   // Invio non deve salvare la pagina
   $('tRicarica').addEventListener('click', () => { try { sessionStorage.removeItem('wiki_img_albero'); } catch (e) {} caricaAlbero(true); });
 
+  /* ---------- CATEGORIE: campo "Altre categorie" ----------
+     Nel database le categorie sono righe [[Categoria:Nome]] in fondo al testo: aprendo la pagina passano nel campo, salvando tornano nel testo. */
+  function listaCats() { return Wiki._unici($('fCats').value.split(',')); }
+  function nomiPagina() { return Wiki._unici(Wiki.catDi({ categoria: $('fCat').value, contenuto: $('fTesto').value }).concat(listaCats())); }
+  function segnaSug() { const l = listaCats().map(Wiki.norm); $('catSug').querySelectorAll('[data-cs]').forEach(b => b.classList.toggle('on', l.indexOf(Wiki.norm(b.dataset.cs)) >= 0)); }
+  $('catSug').addEventListener('click', e => {
+    const b = e.target.closest('[data-cs]'); if (!b) return;
+    const l = listaCats(), k = Wiki.norm(b.dataset.cs), i = l.findIndex(x => Wiki.norm(x) === k);
+    if (i >= 0) l.splice(i, 1); else l.push(b.dataset.cs);
+    $('fCats').value = l.join(', '); segnaSug(); anteprima();
+  });
+  ['fCat', 'fCats'].forEach(i => $(i).addEventListener('input', () => { segnaSug(); anteprima(); }));
+  $('nuovaCat').addEventListener('click', () => {   // pagina "Categoria:Nome": l'elenco di sottocategorie e pagine si crea da solo
+    const n = (prompt('Nome della categoria (es. Cinema italiano):') || '').trim(); if (!n) return;
+    apri(null, 'Categoria:' + n); $('fTesto').value = 'Descrizione della categoria.'; anteprima();
+  });
+
   /* ---------- PORTALE: pannello (titolo, colore, logo, colonne, riquadri) ----------
      Nel testo è un blocco {{portale … }} con i riquadri "=== Titolo {largo bg:#…}". Il pannello lavora su un modello
      (Wiki.ptDaTesto) e a ogni modifica riscrive il blocco (Wiki.ptSintassi). Il testo dei riquadri si scrive nella casella grande. */
@@ -728,7 +750,7 @@
     e.preventDefault();
     if (!$('fTitolo').value.trim()) { msg('Inserisci almeno il titolo.'); return; }
     const pagina = { titolo: $('fTitolo').value, categoria: $('fCat').value, tag: $('fTag').value.split(','), sommario: $('fSomm').value,
-      immagine: $('fImg').value, id: $('fId').value, contenuto: $('fTesto').value };
+      immagine: $('fImg').value, id: $('fId').value, contenuto: Wiki.catAccoda($('fTesto').value, listaCats()) };
     const b = $('salva'); b.disabled = true; b.textContent = 'Salvataggio…'; msg('');
     try {
       const d = await Wiki.salvaPagina(pagina, idMod);
