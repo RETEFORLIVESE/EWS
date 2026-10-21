@@ -209,6 +209,64 @@ const Wiki = {
     return r;
   },
 
+  /* ---------- CATEGORIE (come Categoria:Cinema_italiano di Wikipedia) ----------
+     Una pagina appartiene a una categoria in due modi (si possono usare insieme, anche più categorie):
+       · il campo "Categoria" della pagina (la principale)
+       · righe  [[Categoria:Cinema italiano]]  nel testo (la redazione le gestisce nel campo "Altre categorie")
+     La pagina della categoria è una normale pagina intitolata "Categoria:Cinema italiano" (facoltativa: se manca, la categoria esiste lo stesso).
+     L'elenco di sottocategorie (pagine "Categoria:…" che stanno nella categoria) e di pagine è automatico.
+     [[:Categoria:Nome]] dentro una frase è solo un collegamento. Le righe con solo [[Categoria:…]] non si vedono nel testo: i nomi compaiono in fondo (Wiki.catBox). */
+  catNome: t => String(t == null ? '' : t).replace(/\s+/g, ' ').trim(),
+  _unici(a) { const k = {}, v = []; a.forEach(n => { n = Wiki.catNome(n); const q = Wiki.norm(n); if (n && !k[q]) { k[q] = 1; v.push(n); } }); return v; },
+  catDi(p) {   // nomi delle categorie di una pagina (campo "categoria" + [[Categoria:Nome]] nel testo)
+    const v = [p.categoria], re = /\[\[\s*categoria\s*:\s*([^\]|\n]+?)\s*(?:\|[^\]\n]*)?\]\]/gi, c = String(p.contenuto || ''); let m;
+    while ((m = re.exec(c))) v.push(m[1]);
+    return Wiki._unici(v);
+  },
+  catEstrai(testo) {   // toglie dal testo le righe fatte solo di [[Categoria:Nome]] (senza |chiave) e le restituisce a parte
+    const cats = [], re = /\[\[\s*categoria\s*:\s*([^\]|\n]+?)\s*\]\]/gi;
+    const L = String(testo || '').replace(/\r/g, '').split('\n').filter(l => {
+      if (!/^\s*(?:\[\[\s*categoria\s*:\s*[^\]|\n]+?\s*\]\]\s*)+$/i.test(l)) return true;
+      let m; re.lastIndex = 0; while ((m = re.exec(l))) cats.push(m[1]); return false;
+    });
+    return { testo: L.join('\n').replace(/\s+$/, ''), cats: Wiki._unici(cats) };
+  },
+  catAccoda(testo, cats) {   // rimette in fondo al testo le righe [[Categoria:Nome]]
+    const t = String(testo || '').replace(/\s+$/, ''), l = Wiki._unici(cats || []);
+    return l.length ? t + (t ? '\n\n' : '') + l.map(n => '[[Categoria:' + n + ']]').join('\n') : t;
+  },
+  catId(nome, pagine) {   // id della pagina della categoria: quello della pagina "Categoria:Nome" se esiste, altrimenti lo stesso che avrebbe
+    const k = Wiki.norm('categoria:' + Wiki.catNome(nome)), p = (pagine || []).find(x => Wiki.norm(String(x.titolo).replace(/\s*:\s*/, ':').replace(/\s+/g, ' ')) === k);
+    return p ? p.id : Wiki.slug('Categoria:' + Wiki.catNome(nome));
+  },
+  catElenco(pagine) {   // tutte le categorie: [{ nome, id, pagina (se esiste "Categoria:Nome"), membri: [pagine] }], in ordine alfabetico
+    const mappa = {}, ottieni = n => { const k = Wiki.norm(n); return mappa[k] || (mappa[k] = { nome: n, pagina: null, membri: [] }); };
+    (pagine || []).forEach(p => { const m = /^\s*categoria\s*:\s*(.+)$/i.exec(p.titolo || ''); if (m && Wiki.catNome(m[1])) { const c = ottieni(Wiki.catNome(m[1])); c.pagina = p; } });
+    (pagine || []).forEach(p => Wiki.catDi(p).forEach(n => { const c = ottieni(n); if (!c.pagina || c.pagina.id !== p.id) c.membri.push(p); }));
+    return Object.values(mappa).map(c => Object.assign(c, { id: c.pagina ? c.pagina.id : Wiki.slug('Categoria:' + c.nome) })).sort((a, b) => Wiki.norm(a.nome).localeCompare(Wiki.norm(b.nome)));
+  },
+  catBox(nomi, pagine, blank) {   // riga "Categorie: A · B" in fondo alla pagina (blank = apre in un'altra scheda, per l'anteprima della redazione)
+    if (!nomi || !nomi.length) return '';
+    return '<div class="catbox"><b>Categorie:</b> ' + nomi.map(n => `<a href="wiki.html#${Wiki.esc(Wiki.catId(n, pagine))}"${blank ? ' target="_blank" rel="noopener"' : ''}>${Wiki.esc(n)}</a>`).join(' · ') + '</div>';
+  },
+  catVista(c, elenco) {   // elenco automatico di una categoria: sottocategorie e pagine (queste raggruppate per iniziale)
+    const E = Wiki.esc, ord = (a, b) => Wiki.norm(a.titolo).localeCompare(Wiki.norm(b.titolo)), eCat = p => /^\s*categoria\s*:/i.test(p.titolo || '');
+    const sotto = c.membri.filter(eCat).sort(ord), pag = c.membri.filter(p => !eCat(p)).sort(ord), n = {};
+    (elenco || []).forEach(x => { n[x.id] = x.membri.length; });
+    let h = '';
+    if (sotto.length) h += `<div class="cat-h">Sottocategorie</div><p class="note">Questa categoria contiene ${sotto.length} sottocategori${sotto.length === 1 ? 'a' : 'e'}.</p><ul class="cat-sub">` +
+      sotto.map(p => `<li><a href="wiki.html#${E(p.id)}">${E(String(p.titolo).replace(/^\s*categoria\s*:\s*/i, ''))}</a>${n[p.id] != null ? ` <small>(${n[p.id]})</small>` : ''}</li>`).join('') + '</ul>';
+    if (pag.length) {
+      const g = {}; pag.forEach(p => { const l = (Wiki.norm(p.titolo).charAt(0) || '#').toUpperCase(), k = /[A-Z]/.test(l) ? l : '#'; (g[k] = g[k] || []).push(p); });
+      h += `<div class="cat-h">Pagine nella categoria “${E(c.nome)}”</div><p class="note">Questa categoria contiene ${pag.length} ${pag.length === 1 ? 'pagina' : 'pagine'}.</p><div class="cat-cols">` +
+        Object.keys(g).sort().map(l => `<div class="cat-g"><b>${l}</b><ul>${g[l].map(p => `<li><a href="wiki.html#${E(p.id)}">${E(p.titolo)}</a></li>`).join('')}</ul></div>`).join('') + '</div>';
+    }
+    return h || '<p class="note">Questa categoria non contiene ancora nessuna pagina.</p>';
+  },
+  catIndice(elenco) {   // pagina "Tutte le categorie"
+    return '<div class="cat-h">Tutte le categorie</div>' + (elenco.length ? '<ul class="cat-sub">' + elenco.map(c => `<li><a href="wiki.html#${Wiki.esc(c.id)}">${Wiki.esc(c.nome)}</a> <small>(${c.membri.length})</small></li>`).join('') + '</ul>' : '<p class="note">Nessuna categoria: aggiungine una a una pagina dalla redazione.</p>');
+  },
+
   _ymd(v) {   // data -> "AAAA-MM-GG" (oppure il solo valore, se è un anno)
     const s = String(v == null ? '' : v).trim(); let m;
     if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[1] + '-' + m[2] + '-' + m[3];
@@ -375,7 +433,7 @@ const Wiki = {
     };
     const inl = t => e(t)
       .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, (m, a, u) => imm(a, u))
-      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, a, b) => { a = a.replace(/&amp;/g, '&'); const p = trova(a); return p ? `<a href="wiki.html#${p.id}">${b || e(a)}</a>` : `<a class="red" href="redazione-wiki.html?nuova=${encodeURIComponent(a.replace(/&quot;|&#39;|&lt;|&gt;/g, ''))}" title="Pagina non ancora scritta">${b || e(a)}</a>`; })
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, a, b) => { const a0 = a; a = a.replace(/&amp;/g, '&'); const mc = /^\s*:?\s*categoria\s*:\s*(.+?)\s*$/i.exec(a); if (mc) return `<a class="cat" href="wiki.html#${Wiki.catId(mc[1], pagine)}">${b || 'Categoria:' + a0.replace(/^\s*:?\s*categoria\s*:\s*/i, '').trim()}</a>`; const p = trova(a); return p ? `<a href="wiki.html#${p.id}">${b || e(a)}</a>` : `<a class="red" href="redazione-wiki.html?nuova=${encodeURIComponent(a.replace(/&quot;|&#39;|&lt;|&gt;/g, ''))}" title="Pagina non ancora scritta">${b || e(a)}</a>`; })
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
       .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
     // INFOBOX stile Wikipedia:  {{infobox Titolo  ...righe...  }}
@@ -424,7 +482,7 @@ const Wiki = {
     // ALLINEAMENTO del testo: {sx} {centro} {dx} a inizio riga (vale per quel blocco) · {{centro … }} per più blocchi (vedi sopra)
     const ALN = { sx: 's', sinistra: 's', centro: 'c', centrato: 'c', dx: 'd', destra: 'd' };
     const allinea = (h, a) => h.replace(/^<(\w+)([^>]*)>/, (m, t, at) => /\bclass="/.test(at) ? `<${t}${at.replace('class="', `class="al-${a} `)}>` : `<${t}${at} class="al-${a}">`);
-    const TAG = /\{(sx|sinistra|dx|destra|centro|centrato)\}/gi;
+    const TAG = /\{(sx|sinistra|dx|destra|centro|centrato)\}/gi, CATL = /^(?:\[\[\s*categoria\s*:[^\]\n]*\]\]\s*)+$/i;   // CATL: riga con solo [[Categoria:Nome]]
     const riga = t => {   // una riga con più parti: {sx}A {centro}B {dx}C  ->  A a sinistra, B al centro, C a destra, sulla stessa riga
       const seg = { s: [], c: [], d: [] }; let a = 's';
       t.split(TAG).forEach((x, k) => { if (k % 2) a = ALN[x.toLowerCase()]; else if (x.trim()) seg[a].push(x.trim()); });
@@ -442,7 +500,7 @@ const Wiki = {
     const add = h => { const a = la || pend || blocco; pend = ''; out.push(a && !/^<hr/.test(h) ? allinea(h, a) : h); };
     for (let i = 0; i < L.length; i++) {
       let r = L[i].trim(), m; la = '';
-      if (!r) continue;
+      if (!r || CATL.test(r)) continue;
       if (r === '}}' && blocco) { blocco = ''; continue; }
       if ((m = /^\{\{\s*(sx|sinistra|dx|destra|centro|centrato)\s*$/i.exec(r))) { blocco = ALN[m[1].toLowerCase()]; continue; }
       if (!/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(r) && (m = r.match(TAG)) && (m.length > 1 || r.search(TAG) > 0)) { out.push(riga(r)); pend = ''; continue; }
@@ -468,7 +526,7 @@ const Wiki = {
       else if (/^([-*]|\d+\.)\s/.test(r)) {
         const ol = /^\d/.test(r), it = []; while (i < L.length && /^([-*]|\d+\.)\s/.test(L[i].trim())) it.push(`<li>${inl(L[i++].trim().replace(/^([-*]|\d+\.)\s+/, ''))}</li>`); i--;
         add(`<${ol ? 'ol' : 'ul'}>${it.join('')}</${ol ? 'ol' : 'ul'}>`);
-      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|\}\}$|\{(?:sx|sinistra|dx|destra|centro|centrato)\}|([-*]|\d+\.)\s)/.test(L[i].trim()) && !/\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i.test(L[i])) p.push(inl(L[i++].trim())); i--; add(`<p>${p.join('<br>')}</p>`); }
+      } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|\}\}$|\{(?:sx|sinistra|dx|destra|centro|centrato)\}|([-*]|\d+\.)\s)/.test(L[i].trim()) && !/\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i.test(L[i]) && !CATL.test(L[i].trim())) p.push(inl(L[i++].trim())); i--; add(`<p>${p.join('<br>')}</p>`); }
     }
     return out.join('\n');
     };
