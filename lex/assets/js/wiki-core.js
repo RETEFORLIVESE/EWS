@@ -128,6 +128,87 @@ const Wiki = {
     return .2126 * v[0] + .7152 * v[1] + .0722 * v[2] > .3 ? '#10203a' : '#ffffff';
   },
 
+  /* ---------- PORTALE (pagina-vetrina a riquadri, come Portale:Messico di Wikipedia) ----------
+     {{portale Titolo del banner
+     @colore #2b9cf2        colore del banner e delle barre dei riquadri (facoltativo)
+     @logo https://…        immagine accanto al titolo (facoltativo)
+     @colonne 2             1, 2 o 3 colonne (predefinito 2; su schermi stretti sempre 1)
+     Testo di presentazione, sotto il titolo (più righe, vale tutto il testo normale)
+     === Titolo del riquadro {largo bg:#c8102e}      largo = a tutta larghezza · bg:#rrggbb = colore della barra del riquadro
+     …testo del riquadro: paragrafi, elenchi, [[link]], immagini, grafici CEPU, tabelle, schede…
+     === Un altro riquadro
+     …
+     }}
+     I riquadri si dispongono in colonne, uno sotto l'altro. Gli stili sono in wiki.css (sezione «Portale»). */
+  _AL: /^\{(?:sx|sinistra|dx|destra|centro|centrato)\}\s*/i,
+  _apre: l => { const t = String(l).trim().replace(Wiki._AL, ''); return /^\{\{\s*[a-z]/i.test(t) && !/\}\}\s*$/.test(t); },   // riga che apre un blocco {{…}} da chiudere con }}
+  ptParse(titolo, linee) {   // -> { titolo, colore, logo, col, intro, boxes: [{ titolo, largo, bg, corpo }] }  (intro e corpo sono testo)
+    const p = { titolo: String(titolo || '').trim(), colore: '', logo: '', col: 2, intro: '', boxes: [] }, hex = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i, intro = [];
+    let cur = null, d = 0, m;
+    for (const l of linee) {
+      const t = l.trim().replace(Wiki._AL, '');
+      if (d === 0 && (m = /^===\s*(.*?)\s*(?:\{([^{}]*)\})?\s*$/.exec(t))) {
+        cur = { titolo: m[1], largo: false, bg: '', corpo: [] };
+        (m[2] || '').split(/\s+/).forEach(k => { let x; if (k === 'largo') cur.largo = true; else if ((x = /^bg:(.+)$/.exec(k)) && hex.test(x[1])) cur.bg = x[1].toLowerCase(); });
+        p.boxes.push(cur); continue;
+      }
+      if (!cur && d === 0 && (m = /^@(colore|logo|colonne)\s+(\S+)\s*$/i.exec(t))) {
+        const k = m[1].toLowerCase(), v = m[2];
+        if (k === 'colore' && hex.test(v)) p.colore = v.toLowerCase();
+        else if (k === 'logo' && /^https?:\/\/[^\s)"'<>]+$/i.test(v)) p.logo = v;
+        else if (k === 'colonne') p.col = Math.min(3, Math.max(1, parseInt(v, 10) || 2));
+        continue;
+      }
+      if (Wiki._apre(l)) d++; else if (t === '}}' && d > 0) d--;
+      (cur ? cur.corpo : intro).push(l);
+    }
+    const pulisci = a => a.join('\n').replace(/^(?:[ \t]*\n)+/, '').replace(/\s+$/, '');
+    p.intro = pulisci(intro); p.boxes.forEach(b => { b.corpo = pulisci(b.corpo); });
+    return p;
+  },
+  ptSintassi(p) {   // modello -> blocco {{portale … }}
+    const o = ['{{portale' + (p.titolo ? ' ' + String(p.titolo).replace(/\s+/g, ' ').trim() : '')];
+    if (p.colore) o.push('@colore ' + p.colore);
+    if (p.logo) o.push('@logo ' + p.logo);
+    if (p.col && +p.col !== 2) o.push('@colonne ' + p.col);
+    const intro = String(p.intro || '').replace(/\r/g, '').replace(/^\s+|\s+$/g, ''); if (intro) o.push(intro);
+    (p.boxes || []).forEach(b => {
+      const a = []; if (b.largo) a.push('largo'); if (b.bg) a.push('bg:' + b.bg);
+      o.push(('=== ' + String(b.titolo || '').replace(/\s+/g, ' ').trim() + (a.length ? ' {' + a.join(' ') + '}' : '')).replace(/\s+$/, ''));
+      const c = String(b.corpo || '').replace(/\r/g, '').replace(/^\n+|\s+$/g, ''); if (c) o.push(c);
+    });
+    o.push('}}');
+    return o.join('\n');
+  },
+  ptDaTesto(testo) {   // testo del blocco {{portale … }} -> modello
+    const L = String(testo).replace(/\r/g, '').split('\n'), tit = L[0].trim().replace(/^\{\{\s*portale\b\s*/i, '').replace(/\}\}\s*$/, ''), lin = L.slice(1);
+    if (lin.length && lin[lin.length - 1].trim() === '}}') lin.pop();
+    return Wiki.ptParse(tit, lin);
+  },
+  ptTrova(v) {   // blocchi {{portale}} presenti nel testo, nello stesso ordine in cui li disegna Wiki.render
+    v = String(v); const r = []; let pos = 0, st = null, d = 0;
+    v.split('\n').forEach(l => {
+      const t = l.trim();
+      if (st === null) { if (/^\{\{\s*portale\b/i.test(t)) { if (/\}\}\s*$/.test(t)) r.push({ i: pos, f: pos + l.length }); else { st = pos; d = 1; } } }
+      else if (Wiki._apre(l)) d++;
+      else if (t === '}}' && --d === 0) { r.push({ i: st, f: pos + l.length }); st = null; }
+      pos += l.length + 1;
+    });
+    if (st !== null) r.push({ i: st, f: v.length });
+    return r.map(x => ({ i: x.i, f: x.f, testo: v.slice(x.i, x.f) }));
+  },
+  ptIntest(testo) {   // posizioni (dentro il testo del blocco) delle righe "=== …" e della riga di chiusura: serve a selezionare il testo di un riquadro
+    const L = String(testo).split('\n'), r = { box: [], chiude: -1 }; let off = L[0].length + 1, d = 0;
+    for (let k = 1; k < L.length; k++) {
+      const t = L[k].trim().replace(Wiki._AL, '');
+      if (d === 0 && /^===/.test(t)) r.box.push({ ini: off, fine: off + L[k].length });
+      else if (Wiki._apre(L[k])) d++;
+      else if (t === '}}') { if (d > 0) d--; else if (k === L.length - 1) r.chiude = off; }
+      off += L[k].length + 1;
+    }
+    return r;
+  },
+
   _ymd(v) {   // data -> "AAAA-MM-GG" (oppure il solo valore, se è un anno)
     const s = String(v == null ? '' : v).trim(); let m;
     if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[1] + '-' + m[2] + '-' + m[3];
@@ -270,7 +351,7 @@ const Wiki = {
        {{centro            ·  {{sx  ·  {{dx            su una riga da sole, chiusi da }}: valgono per tutto ciò che sta in mezzo */
   render(src, pagine) {
     const e = Wiki.esc, trova = n => (pagine || []).find(p => Wiki.norm(p.titolo) === Wiki.norm(n) || p.id === Wiki.slug(n));
-    let nImg = 0, inIb = false, nTab = 0;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
+    let nImg = 0, inIb = false, nTab = 0, nPt = 0;   // nImg: numero progressivo delle immagini (serve alla redazione per aprire l'immagine cliccata)
     const imm = (alt, url) => {
       const o = Wiki.imgOpz(alt), n = nImg++, va = { alto: 'text-top', medio: 'middle', basso: 'text-bottom', base: 'baseline' };
       const fit = o.fit === 'adatta' ? 'contain' : o.fit === 'riempi' ? 'cover' : '';
@@ -340,10 +421,8 @@ const Wiki = {
       }).join('') + '</tr>').join('');
       return `<div class="tw"><table class="tbl${t.piena ? ' tfull' : ''}" data-tb="${n}">${tit ? `<caption>${inl(tit)}</caption>` : ''}<tbody>${rows}</tbody></table></div>`;
     };
-    const L = String(src || '').replace(/\r/g, '').split('\n'), out = [];
     // ALLINEAMENTO del testo: {sx} {centro} {dx} a inizio riga (vale per quel blocco) · {{centro … }} per più blocchi (vedi sopra)
     const ALN = { sx: 's', sinistra: 's', centro: 'c', centrato: 'c', dx: 'd', destra: 'd' };
-    let blocco = '', pend = '', la = '';
     const allinea = (h, a) => h.replace(/^<(\w+)([^>]*)>/, (m, t, at) => /\bclass="/.test(at) ? `<${t}${at.replace('class="', `class="al-${a} `)}>` : `<${t}${at} class="al-${a}">`);
     const TAG = /\{(sx|sinistra|dx|destra|centro|centrato)\}/gi;
     const riga = t => {   // una riga con più parti: {sx}A {centro}B {dx}C  ->  A a sinistra, B al centro, C a destra, sulla stessa riga
@@ -351,6 +430,15 @@ const Wiki = {
       t.split(TAG).forEach((x, k) => { if (k % 2) a = ALN[x.toLowerCase()]; else if (x.trim()) seg[a].push(x.trim()); });
       return `<div class="al-row">${['s', 'c', 'd'].map(k => `<span class="al-${k}">${inl(seg[k].join(' '))}</span>`).join('')}</div>`;
     };
+    // PORTALE: {{portale Titolo … }}  (sintassi in Wiki.ptParse). Il testo dei riquadri passa da sezione(): stessi contatori di immagini e tabelle.
+    const portale = (tit, linee) => {
+      const p = Wiki.ptParse(tit, linee), n = nPt++, stile = c => `--pt:${c};--ptc:${Wiki.tabContrasto(c)}`;
+      const th = p.titolo ? inl(p.titolo) : '', intro = p.intro ? sezione(p.intro.split('\n')) : '';
+      const box = b => `<section class="pt-box${b.largo ? ' largo' : ''}"${b.bg ? ` style="${stile(b.bg)}"` : ''}>${b.titolo ? `<h4 class="pt-h">${inl(b.titolo)}</h4>` : ''}<div class="pt-b">${sezione(b.corpo.split('\n'))}</div></section>`;
+      return `<div class="pt pt-c${p.col}" data-pt="${n}" style="${stile(p.colore || '#2b9cf2')}"><div class="pt-ban">${p.logo ? `<img class="pt-logo" src="${e(p.logo)}" alt="" loading="lazy">` : ''}<div class="pt-bt"><span class="pt-lab">Portale</span>${th ? `<span class="pt-tit">${th}</span>` : ''}${intro ? `<div class="pt-intro">${intro}</div>` : ''}</div></div><div class="pt-grid">${p.boxes.map(box).join('')}</div></div>`;
+    };
+    const sezione = L => {
+    const out = []; let blocco = '', pend = '', la = '';
     const add = h => { const a = la || pend || blocco; pend = ''; out.push(a && !/^<hr/.test(h) ? allinea(h, a) : h); };
     for (let i = 0; i < L.length; i++) {
       let r = L[i].trim(), m; la = '';
@@ -359,6 +447,11 @@ const Wiki = {
       if ((m = /^\{\{\s*(sx|sinistra|dx|destra|centro|centrato)\s*$/i.exec(r))) { blocco = ALN[m[1].toLowerCase()]; continue; }
       if (!/^(#{2,3}\s|>|---+$|\{\{|([-*]|\d+\.)\s)/.test(r) && (m = r.match(TAG)) && (m.length > 1 || r.search(TAG) > 0)) { out.push(riga(r)); pend = ''; continue; }
       if ((m = /^\{(sx|sinistra|dx|destra|centro|centrato)\}\s*/i.exec(r))) { la = ALN[m[1].toLowerCase()]; r = L[i] = r.slice(m[0].length); if (!r) { pend = la; continue; } }
+      if (/^\{\{\s*portale\b/i.test(r)) {   // i blocchi {{…}} annidati (scheda, tabella, {{centro}}) hanno la loro riga }}: si contano
+        const tit = r.replace(/^\{\{\s*portale\b\s*/i, '').replace(/\}\}\s*$/, ''), corpo = [];
+        if (!/\}\}\s*$/.test(r)) { let d = 1; i++; while (i < L.length) { const t = L[i].trim().replace(Wiki._AL, ''); if (Wiki._apre(L[i])) d++; else if (t === '}}' && --d === 0) break; corpo.push(L[i]); i++; } }
+        pend = ''; out.push(portale(tit, corpo)); continue;
+      }
       if (/^\{\{\s*infobox\b/i.test(r)) {
         const tit = r.replace(/^\{\{\s*infobox\b\s*/i, '').replace(/\}\}\s*$/, ''), righe = [];
         if (!/\}\}\s*$/.test(r)) { i++; while (i < L.length && L[i].trim() !== '}}') { if (L[i].trim()) righe.push(L[i].trim()); i++; } }
@@ -378,6 +471,8 @@ const Wiki = {
       } else { const p = []; while (i < L.length && L[i].trim() && !/^(#{2,3}\s|>|---+$|\{\{|\}\}$|\{(?:sx|sinistra|dx|destra|centro|centrato)\}|([-*]|\d+\.)\s)/.test(L[i].trim()) && !/\{(?:sx|sinistra|dx|destra|centro|centrato)\}/i.test(L[i])) p.push(inl(L[i++].trim())); i--; add(`<p>${p.join('<br>')}</p>`); }
     }
     return out.join('\n');
+    };
+    return sezione(String(src || '').replace(/\r/g, '').split('\n'));
   },
 
   /* ---------- client API (stesso schema di api.js, endpoint /api/wiki) ---------- */
