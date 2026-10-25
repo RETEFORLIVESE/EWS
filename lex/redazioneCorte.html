@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corte Costituzionale — Redazione</title>
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/corte.css" />
+  <link rel="icon" type="image/png" href="CorteCostituzionale.png">
+  <style>
+    .login-wrap{max-width:440px;margin:48px auto 80px;padding:2rem 2rem 1.6rem;background:#fff;border:1px solid var(--bordo);border-top:5px solid var(--blu-700);border-radius:8px;box-shadow:var(--ombra-hover);}
+    .login-wrap h2{margin:0 0 .3rem;font-family:var(--font-chrome);font-size:1.35rem;color:var(--blu-900);}
+    .login-wrap p.sottotitolo{margin:0 0 1.2rem;color:var(--inchiostro-tenue);font-size:.88rem;}
+    .login-wrap label{display:block;font-family:var(--font-chrome);font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--blu-800);margin-bottom:.25rem;}
+    .login-wrap input{width:100%;padding:.7rem .85rem;margin-bottom:.9rem;background:var(--carta);border:1px solid var(--bordo);border-radius:4px;font-family:var(--font-chrome);font-size:.95rem;}
+    .login-wrap input:focus{outline:none;border-color:var(--blu-accento);box-shadow:0 0 0 3px rgba(168,64,95,.18);}
+    .login-wrap button{width:100%;padding:.8rem;background:var(--blu-700);border:none;color:#fff;border-radius:4px;cursor:pointer;font-family:var(--font-chrome);font-weight:700;}
+    .login-wrap button:disabled{opacity:.6;cursor:not-allowed;}
+    .login-error{display:none;color:#a72e23;background:#fdeceb;border:1px solid rgba(205,33,42,.25);border-radius:4px;font-size:.85rem;margin:.6rem 0 0;padding:.4rem .6rem;text-align:center;}
+    .login-error.show{display:block;}
+    .estji-blocco{margin:0 0 1.4rem;padding-bottom:1.2rem;border-bottom:1px solid var(--bordo);}
+    .estji-blocco p.sottotitolo{margin-bottom:.9rem;}
+    #estji-login{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;text-align:center;}
+    #estji-login canvas,#estji-login img,#estji-login svg{display:block;margin:0 auto;max-width:100%;height:auto;}
+    #estji-login button{width:auto;padding:.5rem 1rem;font-size:.85rem;}
+    .estji-oppure{margin:1rem 0 0;font-family:var(--font-chrome);font-size:.82rem;color:var(--inchiostro-tenue);text-align:center;}
+    .admin-topbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin:1.2rem 0 .5rem;padding:.7rem 1rem;background:var(--carta-scura);border-left:4px solid var(--blu-700);border-radius:4px;font-family:var(--font-chrome);font-size:.88rem;}
+    .admin-topbar button{background:transparent;border:1px solid var(--blu-700);color:var(--blu-700);padding:6px 14px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600;}
+    .admin-topbar button:hover{background:var(--blu-700);color:#fff;}
+  </style>
+</head>
+<body class="corte">
+  <div id="testata-root"></div>
+  <main class="container">
+    <div id="login-area" style="display:none;">
+      <div class="login-wrap">
+        <h2>⚖ Accesso redazione</h2>
+        <p class="sottotitolo">Riservato ai membri della Corte.</p>
+        <div id="estji-blocco" class="estji-blocco" style="display:none;">
+          <label>Accedi con Estji ID</label>
+          <p class="sottotitolo">Inquadra il QR con il telefono e conferma l'accesso.</p>
+          <div id="estji-login"></div>
+          <p class="estji-oppure">oppure usa nome utente e password</p>
+        </div>
+        <label for="u">Nome utente</label>
+        <input type="text" id="u" autocomplete="username" autocapitalize="off" spellcheck="false" />
+        <label for="p">Password</label>
+        <input type="password" id="p" autocomplete="current-password" />
+        <button id="loginBtn" type="button">Accedi</button>
+        <p class="login-error" id="loginError"></p>
+      </div>
+    </div>
+    <div id="admin-content" style="display:none;">
+      <div class="admin-topbar"><span>👤 Connesso come <strong id="nomeUtente">—</strong></span><button id="logoutBtn" type="button">Esci</button></div>
+      <div id="redazione-root"></div>
+    </div>
+  </main>
+  <div id="footer-root"></div>
+  <script src="https://ews-rose.vercel.app/estji-login.js"></script>
+  <script src="assets/js/corte-diff.js"></script>
+  <script src="assets/js/corte-api.js"></script>
+  <script src="assets/js/corte-layout.js"></script>
+  <script src="assets/js/redazione-corte.js"></script>
+</body>
+</html>

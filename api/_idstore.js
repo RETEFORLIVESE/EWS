@@ -26,7 +26,8 @@ export const SCOPES = {
   'unitext.edit': [2, 'redattore', 'Redazione UniText'],
   'normaktiv.edit': [2, 'redattore', 'Redazione atti NormAktiv'],
   'ctsu.edit': [2, 'redattore_ctsu', 'Redazione progetti CTSU'],
-  'cepu.edit': [2, 'redattore_cepu', 'Redazione elezioni CEPU']
+  'cepu.edit': [2, 'redattore_cepu', 'Redazione elezioni CEPU'],
+  'corte.edit': [3, 'giudice_corte', 'Redazione della Corte Costituzionale']
 };
 
 const SITI = ['https://ews-rose.vercel.app', 'https://rtf-rose.vercel.app'];
@@ -39,6 +40,7 @@ export const PORTALI = {
   wiki:      { nome: 'Estji Wiki', origins: SITI, scopes: ['profile.basic', 'wiki.edit'], codice: true },
   unitext:   { nome: 'UniText', origins: SITI, scopes: ['profile.basic', 'unitext.edit'], codice: true },
   ctsu:      { nome: 'CTSU', origins: SITI, scopes: ['profile.basic', 'ctsu.edit'], codice: true },
+  corte:     { nome: 'Corte Costituzionale', origins: SITI, scopes: ['profile.basic', 'corte.edit'], codice: true },
   partito:   { nome: 'DIOPUTTANAAAA!!!A', origins: SITI, scopes: ['profile.basic'], codice: true }
 };
 
@@ -147,6 +149,7 @@ export function ruoliTecnici(p) {
     if (/^Redattore( UniText)?$/i.test(String(x).trim())) r.push('redattore');   // "Redattore" (e la vecchia etichetta "Redattore UniText")
     if (/Redattore CTSU/i.test(x)) r.push('redattore_ctsu');
     if (/Redattore CEPU/i.test(x)) r.push('redattore_cepu');
+    if (/Giudice Costituzionale|Redattore Corte/i.test(x)) r.push('giudice_corte');   // accesso alla redazione della Corte
     if (/^Generale$/i.test(String(x).trim())) r.push('generale');   // accesso a tutti i permessi (resta il livello minimo di sicurezza)
     if (/^(Staff|Admin(istrator)?|Amministratore)$/i.test(String(x).trim())) r.push('staff');   // accesso al pannello staff (non ai permessi dei portali)
     if (/Dirigente/i.test(x)) r.push('dirigente_agenzia');

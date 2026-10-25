@@ -431,6 +431,7 @@
             <select id="f-stato">
               <option value="vigente" ${!atto || atto.stato === "vigente" ? "selected" : ""}>vigente</option>
               <option value="abrogato" ${atto && atto.stato === "abrogato" ? "selected" : ""}>abrogato</option>
+              <option value="annullato" ${atto && atto.stato === "annullato" ? "selected" : ""}>annullato</option>
               <option value="stesura" ${atto && atto.stato === "stesura" ? "selected" : ""}>stesura</option>
             </select>
           </div>
@@ -499,6 +500,7 @@
     const catNuova = document.getElementById("f-categoria-nuova").value.trim();
     const categoria = catNuova || document.getElementById("f-categoria").value;
     const idBase = slugify(document.getElementById("f-id").value.trim() || titolo);
+    const originale = atti.find(a => a.id === idInModifica) || {};   // conserva le pronunce della Corte
     return {
       id: idUnivoco(idBase, idInModifica),
       categoria,
@@ -513,6 +515,7 @@
       didascalia: document.getElementById("f-didascalia").value.trim(),
       luogo: document.getElementById("f-luogo").value || "",
       articoli: leggiArticoli(),
+      ...(originale.pronunce ? { pronunce: originale.pronunce } : {}),
     };
   }
 

@@ -21,7 +21,9 @@
   function scheda(atto) {
     const badge = atto.stato === "vigente"
       ? `<span class="badge-stato">vigente</span>`
-      : `<span class="badge-stato abrogato">abrogato</span>`;
+      : atto.stato === "annullato"
+        ? `<span class="badge-stato annullato">annullato</span>`
+        : `<span class="badge-stato abrogato">abrogato</span>`;
     return `
       <a class="scheda-atto" href="atto.html?id=${encodeURIComponent(atto.id)}">
         <div class="scheda-atto__meta">

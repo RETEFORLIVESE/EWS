@@ -27,6 +27,42 @@
       </figure>`;
   }
 
+
+  // ---------------------------------------------------------------------------
+  // PRONUNCE DELLA CORTE COSTITUZIONALE
+  // Le pronunce sono salvate nell'atto (atto.pronunce) dal sito della Corte (corte.html).
+  // Qui si mostrano: avviso se l'atto è annullato/abrogato, storia delle pronunce, note sugli articoli modificati.
+  // ---------------------------------------------------------------------------
+  const TIPI_CORTE = { modifica: "Modifica", annullamento: "Annullamento", abrogazione: "Abrogazione" };
+  const linkPronuncia = p => `<a href="corte.html?id=${encodeURIComponent(p.id)}">sentenza n. ${escAttr(p.numero)}/${escAttr(p.anno)}</a>`;
+
+  function htmlAvvisoCorte(atto) {
+    const nulle = (atto.pronunce || []).filter(p => p.tipo === "annullamento" || p.tipo === "abrogazione");
+    const p = nulle[nulle.length - 1];
+    if (!p || (atto.stato !== "annullato" && atto.stato !== "abrogato")) return "";
+    const annullato = p.tipo === "annullamento";
+    return `<div class="avviso-corte ${annullato ? "" : "avviso-corte--abrogato"}">
+      <span>⚖</span><span>Atto ${annullato ? "annullato" : "abrogato"} dalla Corte Costituzionale con ${linkPronuncia(p)} del ${escAttr(p.data)}${p.effetto ? " (" + escAttr(p.effetto) + ")" : ""}.
+      Il testo è conservato a titolo di consultazione.</span></div>`;
+  }
+
+  function htmlStoriaCorte(atto) {
+    const lista = atto.pronunce || [];
+    if (!lista.length) return "";
+    return `<section class="storia-pronunce"><h2>Pronunce della Corte Costituzionale</h2><ul>${lista.map(p =>
+      `<li>⚖ ${TIPI_CORTE[p.tipo] || escAttr(p.tipo)} — ${linkPronuncia(p)}, ${escAttr(p.data)}: ${escAttr(p.oggetto)}</li>`).join("")}</ul></section>`;
+  }
+
+  // Nota sotto la rubrica di un articolo modificato o aggiunto dalla Corte.
+  function htmlNotaCorteArticolo(atto, art) {
+    const n = String(art.numero).trim();
+    const tocca = (atto.pronunce || []).filter(p => p.tipo === "modifica" && (p.modifiche || [])
+      .some(m => String(m.numero).trim() === n && (m.azione === "modificato" || m.azione === "aggiunto")));
+    if (!tocca.length) return "";
+    const aggiunto = tocca.some(p => p.modifiche.some(m => String(m.numero).trim() === n && m.azione === "aggiunto"));
+    return `<div class="nota-corte">⚖ Articolo ${aggiunto ? "aggiunto" : "modificato"} dalla Corte Costituzionale: ${tocca.map(linkPronuncia).join(", ")}</div>`;
+  }
+
   // Risolve i codici salvati in atto.luoghi nei rispettivi nomi leggibili,
   // leggendo organi.json dal repo pubblico RETEFORLIVESE/DATA (stessa fonte
   // usata in redazione.js per compilare l'elenco). Se un codice non viene
@@ -81,7 +117,7 @@
       marca: { nome: "NormAktiv", sottotitolo: "Raccolta ufficiale degli atti normativi", logo: "NormAktiv.png" }
     });
 
-    const stato = atto.stato === "vigente" ? "VIGENTE" : "ABROGATO";
+    const stato = atto.stato === "vigente" ? "VIGENTE" : atto.stato === "annullato" ? "ANNULLATO" : "ABROGATO";
     pdf.scrivi(`${(atto.categoria || "").toString().toUpperCase()}  |  ${stato}`,
       { font: "helvetica", stile: "bold", size: 9, colore: C.blu, dopo: 3 });
     pdf.scrivi(atto.titolo, { font: "helvetica", stile: "bold", size: 20, colore: C.scuro, dopo: 3, interlinea: 1.25 });
@@ -197,7 +233,9 @@
 
     const badgeStato = atto.stato === "vigente"
       ? `<span class="badge-stato">vigente</span>`
-      : `<span class="badge-stato abrogato">abrogato</span>`;
+      : atto.stato === "annullato"
+        ? `<span class="badge-stato annullato">annullato</span>`
+        : `<span class="badge-stato abrogato">abrogato</span>`;
 
     // Indice: per ogni articolo mostriamo il link principale e, quando
     // l'articolo ha più di un comma, un sotto-elenco con i link ai singoli commi.
@@ -257,6 +295,7 @@
         <article class="articolo" id="art-${art.numero}">
           <span class="articolo__numero">Articolo ${art.numero}</span>
           <h3>${art.rubrica}</h3>
+          ${htmlNotaCorteArticolo(atto, art)}
           ${corpoCommi}
         </article>`;
     }).join("");
@@ -267,6 +306,7 @@
         <a href="index.html?categoria=${encodeURIComponent(atto.categoria)}">${atto.categoria}</a> &rsaquo;
         ${atto.titolo}
       </p>
+      ${htmlAvvisoCorte(atto)}
       <section class="intestazione-atto">
         <div class="intestazione-atto__meta">
           <span class="badge-categoria">${atto.categoria}</span>
@@ -283,6 +323,7 @@
         </dl>
         ${htmlBottonePdf()}
       </section>
+      ${htmlStoriaCorte(atto)}
       <div class="corpo-atto">
         <div class="colonna-indice">
           ${htmlImmagineAtto(atto)}
