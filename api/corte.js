@@ -6,9 +6,9 @@
 //   POST {azione:"login-estji", id_token}   -> accesso con Estji ID (portale "corte", permesso "corte.edit")
 //   POST {azione:"pubblica", ...}  -> (con token) applica la pronuncia all'atto
 //
-// Variabili d'ambiente: CORTE_SECRET (stringa lunga casuale) e, facoltativa se si usa solo Estji ID,
-// CORTE_USERS = "utente1:password1:Nome da mostrare,utente2:password2:Altro nome"
-// Più quelle dell'archivio (vedi _corte-store.js).
+// Variabili d'ambiente (nel progetto "ews" ci sono già): AUTH_SECRET, GITHUB_TOKEN, GITHUB_DATA_REPO, GITHUB_DATA_BRANCH.
+// Facoltativa: CORTE_USERS = "utente1:password1:Nome,utente2:password2:Altro" per il login con password
+// (senza, si entra solo con Estji ID). CORTE_SECRET, se presente, sostituisce AUTH_SECRET per firmare le sessioni.
 
 import crypto from "crypto";
 import { leggiAtti, scriviAtti } from "./_corte-store.js";
@@ -20,7 +20,12 @@ const PERICOLOSO = /<\s*(script|iframe|object|embed|style)|\son\w+\s*=|javascrip
 
 /* ---------- autenticazione ---------- */
 const b64 = b => Buffer.from(b).toString("base64url");
-const hmac = s => crypto.createHmac("sha256", process.env.CORTE_SECRET || "").update(s).digest("base64url");
+// Chiave di firma derivata da AUTH_SECRET con una etichetta propria: le sessioni della Corte
+// non valgono per gli altri sistemi e viceversa.
+const haSegreto = () => !!(process.env.CORTE_SECRET || process.env.AUTH_SECRET);
+const hmac = s => crypto.createHmac("sha256",
+  crypto.createHmac("sha256", process.env.CORTE_SECRET || process.env.AUTH_SECRET || "").update("corte-sessione").digest())
+  .update(s).digest("base64url");
 
 function uguali(a, b) {
   const x = Buffer.from(String(a)), y = Buffer.from(String(b));
@@ -40,7 +45,7 @@ function leggiToken(req) {
   const h = req.headers.authorization || "";
   const t = h.startsWith("Bearer ") ? h.slice(7) : "";
   const [corpo, firma] = t.split(".");
-  if (!corpo || !firma || !process.env.CORTE_SECRET || !uguali(hmac(corpo), firma)) return null;
+  if (!corpo || !firma || !haSegreto() || !uguali(hmac(corpo), firma)) return null;
   try {
     const p = JSON.parse(Buffer.from(corpo, "base64url").toString("utf8"));
     return p.exp > Date.now() ? p : null;
@@ -105,20 +110,25 @@ export default async function handler(req, res) {
     const b = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
 
     if (b.azione === "login") {
-      if (!process.env.CORTE_SECRET) return errore(res, 500, "CORTE_SECRET non configurata.");
+      if (!haSegreto()) return errore(res, 500, "AUTH_SECRET non configurato.");
       const u = utenti().find(x => uguali(x.u, testo(b.username, 80)) && uguali(x.p, testo(b.password, 200)));
       if (!u) return errore(res, 401, "Credenziali errate");
       return res.status(200).json({ success: true, token: creaToken(u), username: u.nome });
     }
 
     if (b.azione === "login-estji") {
-      if (!process.env.CORTE_SECRET) return errore(res, 500, "CORTE_SECRET non configurata.");
+      if (!haSegreto()) return errore(res, 500, "AUTH_SECRET non configurato.");
       let c;
       try { c = await verificaIdToken(b.id_token, "corte"); }
       catch (e) { return errore(res, 502, "Estji ID non raggiungibile: riprova tra poco."); }
       if (!c) return errore(res, 401, "Accesso Estji ID non valido o scaduto.");
-      if (!haScope(c, "corte.edit")) return errore(res, 403, "Il tuo profilo Estji ID non è abilitato alla redazione della Corte.");
-      const nome = String(c.name || c.nick || c.preferred_username || c.sub || "Estji ID").slice(0, 80);
+      if (!haScope(c, "corte.edit")) {
+        const haRuolo = Array.isArray(c.roles) && c.roles.includes("giudice_corte");
+        return errore(res, 403, haRuolo && !c.vote_eligible
+          ? 'Hai il ruolo di giudice, ma il tuo Estji ID è ancora "In verifica": serve la verifica dello staff.'
+          : "Per la redazione della Corte serve il ruolo di Giudice Costituzionale.");
+      }
+      const nome = String(c.nick || c.sub || "Estji ID").slice(0, 80);
       return res.status(200).json({ success: true, token: creaToken({ u: "estji:" + (c.sub || nome), nome }), username: nome });
     }
 
@@ -170,7 +180,7 @@ export default async function handler(req, res) {
 
       atto.pronunce = [...(atto.pronunce || []), pronuncia];
       atti[i] = atto;
-      await scriviAtti(letto, atti);
+      await scriviAtti(letto, atti, `Corte Costituzionale: sentenza ${meta.numero}/${meta.anno} (${tipo}) su ${atto.id} — ${sess.nome}`);
       return res.status(200).json({ success: true, pronuncia: { ...pronuncia, atto: { id: atto.id, titolo: atto.titolo } } });
     }
 
