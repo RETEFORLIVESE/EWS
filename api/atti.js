@@ -16,7 +16,7 @@ import { verificaIdToken, haScope } from './_estji-verifica.js';
 
 // ⚠️ Stessa nota di sempre: valuta di spostare queste credenziali in
 // REDAZIONE_USER_ATTI / REDAZIONE_PASSWORD_ATTI quando vorrai occupartene.
-const VALID_USERS = { "TandeePetrenka": "TandeePetrenka", "admin": "CambiamiAnche" };
+const VALID_USERS = {};
 
 function estraiAtti(registro) {
     if (Array.isArray(registro)) return registro;
