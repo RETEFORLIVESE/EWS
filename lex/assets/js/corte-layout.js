@@ -2,12 +2,12 @@
 function renderTestataCorte(attiva) {
   const v = (k, href, t) => `<li><a href="${href}" class="${attiva === k ? "attiva" : ""}">${t}</a></li>`;
   document.getElementById("testata-root").innerHTML = `
-    <div class="striscia-top"><div class="container"><span>Sistema giurisdizionale della fazione</span>
+    <div class="striscia-top"><div class="container"><span>Verfassungsgericht [estjibundes.me.ei]</span>
       <span><a href="normaktiv.html">NormAktiv</a></span></div></div>
     <header class="testata"><div class="container testata__riga">
       <div class="testata__emblema"><img src="CorteCostituzionale.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'⚖'}))"></div>
       <div class="testata__testi">
-        <p class="testata__eyebrow">Giurisdizione costituzionale</p>
+        <p class="testata__eyebrow">Einheitliche Verfassungsgerichtsbarkeit</p>
         <h1 class="testata__nome">Corte Costituzionale</h1>
         <p class="testata__motto">Garante della legalità degli atti normativi</p>
       </div></div></header>
