@@ -553,7 +553,10 @@
             <select id="dos-imp-atto">${opzAtti}</select>
             <input type="text" id="dos-imp-art" placeholder="Articoli, es. 1, 3-5 (vuoto = tutti)" />
             <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-dos-importa>Importa articoli</button>
-            <small>Copia i commi dell'atto scelto in entrambe le colonne: poi modifichi solo la colonna di destra.</small>
+            <select id="dos-imp-titolo" title="Titolo di gruppo dell'atto scelto">${htmlOpzioniTitoli(atto)}</select>
+            <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-dos-importa-titolo>Importa titolo intero</button>
+            <small>Copia i commi e i sottocommi in entrambe le colonne: poi modifichi solo la colonna di destra.
+              «Importa titolo intero» porta il titolo di gruppo con tutti i suoi articoli, fino al titolo successivo.</small>
           </div>
           <div id="dos-blocchi">${d.articoli.map(b => b.tipo === "titolo" ? htmlBloccoTitolo(b) : htmlBloccoArticolo(b)).join("")}</div>
           <div class="dos-azioni-riga">
@@ -675,6 +678,20 @@
     return out;
   }
 
+  const eTitolo = a => typeof eTitoloGruppo === "function" ? eTitoloGruppo(a) : !!(a && a.tipo === "titolo");
+
+  // <option> dei titoli di gruppo di un atto: il valore è la posizione nell'elenco degli articoli
+  function htmlOpzioniTitoli(atto) {
+    const arts = (atto && atto.articoli) || [], out = [];
+    arts.forEach((a, i) => {
+      if (!eTitolo(a)) return;
+      let n = 0;
+      for (let j = i + 1; j < arts.length && !eTitolo(arts[j]); j++) n++;
+      out.push(`<option value="${i}">${esc(testoPuro(a.testo).replace(/\s*\n\s*/g, " — "))} (${n} art.)</option>`);
+    });
+    return out.join("") || '<option value="">Nessun titolo di gruppo in questo atto</option>';
+  }
+
   function sposta(el, dir) {
     if (dir < 0 && el.previousElementSibling) el.parentElement.insertBefore(el, el.previousElementSibling);
     else if (dir > 0 && el.nextElementSibling) el.parentElement.insertBefore(el.nextElementSibling, el);
@@ -741,11 +758,22 @@
         return;
       }
 
-      if (t.closest("[data-dos-importa]")) {
+      const impArt = t.closest("[data-dos-importa]"), impTit = t.closest("[data-dos-importa-titolo]");
+      if (impArt || impTit) {
         const id = form.querySelector("#dos-imp-atto").value;
         const sorgente = (opz.atti || []).find(a => a.id === id);
         if (!sorgente) { messaggio("Seleziona un atto da cui importare.", true); return; }
-        const blocchi = blocchiDaAtto(sorgente, parseNumeri(form.querySelector("#dos-imp-art").value));
+        let blocchi;
+        if (impTit) {
+          const v = form.querySelector("#dos-imp-titolo").value;
+          const arts = sorgente.articoli || [];
+          if (v === "" || !eTitolo(arts[+v])) { messaggio("Questo atto non ha titoli di gruppo da importare.", true); return; }
+          let fine = arts.length;
+          for (let j = +v + 1; j < arts.length; j++) if (eTitolo(arts[j])) { fine = j; break; }
+          blocchi = blocchiDaAtto({ articoli: arts.slice(+v, fine) }, null);   // titolo + articoli fino al titolo successivo
+        } else {
+          blocchi = blocchiDaAtto(sorgente, parseNumeri(form.querySelector("#dos-imp-art").value));
+        }
         if (!blocchi.length) { messaggio("Nessun articolo trovato con quei numeri.", true); return; }
         const cont = form.querySelector("#dos-blocchi");
         blocchi.forEach(b => aggiungi(cont, b.tipo === "titolo" ? htmlBloccoTitolo(b) : htmlBloccoArticolo(b)));
@@ -760,6 +788,12 @@
         const r = await opz.elimina();
         if (!r.ok) messaggio("Errore eliminazione: " + r.errore, true);
       }
+    });
+
+    form.addEventListener("change", e => {
+      if (e.target.id !== "dos-imp-atto") return;
+      const sorg = (opz.atti || []).find(a => a.id === e.target.value);
+      form.querySelector("#dos-imp-titolo").innerHTML = htmlOpzioniTitoli(sorg);
     });
 
     form.addEventListener("input", e => {
@@ -782,6 +816,6 @@
     normalizza, nuovo, htmlEditor, collega, leggi, messaggio,
     htmlPagina, collegaPdf, scaricaPdf,
     // esposti per test
-    _diff: diff, _statoRiga: statoRiga, _confrontaRiga: confrontaRiga, _tokHtml: tokHtml, _riepilogo: riepilogo, _parseNumeri: parseNumeri, _blocchiDaAtto: blocchiDaAtto
+    _diff: diff, _statoRiga: statoRiga, _confrontaRiga: confrontaRiga, _tokHtml: tokHtml, _riepilogo: riepilogo, _parseNumeri: parseNumeri, _blocchiDaAtto: blocchiDaAtto, _htmlOpzioniTitoli: htmlOpzioniTitoli
   };
 })();
