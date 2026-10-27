@@ -171,7 +171,7 @@
   }
   const MX_SOTTO = 28; // rientro dei sottocommi (mm dal bordo pagina)
 
-  function htmlBottonePdf() {
+  function htmlBottonePdf(atto) {
     return `
       <div class="intestazione-atto__azioni" style="margin-top:16px;">
         <button type="button" id="btn-scarica-pdf"
@@ -180,6 +180,10 @@
                  letter-spacing:0.03em; cursor:pointer;">
           ⬇ Scarica in PDF
         </button>
+        ${atto && atto.dossier ? `<a href="dossier.html?id=${encodeURIComponent(atto.id)}"
+          style="display:inline-block; margin-left:8px; padding:8px 16px; border:1px solid var(--blu-700,#12508c); border-radius:4px;
+                 color:var(--blu-700,#12508c); font-family:var(--font-chrome,'Titillium Web',sans-serif); font-weight:700; font-size:0.9rem;">
+          📑 Dossier delle modifiche</a>` : ""}
       </div>`;
   }
 
@@ -321,7 +325,7 @@
           <div><dt>Promulgato da</dt><dd>${atto.promulgatoDa}</dd></div>
           <div><dt>Articoli</dt><dd>${atto.articoli.filter(a => !eTitoloGruppo(a)).length}</dd></div>
         </dl>
-        ${htmlBottonePdf()}
+        ${htmlBottonePdf(atto)}
       </section>
       ${htmlStoriaCorte(atto)}
       <div class="corpo-atto">

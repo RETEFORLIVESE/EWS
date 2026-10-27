@@ -599,6 +599,209 @@
       else y += 2;
     }
 
+    /* ---------- DOSSIER: fascia, iter, testo a fronte ---------- */
+    function fascia(testo) {
+      nuovaPaginaSe(18);
+      if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
+      doc.setFillColor(207, 227, 245);
+      doc.rect(MX, y, W, 8, "F");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+      doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
+      doc.text(htmlInTesto(testo).toUpperCase(), PW / 2, y + 5.5, { align: "center" });
+      y += 12;
+    }
+
+    function pagina() { nuovaPagina(); }
+
+    const ITER_COL = {
+      blu:     { bg: [222, 236, 250], fr: [46, 119, 201] },
+      arancio: { bg: [253, 236, 222], fr: [196, 61, 52] },
+      verde:   { bg: [225, 242, 229], fr: [40, 140, 70] },
+      grigio:  { bg: [234, 237, 241], fr: [110, 120, 132] }
+    };
+
+    // Iter: riquadri colorati (fase, data, organo/atto, esito) collegati da frecce, + riquadro finale.
+    function iter(tappe, conclusione) {
+      const L = tappe.length;
+      const freccia = col => {
+        doc.setFillColor(col[0], col[1], col[2]);
+        doc.triangle(PW / 2 - 3.2, y + 1.2, PW / 2 + 3.2, y + 1.2, PW / 2, y + 6.2, "F");
+        y += 8;
+      };
+      tappe.forEach((t, i) => {
+        const col = ITER_COL[t.colore] || ITER_COL.blu;
+        const xEs = MX + 124, wEs = W - 124 - 3;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+        const esito = doc.splitTextToSize(htmlInTesto(t.esito || "").toUpperCase(), wEs);
+        const h = Math.max(24, esito.length * 3.5 + 9);
+        nuovaPaginaSe(h + 9);
+        doc.setFillColor(col.bg[0], col.bg[1], col.bg[2]);
+        doc.roundedRect(MX, y, W, h, 2, 2, "F");
+
+        doc.setFont("helvetica", "bold"); doc.setFontSize(7);
+        doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
+        doc.text(htmlInTesto(t.fase || "").toUpperCase(), MX + 3, y + 4.2);
+
+        const mid = y + h / 2;
+        const dt = (t.data || "").toString().trim().match(/^(\d{1,2})\s+([^\d\s]+)\s+(\d{4})$/);
+        if (dt) {
+          doc.setFontSize(22); doc.text(dt[1], MX + 5, mid + 4);
+          const wd = doc.getTextWidth(dt[1]);
+          doc.setFontSize(8.5);
+          doc.text(htmlInTesto(dt[2]), MX + 5 + wd + 2, mid - 1);
+          doc.text(dt[3], MX + 5 + wd + 2, mid + 4);
+        } else if (t.data) {
+          doc.setFontSize(9);
+          doc.splitTextToSize(htmlInTesto(t.data), 38).forEach((r, k) => doc.text(r, MX + 5, mid - 1 + k * 4));
+        }
+
+        const org = htmlInTesto(t.organo || ""), rif = htmlInTesto(t.riferimento || "");
+        const cx = MX + 84;
+        if (org) {
+          doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+          doc.setTextColor(COLORI.tenue[0], COLORI.tenue[1], COLORI.tenue[2]);
+          doc.text(org, cx, rif ? mid - 1 : mid + 1.5, { align: "center" });
+        }
+        if (rif) {
+          let fs = 12;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(fs);
+          while (fs > 8 && doc.getTextWidth(rif) > 72) { fs -= 0.5; doc.setFontSize(fs); }
+          doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
+          doc.text(rif, cx, org ? mid + 5.5 : mid + 1.5, { align: "center" });
+        }
+
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+        doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
+        const y0 = mid - (esito.length * 3.5) / 2 + 2.6;
+        esito.forEach((r, k) => doc.text(r, xEs + wEs / 2, y0 + k * 3.5, { align: "center" }));
+
+        y += h;
+        if (i < L - 1 || conclusione) freccia(col.fr);
+      });
+      if (conclusione) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+        const ls = doc.splitTextToSize(htmlInTesto(conclusione), W - 10);
+        const h = ls.length * 5.2 + 6;
+        nuovaPaginaSe(h + 3);
+        doc.setDrawColor(COLORI.blu[0], COLORI.blu[1], COLORI.blu[2]); doc.setLineWidth(0.5);
+        doc.roundedRect(MX, y, W, h, 2, 2, "S");
+        doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
+        ls.forEach((r, k) => doc.text(r, PW / 2, y + 6.2 + k * 5.2, { align: "center" }));
+        y += h + 3;
+      }
+    }
+
+    // Testo a fronte: tabella a due colonne uguali con parole in grassetto / barrate.
+    // righe: { tipo:"titolo", segs } | { tipo:"intestazione", sx, dx } | { tipo:"rif", testo } | { tipo:"riga", sx, dx }
+    // segmenti: { t, b (grassetto), c (corsivo), s (barrato, in rosso) }; { t:"\n" } = a capo.
+    // Le righe lunghe continuano sulla pagina dopo; l'intestazione delle colonne si ripete.
+    function confronto(righe, o = {}) {
+      const size = 8.5, lh = size * MM * 1.32, pad = 1.8, cw = W / 2;
+      const etich = o.etichette || null;
+      const puro = s => (s == null ? "" : s).toString().replace(/\u00a0/g, " ")
+        .replace(/[^\x09\x0A\x20-\x7E\u00A1-\u00FF\u2018-\u201F\u2013\u2014\u2026\u2022\u20AC]/g, "?");
+      const stileDi = (s, base) => {
+        const b = s.b || base.b, c = s.c || base.c;
+        return b && c ? "bolditalic" : b ? "bold" : c ? "italic" : "normal";
+      };
+      const larghezzaSpazio = () => { doc.setFont("helvetica", "normal"); doc.setFontSize(size); return doc.getTextWidth(" "); };
+
+      function avvolgi(segs, larg, base) {
+        const sp = larghezzaSpazio();
+        const linee = []; let cur = [], w = 0;
+        (segs || []).forEach(s => {
+          if (s.t === "\n") { linee.push(cur); cur = []; w = 0; return; }
+          const st = stileDi(s, base), testo = puro(s.t);
+          doc.setFont("helvetica", st); doc.setFontSize(size);
+          const pezzi = doc.getTextWidth(testo) > larg ? doc.splitTextToSize(testo, larg) : [testo];
+          pezzi.forEach((p, ip) => {
+            doc.setFont("helvetica", st); doc.setFontSize(size);
+            const pw = doc.getTextWidth(p);
+            if (ip > 0 || (cur.length && w + sp + pw > larg)) { linee.push(cur); cur = []; w = 0; }
+            w += (cur.length ? sp : 0) + pw;
+            cur.push({ t: p, w: pw, st, s: !!s.s });
+          });
+        });
+        if (cur.length || !linee.length) linee.push(cur);
+        return linee;
+      }
+
+      function disegna(linee, x, larg, allinea, colore, yTop) {
+        const sp = larghezzaSpazio();
+        linee.forEach((ln, i) => {
+          const tot = ln.reduce((a, p) => a + p.w, 0) + sp * Math.max(0, ln.length - 1);
+          let cx = allinea === "centro" ? x + (larg - tot) / 2 : allinea === "destra" ? x + larg - tot : x;
+          const base = yTop + pad + size * MM + i * lh;
+          ln.forEach(p => {
+            doc.setFont("helvetica", p.st); doc.setFontSize(size);
+            const c = p.s ? [167, 46, 35] : colore;
+            doc.setTextColor(c[0], c[1], c[2]);
+            doc.text(p.t, cx, base);
+            if (p.s) {
+              doc.setDrawColor(167, 46, 35); doc.setLineWidth(0.2);
+              doc.line(cx, base - size * MM * 0.3, cx + p.w, base - size * MM * 0.3);
+            }
+            cx += p.w + sp;
+          });
+        });
+      }
+
+      function stampa(c0, c1, op) {
+        let i0 = 0, i1 = 0;
+        while (i0 < c0.length || i1 < c1.length) {
+          const n = Math.floor((PH - MB - y - pad * 2) / lh);
+          const resto = Math.max(c0.length - i0, c1.length - i1);
+          // niente righe spezzate se brevi: meglio spostarle intere sulla pagina dopo
+          if (n < 1 || (resto > n && resto <= 7 && i0 === 0 && i1 === 0)) { nuovaPaginaConIntestazione(); continue; }
+          const s0 = c0.slice(i0, i0 + n), s1 = c1.slice(i1, i1 + n);
+          const h = Math.max(s0.length, s1.length, 1) * lh + pad * 2;
+          doc.setDrawColor(160, 182, 204); doc.setLineWidth(0.25);
+          if (op.unita) {
+            if (op.fill) { doc.setFillColor(op.fill[0], op.fill[1], op.fill[2]); doc.rect(MX, y, W, h, "F"); }
+            doc.rect(MX, y, W, h, "S");
+            disegna(s0, MX + pad, W - pad * 2, op.allinea[0], op.colore, y);
+          } else {
+            [0, 1].forEach(k => {
+              const x = MX + k * cw;
+              if (op.fill) { doc.setFillColor(op.fill[0], op.fill[1], op.fill[2]); doc.rect(x, y, cw, h, "F"); }
+              doc.rect(x, y, cw, h, "S");
+            });
+            disegna(s0, MX + pad, cw - pad * 2, op.allinea[0], op.colore, y);
+            disegna(s1, MX + cw + pad, cw - pad * 2, op.allinea[1], op.colore, y);
+          }
+          y += h; i0 += s0.length; i1 += s1.length;
+          if (i0 < c0.length || i1 < c1.length) nuovaPaginaConIntestazione();
+        }
+      }
+
+      const intestazione = () => {
+        if (!etich) return;
+        const larg = cw - pad * 2;
+        stampa(avvolgi([{ t: etich[0], b: true }], larg, {}), avvolgi([{ t: etich[1], b: true }], larg, {}),
+          { fill: [207, 227, 245], colore: COLORI.scuro, allinea: ["centro", "centro"] });
+      };
+      function nuovaPaginaConIntestazione() { nuovaPagina(); intestazione(); }
+
+      if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
+      y += 1;
+      intestazione();
+      righe.forEach(r => {
+        const larg = cw - pad * 2;
+        if (r.tipo === "titolo") {
+          stampa(avvolgi(r.segs, W - pad * 2, { b: true }), [], { fill: [231, 241, 250], colore: COLORI.scuro, allinea: ["centro", "centro"], unita: true });
+        } else if (r.tipo === "intestazione") {
+          stampa(avvolgi(r.sx, larg, { b: true }), avvolgi(r.dx, larg, { b: true }),
+            { fill: COLORI.blu, colore: [255, 255, 255], allinea: ["centro", "centro"] });
+        } else if (r.tipo === "rif") {
+          stampa([], avvolgi([{ t: r.testo, c: true }], larg, {}), { fill: null, colore: COLORI.tenue, allinea: ["sinistra", "destra"] });
+        } else {
+          stampa(avvolgi(r.sx, larg, {}), avvolgi(r.dx, larg, {}), { fill: null, colore: COLORI.testo, allinea: ["sinistra", "sinistra"] });
+        }
+      });
+      y += 3;
+    }
+
     // Testo cliccabile che apre un indirizzo.
     function link(testo, url, o = {}) {
       const { size = 10, x = MX } = o;
@@ -651,7 +854,7 @@
       doc.save(nomeFile);
     }
 
-    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva };
+    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto };
   }
 
   function nomeFile(titolo, predefinito) {

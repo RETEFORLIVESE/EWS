@@ -181,7 +181,7 @@
       <p style="color:var(--inchiostro-tenue); max-width:60ch; margin-top:0;">
         Le modifiche vengono salvate direttamente sul database condiviso: saranno visibili a tutti gli utenti del sito.
       </p>
-      <div class="redazione-menu" style="grid-template-columns:repeat(2,1fr);">
+      <div class="redazione-menu">
         <button type="button" class="redazione-card" data-azione="nuovo">
           <span class="redazione-card__numero">1</span>
           <span class="redazione-card__titolo">Crea nuovo atto</span>
@@ -191,6 +191,11 @@
           <span class="redazione-card__numero">2</span>
           <span class="redazione-card__titolo">Carica atto esistente</span>
           <span class="redazione-card__desc">Scegli un atto già presente e modificane il contenuto.</span>
+        </button>
+        <button type="button" class="redazione-card" data-azione="dossier">
+          <span class="redazione-card__numero">3</span>
+          <span class="redazione-card__titolo">Dossier delle modifiche</span>
+          <span class="redazione-card__desc">Crea o modifica il dossier di un atto: iter, testo a fronte, tabelle ed esportazione in PDF.</span>
         </button>
       </div>
       <p id="redazione-messaggio" class="redazione-messaggio" style="display:none;"></p>
@@ -220,6 +225,71 @@
       <input type="text" id="redazione-filtro" placeholder="Filtra per titolo o categoria&hellip;" style="width:100%; max-width:420px; padding:10px 14px; border:1px solid var(--bordo); border-radius:var(--radius); font-family:var(--font-chrome); margin-bottom:16px;" />
       <div id="redazione-elenco-carica">${righe || "<p>Nessun atto presente.</p>"}</div>
       <p style="margin-top:20px;"><button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">&larr; Torna al menu</button></p>`;
+  }
+
+  /* ---------- DOSSIER DELLE MODIFICHE ---------- */
+  // Il dossier è salvato dentro l'atto (atto.dossier) con lo stesso salvataggio degli atti.
+
+  function renderDossierElenco() {
+    const lista = [...atti].sort((a, b) => (a.titolo || "").localeCompare(b.titolo || ""));
+    const righe = lista.map(a => {
+      const ha = !!a.dossier;
+      const agg = ha && a.dossier.aggiornato && !isNaN(new Date(a.dossier.aggiornato))
+        ? " &middot; aggiornato il " + new Date(a.dossier.aggiornato).toLocaleDateString("it-IT") : "";
+      return `
+      <div class="redazione-riga">
+        <div>
+          <span class="badge-categoria">${escapeHtml(a.categoria)}</span>
+          <p class="redazione-riga__titolo">${escapeHtml(a.titolo)}</p>
+          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${ha ? "📑 dossier presente" + agg : "nessun dossier"}</p>
+        </div>
+        <div class="redazione-riga__azioni">
+          <button type="button" class="redazione-btn redazione-btn--piccolo ${ha ? "" : "redazione-btn--primario"}" data-dossier-apri="${escapeHtml(a.id)}">${ha ? "Modifica dossier" : "Crea dossier"}</button>
+        </div>
+      </div>`;
+    }).join("");
+    return `
+      <p class="breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="redazione.html">Redazione</a> &rsaquo; Dossier delle modifiche</p>
+      <h1>Dossier delle modifiche</h1>
+      <p style="color:var(--inchiostro-tenue);max-width:62ch;margin-top:0;">Scegli l'atto a cui collegare il dossier. Il dossier viene salvato insieme all'atto e resta modificabile.</p>
+      <input type="text" id="redazione-filtro" placeholder="Filtra per titolo o categoria&hellip;" style="width:100%; max-width:420px; padding:10px 14px; border:1px solid var(--bordo); border-radius:var(--radius); font-family:var(--font-chrome); margin-bottom:16px;" />
+      <div id="redazione-elenco-carica">${righe || "<p>Nessun atto presente.</p>"}</div>
+      <p style="margin-top:20px;"><button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">&larr; Torna al menu</button></p>`;
+  }
+
+  async function salvaDossierAtto(attoId, dossier) {
+    const copia = atti.map(a => a.id === attoId ? { ...a, dossier: { ...dossier, aggiornato: new Date().toISOString() } } : a);
+    try { await API.saveAtti(copia); atti = copia; return { ok: true }; }
+    catch (e) { return { ok: false, errore: e.message }; }
+  }
+
+  async function eliminaDossierAtto(attoId) {
+    const copia = atti.map(a => { if (a.id !== attoId) return a; const { dossier, ...resto } = a; return resto; });
+    try { await API.saveAtti(copia); atti = copia; return { ok: true }; }
+    catch (e) { return { ok: false, errore: e.message }; }
+  }
+
+  function apriDossierEditor(root, attoId) {
+    const atto = atti.find(a => a.id === attoId);
+    if (!atto) { vai("dossier-elenco"); return; }
+    if (typeof Dossier === "undefined") { root.innerHTML = "<p>Modulo dossier non caricato (assets/js/dossier.js).</p>"; return; }
+    root.innerHTML = Dossier.htmlEditor(atto, atto.dossier || Dossier.nuovo(atto), atti);
+    Dossier.collega(document.getElementById("dossier-form"), {
+      atto, atti,
+      salva: async d => {
+        const r = await salvaDossierAtto(attoId, d);
+        if (r.ok) {
+          vai("dossier-editor", attoId);
+          Dossier.messaggio("✅ Dossier salvato. Resta modificabile da qui; la pagina pubblica è aggiornata.");
+        }
+        return r;
+      },
+      elimina: async () => {
+        const r = await eliminaDossierAtto(attoId);
+        if (r.ok) { vai("dossier-elenco"); mostraMessaggio("Dossier eliminato."); }
+        return r;
+      }
+    });
   }
 
   /* ---------- COMMI E SOTTOCOMMI (editor) ---------- */
@@ -516,6 +586,7 @@
       luogo: document.getElementById("f-luogo").value || "",
       articoli: leggiArticoli(),
       ...(originale.pronunce ? { pronunce: originale.pronunce } : {}),
+      ...(originale.dossier ? { dossier: originale.dossier } : {}),   // non perdere il dossier modificando l'atto
     };
   }
 
@@ -552,6 +623,8 @@
     if (vista === "menu") root.innerHTML = renderMenu();
     else if (vista === "carica") root.innerHTML = renderCarica();
     else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); aggiornaAnteprimaImmagine(); }
+    else if (vista === "dossier-elenco") root.innerHTML = renderDossierElenco();
+    else if (vista === "dossier-editor") apriDossierEditor(root, extra);
     window.scrollTo(0, 0);
   }
 
@@ -567,8 +640,12 @@
         if (a === "nuovo") vai("editor", null);
         else if (a === "carica") vai("carica");
         else if (a === "menu") vai("menu");
+        else if (a === "dossier") { e.preventDefault(); vai("dossier-elenco"); }
         return;
       }
+
+      const dos = e.target.closest("[data-dossier-apri]");
+      if (dos) { vai("dossier-editor", dos.getAttribute("data-dossier-apri")); return; }
 
       const mod = e.target.closest("[data-modifica]");
       if (mod) {

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dossier — NormAktiv</title>
+  <meta name="description" content="Dossier delle modifiche di un atto normativo: iter, testo a fronte, fonti e glossario." />
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/dossier.css" />
+  <link rel="apple-touch-icon" href="NormAktiv.png">
+  <link rel="icon" type="image/png" href="NormAktiv.png">
+</head>
+<body>
+  <div id="testata-root"></div>
+  <main class="container"><div id="dossier-root"><p>Caricamento…</p></div></main>
+  <div id="footer-root"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/layout.js"></script>
+  <script src="assets/js/dossier.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      renderTestata("home");
+      renderFooter();
+      var root = document.getElementById("dossier-root");
+      var id = new URLSearchParams(window.location.search).get("id");
+      var nome = (window.SITE_CONFIG && SITE_CONFIG.nomeFazione) || "NormAktiv";
+      var atti;
+      try { atti = await API.loadAtti(); }
+      catch (e) { root.innerHTML = '<div class="nessun-risultato">Errore nel caricamento del dossier.</div>'; return; }
+      var atto = atti.find(function (a) { return a.id === id; });
+      if (!atto || !atto.dossier) {
+        root.innerHTML = '<p class="breadcrumb"><a href="index.html">Home</a> &rsaquo; Dossier non trovato</p>' +
+          '<div class="nessun-risultato">Nessun dossier disponibile per questo atto. Torna alla <a href="index.html">home</a>.</div>';
+        document.title = "Dossier non trovato — " + nome;
+        return;
+      }
+      document.title = (atto.dossier.titolo || "Dossier: " + atto.titolo) + " — " + nome;
+      root.innerHTML = Dossier.htmlPagina(atto);
+      Dossier.collegaPdf(root, atto);
+    });
+  </script>
+</body>
+</html>
