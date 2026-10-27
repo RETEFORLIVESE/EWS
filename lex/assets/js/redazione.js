@@ -68,6 +68,17 @@
     return u;
   }
 
+  // Anteprima e trascinamento della copertina nell'editor dell'atto
+  function collegaCopertinaAtto() {
+    const el = document.querySelector("#redazione-form [data-cop]");
+    if (!el || typeof Copertina === "undefined") return;
+    const v = id => { const x = document.getElementById(id); return x ? x.value.trim() : ""; };
+    Copertina.collega(el, () => ({
+      titolo: v("f-titolo"), sottotitolo: v("f-sommario"), numero: v("f-numero"), anno: v("f-anno"), data: v("f-data"),
+      categoria: v("f-categoria-nuova") || v("f-categoria"), ente: v("f-promulgato"), atto: v("f-titolo")
+    }));
+  }
+
   function aggiornaAnteprimaImmagine() {
     const campo = document.getElementById("f-immagine");
     const box = document.getElementById("f-immagine-anteprima");
@@ -533,6 +544,10 @@
           <label for="f-id">Identificativo URL (id)</label>
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
+        <details class="cop-dettagli">
+          <summary>🖼 Copertina del PDF (facoltativa)</summary>
+          ${typeof Copertina !== "undefined" ? Copertina.htmlEditor(atto ? atto.copertina : null) : ""}
+        </details>
         <h3>Articoli</h3>
         <div id="redazione-articoli">${articoli.map((a, i) => eTitoloGruppo(a) ? renderRigaTitolo(a, i) : renderRigaArticolo(a, i)).join("")}</div>
         <div class="redazione-riga-campi">
@@ -571,6 +586,8 @@
     const categoria = catNuova || document.getElementById("f-categoria").value;
     const idBase = slugify(document.getElementById("f-id").value.trim() || titolo);
     const originale = atti.find(a => a.id === idInModifica) || {};   // conserva le pronunce della Corte
+    const copEl = document.querySelector("#redazione-form [data-cop]");
+    const copertina = (copEl && typeof Copertina !== "undefined") ? Copertina.leggi(copEl) : originale.copertina;
     return {
       id: idUnivoco(idBase, idInModifica),
       categoria,
@@ -586,7 +603,8 @@
       luogo: document.getElementById("f-luogo").value || "",
       articoli: leggiArticoli(),
       ...(originale.pronunce ? { pronunce: originale.pronunce } : {}),
-      ...(originale.dossier ? { dossier: originale.dossier } : {}),   // non perdere il dossier modificando l'atto
+      ...(originale.dossier ? { dossier: originale.dossier } : {}),
+      ...(copertina && (copertina.attiva || originale.copertina) ? { copertina } : {}),   // copertina personalizzata del PDF   // non perdere il dossier modificando l'atto
     };
   }
 
@@ -622,7 +640,7 @@
     const root = document.getElementById("redazione-root");
     if (vista === "menu") root.innerHTML = renderMenu();
     else if (vista === "carica") root.innerHTML = renderCarica();
-    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); aggiornaAnteprimaImmagine(); }
+    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); aggiornaAnteprimaImmagine(); collegaCopertinaAtto(); }
     else if (vista === "dossier-elenco") root.innerHTML = renderDossierElenco();
     else if (vista === "dossier-editor") apriDossierEditor(root, extra);
     window.scrollTo(0, 0);

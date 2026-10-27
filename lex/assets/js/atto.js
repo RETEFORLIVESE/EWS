@@ -119,6 +119,14 @@
       marca: { nome: "NormAktiv", sottotitolo: "Raccolta ufficiale degli atti normativi", logo: "NormAktiv.png" }
     });
 
+    // Copertina personalizzata (facoltativa, configurata in redazione): occupa la prima pagina
+    if (atto.copertina && atto.copertina.attiva) {
+      await pdf.copertina(atto.copertina, {
+        titolo: atto.titolo || "", sottotitolo: atto.sommario || "", numero: atto.numero || "", anno: atto.anno || "",
+        data: atto.dataEmanazione || "", categoria: atto.categoria || "", ente: atto.promulgatoDa || "", atto: atto.titolo || ""
+      });
+    }
+
     const stato = atto.stato === "vigente" ? "VIGENTE" : atto.stato === "annullato" ? "ANNULLATO" : "ABROGATO";
     pdf.scrivi(`${(atto.categoria || "").toString().toUpperCase()}  |  ${stato}`,
       { font: "helvetica", stile: "bold", size: 9, colore: C.blu, dopo: 3 });

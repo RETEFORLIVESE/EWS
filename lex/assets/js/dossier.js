@@ -64,8 +64,15 @@
       sezioni: arr(d.sezioni).map(s => ({ titolo: s.titolo || "", testo: s.testo || "" })),
       fonti: d.fonti || "",
       glossario: arr(d.glossario).map(g => ({ termine: g.termine || "", definizione: g.definizione || "" })),
+      copertina: d.copertina || null,
       aggiornato: d.aggiornato || ""
     };
+  }
+
+  // valori dei segnaposto {titolo}, {data}… usati nelle copertine personalizzate
+  function varsDocumento(d, atto) {
+    return { titolo: d.titolo || "", sottotitolo: d.sottotitolo || "", ente: d.ente || "", data: d.data || "",
+      atto: (atto && atto.titolo) || "", numero: (atto && atto.numero) || "", anno: (atto && atto.anno) || "", categoria: (atto && atto.categoria) || "" };
   }
 
   function nuovo(atto) {
@@ -315,6 +322,9 @@
     });
 
     // --- copertina ---
+    if (d.copertina && d.copertina.attiva) {
+      await pdf.copertina(d.copertina, varsDocumento(d, atto));      // copertina personalizzata (copertina.js)
+    } else {
     pdf.spazio(48);
     pdf.scrivi("DOSSIER", { font: "helvetica", stile: "bold", size: 12, colore: C.blu, align: "center", dopo: 6 });
     pdf.scrivi(d.titolo || ("Dossier: " + atto.titolo), { font: "helvetica", stile: "bold", size: 26, colore: C.scuro, align: "center", interlinea: 1.2, dopo: 8 });
@@ -323,6 +333,7 @@
     if (d.ente) pdf.scrivi(d.ente, { font: "helvetica", stile: "bold", size: 12, colore: C.scuro, align: "center", dopo: 8 });
     if (d.data) pdf.scrivi(d.data, { font: "helvetica", size: 11, colore: C.tenue, align: "center" });
     pdf.pagina();
+    }
 
     // --- presentazione + dati dell'atto ---
     pdf.fascia("Presentazione");
@@ -579,6 +590,10 @@
           <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-dos-aggiungi="voce">+ Aggiungi voce</button>
         </fieldset>
 
+        <fieldset class="dos-ed-sez"><legend>6 · Copertina del PDF</legend>
+          ${typeof Copertina !== "undefined" ? Copertina.htmlEditor(d.copertina) : '<p class="dos-aiuto">Modulo copertine non caricato (assets/js/copertina.js).</p>'}
+        </fieldset>
+
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva dossier</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-dos-pdf>⬇ Esporta in PDF</button>
@@ -622,7 +637,8 @@
       titolo: campo("titolo"), sottotitolo: campo("sottotitolo"), ente: campo("ente"), data: campo("data"),
       presentazione: campo("presentazione"),
       etichettaPrima: campo("etichettaPrima"), etichettaDopo: campo("etichettaDopo"),
-      iter, pubblicazione: campo("pubblicazione"), articoli, sezioni, fonti: campo("fonti"), glossario
+      iter, pubblicazione: campo("pubblicazione"), articoli, sezioni, fonti: campo("fonti"), glossario,
+      copertina: (form.querySelector("[data-cop]") && window.Copertina) ? Copertina.leggi(form.querySelector("[data-cop]")) : null
     });
   }
 
@@ -808,6 +824,12 @@
       btn.disabled = false; btn.textContent = "💾 Salva dossier";
       if (!r.ok) messaggio("Errore salvataggio: " + r.errore, true);
     });
+
+    const cop = form.querySelector("[data-cop]");
+    if (cop && window.Copertina) {
+      const v = k => { const el = form.querySelector(`[data-campo="${k}"]`); return el ? el.value.trim() : ""; };
+      Copertina.collega(cop, () => varsDocumento({ titolo: v("titolo"), sottotitolo: v("sottotitolo"), ente: v("ente"), data: v("data") }, opz.atto));
+    }
 
     collegaPdf(form, opz.atto, () => leggi(form));
   }

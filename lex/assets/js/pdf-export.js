@@ -98,6 +98,34 @@
   }
 
 
+  // Come caricaImmagine, ma ritaglia al centro per riempire un riquadro con il rapporto dato (come "cover" in CSS).
+  function caricaImmagineCover(src, rapporto, formato) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      const timer = setTimeout(() => resolve(null), 15000);
+      img.onload = () => {
+        clearTimeout(timer);
+        try {
+          const w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) return resolve(null);
+          let sw = w, sh = w / rapporto;
+          if (sh > h) { sh = h; sw = h * rapporto; }
+          const k = Math.min(1, 1800 / Math.max(sw, sh));
+          const c = document.createElement("canvas");
+          c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+          const ctx = c.getContext("2d");
+          const png = formato === "png";
+          if (!png) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); }
+          ctx.drawImage(img, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, c.width, c.height);
+          resolve({ data: c.toDataURL(png ? "image/png" : "image/jpeg", 0.9), tipo: png ? "PNG" : "JPEG", w: c.width, h: c.height });
+        } catch (e) { resolve(null); }
+      };
+      img.onerror = () => { clearTimeout(timer); resolve(null); };
+      img.src = src;
+    });
+  }
+
   /* ---------- MAPPE DI TRASPORTI ---------- */
   // Stessi blocchi { tipo:"mappa", righe:[...] } usati dal sito (vedi ctsuMappaHtml in ctsu-core.js e
   // mappa-trasporti.js). Nel PDF la mappa viene disegnata con le stesse icone BSicon di Wikimedia Commons
@@ -173,6 +201,8 @@
     // Immagini che non entravano nello spazio rimasto: il testo prosegue senza buchi e
     // l'immagine viene posata in cima alla pagina successiva.
     let inAttesa = [];
+    // Pagine "nude": senza barra in alto, piè di pagina e numerazione (copertine personalizzate).
+    const nude = new Set();
     // Zone occupate da immagini a destra sulla pagina corrente: il testo si stringe per aggirarle.
     let zone = [];
     const GAP = 5;
@@ -855,6 +885,82 @@
       y += 3;
     }
 
+    // Copertina personalizzata (vedi assets/js/copertina.js): va chiamata PRIMA di scrivere altro.
+    // Disegna sfondo, immagine di sfondo, elementi (testi, immagini, rettangoli, linee) e cornice sulla
+    // prima pagina, poi passa alla pagina successiva. vars sostituisce i segnaposto {titolo}, {data}…
+    async function copertina(c, vars) {
+      c = c || {};
+      const num = (v, d) => { const n = parseFloat(v); return isFinite(n) ? n : d; };
+      const rgb = (v, d) => { const m = mappaColore(v); return m ? mappaRgb(m) : d; };
+      const sost = t => (t == null ? "" : String(t)).replace(/\{(\w+)\}/g, (m, k) => vars && vars[k] != null ? vars[k] : "");
+      if (c.nascondiBarra !== false) nude.add(doc.getNumberOfPages());
+
+      const sf = rgb(c.sfondo, null);
+      if (sf) { doc.setFillColor(sf[0], sf[1], sf[2]); doc.rect(0, 0, PW, PH, "F"); }
+      const urlBg = urlSicuro(c.immagineSfondo);
+      if (urlBg) {
+        const img = await caricaImmagineCover(urlBg, PW / PH, "jpeg");
+        if (img) doc.addImage(img.data, img.tipo, 0, 0, PW, PH);
+      }
+
+      for (const el of (Array.isArray(c.elementi) ? c.elementi : [])) {
+        if (!el || typeof el !== "object") continue;
+        const x = num(el.x, 0), yy = num(el.y, 0);
+        if (el.tipo === "testo") {
+          const size = Math.min(120, Math.max(4, num(el.size, 14)));
+          const w = Math.max(10, num(el.w, PW - x - 20));
+          const font = ["helvetica", "times", "courier"].includes(el.font) ? el.font : "helvetica";
+          const stile = ["normal", "bold", "italic", "bolditalic"].includes(el.stile) ? el.stile : "normal";
+          const align = ["left", "center", "right"].includes(el.align) ? el.align : "left";
+          const col = rgb(el.colore, [0, 0, 0]);
+          doc.setFont(font, stile); doc.setFontSize(size); doc.setTextColor(col[0], col[1], col[2]);
+          const lh = size * MM * 1.25;
+          let ty = yy + size * MM;
+          htmlInTesto(sost(el.testo)).split("\n").forEach(p => {
+            const linee = p.trim() === "" ? [""] : doc.splitTextToSize(p, w);
+            linee.forEach(l => {
+              const px = align === "center" ? x + w / 2 : align === "right" ? x + w : x;
+              if (l) doc.text(l, px, ty, { align });
+              ty += lh;
+            });
+          });
+        } else if (el.tipo === "immagine") {
+          const w = Math.max(1, num(el.w, 60)), h = Math.max(1, num(el.h, 60));
+          const url = urlSicuro(sost(el.src));
+          if (!url) continue;
+          const riempi = el.adatta === "riempi";
+          const img = riempi ? await caricaImmagineCover(url, w / h, "jpeg") : await caricaImmagine(url, "png");
+          if (!img) continue;                      // file non raggiungibile o CORS: l'elemento viene saltato
+          let dw = w, dh = h, dx = x, dy = yy;
+          if (!riempi) {
+            const r = img.w / img.h;
+            if (w / h > r) { dh = h; dw = h * r; } else { dw = w; dh = w / r; }
+            dx = x + (w - dw) / 2; dy = yy + (h - dh) / 2;
+          }
+          doc.addImage(img.data, img.tipo, dx, dy, dw, dh);
+        } else if (el.tipo === "rettangolo") {
+          const w = num(el.w, 0), h = num(el.h, 0), sp = num(el.spessore, 0);
+          const pieno = el.pieno !== false && el.pieno !== "false";
+          if (pieno) { const f = rgb(el.riempimento, [11, 61, 110]); doc.setFillColor(f[0], f[1], f[2]); }
+          if (sp > 0) { const b = rgb(el.bordo, [0, 0, 0]); doc.setDrawColor(b[0], b[1], b[2]); doc.setLineWidth(sp); }
+          if (pieno || sp > 0) doc.rect(x, yy, w, h, pieno && sp > 0 ? "FD" : pieno ? "F" : "S");
+        } else if (el.tipo === "linea") {
+          const col = rgb(el.colore, [201, 162, 39]);
+          doc.setDrawColor(col[0], col[1], col[2]);
+          doc.setLineWidth(Math.max(0.1, num(el.spessore, 1)));
+          doc.line(x, yy, num(el.x2, x), num(el.y2, yy));
+        }
+      }
+
+      const co = c.cornice;
+      if (co && co.attiva) {
+        const m = Math.max(0, num(co.margine, 10)), col = rgb(co.colore, [11, 61, 110]);
+        doc.setDrawColor(col[0], col[1], col[2]); doc.setLineWidth(Math.max(0.1, num(co.spessore, 1)));
+        doc.rect(m, m, PW - 2 * m, PH - 2 * m, "S");
+      }
+      nuovaPagina();
+    }
+
     // Testo cliccabile che apre un indirizzo.
     function link(testo, url, o = {}) {
       const { size = 10, x = MX } = o;
@@ -897,6 +1003,7 @@
       while (inAttesa.length) nuovaPagina();
       const n = doc.getNumberOfPages();
       for (let i = 1; i <= n; i++) {
+        if (nude.has(i)) continue;
         doc.setPage(i);
         disegnaBarra();
         doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
@@ -907,7 +1014,7 @@
       doc.save(nomeFile);
     }
 
-    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto, riquadro };
+    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto, riquadro, copertina };
   }
 
   function nomeFile(titolo, predefinito) {
