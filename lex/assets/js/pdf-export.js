@@ -767,8 +767,9 @@
               if (op.fill) { doc.setFillColor(op.fill[0], op.fill[1], op.fill[2]); doc.rect(x, y, cw, h, "F"); }
               doc.rect(x, y, cw, h, "S");
             });
-            disegna(s0, MX + pad, cw - pad * 2, op.allinea[0], op.colore, y);
-            disegna(s1, MX + cw + pad, cw - pad * 2, op.allinea[1], op.colore, y);
+            const ri = op.rientro || 0;
+            disegna(s0, MX + pad + ri, cw - pad * 2 - ri, op.allinea[0], op.colore, y);
+            disegna(s1, MX + cw + pad + ri, cw - pad * 2 - ri, op.allinea[1], op.colore, y);
           }
           y += h; i0 += s0.length; i1 += s1.length;
           if (i0 < c0.length || i1 < c1.length) nuovaPaginaConIntestazione();
@@ -796,7 +797,8 @@
         } else if (r.tipo === "rif") {
           stampa([], avvolgi([{ t: r.testo, c: true }], larg, {}), { fill: null, colore: COLORI.tenue, allinea: ["sinistra", "destra"] });
         } else {
-          stampa(avvolgi(r.sx, larg, {}), avvolgi(r.dx, larg, {}), { fill: null, colore: COLORI.testo, allinea: ["sinistra", "sinistra"] });
+          const ri = r.rientro || 0;
+          stampa(avvolgi(r.sx, larg - ri, {}), avvolgi(r.dx, larg - ri, {}), { fill: null, colore: COLORI.testo, allinea: ["sinistra", "sinistra"], rientro: ri });
         }
       });
       y += 3;

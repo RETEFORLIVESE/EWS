@@ -14,7 +14,8 @@
 //   etichettaPrima, etichettaDopo,
 //   iter: [{ fase, organo, riferimento, data, esito, colore }],
 //   pubblicazione,
-//   articoli: [ { tipo:"titolo", testo } | { tipo:"articolo", numero, riferimento, righe:[{ prima, dopo }] } ],
+//   articoli: [ { tipo:"titolo", testo } | { tipo:"articolo", numero, riferimento,
+//                 righe:[{ etichetta:"1." | "a)", livello:0 (comma) | 1 (sottocomma), prima, dopo }] } ],
 //   sezioni:  [{ titolo, testo }],
 //   fonti:    "una per riga",
 //   glossario:[{ termine, definizione }],
@@ -26,6 +27,7 @@
   const esc = t => (t == null ? "" : t).toString().replace(/[&<>"']/g,
     c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const norm = s => (s == null ? "" : s).toString().replace(/\s+/g, " ").trim();
+  const lettera = i => typeof letteraDa === "function" ? letteraDa(i) : String.fromCharCode(97 + i);
   const COLORI_TAPPA = { blu: "Blu", arancio: "Arancio", verde: "Verde", grigio: "Grigio" };
 
   function testoPuro(html) {
@@ -58,7 +60,7 @@
       articoli: arr(d.articoli).map(b => (b && b.tipo === "titolo")
         ? { tipo: "titolo", testo: b.testo || "" }
         : { tipo: "articolo", numero: b && b.numero != null ? String(b.numero) : "", riferimento: (b && b.riferimento) || "",
-            righe: arr(b && b.righe).map(r => ({ prima: r.prima || "", dopo: r.dopo || "" })) }),
+            righe: arr(b && b.righe).map(r => ({ prima: r.prima || "", dopo: r.dopo || "", etichetta: r.etichetta || "", livello: r.livello === 1 ? 1 : 0 })) }),
       sezioni: arr(d.sezioni).map(s => ({ titolo: s.titolo || "", testo: s.testo || "" })),
       fonti: d.fonti || "",
       glossario: arr(d.glossario).map(g => ({ termine: g.termine || "", definizione: g.definizione || "" })),
@@ -214,8 +216,10 @@
       b.righe.forEach(r => {
         const c = confrontaRiga(r);
         if (!c) return;
-        const dx = c.speciale ? `<em class="dos-spec">${c.speciale}</em>` : tokHtml(c.dopo, "strong", "dos-nuovo");
-        righe += `<tr class="dos-r dos-r--${c.stato}"><td>${tokHtml(c.prima, "del", "dos-tolto")}</td><td>${dx}</td></tr>`;
+        const et = r.etichetta ? `<span class="dos-et">${esc(r.etichetta)}</span> ` : "";
+        const sx = c.prima.length ? et + tokHtml(c.prima, "del", "dos-tolto") : "";
+        const dx = et + (c.speciale ? `<em class="dos-spec">${c.speciale}</em>` : tokHtml(c.dopo, "strong", "dos-nuovo"));
+        righe += `<tr class="dos-r dos-r--${c.stato}${r.livello === 1 ? " dos-r--sotto" : ""}"><td>${sx}</td><td>${dx}</td></tr>`;
       });
     });
     return `<section class="dos-sezione" id="dos-fronte"><h2 class="dos-fascia">Il testo a fronte</h2>
@@ -352,10 +356,12 @@
         b.righe.forEach(r => {
           const c = confrontaRiga(r);
           if (!c) return;
+          const et = r.etichetta ? [{ t: r.etichetta }] : [];
           righe.push({
             tipo: "riga",
-            sx: segsPdf(c.prima, "prima"),
-            dx: c.speciale ? [{ t: c.speciale, c: true }] : segsPdf(c.dopo, "dopo")
+            rientro: r.livello === 1 ? 6 : 0,
+            sx: c.prima.length ? et.concat(segsPdf(c.prima, "prima")) : [],
+            dx: et.concat(c.speciale ? [{ t: c.speciale, c: true }] : segsPdf(c.dopo, "dopo"))
           });
         });
       });
@@ -440,15 +446,19 @@
   }
 
   function htmlRiga(r) {
+    const sotto = r.livello === 1;
     return `
-      <div class="dos-mov dos-ed-riga">
+      <div class="dos-mov dos-ed-riga${sotto ? " dos-ed-riga--sotto" : ""}" data-livello="${sotto ? 1 : 0}">
         <div class="dos-ed-riga__celle">
           <textarea data-prima rows="3" placeholder="Testo prima (vuoto = disposizione nuova)">${esc(r.prima)}</textarea>
           <textarea data-dopo rows="3" placeholder="Testo dopo (vuoto = disposizione soppressa)">${esc(r.dopo)}</textarea>
         </div>
         <div class="dos-ed-riga__az">
+          <input type="text" class="dos-etichetta-input" data-etichetta value="${esc(r.etichetta || "")}" placeholder="1. / a)" title="Numero del comma o lettera del sottocomma" />
           <span class="dos-stato" data-stato></span>
           <button type="button" class="redazione-btn redazione-btn--piccolo" data-dos-copia title="Copia il testo di sinistra a destra">Copia → destra</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-dos-sotto title="Aggiungi un sottocomma sotto questa riga">+ sottocomma</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo" data-dos-livello title="Trasforma in comma / sottocomma">${sotto ? "↰ comma" : "↳ sottocomma"}</button>
           <span class="dos-spacer"></span>${bottoniMov()}
         </div>
       </div>`;
@@ -472,7 +482,7 @@
           ${bottoniMov()}
         </div>
         <div class="dos-ed-righe">${b.righe.map(htmlRiga).join("")}</div>
-        <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-dos-aggiungi="riga">+ Aggiungi riga di confronto</button>
+        <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-dos-aggiungi="riga">+ Aggiungi comma</button>
       </div>`;
   }
 
@@ -592,6 +602,8 @@
         numero: k(el, "numero", ".dos-ed-barra"),
         riferimento: k(el, "riferimento", ".dos-ed-barra"),
         righe: [...el.querySelectorAll(":scope > .dos-ed-righe > .dos-ed-riga")].map(r => ({
+          etichetta: r.querySelector("[data-etichetta]").value.trim(),
+          livello: r.dataset.livello === "1" ? 1 : 0,
           prima: r.querySelector("[data-prima]").value.trim(),
           dopo: r.querySelector("[data-dopo]").value.trim()
         })).filter(r => r.prima || r.dopo)
@@ -643,16 +655,20 @@
 
   function blocchiDaAtto(atto, numeri) {
     const eTit = a => typeof eTitoloGruppo === "function" ? eTitoloGruppo(a) : a && a.tipo === "titolo";
-    const lettera = i => typeof letteraDa === "function" ? letteraDa(i) : String.fromCharCode(97 + i);
     const out = [];
     (atto.articoli || []).forEach(art => {
       if (eTit(art)) { if (!numeri) out.push({ tipo: "titolo", testo: testoPuro(art.testo) }); return; }
       if (numeri && !numeri.has(String(art.numero).trim().toLowerCase())) return;
       const commi = typeof commiDiArticolo === "function" ? commiDiArticolo(art) : (art.commi || []);
-      const righe = commi.map(c => {
-        let t = testoPuro(c.testo);
-        (c.sottocommi || []).filter(s => s && s.trim()).forEach((s, i) => { t += `\n${lettera(i)}) ${testoPuro(s)}`; });
-        return { prima: t, dopo: t };
+      // un box per ogni comma e uno per ogni sottocomma, con la numerazione dell'atto (1., 2. … / a), b) …)
+      const righe = [];
+      commi.forEach((c, ic) => {
+        const t = testoPuro(c.testo);
+        righe.push({ etichetta: commi.length > 1 ? `${ic + 1}.` : "", livello: 0, prima: t, dopo: t });
+        (c.sottocommi || []).filter(s => s && s.trim()).forEach((s, is) => {
+          const ts = testoPuro(s);
+          righe.push({ etichetta: `${lettera(is)})`, livello: 1, prima: ts, dopo: ts });
+        });
       });
       out.push({ tipo: "articolo", numero: String(art.numero), riferimento: "", righe });
     });
@@ -693,6 +709,30 @@
         return;
       }
 
+      const sottoBtn = t.closest("[data-dos-sotto]");
+      if (sottoBtn) {
+        const riga = sottoBtn.closest(".dos-ed-riga");
+        let inizio = riga;                                   // risale al comma da cui parte il gruppo
+        while (inizio.dataset.livello === "1" && inizio.previousElementSibling) inizio = inizio.previousElementSibling;
+        let ultima = inizio, n = 0;                          // scende fino all'ultimo sottocomma del gruppo
+        while (ultima.nextElementSibling && ultima.nextElementSibling.dataset.livello === "1") { ultima = ultima.nextElementSibling; n++; }
+        ultima.insertAdjacentHTML("afterend", htmlRiga({ prima: "", dopo: "", livello: 1, etichetta: `${lettera(n)})` }));
+        const nuova = ultima.nextElementSibling;
+        aggiornaStato(nuova);
+        nuova.querySelector("[data-prima]").focus();
+        return;
+      }
+
+      const livelloBtn = t.closest("[data-dos-livello]");
+      if (livelloBtn) {
+        const riga = livelloBtn.closest(".dos-ed-riga");
+        const sotto = riga.dataset.livello !== "1";
+        riga.dataset.livello = sotto ? "1" : "0";
+        riga.classList.toggle("dos-ed-riga--sotto", sotto);
+        livelloBtn.textContent = sotto ? "↰ comma" : "↳ sottocomma";
+        return;
+      }
+
       const copia = t.closest("[data-dos-copia]");
       if (copia) {
         const riga = copia.closest(".dos-ed-riga");
@@ -710,7 +750,8 @@
         const cont = form.querySelector("#dos-blocchi");
         blocchi.forEach(b => aggiungi(cont, b.tipo === "titolo" ? htmlBloccoTitolo(b) : htmlBloccoArticolo(b)));
         cont.querySelectorAll(".dos-ed-riga").forEach(aggiornaStato);
-        messaggio(`✅ Importati ${blocchi.filter(b => b.tipo === "articolo").length} articoli: modifica ora la colonna di destra.`);
+        const nRighe = blocchi.reduce((n, b) => n + (b.righe ? b.righe.length : 0), 0);
+        messaggio(`✅ Importati ${blocchi.filter(b => b.tipo === "articolo").length} articoli (${nRighe} tra commi e sottocommi, ciascuno nel suo box): modifica ora la colonna di destra.`);
         return;
       }
 
@@ -741,6 +782,6 @@
     normalizza, nuovo, htmlEditor, collega, leggi, messaggio,
     htmlPagina, collegaPdf, scaricaPdf,
     // esposti per test
-    _diff: diff, _statoRiga: statoRiga, _confrontaRiga: confrontaRiga, _tokHtml: tokHtml, _riepilogo: riepilogo, _parseNumeri: parseNumeri
+    _diff: diff, _statoRiga: statoRiga, _confrontaRiga: confrontaRiga, _tokHtml: tokHtml, _riepilogo: riepilogo, _parseNumeri: parseNumeri, _blocchiDaAtto: blocchiDaAtto
   };
 })();
