@@ -110,6 +110,8 @@
     });
   }
 
+  const testoSentenza = p => `sentenza n. ${p.numero}/${p.anno}`;
+
   async function scaricaPdfAtto(atto, mappaLuoghi) {
     const PE = await caricaPdfExport();
     const C = PE.colori;
@@ -129,6 +131,18 @@
         { font: "helvetica", size: 10, colore: C.tenue, dopo: 3 });
     }
 
+    // Avviso della Corte Costituzionale (come nella pagina dell'atto): atto annullato o abrogato
+    const nulleCorte = (atto.pronunce || []).filter(p => p.tipo === "annullamento" || p.tipo === "abrogazione");
+    const ultimaNulla = nulleCorte[nulleCorte.length - 1];
+    if (ultimaNulla && (atto.stato === "annullato" || atto.stato === "abrogato")) {
+      const annullato = ultimaNulla.tipo === "annullamento";
+      pdf.riquadro({
+        colore: annullato ? "rosso" : "ambra",
+        titolo: `Atto ${annullato ? "annullato" : "abrogato"} dalla Corte Costituzionale`,
+        righe: [`${testoSentenza(ultimaNulla)} del ${ultimaNulla.data || ""}${ultimaNulla.effetto ? " (" + ultimaNulla.effetto + ")" : ""}. Il testo è conservato a titolo di consultazione.`]
+      });
+    }
+
     // immagine facoltativa dell'atto (in intestazione, a tutta larghezza)
     if (atto.immagine) await pdf.immagine(atto.immagine, atto.didascalia, { maxH: 60 });
 
@@ -142,6 +156,15 @@
     pdf.linea();
     pdf.spazio(3);
 
+    // Storia delle pronunce della Corte Costituzionale
+    if ((atto.pronunce || []).length) {
+      pdf.riquadro({
+        colore: "blu", elenco: true,
+        titolo: "Pronunce della Corte Costituzionale",
+        righe: atto.pronunce.map(p => `${TIPI_CORTE[p.tipo] || p.tipo} - ${testoSentenza(p)}, ${p.data || ""}: ${p.oggetto || ""}`)
+      });
+    }
+
     atto.articoli.forEach(art => {
       if (eTitoloGruppo(art)) {
         pdf.spazio(4);
@@ -154,6 +177,18 @@
       pdf.riservaSpazio(28); // evita intestazione d'articolo isolata a fondo pagina
       pdf.scrivi(`Articolo ${art.numero}`, { font: "helvetica", stile: "bold", size: 9.5, colore: C.blu, dopo: 0.5 });
       pdf.scrivi(art.rubrica, { font: "helvetica", stile: "bold", size: 12.5, colore: C.scuro, dopo: 2.5 });
+
+      // Nota se l'articolo è stato modificato o aggiunto dalla Corte
+      const numArt = String(art.numero).trim();
+      const pronunceArt = (atto.pronunce || []).filter(p => p.tipo === "modifica" && (p.modifiche || [])
+        .some(m => String(m.numero).trim() === numArt && (m.azione === "modificato" || m.azione === "aggiunto")));
+      if (pronunceArt.length) {
+        const aggiunto = pronunceArt.some(p => p.modifiche.some(m => String(m.numero).trim() === numArt && m.azione === "aggiunto"));
+        pdf.riquadro({
+          colore: "blu", size: 8.5,
+          righe: [`Articolo ${aggiunto ? "aggiunto" : "modificato"} dalla Corte Costituzionale: ${pronunceArt.map(p => `${testoSentenza(p)} del ${p.data || ""}`).join("; ")}`]
+        });
+      }
 
       const commi = commiDiArticolo(art);
       commi.forEach((comma, ic) => {

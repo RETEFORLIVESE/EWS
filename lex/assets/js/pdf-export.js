@@ -804,6 +804,57 @@
       y += 3;
     }
 
+    // Riquadro evidenziato (avvisi, note): fascia colorata a sinistra, titolo in grassetto e righe di testo.
+    // o: { titolo, righe:[testo], elenco:true (puntato), colore:"rosso"|"ambra"|"blu", size }
+    // Se non entra nella pagina corrente passa alla successiva; se è più lungo di una pagina continua.
+    function riquadro(o = {}) {
+      const { titolo = "", righe = [], elenco = false, colore = "blu", size = 9.5 } = o;
+      const T = {
+        rosso: { bg: [253, 236, 235], br: [167, 46, 35], tx: [110, 28, 20] },
+        ambra: { bg: [255, 247, 222], br: [201, 162, 39], tx: [105, 78, 0] },
+        blu:   { bg: [231, 241, 250], br: [18, 80, 140],  tx: COLORI.scuro }
+      }[colore] || { bg: [231, 241, 250], br: [18, 80, 140], tx: COLORI.scuro };
+      const pad = 3, band = 1.6, lh = size * MM * 1.35, ind = elenco ? 3.5 : 0;
+      const wTesto = W - pad * 2 - band - 1;
+      if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
+
+      const linee = [];
+      if (titolo) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(size + 0.5);
+        doc.splitTextToSize(htmlInTesto(titolo), wTesto).forEach(t => linee.push({ t, b: true, x: 0 }));
+      }
+      doc.setFont("helvetica", "normal"); doc.setFontSize(size);
+      righe.forEach(r => {
+        const testo = htmlInTesto(r);
+        if (!testo) return;
+        doc.splitTextToSize(testo, wTesto - ind).forEach((t, i) => linee.push({ t, b: false, x: ind, punto: elenco && i === 0 }));
+      });
+      if (!linee.length) return;
+
+      let i = 0;
+      while (i < linee.length) {
+        const n = Math.floor((PH - MB - y - pad * 2) / lh);
+        // un riquadro che sta in una pagina non viene spezzato
+        if (n < 1 || (i === 0 && linee.length > n && linee.length <= 40)) { nuovaPagina(); continue; }
+        const parte = linee.slice(i, i + n);
+        const h = parte.length * lh + pad * 2;
+        doc.setFillColor(T.bg[0], T.bg[1], T.bg[2]); doc.rect(MX, y, W, h, "F");
+        doc.setDrawColor(T.br[0], T.br[1], T.br[2]); doc.setLineWidth(0.25); doc.rect(MX, y, W, h, "S");
+        doc.setFillColor(T.br[0], T.br[1], T.br[2]); doc.rect(MX, y, band, h, "F");
+        parte.forEach((l, k) => {
+          doc.setFont("helvetica", l.b ? "bold" : "normal");
+          doc.setFontSize(l.b ? size + 0.5 : size);
+          doc.setTextColor(T.tx[0], T.tx[1], T.tx[2]);
+          const ty = y + pad + size * MM + k * lh;
+          if (l.punto) doc.text("\u2022", MX + band + pad, ty);
+          doc.text(l.t, MX + band + pad + l.x, ty);
+        });
+        y += h; i += parte.length;
+        if (i < linee.length) nuovaPagina();
+      }
+      y += 3;
+    }
+
     // Testo cliccabile che apre un indirizzo.
     function link(testo, url, o = {}) {
       const { size = 10, x = MX } = o;
@@ -856,7 +907,7 @@
       doc.save(nomeFile);
     }
 
-    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto };
+    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto, riquadro };
   }
 
   function nomeFile(titolo, predefinito) {
