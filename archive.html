@@ -242,6 +242,8 @@ a.card:hover{filter:brightness(1.25)}
         <span class="gh">Union Sites</span>
         <a class="item on" href="#intro" data-page="intro"><span class="ic"><img src="USSEcoat.png" alt="" width="16" height="16"></span>General</a>
         <a class="item" href="#normaktiv" data-page="normaktiv"><span class="ic"><img src="NormAktiv.png" alt="" width="16" height="16"></span>NormAktiv</a>
+        <a class="item" href="#dossier" data-page="dossier"><span class="ic">📑</span>Dossier</a>
+        <a class="item" href="#corte" data-page="corte"><span class="ic"><img src="lex/CorteCostituzionale.png" alt="" width="16" height="16"></span>Corte Costituzionale</a>
         <a class="item" href="#CTSU" data-page="CTSU"><span class="ic"><img src="lex/CTSU.png" alt="CTSU" width="16" height="16"></span>CTSU</a>
         <a class="item" href="#CEPU" data-page="CEPU"><span class="ic"><img src="CEPU.png" alt="CEPU" width="16" height="16"></span>CEPU</a>
         <a class="item" href="#unitext" data-page="unitext"><span class="ic"><img src="lex/UniText.png" alt="UniText" width="16" height="16"></span>UniText</a>
@@ -323,6 +325,38 @@ a.card:hover{filter:brightness(1.25)}
       </div>
 
       <div class="panel feed" data-feed="normaktiv"></div></section>
+
+      <section data-page="dossier" hidden><div class="bar">Dossier Archive</div>
+
+      <div class="panel">
+        <div class="banner">
+          <div class="frame">📑</div>
+          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>Dossier</b><em>Amendment dossiers of the laws</em></div>
+          <div class="bub"></div>
+        </div>
+        <div class="btns">
+          <a class="item ext" href="lex/normaktiv.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
+          <a class="item ext" href="lex/redazione.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+        </div>
+      </div>
+
+      <div class="panel feed" data-feed="dossier"></div></section>
+
+      <section data-page="corte" hidden><div class="bar">Constitutional Court Archive</div>
+
+      <div class="panel">
+        <div class="banner">
+          <div class="frame"><img src="lex/CorteCostituzionale.png" alt="Corte Costituzionale" width="96" height="96"></div>
+          <div class="txt"><small>Zentraler Exekutivrat der Union</small><b>Corte Costituzionale</b><em>Rulings on the laws</em></div>
+          <div class="bub"></div>
+        </div>
+        <div class="btns">
+          <a class="item ext" href="lex/corte.html" target="_blank" rel="noopener"><span class="ic">🌐</span>WebSite</a>
+          <a class="item ext" href="lex/redazioneCorte.html" target="_blank" rel="noopener"><span class="ic">✍️</span>Redazione</a>
+        </div>
+      </div>
+
+      <div class="panel feed" data-feed="corte"></div></section>
 
       <section data-page="CTSU" hidden><div class="bar">Projects Archive</div>
 
@@ -594,6 +628,46 @@ var FEEDS={
         num:o.numero?'n. '+s(o.numero)+(o.anno?'/'+s(o.anno):''):'',
         data:s(o.dataEmanazione),titolo:s(o.titolo),sunto:clean(o.sommario,240),
         img:s(o.immagine),id:s(o.id),_t:ts(o.dataEmanazione)}});
+    }},
+  // Tutti i dossier di tutti gli atti. Ogni atto puo' averne piu' d'uno (atto.dossiers);
+  // il vecchio formato a dossier singolo (atto.dossier) e' ancora letto.
+  dossier:{label:'Elenco dei dossier',file:'atti.json',site:'lex/normaktiv.html',detail:'',
+    load:function(raw){
+      var out=[],n=0;
+      (raw.atti||[]).forEach(function(a){
+        var multi=a.dossiers&&a.dossiers.length;
+        var ds=multi?a.dossiers:(a.dossier?[a.dossier]:[]);
+        ds.forEach(function(d){
+          var did=s(d.id)||(multi?'':'principale');
+          out.push({_i:n++,
+            cat:s(a.categoria),stato:'',
+            num:a.numero?'Atto n. '+s(a.numero)+(a.anno?'/'+s(a.anno):''):'',
+            data:s(d.data)||isoIt(d.aggiornato),
+            titolo:s(d.titolo)||('Dossier: '+s(a.titolo)),
+            sunto:clean(['Atto: '+s(a.titolo),s(d.sottotitolo)].filter(Boolean).join(' \u2014 '),240),
+            img:'',_t:ts(d.data)||ts(d.aggiornato),
+            url:'lex/dossier.html?id='+encodeURIComponent(s(a.id))+(did?'&d='+encodeURIComponent(did):'')});
+        });
+      });
+      return out;
+    }},
+  // Tutte le sentenze della Corte: sono salvate negli atti (atto.pronunce), quindi si leggono da atti.json.
+  corte:{label:'Elenco delle sentenze',file:'atti.json',site:'lex/corte.html',detail:'lex/corte.html?id=',
+    load:function(raw){
+      var TIPI={modifica:'Modifica',annullamento:'Annullamento',abrogazione:'Abrogazione'},out=[],n=0;
+      (raw.atti||[]).forEach(function(a){
+        (a.pronunce||[]).forEach(function(p){
+          var eff=s(p.effetto);
+          out.push({_i:n++,
+            cat:TIPI[p.tipo]||s(p.tipo),stato:'',
+            num:p.numero?'Sentenza n. '+s(p.numero)+(p.anno?'/'+s(p.anno):''):'',
+            data:s(p.data),
+            titolo:s(p.oggetto)||('Sentenza su '+s(a.titolo)),
+            sunto:clean('Atto: '+s(a.titolo)+(eff?' \u2014 '+eff:''),240),
+            img:'',id:s(p.id),_t:ts(p.data)});
+        });
+      });
+      return out;
     }},
   CTSU:{label:'Elenco dei progetti',file:'ctsu.json',site:'lex/ctsu.html',detail:'lex/progetto.html?id=',
     load:function(raw){
