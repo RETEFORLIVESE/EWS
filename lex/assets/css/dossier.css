@@ -191,3 +191,6 @@
   .cop-pagina-wrap{padding:6px;}
   .cop-el{padding:8px 10px;}
 }
+
+.cop-modo{display:flex;flex-direction:column;gap:4px;max-width:420px;font-family:var(--font-chrome);font-size:.78rem;font-weight:600;text-transform:uppercase;color:var(--inchiostro-tenue);}
+.cop-modo select{font-family:var(--font-testo);font-size:.92rem;text-transform:none;padding:8px 10px;border:1px solid var(--bordo);border-radius:var(--radius);background:#fff;}

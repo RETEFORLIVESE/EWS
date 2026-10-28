@@ -370,18 +370,16 @@
       marca: { nome: "NormAktiv", sottotitolo: "Dossier delle modifiche", logo: "NormAktiv.png" }
     });
 
-    // --- copertina ---
-    if (d.copertina && d.copertina.attiva) {
-      await pdf.copertina(d.copertina, varsDocumento(d, atto));      // copertina personalizzata (copertina.js)
-    } else {
-    pdf.spazio(48);
-    pdf.scrivi("DOSSIER", { font: "helvetica", stile: "bold", size: 12, colore: C.blu, align: "center", dopo: 6 });
-    pdf.scrivi(d.titolo || ("Dossier: " + atto.titolo), { font: "helvetica", stile: "bold", size: 26, colore: C.scuro, align: "center", interlinea: 1.2, dopo: 8 });
-    if (d.sottotitolo) pdf.scrivi(d.sottotitolo, { font: "helvetica", size: 13, colore: C.tenue, align: "center", dopo: 40 });
-    if (d.ente) pdf.scrivi("A cura di", { font: "helvetica", size: 9, colore: C.tenue, align: "center", dopo: 1 });
-    if (d.ente) pdf.scrivi(d.ente, { font: "helvetica", stile: "bold", size: 12, colore: C.scuro, align: "center", dopo: 8 });
-    if (d.data) pdf.scrivi(d.data, { font: "helvetica", size: 11, colore: C.tenue, align: "center" });
-    pdf.pagina();
+    // --- copertina: nessuna / standard / personalizzata (scelta nell'editor, default standard) ---
+    const cop = d.copertina || {};
+    const modoCop = cop.modo || (cop.attiva ? "personalizzata" : "standard");
+    if (modoCop === "personalizzata") {
+      await pdf.copertina(cop, varsDocumento(d, atto));
+    } else if (modoCop === "standard") {
+      pdf.copertinaStandard({
+        kicker: "Dossier", titolo: d.titolo || ("Dossier: " + atto.titolo), sottotitolo: d.sottotitolo,
+        righe: [["A cura di", d.ente], ["Data", d.data]]
+      });
     }
 
     // --- presentazione + dati dell'atto ---

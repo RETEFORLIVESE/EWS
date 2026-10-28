@@ -583,7 +583,7 @@
           <input type="text" id="f-id" value="${atto ? escapeHtml(atto.id) : ""}" placeholder="generato dal titolo se vuoto" />
         </div>
         <details class="cop-dettagli">
-          <summary>🖼 Copertina del PDF (facoltativa)</summary>
+          <summary>🖼 Copertina del PDF</summary>
           ${typeof Copertina !== "undefined" ? Copertina.htmlEditor(atto ? atto.copertina : null) : ""}
         </details>
         <h3>Articoli</h3>
@@ -642,8 +642,8 @@
       articoli: leggiArticoli(),
       ...(originale.pronunce ? { pronunce: originale.pronunce } : {}),
       ...(originale.dossiers ? { dossiers: originale.dossiers } : {}),
-      ...(originale.dossier ? { dossier: originale.dossier } : {}),
-      ...(copertina && (copertina.attiva || originale.copertina) ? { copertina } : {}),   // copertina personalizzata del PDF   // non perdere il dossier modificando l'atto
+      ...(originale.dossier ? { dossier: originale.dossier } : {}),   // non perdere i dossier modificando l'atto
+      ...(copertina && (copertina.modo !== "standard" || originale.copertina) ? { copertina } : {}),   // copertina del PDF (la standard è il default: niente da salvare)
     };
   }
 

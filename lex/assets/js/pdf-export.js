@@ -885,6 +885,22 @@
       y += 3;
     }
 
+    // Copertina standard (stessa grafica per leggi e dossier): sigla in alto, titolo grande, sottotitolo e dati.
+    // o: { kicker, titolo, sottotitolo, righe:[[etichetta, valore], …] }. Va chiamata PRIMA di scrivere altro.
+    function copertinaStandard(o = {}) {
+      spazio(48);
+      if (o.kicker) scrivi(String(o.kicker).toUpperCase(), { font: "helvetica", stile: "bold", size: 12, colore: COLORI.blu, align: "center", dopo: 6 });
+      scrivi(o.titolo || "", { font: "helvetica", stile: "bold", size: 26, colore: COLORI.scuro, align: "center", interlinea: 1.2, dopo: 8 });
+      if (o.sottotitolo) scrivi(o.sottotitolo, { font: "helvetica", size: 13, colore: COLORI.tenue, align: "center", dopo: 40 });
+      else spazio(30);
+      (o.righe || []).forEach(r => {
+        if (!r || !r[1]) return;
+        scrivi(String(r[0]), { font: "helvetica", size: 9, colore: COLORI.tenue, align: "center", dopo: 1 });
+        scrivi(String(r[1]), { font: "helvetica", stile: "bold", size: 12, colore: COLORI.scuro, align: "center", dopo: 8 });
+      });
+      nuovaPagina();
+    }
+
     // Copertina personalizzata (vedi assets/js/copertina.js): va chiamata PRIMA di scrivere altro.
     // Disegna sfondo, immagine di sfondo, elementi (testi, immagini, rettangoli, linee) e cornice sulla
     // prima pagina, poi passa alla pagina successiva. vars sostituisce i segnaposto {titolo}, {data}…
@@ -1014,7 +1030,7 @@
       doc.save(nomeFile);
     }
 
-    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto, riquadro, copertina };
+    return { scrivi, linea, spazio, riservaSpazio, dati, immagine, immagineDestra, mappa, link, salva, fascia, pagina, iter, confronto, riquadro, copertina, copertinaStandard };
   }
 
   function nomeFile(titolo, predefinito) {

@@ -3,7 +3,7 @@
 //
 // Una copertina è salvata come oggetto semplice (atto.copertina / atto.dossier.copertina):
 // {
-//   attiva, sfondo:"#rrggbb", immagineSfondo:"url", nascondiBarra,
+//   modo:"nessuna"|"standard"|"personalizzata" (attiva = modo personalizzata), sfondo:"#rrggbb", immagineSfondo:"url", nascondiBarra,
 //   cornice:{ attiva, colore, spessore, margine },
 //   elementi:[
 //     { tipo:"testo", testo, x, y, w, size, colore, font, stile, align },
@@ -44,6 +44,7 @@
   const STILI = { normal: "Normale", bold: "Grassetto", italic: "Corsivo", bolditalic: "Grassetto corsivo" };
   const ALLIN = { left: "Sinistra", center: "Centro", right: "Destra" };
   const ADATTA = { contieni: "Contieni (intera)", riempi: "Riempi (ritaglia)" };
+  const MODI = { nessuna: "Nessuna copertina", standard: "Copertina standard (titolo, numero, data…)", personalizzata: "Copertina personalizzata" };
   const TIPI = { testo: "Testo", immagine: "Immagine", rettangolo: "Rettangolo", linea: "Linea" };
   const CSS_FONT = {
     helvetica: "Helvetica,Arial,sans-serif",
@@ -84,8 +85,10 @@
   function normalizza(c) {
     c = c || {};
     const co = c.cornice || {};
+    const modo = has(MODI, c.modo) ? c.modo : (c.attiva ? "personalizzata" : "standard");
     return {
-      attiva: !!c.attiva,
+      modo,
+      attiva: modo === "personalizzata",          // compatibilità: true solo per la copertina personalizzata
       sfondo: colore(c.sfondo, "#ffffff"),
       immagineSfondo: (c.immagineSfondo || "").toString().trim(),
       nascondiBarra: c.nascondiBarra !== false,
@@ -213,7 +216,9 @@
     c = normalizza(c);
     return `
       <div class="cop-ed ${c.attiva ? "" : "cop-ed--off"}" data-cop>
-        <label class="cop-check cop-attiva"><input type="checkbox" data-cf="attiva" ${c.attiva ? "checked" : ""} /> Usa una copertina personalizzata nel PDF</label>
+        <label class="cop-modo">Copertina del PDF
+          <select data-cf="modo">${Object.keys(MODI).map(k => `<option value="${k}" ${k === c.modo ? "selected" : ""}>${MODI[k]}</option>`).join("")}</select>
+        </label>
         <div class="cop-corpo" data-cop-corpo>${htmlCorpo(c)}</div>
       </div>`;
   }
@@ -228,7 +233,7 @@
       return normEl(o);
     }).filter(Boolean);
     return normalizza({
-      attiva: g("attiva").checked,
+      modo: g("modo").value,
       sfondo: g("sfondo").value,
       immagineSfondo: g("immagineSfondo").value,
       nascondiBarra: g("nascondiBarra").checked,
@@ -279,7 +284,7 @@
 
     radice.addEventListener("input", disegna);
     radice.addEventListener("change", e => {
-      if (e.target.matches('[data-cf="attiva"]')) radice.classList.toggle("cop-ed--off", !e.target.checked);
+      if (e.target.matches('[data-cf="modo"]')) radice.classList.toggle("cop-ed--off", e.target.value !== "personalizzata");
       disegna();
     });
     // Invio dentro un campo non deve salvare l'intero modulo

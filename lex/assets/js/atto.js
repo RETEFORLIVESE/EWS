@@ -119,11 +119,21 @@
       marca: { nome: "NormAktiv", sottotitolo: "Raccolta ufficiale degli atti normativi", logo: "NormAktiv.png" }
     });
 
-    // Copertina personalizzata (facoltativa, configurata in redazione): occupa la prima pagina
-    if (atto.copertina && atto.copertina.attiva) {
-      await pdf.copertina(atto.copertina, {
+    // Copertina del PDF, scelta in redazione: nessuna / standard (come i dossier) / personalizzata.
+    // Se l'atto non ha impostazioni, usa la copertina standard.
+    const cop = atto.copertina || {};
+    const modoCop = cop.modo || (cop.attiva ? "personalizzata" : (atto.copertina ? "nessuna" : "standard"));
+    if (modoCop === "personalizzata") {
+      await pdf.copertina(cop, {
         titolo: atto.titolo || "", sottotitolo: atto.sommario || "", numero: atto.numero || "", anno: atto.anno || "",
         data: atto.dataEmanazione || "", categoria: atto.categoria || "", ente: atto.promulgatoDa || "", atto: atto.titolo || ""
+      });
+    } else if (modoCop === "standard") {
+      const somm = (atto.sommario || "").replace(/\s+/g, " ").trim();
+      pdf.copertinaStandard({
+        kicker: atto.categoria, titolo: atto.titolo,
+        sottotitolo: somm.length > 220 ? somm.slice(0, 217).trim() + "..." : somm,
+        righe: [["Numero", atto.numero ? `${atto.numero}/${atto.anno}` : ""], ["Data di emanazione", atto.dataEmanazione], ["Promulgato da", atto.promulgatoDa]]
       });
     }
 
