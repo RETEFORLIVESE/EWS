@@ -214,6 +214,13 @@
   }
   const MX_SOTTO = 28; // rientro dei sottocommi (mm dal bordo pagina)
 
+  // quanti dossier ha l'atto (nuovo formato a elenco o vecchio dossier singolo)
+  function nDossier(atto) {
+    if (!atto) return 0;
+    if (Array.isArray(atto.dossiers) && atto.dossiers.length) return atto.dossiers.length;
+    return atto.dossier ? 1 : 0;
+  }
+
   function htmlBottonePdf(atto) {
     return `
       <div class="intestazione-atto__azioni" style="margin-top:16px;">
@@ -223,10 +230,10 @@
                  letter-spacing:0.03em; cursor:pointer;">
           ⬇ Scarica in PDF
         </button>
-        ${atto && atto.dossier ? `<a href="dossier.html?id=${encodeURIComponent(atto.id)}"
+        ${nDossier(atto) ? `<a href="dossier.html?id=${encodeURIComponent(atto.id)}"
           style="display:inline-block; margin-left:8px; padding:8px 16px; border:1px solid var(--blu-700,#12508c); border-radius:4px;
                  color:var(--blu-700,#12508c); font-family:var(--font-chrome,'Titillium Web',sans-serif); font-weight:700; font-size:0.9rem;">
-          📑 Dossier delle modifiche</a>` : ""}
+          📑 ${nDossier(atto) > 1 ? "Dossier delle modifiche (" + nDossier(atto) + ")" : "Dossier delle modifiche"}</a>` : ""}
       </div>`;
   }
 

@@ -31,15 +31,24 @@
       try { atti = await API.loadAtti(); }
       catch (e) { root.innerHTML = '<div class="nessun-risultato">Errore nel caricamento del dossier.</div>'; return; }
       var atto = atti.find(function (a) { return a.id === id; });
-      if (!atto || !atto.dossier) {
+      var lista = atto ? Dossier.elenco(atto) : [];
+      var did = new URLSearchParams(window.location.search).get("d");
+      var scelto = did ? lista.find(function (x) { return x.id === did; }) : (lista.length === 1 ? lista[0] : null);
+      if (!atto || !lista.length || (did && !scelto)) {
         root.innerHTML = '<p class="breadcrumb"><a href="index.html">Home</a> &rsaquo; Dossier non trovato</p>' +
-          '<div class="nessun-risultato">Nessun dossier disponibile per questo atto. Torna alla <a href="index.html">home</a>.</div>';
+          '<div class="nessun-risultato">Dossier non disponibile.' +
+          (atto && lista.length ? ' <a href="dossier.html?id=' + encodeURIComponent(atto.id) + '">Vedi tutti i dossier di questo atto</a>.' : ' Torna alla <a href="index.html">home</a>.') + '</div>';
         document.title = "Dossier non trovato — " + nome;
         return;
       }
-      document.title = (atto.dossier.titolo || "Dossier: " + atto.titolo) + " — " + nome;
-      root.innerHTML = Dossier.htmlPagina(atto);
-      Dossier.collegaPdf(root, atto);
+      if (!scelto) {                                   // più dossier: prima si sceglie dall'elenco
+        document.title = "Dossier: " + atto.titolo + " — " + nome;
+        root.innerHTML = Dossier.htmlElencoPubblico(atto);
+        return;
+      }
+      document.title = (scelto.titolo || "Dossier: " + atto.titolo) + " — " + nome;
+      root.innerHTML = Dossier.htmlPagina(atto, scelto);
+      Dossier.collegaPdf(root, atto, function () { return scelto; });
     });
   </script>
 </body>

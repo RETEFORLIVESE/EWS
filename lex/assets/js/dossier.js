@@ -1,7 +1,9 @@
 // assets/js/dossier.js
 // Dossier delle modifiche di un atto (stile "dossier di legge": iter, testo a fronte, tabelle, glossario).
 //
-// Il dossier è salvato DENTRO l'atto (atto.dossier), quindi viaggia con lo stesso
+// I dossier sono salvati DENTRO l'atto (atto.dossiers = elenco; ogni atto può averne più di uno,
+// es. uno per ogni riforma o versione). Il vecchio formato a dossier singolo (atto.dossier) è
+// ancora letto e viene migrato al primo salvataggio. Viaggiano con lo stesso
 // salvataggio (API.saveAtti) e non richiede modifiche al backend.
 //
 // Usato da:
@@ -41,10 +43,24 @@
      MODELLO
      ==================================================================== */
 
+  // Tutti i dossier di un atto (anche quello nel vecchio formato singolo, con id "principale")
+  function elenco(atto) {
+    if (!atto) return [];
+    if (Array.isArray(atto.dossiers) && atto.dossiers.length) return atto.dossiers.map(d => normalizza(d));
+    return atto.dossier ? [normalizza({ ...atto.dossier, id: atto.dossier.id || "principale" })] : [];
+  }
+  const nuovoId = () => "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const fmtData = iso => iso && !isNaN(new Date(iso))
+    ? new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "";
+  // etichetta di data mostrata negli elenchi: la data scritta dalla redazione, altrimenti l'ultimo salvataggio
+  const etichettaData = d => d.data || (d.aggiornato ? "aggiornato il " + fmtData(d.aggiornato) : "");
+  const ordinati = lista => lista.slice().sort((a, b) => (b.aggiornato || "").localeCompare(a.aggiornato || "") || (a.titolo || "").localeCompare(b.titolo || ""));
+
   function normalizza(d) {
     d = d || {};
     const arr = x => Array.isArray(x) ? x : [];
     return {
+      id: d.id || "",
       titolo: d.titolo || "",
       sottotitolo: d.sottotitolo || "",
       ente: d.ente || "",
@@ -226,7 +242,7 @@
         const et = r.etichetta ? `<span class="dos-et">${esc(r.etichetta)}</span> ` : "";
         const sx = c.prima.length ? et + tokHtml(c.prima, "del", "dos-tolto") : "";
         const dx = et + (c.speciale ? `<em class="dos-spec">${c.speciale}</em>` : tokHtml(c.dopo, "strong", "dos-nuovo"));
-        righe += `<tr class="dos-r dos-r--${c.stato}${r.livello === 1 ? " dos-r--sotto" : ""}"><td>${sx}</td><td>${dx}</td></tr>`;
+        righe += `<tr class="dos-r dos-r--${c.stato}${r.livello === 1 ? " dos-r--sotto" : ""}"><td data-et="${esc(d.etichettaPrima)}">${sx}</td><td data-et="${esc(d.etichettaDopo)}">${dx}</td></tr>`;
       });
     });
     return `<section class="dos-sezione" id="dos-fronte"><h2 class="dos-fascia">Il testo a fronte</h2>
@@ -236,8 +252,38 @@
         <tbody>${righe}</tbody></table></div></section>`;
   }
 
+  const urlDossier = (atto, d) => `dossier.html?id=${encodeURIComponent(atto.id)}${d && d.id ? "&d=" + encodeURIComponent(d.id) : ""}`;
+
+  // Elenco dei dossier di un atto (pagina pubblica, quando ce n'è più di uno)
+  function htmlElencoPubblico(atto) {
+    const lista = ordinati(elenco(atto));
+    const schede = lista.map(d => {
+      const nArt = d.articoli.filter(b => b.tipo === "articolo").length;
+      return `
+        <a class="scheda-atto" href="${esc(urlDossier(atto, d))}">
+          <div class="scheda-atto__meta">
+            <span class="badge-categoria">Dossier</span>
+            ${etichettaData(d) ? `<span>${esc(etichettaData(d))}</span>` : ""}
+            ${d.ente ? `<span>${esc(d.ente)}</span>` : ""}
+          </div>
+          <h3 class="scheda-atto__titolo">${esc(d.titolo || "Dossier: " + atto.titolo)}</h3>
+          <p class="scheda-atto__sommario">${esc(d.sottotitolo || "")}${nArt ? ` &middot; ${nArt} articoli a fronte` : ""}</p>
+        </a>`;
+    }).join("");
+    return `
+      <p class="breadcrumb"><a href="index.html">Home</a> &rsaquo;
+        <a href="atto.html?id=${encodeURIComponent(atto.id)}">${esc(atto.titolo)}</a> &rsaquo; Dossier</p>
+      <section class="intestazione-atto">
+        <div class="intestazione-atto__meta"><span class="badge-categoria">Dossier</span></div>
+        <h1>Dossier delle modifiche</h1>
+        <p>${esc(atto.titolo)} &mdash; ${lista.length} dossier disponibili. Scegli quello che vuoi consultare.</p>
+      </section>
+      <div class="elenco-atti" style="margin-top:24px;">${schede}</div>`;
+  }
+
   function htmlPagina(atto, dIn) {
-    const d = normalizza(dIn || atto.dossier);
+    const d = normalizza(dIn || elenco(atto)[0]);
+    const altri = ordinati(elenco(atto)).filter(x => x.id !== d.id);
     const rp = riepilogo(d);
     const agg = d.aggiornato && !isNaN(new Date(d.aggiornato))
       ? new Date(d.aggiornato).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "";
@@ -254,7 +300,7 @@
             ? `<li><a href="${esc(f)}" target="_blank" rel="noopener noreferrer">${esc(f)}</a></li>` : `<li>${esc(f)}</li>`).join("")}</ul></section>` : "";
     const riepHtml = rp.righe.length
       ? `<section class="dos-sezione" id="dos-riepilogo"><h2 class="dos-fascia">Riepilogo delle modifiche</h2>
-          <div class="dos-tabella-wrap">${tabellaRiepilogo(rp, "dos-riepilogo")}</div></section>` : "";
+          <div class="dos-tabella-wrap dos-scroll">${tabellaRiepilogo(rp, "dos-riepilogo")}</div></section>` : "";
 
     const indice = [
       d.presentazione && ["dos-presentazione", "Presentazione"],
@@ -268,7 +314,8 @@
 
     return `
       <p class="breadcrumb"><a href="index.html">Home</a> &rsaquo;
-        <a href="atto.html?id=${encodeURIComponent(atto.id)}">${esc(atto.titolo)}</a> &rsaquo; Dossier</p>
+        <a href="atto.html?id=${encodeURIComponent(atto.id)}">${esc(atto.titolo)}</a> &rsaquo;
+        ${altri.length ? `<a href="dossier.html?id=${encodeURIComponent(atto.id)}">Tutti i dossier</a> &rsaquo;` : ""} ${esc(d.titolo || "Dossier")}</p>
       <article class="dossier">
         <section class="intestazione-atto">
           <div class="intestazione-atto__meta"><span class="badge-categoria">Dossier</span></div>
@@ -292,6 +339,8 @@
         ${sezioniLibere}
         ${fontiHtml}
         ${glossario}
+        ${altri.length ? `<section class="dos-sezione"><h2 class="dos-fascia">Altri dossier di questo atto</h2><ul class="dos-altri">${
+          altri.map(x => `<li><a href="${esc(urlDossier(atto, x))}">${esc(x.titolo || "Dossier")}</a>${etichettaData(x) ? ` <small>&middot; ${esc(etichettaData(x))}</small>` : ""}</li>`).join("")}</ul></section>` : ""}
       </article>`;
   }
 
@@ -314,7 +363,7 @@
     : { t: k.t, b: lato === "dopo" && !!k.x, s: lato === "prima" && !!k.x });
 
   async function scaricaPdf(atto, dIn) {
-    const d = normalizza(dIn || atto.dossier);
+    const d = normalizza(dIn || elenco(atto)[0]);
     const PE = await caricaPdfExport();
     const C = PE.colori;
     const pdf = await PE.crea({
@@ -413,7 +462,7 @@
       });
     }
 
-    pdf.salva(PE.nomeFile("dossier " + atto.titolo, "dossier"), d.titolo || atto.titolo);
+    pdf.salva(PE.nomeFile("dossier " + (d.titolo || atto.titolo), "dossier"), d.titolo || atto.titolo);
   }
 
   function collegaPdf(radice, atto, getDossier) {
@@ -422,7 +471,7 @@
     btn.addEventListener("click", async () => {
       const testo = btn.textContent;
       btn.disabled = true; btn.style.opacity = "0.6"; btn.textContent = "Generazione PDF…";
-      try { await scaricaPdf(atto, getDossier ? getDossier() : atto.dossier); }
+      try { await scaricaPdf(atto, getDossier ? getDossier() : elenco(atto)[0]); }
       catch (e) { alert("Errore nella creazione del PDF: " + e.message); }
       finally { btn.disabled = false; btn.style.opacity = ""; btn.textContent = testo; }
     });
@@ -517,7 +566,7 @@
 
   function htmlEditor(atto, dIn, atti) {
     const d = normalizza(dIn || nuovo(atto));
-    const esiste = !!(atto && atto.dossier);
+    const esiste = !!(d.id && elenco(atto).some(x => x.id === d.id));      // già salvato (e non nuovo / duplicato)
     const agg = d.aggiornato && !isNaN(new Date(d.aggiornato))
       ? " · ultimo salvataggio " + new Date(d.aggiornato).toLocaleString("it-IT") : "";
     const opzAtti = (atti || []).filter(a => a.articoli && a.articoli.length)
@@ -532,6 +581,7 @@
       <p id="dos-messaggio" class="redazione-messaggio" style="display:none;"></p>
 
       <form id="dossier-form" class="redazione-form redazione-form--dossier" novalidate>
+        <input type="hidden" data-campo="id" value="${esc(d.id)}" />
 
         <fieldset class="dos-ed-sez"><legend>1 · Intestazione</legend>
           <div class="dos-grid dos-grid--2">
@@ -597,7 +647,7 @@
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva dossier</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-dos-pdf>⬇ Esporta in PDF</button>
-          ${esiste ? `<a class="redazione-btn redazione-btn--secondario" style="text-decoration:none;display:inline-block;" href="dossier.html?id=${encodeURIComponent(atto.id)}" target="_blank" rel="noopener">👁 Apri pagina pubblica</a>` : ""}
+          ${esiste ? `<a class="redazione-btn redazione-btn--secondario" style="text-decoration:none;display:inline-block;" href="${esc(urlDossier(atto, d))}" target="_blank" rel="noopener">👁 Apri pagina pubblica</a>` : ""}
           <button type="button" class="redazione-btn redazione-btn--secondario" data-azione="dossier">&larr; Elenco dossier</button>
           ${esiste ? `<button type="button" class="redazione-btn redazione-btn--pericolo" data-dos-elimina>Elimina dossier</button>` : ""}
         </div>
@@ -634,6 +684,7 @@
       .map(el => ({ termine: k(el, "termine"), definizione: k(el, "definizione") })).filter(g => g.termine);
 
     return normalizza({
+      id: campo("id"),
       titolo: campo("titolo"), sottotitolo: campo("sottotitolo"), ente: campo("ente"), data: campo("data"),
       presentazione: campo("presentazione"),
       etichettaPrima: campo("etichettaPrima"), etichettaDopo: campo("etichettaDopo"),
@@ -836,6 +887,7 @@
 
   window.Dossier = {
     normalizza, nuovo, htmlEditor, collega, leggi, messaggio,
+    elenco, nuovoId, etichettaData, ordinati, htmlElencoPubblico, urlDossier,
     htmlPagina, collegaPdf, scaricaPdf,
     // esposti per test
     _diff: diff, _statoRiga: statoRiga, _confrontaRiga: confrontaRiga, _tokHtml: tokHtml, _riepilogo: riepilogo, _parseNumeri: parseNumeri, _blocchiDaAtto: blocchiDaAtto, _htmlOpzioniTitoli: htmlOpzioniTitoli

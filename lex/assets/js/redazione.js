@@ -239,64 +239,102 @@
   }
 
   /* ---------- DOSSIER DELLE MODIFICHE ---------- */
-  // Il dossier è salvato dentro l'atto (atto.dossier) con lo stesso salvataggio degli atti.
+  // Ogni atto può avere più dossier (atto.dossiers, ciascuno con un id). Il vecchio formato
+  // a dossier singolo (atto.dossier) viene letto da Dossier.elenco() e migrato al salvataggio.
 
   function renderDossierElenco() {
     const lista = [...atti].sort((a, b) => (a.titolo || "").localeCompare(b.titolo || ""));
     const righe = lista.map(a => {
-      const ha = !!a.dossier;
-      const agg = ha && a.dossier.aggiornato && !isNaN(new Date(a.dossier.aggiornato))
-        ? " &middot; aggiornato il " + new Date(a.dossier.aggiornato).toLocaleDateString("it-IT") : "";
+      const ds = Dossier.ordinati(Dossier.elenco(a));
+      const sub = ds.map(d => `
+        <div class="dos-sub">
+          <span>📑 <strong>${escapeHtml(d.titolo || "Dossier senza titolo")}</strong>
+            <small>${escapeHtml(Dossier.etichettaData(d))}</small></span>
+          <span class="dos-sub__az">
+            <button type="button" class="redazione-btn redazione-btn--piccolo" data-dossier-apri="${escapeHtml(a.id)}" data-dossier-id="${escapeHtml(d.id)}">Modifica</button>
+            <button type="button" class="redazione-btn redazione-btn--piccolo" data-dossier-duplica="${escapeHtml(a.id)}" data-dossier-id="${escapeHtml(d.id)}" title="Crea una copia da cui partire">Duplica</button>
+            <a class="redazione-btn redazione-btn--piccolo" style="text-decoration:none;" href="${escapeHtml(Dossier.urlDossier(a, d))}" target="_blank" rel="noopener">Apri</a>
+          </span>
+        </div>`).join("");
       return `
       <div class="redazione-riga">
-        <div>
+        <div style="flex:1;min-width:0;">
           <span class="badge-categoria">${escapeHtml(a.categoria)}</span>
           <p class="redazione-riga__titolo">${escapeHtml(a.titolo)}</p>
-          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${ha ? "📑 dossier presente" + agg : "nessun dossier"}</p>
+          <p class="redazione-riga__meta">n. ${escapeHtml(a.numero)}/${escapeHtml(a.anno)} &middot; ${ds.length ? ds.length + (ds.length === 1 ? " dossier" : " dossier") : "nessun dossier"}</p>
+          ${sub ? `<div class="dos-sub-lista">${sub}</div>` : ""}
         </div>
         <div class="redazione-riga__azioni">
-          <button type="button" class="redazione-btn redazione-btn--piccolo ${ha ? "" : "redazione-btn--primario"}" data-dossier-apri="${escapeHtml(a.id)}">${ha ? "Modifica dossier" : "Crea dossier"}</button>
+          <button type="button" class="redazione-btn redazione-btn--piccolo ${ds.length ? "" : "redazione-btn--primario"}" data-dossier-apri="${escapeHtml(a.id)}" data-dossier-id="">+ Nuovo dossier</button>
         </div>
       </div>`;
     }).join("");
     return `
       <p class="breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="redazione.html">Redazione</a> &rsaquo; Dossier delle modifiche</p>
       <h1>Dossier delle modifiche</h1>
-      <p style="color:var(--inchiostro-tenue);max-width:62ch;margin-top:0;">Scegli l'atto a cui collegare il dossier. Il dossier viene salvato insieme all'atto e resta modificabile.</p>
+      <p style="color:var(--inchiostro-tenue);max-width:62ch;margin-top:0;">Ogni atto può avere più dossier (per esempio uno per ogni riforma o versione). I lettori scelgono quale consultare da un elenco ordinato per data.</p>
       <input type="text" id="redazione-filtro" placeholder="Filtra per titolo o categoria&hellip;" style="width:100%; max-width:420px; padding:10px 14px; border:1px solid var(--bordo); border-radius:var(--radius); font-family:var(--font-chrome); margin-bottom:16px;" />
       <div id="redazione-elenco-carica">${righe || "<p>Nessun atto presente.</p>"}</div>
       <p style="margin-top:20px;"><button type="button" class="redazione-btn redazione-btn--secondario" data-azione="menu">&larr; Torna al menu</button></p>`;
   }
 
+  // Salva (o sostituisce per id) un dossier nell'elenco dell'atto; migra l'eventuale dossier singolo.
   async function salvaDossierAtto(attoId, dossier) {
-    const copia = atti.map(a => a.id === attoId ? { ...a, dossier: { ...dossier, aggiornato: new Date().toISOString() } } : a);
+    const copia = atti.map(a => {
+      if (a.id !== attoId) return a;
+      const { dossier: _vecchio, ...resto } = a;
+      const nuovo = { ...dossier, aggiornato: new Date().toISOString() };
+      const lista = Dossier.elenco(a);
+      const i = lista.findIndex(d => d.id === nuovo.id);
+      if (i >= 0) lista[i] = nuovo; else lista.push(nuovo);
+      return { ...resto, dossiers: lista };
+    });
     try { await API.saveAtti(copia); atti = copia; return { ok: true }; }
     catch (e) { return { ok: false, errore: e.message }; }
   }
 
-  async function eliminaDossierAtto(attoId) {
-    const copia = atti.map(a => { if (a.id !== attoId) return a; const { dossier, ...resto } = a; return resto; });
+  async function eliminaDossierAtto(attoId, dossierId) {
+    const copia = atti.map(a => {
+      if (a.id !== attoId) return a;
+      const { dossier: _vecchio, dossiers: _lista, ...resto } = a;
+      const rimasti = Dossier.elenco(a).filter(d => d.id !== dossierId);
+      return rimasti.length ? { ...resto, dossiers: rimasti } : resto;
+    });
     try { await API.saveAtti(copia); atti = copia; return { ok: true }; }
     catch (e) { return { ok: false, errore: e.message }; }
   }
 
-  function apriDossierEditor(root, attoId) {
+  async function duplicaDossier(attoId, dossierId) {
+    const a = atti.find(x => x.id === attoId);
+    const orig = a && Dossier.elenco(a).find(d => d.id === dossierId);
+    if (!orig) return;
+    const copia = { ...JSON.parse(JSON.stringify(orig)), id: Dossier.nuovoId(), titolo: (orig.titolo || "Dossier") + " (copia)" };
+    const r = await salvaDossierAtto(attoId, copia);
+    if (r.ok) { vai("dossier-editor", { attoId, dossierId: copia.id }); Dossier.messaggio("✅ Copia creata: modificala e salvala quando vuoi."); }
+    else mostraMessaggio("Errore nella duplicazione: " + r.errore);
+  }
+
+  // extra = { attoId, dossierId }  (dossierId vuoto = nuovo dossier)
+  function apriDossierEditor(root, extra) {
+    const attoId = extra && extra.attoId, dossierId = extra && extra.dossierId;
     const atto = atti.find(a => a.id === attoId);
     if (!atto) { vai("dossier-elenco"); return; }
     if (typeof Dossier === "undefined") { root.innerHTML = "<p>Modulo dossier non caricato (assets/js/dossier.js).</p>"; return; }
-    root.innerHTML = Dossier.htmlEditor(atto, atto.dossier || Dossier.nuovo(atto), atti);
+    const esistente = dossierId ? Dossier.elenco(atto).find(d => d.id === dossierId) : null;
+    root.innerHTML = Dossier.htmlEditor(atto, esistente || Dossier.nuovo(atto), atti);
     Dossier.collega(document.getElementById("dossier-form"), {
       atto, atti,
       salva: async d => {
-        const r = await salvaDossierAtto(attoId, d);
+        const dossier = { ...d, id: d.id || Dossier.nuovoId() };
+        const r = await salvaDossierAtto(attoId, dossier);
         if (r.ok) {
-          vai("dossier-editor", attoId);
+          vai("dossier-editor", { attoId, dossierId: dossier.id });
           Dossier.messaggio("✅ Dossier salvato. Resta modificabile da qui; la pagina pubblica è aggiornata.");
         }
         return r;
       },
       elimina: async () => {
-        const r = await eliminaDossierAtto(attoId);
+        const r = await eliminaDossierAtto(attoId, dossierId);
         if (r.ok) { vai("dossier-elenco"); mostraMessaggio("Dossier eliminato."); }
         return r;
       }
@@ -603,6 +641,7 @@
       luogo: document.getElementById("f-luogo").value || "",
       articoli: leggiArticoli(),
       ...(originale.pronunce ? { pronunce: originale.pronunce } : {}),
+      ...(originale.dossiers ? { dossiers: originale.dossiers } : {}),
       ...(originale.dossier ? { dossier: originale.dossier } : {}),
       ...(copertina && (copertina.attiva || originale.copertina) ? { copertina } : {}),   // copertina personalizzata del PDF   // non perdere il dossier modificando l'atto
     };
@@ -662,8 +701,10 @@
         return;
       }
 
+      const dup = e.target.closest("[data-dossier-duplica]");
+      if (dup) { duplicaDossier(dup.getAttribute("data-dossier-duplica"), dup.getAttribute("data-dossier-id")); return; }
       const dos = e.target.closest("[data-dossier-apri]");
-      if (dos) { vai("dossier-editor", dos.getAttribute("data-dossier-apri")); return; }
+      if (dos) { vai("dossier-editor", { attoId: dos.getAttribute("data-dossier-apri"), dossierId: dos.getAttribute("data-dossier-id") || "" }); return; }
 
       const mod = e.target.closest("[data-modifica]");
       if (mod) {
