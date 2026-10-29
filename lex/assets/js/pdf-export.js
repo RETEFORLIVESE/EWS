@@ -204,6 +204,7 @@
     const MT = BAR + (compatto ? 6 : 10);          // inizio del contenuto
     const W = PW - MX * 2;
     const VS = compatto ? 0.85 : 1;                // fattore della spaziatura verticale
+    const VSA = compatto ? 0.45 : 1;               // fattore degli stacchi tra articoli/sezioni (spazio(), dopo dei testi, separatori)
     const LN = compatto ? { col: [205, 217, 230], w: 0.12 } : { col: [160, 182, 204], w: 0.25 };   // linee di tabelle e riquadri
     const jsPDF = await caricaJsPdf();
     const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -241,7 +242,7 @@
       // rientri (es. sottocommi a), b)…) dimezzati in modalità compatta; il bordo destro non si sposta
       const x = compatto ? MX + (xBase - MX) * 0.5 : xBase;
       const larghezza = largBase == null ? W - (x - MX) : largBase + (xBase - x);
-      const dopo = dopoBase * VS;
+      const dopo = dopoBase * VSA;
       const interlinea = compatto ? interBase * 0.88 : interBase;
       const hRiga = size * MM * interlinea;
       const imposta = () => {
@@ -358,7 +359,7 @@
         if (i % 2 === 1) tabella(parte, o);
         else if (htmlInTesto(parte)) scriviTesto(parte, Object.assign({}, o, { dopo: 0.5 }));
       });
-      y += (o.dopo == null ? 2 : o.dopo) * VS;
+      y += (o.dopo == null ? 2 : o.dopo) * VSA;
     }
 
     function linea(colore = COLORI.blu, spessore = 0.5) {
@@ -367,10 +368,10 @@
       doc.setDrawColor(colore[0], colore[1], colore[2]);
       doc.setLineWidth(spessore);
       doc.line(MX, y, PW - MX - riduzioneAt(y, y + 1), y);
-      y += compatto ? 2.5 : 4;
+      y += compatto ? 1.5 : 4;
     }
 
-    function spazio(mm) { y += mm * VS; }
+    function spazio(mm) { y += mm * VSA; }
     function riservaSpazio(mm) { nuovaPaginaSe(mm); }
 
     // Coppie [etichetta, valore] su due colonne.
@@ -659,7 +660,7 @@
       doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
       doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
       doc.text(htmlInTesto(testo).toUpperCase(), PW / 2, y + 5.5, { align: "center" });
-      y += compatto ? 10 : 12;
+      y += compatto ? 9 : 12;
     }
 
     function pagina() { nuovaPagina(); }
