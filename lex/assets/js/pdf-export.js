@@ -4,16 +4,14 @@
 // Il PDF è generato nel browser con jsPDF (caricata da cdnjs).
 //
 // Uso:
-//   const modo = await PdfExport.scegliModalita();          // "standard" | "compatto" | null (annullato)
-//   if (!modo) return;
-//   const pdf = await PdfExport.crea({ marca: { nome, sottotitolo, logo }, compatto: modo === "compatto" });
+//   const pdf = await PdfExport.crea({ marca: { nome, sottotitolo, logo } });
 //   pdf.scrivi(...); pdf.dati([...]); await pdf.immagine(url, didascalia); ...
 //   pdf.salva("nome-file.pdf", "testo del piè di pagina");
 //
 // La "marca" disegna in alto, su OGNI pagina, una barra blu con il logo e il nome
 // del sito che genera il PDF (NormAktiv oppure CTSU).
 //
-// Modalità "compatto" (opzione compatto:true): margini laterali e inferiori ridotti, linee
+// Impaginazione compatta (sempre attiva): margini laterali e inferiori ridotti, linee
 // (tabelle, riquadri, separatori) più sottili e chiare, spaziatura verticale e interlinea
 // ridotte, testo corrente leggermente più piccolo: più testo per pagina, meno pagine.
 (function () {
@@ -199,8 +197,8 @@
 
   async function crea(opzioni) {
     const marca = (opzioni && opzioni.marca) || {};
-    // Modalità compatta: ridefinisce (solo dentro crea) margini e spaziature.
-    const compatto = !!(opzioni && opzioni.compatto);
+    // Impaginazione compatta, sempre attiva. Per tornare a quella ampia basta mettere false.
+    const compatto = true;
     const MX = compatto ? 10 : 20;                 // margine laterale
     const MB = compatto ? 14 : 20;                 // margine inferiore
     const MT = BAR + (compatto ? 6 : 10);          // inizio del contenuto
@@ -1060,44 +1058,5 @@
     return (base || predefinito || "documento") + ".pdf";
   }
 
-  // Piccola finestra per scegliere come esportare. Restituisce "standard", "compatto" oppure null (annullato).
-  function scegliModalita() {
-    return new Promise(resolve => {
-      const el = (tag, stile, testo) => {
-        const e = document.createElement(tag);
-        if (stile) e.style.cssText = stile;
-        if (testo) e.textContent = testo;
-        return e;
-      };
-      const velo = el("div", "position:fixed;inset:0;background:rgba(11,31,56,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px");
-      velo.setAttribute("role", "dialog");
-      velo.setAttribute("aria-modal", "true");
-      const box = el("div", "background:#fff;border-radius:10px;max-width:420px;width:100%;padding:20px;font-family:system-ui,sans-serif;color:#141e28;box-shadow:0 10px 40px rgba(0,0,0,.3)");
-      box.appendChild(el("div", "font-size:17px;font-weight:700;margin-bottom:12px", "Scarica in PDF"));
-      const chiudi = valore => { velo.remove(); document.removeEventListener("keydown", onKey); resolve(valore); };
-      const onKey = e => { if (e.key === "Escape") chiudi(null); };
-      const opzione = (valore, titolo, desc) => {
-        const b = el("button", "display:block;width:100%;text-align:left;border:1px solid #d6e2ed;background:#f5f9fd;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font:inherit;color:inherit");
-        b.type = "button";
-        b.appendChild(el("div", "font-weight:700;font-size:14px", titolo));
-        b.appendChild(el("div", "font-size:12.5px;color:#4b5866;margin-top:2px", desc));
-        b.onclick = () => chiudi(valore);
-        box.appendChild(b);
-        return b;
-      };
-      const primo = opzione("standard", "Standard", "Impaginazione attuale, margini e spaziatura ampi.");
-      opzione("compatto", "Compatto", "Margini laterali ridotti, linee più leggere, spaziatura verticale ridotta: più testo per pagina.");
-      const annulla = el("button", "border:0;background:none;color:#4b5866;cursor:pointer;font:inherit;font-size:13px;padding:4px 0", "Annulla");
-      annulla.type = "button";
-      annulla.onclick = () => chiudi(null);
-      box.appendChild(annulla);
-      velo.appendChild(box);
-      velo.addEventListener("click", e => { if (e.target === velo) chiudi(null); });
-      document.addEventListener("keydown", onKey);
-      document.body.appendChild(velo);
-      primo.focus();
-    });
-  }
-
-  window.PdfExport = { crea, nomeFile, htmlInTesto, scegliModalita, colori: COLORI };
+  window.PdfExport = { crea, nomeFile, htmlInTesto, colori: COLORI };
 })();
