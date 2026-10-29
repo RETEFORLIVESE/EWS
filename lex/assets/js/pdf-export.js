@@ -234,10 +234,13 @@
     // Testo semplice con a capo automatico; spezza le pagine riga per riga e si stringe
     // accanto alle immagini posate a destra.
     function scriviTesto(testo, o = {}) {
-      const { font = "times", stile = "normal", size: sizeBase = 11, x = MX, larghezza = W - (x - MX),
+      const { font = "times", stile = "normal", size: sizeBase = 11, x: xBase = MX, larghezza: largBase,
               align = "left", colore = COLORI.testo, dopo: dopoBase = 2, interlinea: interBase = 1.35 } = o;
       // in modalità compatta il testo corrente è un po' più piccolo e più stretto in verticale
       const size = compatto && sizeBase <= 12 ? sizeBase * 0.92 : sizeBase;
+      // rientri (es. sottocommi a), b)…) dimezzati in modalità compatta; il bordo destro non si sposta
+      const x = compatto ? MX + (xBase - MX) * 0.5 : xBase;
+      const larghezza = largBase == null ? W - (x - MX) : largBase + (xBase - x);
       const dopo = dopoBase * VS;
       const interlinea = compatto ? interBase * 0.88 : interBase;
       const hRiga = size * MM * interlinea;
@@ -845,7 +848,7 @@
         } else if (r.tipo === "rif") {
           stampa([], avvolgi([{ t: r.testo, c: true }], larg, {}), { fill: null, colore: COLORI.tenue, allinea: ["sinistra", "destra"] });
         } else {
-          const ri = r.rientro || 0;
+          const ri = (r.rientro || 0) * (compatto ? 0.5 : 1);
           stampa(avvolgi(r.sx, larg - ri, {}), avvolgi(r.dx, larg - ri, {}), { fill: null, colore: COLORI.testo, allinea: ["sinistra", "sinistra"], rientro: ri });
         }
       });
