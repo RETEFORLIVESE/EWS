@@ -4,12 +4,18 @@
 // Il PDF è generato nel browser con jsPDF (caricata da cdnjs).
 //
 // Uso:
-//   const pdf = await PdfExport.crea({ marca: { nome, sottotitolo, logo } });
+//   const modo = await PdfExport.scegliModalita();          // "standard" | "compatto" | null (annullato)
+//   if (!modo) return;
+//   const pdf = await PdfExport.crea({ marca: { nome, sottotitolo, logo }, compatto: modo === "compatto" });
 //   pdf.scrivi(...); pdf.dati([...]); await pdf.immagine(url, didascalia); ...
 //   pdf.salva("nome-file.pdf", "testo del piè di pagina");
 //
 // La "marca" disegna in alto, su OGNI pagina, una barra blu con il logo e il nome
 // del sito che genera il PDF (NormAktiv oppure CTSU).
+//
+// Modalità "compatto" (opzione compatto:true): margini laterali e inferiori ridotti, linee
+// (tabelle, riquadri, separatori) più sottili e chiare, spaziatura verticale e interlinea
+// ridotte, testo corrente leggermente più piccolo: più testo per pagina, meno pagine.
 (function () {
   "use strict";
 
@@ -193,6 +199,14 @@
 
   async function crea(opzioni) {
     const marca = (opzioni && opzioni.marca) || {};
+    // Modalità compatta: ridefinisce (solo dentro crea) margini e spaziature.
+    const compatto = !!(opzioni && opzioni.compatto);
+    const MX = compatto ? 10 : 20;                 // margine laterale
+    const MB = compatto ? 14 : 20;                 // margine inferiore
+    const MT = BAR + (compatto ? 6 : 10);          // inizio del contenuto
+    const W = PW - MX * 2;
+    const VS = compatto ? 0.85 : 1;                // fattore della spaziatura verticale
+    const LN = compatto ? { col: [205, 217, 230], w: 0.12 } : { col: [160, 182, 204], w: 0.25 };   // linee di tabelle e riquadri
     const jsPDF = await caricaJsPdf();
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const logo = marca.logo ? await caricaImmagine(marca.logo, "png") : null;
@@ -222,8 +236,12 @@
     // Testo semplice con a capo automatico; spezza le pagine riga per riga e si stringe
     // accanto alle immagini posate a destra.
     function scriviTesto(testo, o = {}) {
-      const { font = "times", stile = "normal", size = 11, x = MX, larghezza = W - (x - MX),
-              align = "left", colore = COLORI.testo, dopo = 2, interlinea = 1.35 } = o;
+      const { font = "times", stile = "normal", size: sizeBase = 11, x = MX, larghezza = W - (x - MX),
+              align = "left", colore = COLORI.testo, dopo: dopoBase = 2, interlinea: interBase = 1.35 } = o;
+      // in modalità compatta il testo corrente è un po' più piccolo e più stretto in verticale
+      const size = compatto && sizeBase <= 12 ? sizeBase * 0.92 : sizeBase;
+      const dopo = dopoBase * VS;
+      const interlinea = compatto ? interBase * 0.88 : interBase;
       const hRiga = size * MM * interlinea;
       const imposta = () => {
         doc.setFont(font, stile);
@@ -286,7 +304,7 @@
       const somma = peso.reduce((a, b) => a + b, 0);
       const largCol = peso.map(p => larghezza * p / somma);
 
-      const pad = 1.6, lh = size * MM * 1.3;
+      const pad = compatto ? 1 : 1.6, lh = size * MM * (compatto ? 1.2 : 1.3);
       const misura = r => {
         let j = 0, cx = x, h = 0;
         const celle = r.celle.map(c => {
@@ -305,7 +323,7 @@
         m.celle.forEach(c => {
           if (r.intestazione) { doc.setFillColor(231, 241, 250); doc.rect(c.x, y, c.w, m.h, "F"); }
           else if (zebra) { doc.setFillColor(245, 249, 253); doc.rect(c.x, y, c.w, m.h, "F"); }
-          doc.setDrawColor(160, 182, 204); doc.setLineWidth(0.25);
+          doc.setDrawColor(LN.col[0], LN.col[1], LN.col[2]); doc.setLineWidth(LN.w);
           doc.rect(c.x, y, c.w, m.h, "S");
           doc.setFont("helvetica", (r.intestazione || c.th) ? "bold" : "normal");
           doc.setFontSize(size);
@@ -317,7 +335,7 @@
       };
 
       const intest = righe[0].intestazione ? righe[0] : null;
-      y += 1.5;
+      y += 1.5 * VS;
       let corpo = 0;
       righe.forEach(r => {
         const m = misura(r);
@@ -328,7 +346,7 @@
         if (!r.intestazione) corpo++;
         disegna(m, r, !r.intestazione && corpo % 2 === 0);
       });
-      y += 1.5;
+      y += 1.5 * VS;
     }
 
     // Testo che può contenere tabelle: il testo viene scritto a paragrafi, le tabelle disegnate come tabelle.
@@ -339,34 +357,36 @@
         if (i % 2 === 1) tabella(parte, o);
         else if (htmlInTesto(parte)) scriviTesto(parte, Object.assign({}, o, { dopo: 0.5 }));
       });
-      y += (o.dopo == null ? 2 : o.dopo);
+      y += (o.dopo == null ? 2 : o.dopo) * VS;
     }
 
     function linea(colore = COLORI.blu, spessore = 0.5) {
       nuovaPaginaSe(2);
+      if (compatto) { colore = colore === COLORI.blu ? [150, 175, 202] : colore; spessore = Math.min(spessore, 0.2); }
       doc.setDrawColor(colore[0], colore[1], colore[2]);
       doc.setLineWidth(spessore);
       doc.line(MX, y, PW - MX - riduzioneAt(y, y + 1), y);
-      y += 4;
+      y += compatto ? 2.5 : 4;
     }
 
-    function spazio(mm) { y += mm; }
+    function spazio(mm) { y += mm * VS; }
     function riservaSpazio(mm) { nuovaPaginaSe(mm); }
 
     // Coppie [etichetta, valore] su due colonne.
     function dati(coppie) {
       coppie.forEach(([k, v]) => {
-        nuovaPaginaSe(6);
-        doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+        nuovaPaginaSe(compatto ? 5 : 6);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(compatto ? 9.5 : 10);
         doc.setTextColor(COLORI.blu[0], COLORI.blu[1], COLORI.blu[2]);
         doc.text(k + ":", MX, y + 3.5);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(COLORI.testo[0], COLORI.testo[1], COLORI.testo[2]);
+        const rh = compatto ? 4.1 : 4.8;
         const val = doc.splitTextToSize(htmlInTesto(v) || "—", W - 52);
-        val.forEach((r, i) => doc.text(r, MX + 52, y + 3.5 + i * 4.8));
-        y += Math.max(1, val.length) * 4.8 + 1;
+        val.forEach((r, i) => doc.text(r, MX + 52, y + 3.5 + i * rh));
+        y += Math.max(1, val.length) * rh + (compatto ? 0.4 : 1);
       });
-      y += 2;
+      y += 2 * VS;
     }
 
     function posaImmagine(img, didascalia, w, h) {
@@ -467,7 +487,7 @@
       const nCol = Math.max(1, ...righe.filter(r => r.tipo !== "ramo").map(r => mappaCodici(r.icone).length));
 
       const fs = Math.min(8.5, sz * 0.8 / MM);          // corpo del testo, pt
-      const BORDO = [162, 169, 177];
+      const BORDO = compatto ? [200, 205, 211] : [162, 169, 177];
       const xIcone = x0 + 1.6;
       const kmW = mostraKm ? 14 : 0;
       const xKm = xIcone + nCol * sz + 1;
@@ -631,14 +651,14 @@
 
     /* ---------- DOSSIER: fascia, iter, testo a fronte ---------- */
     function fascia(testo) {
-      nuovaPaginaSe(18);
+      nuovaPaginaSe(compatto ? 14 : 18);
       if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
       doc.setFillColor(207, 227, 245);
       doc.rect(MX, y, W, 8, "F");
       doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
       doc.setTextColor(COLORI.scuro[0], COLORI.scuro[1], COLORI.scuro[2]);
       doc.text(htmlInTesto(testo).toUpperCase(), PW / 2, y + 5.5, { align: "center" });
-      y += 12;
+      y += compatto ? 10 : 12;
     }
 
     function pagina() { nuovaPagina(); }
@@ -727,7 +747,7 @@
     // segmenti: { t, b (grassetto), c (corsivo), s (barrato, in rosso) }; { t:"\n" } = a capo.
     // Le righe lunghe continuano sulla pagina dopo; l'intestazione delle colonne si ripete.
     function confronto(righe, o = {}) {
-      const size = 8.5, lh = size * MM * 1.32, pad = 1.8, cw = W / 2;
+      const size = compatto ? 8.2 : 8.5, lh = size * MM * (compatto ? 1.2 : 1.32), pad = compatto ? 1 : 1.8, cw = W / 2;
       const etich = o.etichette || null;
       const puro = s => (s == null ? "" : s).toString().replace(/\u00a0/g, " ")
         .replace(/[^\x09\x0A\x20-\x7E\u00A1-\u00FF\u2018-\u201F\u2013\u2014\u2026\u2022\u20AC]/g, "?");
@@ -786,7 +806,7 @@
           if (n < 1 || (resto > n && resto <= 7 && i0 === 0 && i1 === 0)) { nuovaPaginaConIntestazione(); continue; }
           const s0 = c0.slice(i0, i0 + n), s1 = c1.slice(i1, i1 + n);
           const h = Math.max(s0.length, s1.length, 1) * lh + pad * 2;
-          doc.setDrawColor(160, 182, 204); doc.setLineWidth(0.25);
+          doc.setDrawColor(LN.col[0], LN.col[1], LN.col[2]); doc.setLineWidth(LN.w);
           if (op.unita) {
             if (op.fill) { doc.setFillColor(op.fill[0], op.fill[1], op.fill[2]); doc.rect(MX, y, W, h, "F"); }
             doc.rect(MX, y, W, h, "S");
@@ -831,7 +851,7 @@
           stampa(avvolgi(r.sx, larg - ri, {}), avvolgi(r.dx, larg - ri, {}), { fill: null, colore: COLORI.testo, allinea: ["sinistra", "sinistra"], rientro: ri });
         }
       });
-      y += 3;
+      y += 3 * VS;
     }
 
     // Riquadro evidenziato (avvisi, note): fascia colorata a sinistra, titolo in grassetto e righe di testo.
@@ -844,7 +864,7 @@
         ambra: { bg: [255, 247, 222], br: [201, 162, 39], tx: [105, 78, 0] },
         blu:   { bg: [231, 241, 250], br: [18, 80, 140],  tx: COLORI.scuro }
       }[colore] || { bg: [231, 241, 250], br: [18, 80, 140], tx: COLORI.scuro };
-      const pad = 3, band = 1.6, lh = size * MM * 1.35, ind = elenco ? 3.5 : 0;
+      const pad = compatto ? 2 : 3, band = compatto ? 1.2 : 1.6, lh = size * MM * (compatto ? 1.2 : 1.35), ind = elenco ? 3.5 : 0;
       const wTesto = W - pad * 2 - band - 1;
       if (zone.some(z => z.y1 > y)) y = Math.max(y, fineZone());
 
@@ -869,7 +889,7 @@
         const parte = linee.slice(i, i + n);
         const h = parte.length * lh + pad * 2;
         doc.setFillColor(T.bg[0], T.bg[1], T.bg[2]); doc.rect(MX, y, W, h, "F");
-        doc.setDrawColor(T.br[0], T.br[1], T.br[2]); doc.setLineWidth(0.25); doc.rect(MX, y, W, h, "S");
+        doc.setDrawColor(T.br[0], T.br[1], T.br[2]); doc.setLineWidth(compatto ? 0.12 : 0.25); doc.rect(MX, y, W, h, "S");
         doc.setFillColor(T.br[0], T.br[1], T.br[2]); doc.rect(MX, y, band, h, "F");
         parte.forEach((l, k) => {
           doc.setFont("helvetica", l.b ? "bold" : "normal");
@@ -882,7 +902,7 @@
         y += h; i += parte.length;
         if (i < linee.length) nuovaPagina();
       }
-      y += 3;
+      y += 3 * VS;
     }
 
     // Copertina standard (stessa grafica per leggi e dossier): sigla in alto, titolo grande, sottotitolo e dati.
@@ -985,11 +1005,11 @@
       doc.setFont("helvetica", "normal"); doc.setFontSize(size);
       doc.setTextColor(COLORI.link[0], COLORI.link[1], COLORI.link[2]);
       doc.splitTextToSize(htmlInTesto(testo), W - (x - MX)).forEach(r => {
-        nuovaPaginaSe(size * MM * 1.4);
+        nuovaPaginaSe(size * MM * (compatto ? 1.2 : 1.4));
         doc.textWithLink(r, x, y + size * MM, { url: href });
-        y += size * MM * 1.4;
+        y += size * MM * (compatto ? 1.2 : 1.4);
       });
-      y += 2;
+      y += 2 * VS;
     }
 
     // Barra in alto (logo + nome) e numerazione, su tutte le pagine.
@@ -1040,5 +1060,44 @@
     return (base || predefinito || "documento") + ".pdf";
   }
 
-  window.PdfExport = { crea, nomeFile, htmlInTesto, colori: COLORI };
+  // Piccola finestra per scegliere come esportare. Restituisce "standard", "compatto" oppure null (annullato).
+  function scegliModalita() {
+    return new Promise(resolve => {
+      const el = (tag, stile, testo) => {
+        const e = document.createElement(tag);
+        if (stile) e.style.cssText = stile;
+        if (testo) e.textContent = testo;
+        return e;
+      };
+      const velo = el("div", "position:fixed;inset:0;background:rgba(11,31,56,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px");
+      velo.setAttribute("role", "dialog");
+      velo.setAttribute("aria-modal", "true");
+      const box = el("div", "background:#fff;border-radius:10px;max-width:420px;width:100%;padding:20px;font-family:system-ui,sans-serif;color:#141e28;box-shadow:0 10px 40px rgba(0,0,0,.3)");
+      box.appendChild(el("div", "font-size:17px;font-weight:700;margin-bottom:12px", "Scarica in PDF"));
+      const chiudi = valore => { velo.remove(); document.removeEventListener("keydown", onKey); resolve(valore); };
+      const onKey = e => { if (e.key === "Escape") chiudi(null); };
+      const opzione = (valore, titolo, desc) => {
+        const b = el("button", "display:block;width:100%;text-align:left;border:1px solid #d6e2ed;background:#f5f9fd;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font:inherit;color:inherit");
+        b.type = "button";
+        b.appendChild(el("div", "font-weight:700;font-size:14px", titolo));
+        b.appendChild(el("div", "font-size:12.5px;color:#4b5866;margin-top:2px", desc));
+        b.onclick = () => chiudi(valore);
+        box.appendChild(b);
+        return b;
+      };
+      const primo = opzione("standard", "Standard", "Impaginazione attuale, margini e spaziatura ampi.");
+      opzione("compatto", "Compatto", "Margini laterali ridotti, linee più leggere, spaziatura verticale ridotta: più testo per pagina.");
+      const annulla = el("button", "border:0;background:none;color:#4b5866;cursor:pointer;font:inherit;font-size:13px;padding:4px 0", "Annulla");
+      annulla.type = "button";
+      annulla.onclick = () => chiudi(null);
+      box.appendChild(annulla);
+      velo.appendChild(box);
+      velo.addEventListener("click", e => { if (e.target === velo) chiudi(null); });
+      document.addEventListener("keydown", onKey);
+      document.body.appendChild(velo);
+      primo.focus();
+    });
+  }
+
+  window.PdfExport = { crea, nomeFile, htmlInTesto, scegliModalita, colori: COLORI };
 })();
