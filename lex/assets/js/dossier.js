@@ -81,6 +81,7 @@
       fonti: d.fonti || "",
       glossario: arr(d.glossario).map(g => ({ termine: g.termine || "", definizione: g.definizione || "" })),
       copertina: d.copertina || null,
+      marcaPdf: (d.marcaPdf && typeof d.marcaPdf === "object") ? d.marcaPdf : null,
       aggiornato: d.aggiornato || ""
     };
   }
@@ -367,7 +368,12 @@
     const PE = await caricaPdfExport();
     const C = PE.colori;
     const pdf = await PE.crea({
-      marca: { nome: "NormAktiv", sottotitolo: "Dossier delle modifiche", logo: "NormAktiv.png" }
+      marca: {
+        nome: (d.marcaPdf && d.marcaPdf.nome) || "NormAktiv",
+        sottotitolo: (d.marcaPdf && d.marcaPdf.sottotitolo) || "Dossier delle modifiche",
+        colore: d.marcaPdf && d.marcaPdf.colore,
+        logo: "NormAktiv.png"
+      }
     });
 
     // --- copertina: nessuna / standard / personalizzata (scelta nell'editor, default standard) ---
@@ -642,6 +648,10 @@
           ${typeof Copertina !== "undefined" ? Copertina.htmlEditor(d.copertina) : '<p class="dos-aiuto">Modulo copertine non caricato (assets/js/copertina.js).</p>'}
         </fieldset>
 
+        <fieldset class="dos-ed-sez"><legend>7 · Banda superiore del PDF</legend>
+          ${typeof MarcaPdf !== "undefined" ? MarcaPdf.htmlEditor(d.marcaPdf, { nome: "NormAktiv", sottotitolo: "Dossier delle modifiche" }) : '<p class="dos-aiuto">Modulo banda PDF non caricato (assets/js/marca-pdf.js).</p>'}
+        </fieldset>
+
         <div class="redazione-azioni-form">
           <button type="submit" class="redazione-btn redazione-btn--primario">💾 Salva dossier</button>
           <button type="button" class="redazione-btn redazione-btn--secondario" data-dos-pdf>⬇ Esporta in PDF</button>
@@ -687,7 +697,8 @@
       presentazione: campo("presentazione"),
       etichettaPrima: campo("etichettaPrima"), etichettaDopo: campo("etichettaDopo"),
       iter, pubblicazione: campo("pubblicazione"), articoli, sezioni, fonti: campo("fonti"), glossario,
-      copertina: (form.querySelector("[data-cop]") && window.Copertina) ? Copertina.leggi(form.querySelector("[data-cop]")) : null
+      copertina: (form.querySelector("[data-cop]") && window.Copertina) ? Copertina.leggi(form.querySelector("[data-cop]")) : null,
+      marcaPdf: (form.querySelector("[data-marca]") && window.MarcaPdf) ? MarcaPdf.leggi(form.querySelector("[data-marca]")) : null
     });
   }
 
@@ -880,8 +891,95 @@
       Copertina.collega(cop, () => varsDocumento({ titolo: v("titolo"), sottotitolo: v("sottotitolo"), ente: v("ente"), data: v("data") }, opz.atto));
     }
 
+    if (window.MarcaPdf) MarcaPdf.collega(form.querySelector("[data-marca]"));
+
     collegaPdf(form, opz.atto, () => leggi(form));
   }
+
+  /* ---------- BANDA SUPERIORE DEL PDF (editor usato anche da redazione.js per gli atti) ---------- */
+  // Colore della banda, testo accanto al logo e testo sotto. Salvato in atto.marcaPdf / dossier.marcaPdf
+  // come { colore, nome, sottotitolo } (solo i valori diversi dai predefiniti); letto da pdf-export.js.
+  window.MarcaPdf = (function () {
+  const COLORE_PREDEFINITO = "#0b3d6e";
+  const esc = t => (t == null ? "" : String(t)).replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const hexOk = c => /^#[0-9a-f]{6}$/i.test(c || "");
+
+  // testo chiaro su banda scura, scuro su banda chiara (stessa regola di pdf-export.js)
+  function testoSu(hex) {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#1f2a33" : "#ffffff";
+  }
+
+  // marca: valori salvati (o null); def: { nome, sottotitolo } predefiniti del documento
+  function htmlEditor(marca, def) {
+    def = def || {};
+    const m = marca || {};
+    const colore = hexOk(m.colore) ? m.colore.toLowerCase() : COLORE_PREDEFINITO;
+    const nome = m.nome || def.nome || "";
+    const sott = m.sottotitolo || def.sottotitolo || "";
+    return `
+      <div class="marca-ed" data-marca data-def-nome="${esc(def.nome)}" data-def-sott="${esc(def.sottotitolo)}">
+        <p class="dos-aiuto">Personalizza la banda che compare in alto su ogni pagina del PDF. Se lasci i valori predefiniti il PDF resta com'è ora.</p>
+        <div class="marca-anteprima" data-marca-anteprima>
+          <span class="marca-logo"><img src="NormAktiv.png" alt="" /></span>
+          <span class="marca-testi"><strong data-marca-a-nome></strong><small data-marca-a-sott></small></span>
+        </div>
+        <div class="dos-grid">
+          <label>Colore della banda
+            <input type="color" data-marca-k="colore" value="${colore}" />
+          </label>
+          <label>Testo accanto al logo
+            <input type="text" data-marca-k="nome" value="${esc(nome)}" placeholder="${esc(def.nome)}" />
+          </label>
+          <label>Testo sotto
+            <input type="text" data-marca-k="sottotitolo" value="${esc(sott)}" placeholder="${esc(def.sottotitolo)}" />
+          </label>
+        </div>
+        <button type="button" class="redazione-btn redazione-btn--secondario redazione-btn--piccolo" data-marca-reset>Ripristina i valori predefiniti</button>
+      </div>`;
+  }
+
+  const campo = (el, k) => el.querySelector(`[data-marca-k="${k}"]`);
+
+  function aggiorna(el) {
+    const col = campo(el, "colore").value;
+    const ant = el.querySelector("[data-marca-anteprima]");
+    if (!ant) return;
+    ant.style.background = col;
+    ant.style.color = testoSu(col);
+    ant.querySelector("[data-marca-a-nome]").textContent = campo(el, "nome").value.trim() || el.dataset.defNome || "";
+    ant.querySelector("[data-marca-a-sott]").textContent = campo(el, "sottotitolo").value.trim() || el.dataset.defSott || "";
+  }
+
+  function collega(el) {
+    if (!el) return;
+    el.addEventListener("input", () => aggiorna(el));
+    el.addEventListener("click", e => {
+      if (!e.target.closest("[data-marca-reset]")) return;
+      campo(el, "colore").value = COLORE_PREDEFINITO;
+      campo(el, "nome").value = el.dataset.defNome || "";
+      campo(el, "sottotitolo").value = el.dataset.defSott || "";
+      aggiorna(el);
+    });
+    aggiorna(el);
+  }
+
+  // Restituisce solo i valori diversi dai predefiniti, oppure null se non c'è nulla da salvare.
+  function leggi(el) {
+    if (!el) return null;
+    const out = {};
+    const col = campo(el, "colore").value.toLowerCase();
+    if (hexOk(col) && col !== COLORE_PREDEFINITO) out.colore = col;
+    const nome = campo(el, "nome").value.trim();
+    if (nome && nome !== (el.dataset.defNome || "")) out.nome = nome;
+    const sott = campo(el, "sottotitolo").value.trim();
+    if (sott && sott !== (el.dataset.defSott || "")) out.sottotitolo = sott;
+    return Object.keys(out).length ? out : null;
+  }
+
+    return { htmlEditor, collega, leggi, COLORE_PREDEFINITO };
+  })();
 
   window.Dossier = {
     normalizza, nuovo, htmlEditor, collega, leggi, messaggio,

@@ -194,3 +194,13 @@
 
 .cop-modo{display:flex;flex-direction:column;gap:4px;max-width:420px;font-family:var(--font-chrome);font-size:.78rem;font-weight:600;text-transform:uppercase;color:var(--inchiostro-tenue);}
 .cop-modo select{font-family:var(--font-testo);font-size:.92rem;text-transform:none;padding:8px 10px;border:1px solid var(--bordo);border-radius:var(--radius);background:#fff;}
+/* ---------- Banda superiore del PDF (marca-pdf.js) ---------- */
+.marca-ed{margin-top:10px;}
+.marca-anteprima{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius);margin:0 0 14px;max-width:560px;background:#0b3d6e;color:#fff;}
+.marca-logo{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:0 0 38px;background:#fff;border-radius:5px;}
+.marca-logo img{max-width:30px;max-height:30px;}
+.marca-testi{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere;}
+.marca-testi strong{font-family:var(--font-chrome);font-size:1.1rem;line-height:1.15;}
+.marca-testi small{font-family:var(--font-chrome);font-size:.75rem;opacity:.95;}
+.marca-ed .dos-grid input[type=color]{width:100%;height:36px;padding:2px;border:1px solid var(--bordo);border-radius:var(--radius);background:#fff;}
+.marca-ed .dos-grid input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--bordo);border-radius:var(--radius);background:#fff;}

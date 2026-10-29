@@ -79,6 +79,12 @@
     }));
   }
 
+  // Anteprima live della banda superiore del PDF dell'atto
+  function collegaMarcaPdf() {
+    if (typeof MarcaPdf === "undefined") return;
+    MarcaPdf.collega(document.querySelector("#redazione-form [data-marca]"));
+  }
+
   function aggiornaAnteprimaImmagine() {
     const campo = document.getElementById("f-immagine");
     const box = document.getElementById("f-immagine-anteprima");
@@ -586,6 +592,10 @@
           <summary>🖼 Copertina del PDF</summary>
           ${typeof Copertina !== "undefined" ? Copertina.htmlEditor(atto ? atto.copertina : null) : ""}
         </details>
+        <details class="cop-dettagli">
+          <summary>🎨 Banda superiore del PDF</summary>
+          ${typeof MarcaPdf !== "undefined" ? MarcaPdf.htmlEditor(atto ? atto.marcaPdf : null, { nome: "NormAktiv", sottotitolo: "Raccolta ufficiale degli atti normativi" }) : ""}
+        </details>
         <h3>Articoli</h3>
         <div id="redazione-articoli">${articoli.map((a, i) => eTitoloGruppo(a) ? renderRigaTitolo(a, i) : renderRigaArticolo(a, i)).join("")}</div>
         <div class="redazione-riga-campi">
@@ -626,6 +636,8 @@
     const originale = atti.find(a => a.id === idInModifica) || {};   // conserva le pronunce della Corte
     const copEl = document.querySelector("#redazione-form [data-cop]");
     const copertina = (copEl && typeof Copertina !== "undefined") ? Copertina.leggi(copEl) : originale.copertina;
+    const marcaEl = document.querySelector("#redazione-form [data-marca]");
+    const marcaPdf = (marcaEl && typeof MarcaPdf !== "undefined") ? MarcaPdf.leggi(marcaEl) : originale.marcaPdf;   // banda superiore del PDF (null = predefinita)
     return {
       id: idUnivoco(idBase, idInModifica),
       categoria,
@@ -643,6 +655,7 @@
       ...(originale.pronunce ? { pronunce: originale.pronunce } : {}),
       ...(originale.dossiers ? { dossiers: originale.dossiers } : {}),
       ...(originale.dossier ? { dossier: originale.dossier } : {}),   // non perdere i dossier modificando l'atto
+      ...(marcaPdf ? { marcaPdf } : {}),
       ...(copertina && (copertina.modo !== "standard" || originale.copertina) ? { copertina } : {}),   // copertina del PDF (la standard è il default: niente da salvare)
     };
   }
@@ -679,7 +692,7 @@
     const root = document.getElementById("redazione-root");
     if (vista === "menu") root.innerHTML = renderMenu();
     else if (vista === "carica") root.innerHTML = renderCarica();
-    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); aggiornaAnteprimaImmagine(); collegaCopertinaAtto(); }
+    else if (vista === "editor") { root.innerHTML = renderEditor(extra || null); aggiornaAnteprimaImmagine(); collegaCopertinaAtto(); collegaMarcaPdf(); }
     else if (vista === "dossier-elenco") root.innerHTML = renderDossierElenco();
     else if (vista === "dossier-editor") apriDossierEditor(root, extra);
     window.scrollTo(0, 0);

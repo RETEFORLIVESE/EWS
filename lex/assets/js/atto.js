@@ -116,7 +116,12 @@
     const PE = await caricaPdfExport();
     const C = PE.colori;
     const pdf = await PE.crea({
-      marca: { nome: "NormAktiv", sottotitolo: "Raccolta ufficiale degli atti normativi", logo: "NormAktiv.png" }
+      marca: {
+        nome: (atto.marcaPdf && atto.marcaPdf.nome) || "NormAktiv",
+        sottotitolo: (atto.marcaPdf && atto.marcaPdf.sottotitolo) || "Raccolta ufficiale degli atti normativi",
+        colore: atto.marcaPdf && atto.marcaPdf.colore,
+        logo: "NormAktiv.png"
+      }
     });
 
     // Copertina del PDF, scelta in redazione: nessuna / standard (come i dossier) / personalizzata.

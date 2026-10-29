@@ -8,8 +8,8 @@
 //   pdf.scrivi(...); pdf.dati([...]); await pdf.immagine(url, didascalia); ...
 //   pdf.salva("nome-file.pdf", "testo del piè di pagina");
 //
-// La "marca" disegna in alto, su OGNI pagina, una barra blu con il logo e il nome
-// del sito che genera il PDF (NormAktiv oppure CTSU).
+// La "marca" disegna in alto, su OGNI pagina, una barra (blu di default) con il logo e il nome
+// del sito che genera il PDF (NormAktiv oppure CTSU). Opzioni: { nome, sottotitolo, logo, colore:"#rrggbb" }.
 //
 // Impaginazione compatta (sempre attiva): margini laterali e inferiori ridotti, linee
 // (tabelle, riquadri, separatori) più sottili e chiare, spaziatura verticale e interlinea
@@ -1016,7 +1016,11 @@
 
     // Barra in alto (logo + nome) e numerazione, su tutte le pagine.
     function disegnaBarra() {
-      doc.setFillColor(COLORI.blu[0], COLORI.blu[1], COLORI.blu[2]);
+      // colore della banda personalizzabile (marca.colore, "#rrggbb"); il testo diventa scuro su fondi chiari
+      const hexBarra = mappaColore(marca.colore);
+      const fondo = hexBarra ? mappaRgb(hexBarra) : COLORI.blu;
+      const tx = hexBarra ? mappaTestoSu(hexBarra) : [255, 255, 255];
+      doc.setFillColor(fondo[0], fondo[1], fondo[2]);
       doc.rect(0, 0, PW, BAR, "F");
       let xTesto = MX;
       if (logo) {
@@ -1028,7 +1032,7 @@
         doc.addImage(logo.data, "PNG", MX + 6.5 - lw / 2, 9 - lh / 2, lw, lh);
         xTesto = MX + 17;
       }
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(tx[0], tx[1], tx[2]);
       doc.setFont("helvetica", "bold"); doc.setFontSize(15);
       doc.text((marca.nome || "").toString(), xTesto, marca.sottotitolo ? 9.2 : 10.8);
       if (marca.sottotitolo) {
