@@ -152,13 +152,10 @@
 
                     <div class="form-group">
                         <label>Icona (Opzionale)</label>
-                        <!-- L'elenco viene riempito in automatico leggendo la cartella "Icons" dalla repository GitHub.
+                        <!-- L'elenco viene riempito in automatico leggendo la cartella "CBALL" della repository GitHub IMG.
                              Le voci qui sotto sono solo un elenco di riserva, usato se GitHub non risponde. -->
                         <select id="input_icona" disabled>
                             <option value="">-- Predefinita --</option>
-                            <option value="Stato.png">Stato.png</option>
-                            <option value="DocumentW95.png">DocumentW95.png</option>
-                            <option value="FolderclosedW95.png">FolderclosedW95.png</option>
                         </select>
                         <small class="icone-stato" id="icone_stato">Caricamento elenco icone…</small>
                     </div>
@@ -261,9 +258,20 @@
            nell'HTML. L'elenco è tenuto in cache per la sessione
            (l'API senza autenticazione ha un limite di richieste orarie).
         ========================================================= */
-        const REPO_ICONE = { proprietario: 'RETEFORLIVESE', repository: 'EWS', cartella: 'Icons' };
+        // 'ref' = commit/branch da cui leggere. Messo sul commit indicato; per leggere sempre
+        // l'ultima versione della repo metti il nome del branch (es. 'main') oppure ''.
+        const REPO_ICONE = {
+            proprietario: 'RETEFORLIVESE',
+            repository: 'IMG',
+            cartella: 'CBALL',
+            ref: '6580dcd2756a244f3b5e80fee7637b80cbfa7abf'
+        };
+        function urlIcona(nome) {
+            const base = `https://raw.githubusercontent.com/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/${REPO_ICONE.ref || 'HEAD'}/${REPO_ICONE.cartella}/`;
+            return base + encodeURIComponent(nome);
+        }
         const ESTENSIONI_ICONE = /\.(png|ico|gif|jpe?g|svg|webp)$/i;
-        const CHIAVE_CACHE_ICONE = 'ews_elenco_icone_v1';
+        const CHIAVE_CACHE_ICONE = 'img_cball_elenco_icone_v1';
 
         async function leggiIconeDaGitHub() {
             try {
@@ -271,7 +279,7 @@
                 if (inCache) return JSON.parse(inCache);
             } catch (e) { /* sessionStorage non disponibile: si procede senza cache */ }
 
-            const url = `https://api.github.com/repos/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/contents/${REPO_ICONE.cartella}`;
+            const url = `https://api.github.com/repos/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/contents/${REPO_ICONE.cartella}` + (REPO_ICONE.ref ? `?ref=${encodeURIComponent(REPO_ICONE.ref)}` : '');
             const risposta = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
             if (!risposta.ok) throw new Error('GitHub ha risposto ' + risposta.status);
             const voci = await risposta.json();
@@ -508,7 +516,7 @@
                 const etichettaTipo = nodo.categoria === 'assemblea' ? 'Assemblea' : (nodo.categoria === 'congresso' ? 'Congresso' : 'Non specificato');
                 const infoLuogo = trovaVoceLuogo(nodo.luogo);
                 const testoLuogo = infoLuogo ? ` · ${escapeHtml(infoLuogo.nome)}` : '';
-                const customStyle = nodo.icona ? ` style="--icona-custom: url('Icons/${escapeHtml(nodo.icona)}');"` : '';
+                const customStyle = nodo.icona ? ` style="--icona-custom: url('${escapeHtml(urlIcona(nodo.icona))}');"` : '';
                 const htmlTesto = `<span${customStyle}><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
 
                 const actions = document.createElement('div');
