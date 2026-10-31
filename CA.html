@@ -212,12 +212,10 @@
         }
         
         /* Icone personalizzate (scelte in redazione): bordo nero attorno all'immagine */
+        /* Per le icone personalizzate si usa un <img> vero, così il bordo nero segue esattamente il perimetro dell'immagine */
         .sidebar summary.icona-personalizzata::before,
-        .nodo-foglia.icona-personalizzata::before {
-            border: 1px solid #000;
-            box-sizing: border-box;
-            background-color: #fff;
-        }
+        .nodo-foglia.icona-personalizzata::before { display: none; }
+        .icona-menu { display: block; height: 18px; width: auto; max-width: 32px; margin-right: 8px; flex-shrink: 0; border: 1px solid #000; padding: 0; background: none; }
 
         .figli-container { padding-left: 14px; margin-top: 4px; margin-bottom: 8px; border-left: 1px dashed var(--ist-line); margin-left: 18px; }
         
@@ -237,7 +235,7 @@
         
         .riga-nome { display: flex; align-items: center; gap: 0.9rem; margin: 0.4rem 0 0.6rem; }
         .dettagli-organo .riga-nome h2 { margin: 0; }
-        .icona-organo { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; border: 1px solid #000; box-sizing: border-box; background: #fff; padding: 3px; }
+        .icona-organo { display: block; width: auto; height: auto; max-width: 64px; max-height: 64px; flex-shrink: 0; border: 1px solid #000; padding: 0; background: none; }
         .luogo-badge { 
             display: inline-block; 
             background: var(--ist-azure); 
@@ -586,9 +584,14 @@
         function applicaIconaPersonalizzata(elemento, nodo) {
             const nomeFile = (nodo.icona || '').toString().trim();
             if (!nomeFile) return;
-            const percorso = urlIcona(nomeFile).replace(/'/g, '%27');
-            elemento.style.setProperty('--icona-custom', "url('" + percorso + "')");
+            const img = document.createElement('img');
+            img.className = 'icona-menu';
+            img.alt = '';
+            img.loading = 'lazy';
+            img.onerror = () => { img.remove(); elemento.classList.remove('icona-personalizzata'); };
+            img.src = urlIcona(nomeFile);
             elemento.classList.add('icona-personalizzata');
+            elemento.insertBefore(img, elemento.firstChild);
         }
 
         function creaElementiMenu(nodi) {
