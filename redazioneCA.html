@@ -19,7 +19,7 @@
         .tab-btn.active { background: #0055a4; color: white; }
         .layout { display: flex; flex-wrap: wrap; gap: 30px; }
         .tree-panel { flex: 1.5 1 420px; min-width: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; }
-        .form-panel { flex: 1 1 300px; min-width: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 20px; height: fit-content; }
+        .form-panel { flex: 1 1 300px; min-width: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 96px; height: fit-content; }
         .node-list { list-style-type: none; padding-left: 20px; margin: 0; }
         .node-item { margin-top: 10px; }
         .node-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; text-align: left; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
@@ -64,6 +64,46 @@
             background-image: var(--icona-custom, url('Icons/FolderOpenedW95.png'));
         }
 
+        /* --- Usabilità: header fisso, barra strumenti, toast, anteprima icone --- */
+        header { position: sticky; top: 0; z-index: 20; background: #c0c0c0; padding-top: 10px; }
+        .header-azioni { align-items: center; }
+        .btn-header { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-header:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-salva-online { background: #28a745; }
+        .btn-salva-online.dirty { background: #e67e00; box-shadow: 0 0 0 3px rgba(230,126,0,.35); }
+        .btn-undo { background: #6c757d; }
+        .btn-esci { background: #dc3545; }
+        .stato-bozza { font-size: 13px; color: #444; padding: 0 6px; white-space: nowrap; }
+        .stato-bozza.dirty { color: #a85a00; font-weight: bold; }
+        button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid #0055a4; outline-offset: 2px; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+        .cerca { flex: 1 1 200px; padding: 8px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-mini { padding: 8px 12px; border: 1px solid #bbb; background: #f4f4f4; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-mini:hover { background: #e8e8e8; }
+        .node-header:hover { background: #f0f6ff; }
+        .node-header.in-modifica { background: #fff7d6; border-color: #ffc107; box-shadow: inset 4px 0 0 #ffc107; }
+        .form-panel { max-height: calc(100vh - 116px); overflow-y: auto; scroll-margin-top: 96px; }
+        .form-azioni { display: flex; gap: 10px; margin-top: 10px; }
+        .form-azioni .btn-save { margin-top: 0; flex: 1 1 auto; width: auto; }
+        .btn-cancel { padding: 12px 16px; border: 1px solid #aaa; background: #f4f4f4; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        .btn-cancel:hover { background: #e6e6e6; }
+        .icona-riga { display: flex; gap: 8px; align-items: center; }
+        .icona-anteprima { width: 34px; height: 34px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; background: #fafafa; padding: 2px; flex-shrink: 0; }
+        .icone-picker { margin-top: 8px; border: 1px solid #ddd; border-radius: 4px; padding: 6px 8px; }
+        .icone-picker > summary { cursor: pointer; font-size: 13px; color: #0055a4; font-weight: 600; }
+        .icone-picker input { margin-top: 8px; padding: 7px 8px; font-size: 14px; }
+        #icone_griglia { max-height: 220px; overflow-y: auto; margin-top: 8px; }
+        .ig-cartella { font-size: 11px; font-weight: 700; color: #666; margin: 8px 0 4px; word-break: break-all; }
+        .ig-items { display: flex; flex-wrap: wrap; gap: 4px; }
+        .ig-item { width: 38px; height: 38px; padding: 3px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; }
+        .ig-item:hover { border-color: #0055a4; }
+        .ig-item img { width: 100%; height: 100%; object-fit: contain; }
+        .ig-item.sel { border-color: #0055a4; box-shadow: 0 0 0 2px rgba(0,85,164,.3); }
+        #toast-box { position: fixed; right: 16px; bottom: 16px; z-index: 100; display: flex; flex-direction: column; gap: 8px; max-width: calc(100vw - 32px); }
+        .toast { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 6px; color: white; font-size: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.3); background: #28a745; }
+        .toast.err { background: #c82333; }
+        .toast button { background: rgba(255,255,255,.2); color: white; border: 1px solid rgba(255,255,255,.6); border-radius: 3px; padding: 4px 10px; cursor: pointer; font-weight: bold; }
+
         /* --- Adattamento per schermi stretti (telefoni/tablet in verticale) --- */
         @media (max-width: 720px) {
             body { padding: 12px; }
@@ -73,7 +113,9 @@
             .tab-btn { min-width: 0; padding: 12px 10px; font-size: 14px; }
             .layout { flex-direction: column; gap: 16px; }
             .tree-panel, .form-panel { flex: 1 1 auto; width: 100%; }
-            .form-panel { position: static; }
+            .form-panel { position: static; max-height: none; overflow-y: visible; }
+            header { position: static; }
+            .stato-bozza { display: none; }
             .tree-panel { padding: 14px; }
             .node-list { padding-left: 12px; }
             .node-header { flex-direction: column; align-items: flex-start; }
@@ -93,9 +135,11 @@
                 <h1 style="margin: 0;">Redazione Organi e Luoghi</h1>
                 <p style="margin: 5px 0 0 0; color: #555;">Gestione della struttura ad albero di Organi (Congressi/Assemblee) e Luoghi (Città/Distretti), collegati tra loro.</p>
             </div>
-            <div>
-                <button onclick="salvaOnline()" style="background: #28a745; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">💾 Salva online su JSONBin</button>
-                <button onclick="eseguiLogout()" style="background: #dc3545; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; margin-left: 10px;">Esci</button>
+            <div class="header-azioni">
+                <span id="stato-bozza" class="stato-bozza">Nessuna modifica</span>
+                <button type="button" id="btn_annulla" class="btn-header btn-undo" onclick="annullaUltima()" disabled title="Annulla l'ultima modifica (Ctrl+Z)">↶ Annulla</button>
+                <button type="button" id="btn_salva_online" class="btn-header btn-salva-online" onclick="salvaOnline()" title="Salva online (Ctrl+S)">💾 Salva online su JSONBin</button>
+                <button type="button" class="btn-header btn-esci" onclick="eseguiLogout()">Esci</button>
             </div>
         </header>
 
@@ -109,6 +153,11 @@
             <div class="layout">
                 <div class="tree-panel">
                     <h3>Struttura Organi</h3>
+                    <div class="toolbar">
+                        <input type="search" class="cerca" id="cerca-organi" placeholder="🔍 Cerca per nome, ID o luogo…" oninput="filtraAlbero('tree-container', this.value)" autocomplete="off">
+                        <button type="button" class="btn-mini" onclick="espandiTutto('tree-container', true)">Espandi tutto</button>
+                        <button type="button" class="btn-mini" onclick="espandiTutto('tree-container', false)">Comprimi tutto</button>
+                    </div>
                     <div id="tree-container">In caricamento...</div>
                 </div>
 
@@ -152,15 +201,25 @@
 
                     <div class="form-group">
                         <label>Icona (Opzionale)</label>
-                        <!-- L'elenco viene riempito in automatico leggendo la cartella "CBALL" della repository GitHub IMG.
-                             Le voci qui sotto sono solo un elenco di riserva, usato se GitHub non risponde. -->
-                        <select id="input_icona" disabled>
-                            <option value="">-- Predefinita --</option>
-                        </select>
+                        <!-- L'elenco viene riempito leggendo TUTTE le cartelle della repository GitHub IMG. -->
+                        <div class="icona-riga">
+                            <img id="icona_anteprima" class="icona-anteprima" alt="" style="display:none">
+                            <select id="input_icona" disabled onchange="aggiornaAnteprimaIcona()">
+                                <option value="">-- Predefinita --</option>
+                            </select>
+                        </div>
+                        <details class="icone-picker">
+                            <summary>Scegli dall'anteprima</summary>
+                            <input type="search" id="icone_cerca" placeholder="Cerca icona…" autocomplete="off" oninput="filtraGrigliaIcone(this.value)">
+                            <div id="icone_griglia"></div>
+                        </details>
                         <small class="icone-stato" id="icone_stato">Caricamento elenco icone…</small>
                     </div>
 
-                    <button class="btn-save" id="btn_salva_form" onclick="applicaModifiche()" disabled>Applica Modifiche (Bozza)</button>
+                    <div class="form-azioni">
+                        <button type="button" class="btn-save" id="btn_salva_form" onclick="applicaModifiche()" disabled>Applica Modifiche (Bozza)</button>
+                        <button type="button" class="btn-cancel" onclick="chiudiFormOrgani()" title="Chiudi il modulo (Esc)">Annulla</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -175,6 +234,11 @@
             <div class="layout">
                 <div class="tree-panel">
                     <h3>Database Luoghi</h3>
+                    <div class="toolbar">
+                        <input type="search" class="cerca" id="cerca-luoghi" placeholder="🔍 Cerca per nome o ID…" oninput="filtraAlbero('luoghi-tree-container', this.value)" autocomplete="off">
+                        <button type="button" class="btn-mini" onclick="espandiTutto('luoghi-tree-container', true)">Espandi tutto</button>
+                        <button type="button" class="btn-mini" onclick="espandiTutto('luoghi-tree-container', false)">Comprimi tutto</button>
+                    </div>
                     <div id="luoghi-tree-container">In caricamento...</div>
                 </div>
 
@@ -212,7 +276,10 @@
                         <input type="text" id="luoghi_input_id" disabled>
                     </div>
 
-                    <button class="btn-save" id="luoghi_btn_salva_form" onclick="applicaModificheLuogo()" disabled>Applica Modifiche (Bozza)</button>
+                    <div class="form-azioni">
+                        <button type="button" class="btn-save" id="luoghi_btn_salva_form" onclick="applicaModificheLuogo()" disabled>Applica Modifiche (Bozza)</button>
+                        <button type="button" class="btn-cancel" onclick="chiudiFormLuoghi()" title="Chiudi il modulo (Esc)">Annulla</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -220,6 +287,8 @@
 
     <script>
         let datiInMemoria = { luoghi: {}, alberoOrgani: [], alberoLuoghi: [] };
+        const apertiOrgani = new Set();   // ricorda i rami aperti dopo ogni ridisegno
+        const apertiLuoghi = new Set();
 
         // Login automatico all'apertura della pagina: niente più schermata di accesso.
         const CREDENZIALI_AUTO = { username: 'TandeePetrenka', password: 'TandeePetrenka' };
@@ -252,26 +321,29 @@
         }
 
         /* =========================================================
-           ICONE: elenco letto in automatico dalla cartella "Icons"
-           della repository GitHub (API pubblica, nessuna chiave).
-           Se GitHub non risponde resta l'elenco di riserva scritto
-           nell'HTML. L'elenco è tenuto in cache per la sessione
-           (l'API senza autenticazione ha un limite di richieste orarie).
+           ICONE: elenco letto da TUTTE le cartelle della repository
+           GitHub IMG (API "git/trees" ricorsiva, nessuna chiave).
+           Il valore salvato nel nodo è il percorso relativo, es.
+           "CBALL/icona.png". I vecchi valori senza cartella (es.
+           "icona.png") sono interpretati come presenti in CBALL.
+           L'elenco è in cache per la sessione (limite orario API).
         ========================================================= */
         // 'ref' = commit/branch da cui leggere. Messo sul commit indicato; per leggere sempre
         // l'ultima versione della repo metti il nome del branch (es. 'main') oppure ''.
         const REPO_ICONE = {
             proprietario: 'RETEFORLIVESE',
             repository: 'IMG',
-            cartella: 'CBALL',
-            ref: '6580dcd2756a244f3b5e80fee7637b80cbfa7abf'
+            ref: '6580dcd2756a244f3b5e80fee7637b80cbfa7abf',
+            cartellaPredefinita: 'CBALL'
         };
-        function urlIcona(nome) {
-            const base = `https://raw.githubusercontent.com/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/${REPO_ICONE.ref || 'HEAD'}/${REPO_ICONE.cartella}/`;
-            return base + encodeURIComponent(nome);
-        }
         const ESTENSIONI_ICONE = /\.(png|ico|gif|jpe?g|svg|webp)$/i;
-        const CHIAVE_CACHE_ICONE = 'img_cball_elenco_icone_v1';
+        const CHIAVE_CACHE_ICONE = 'img_tutte_cartelle_icone_v1';
+
+        function urlIcona(percorso) {
+            const p = percorso.indexOf('/') >= 0 ? percorso : REPO_ICONE.cartellaPredefinita + '/' + percorso;
+            const base = `https://raw.githubusercontent.com/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/${REPO_ICONE.ref || 'HEAD'}/`;
+            return base + p.split('/').map(encodeURIComponent).join('/');
+        }
 
         async function leggiIconeDaGitHub() {
             try {
@@ -279,56 +351,118 @@
                 if (inCache) return JSON.parse(inCache);
             } catch (e) { /* sessionStorage non disponibile: si procede senza cache */ }
 
-            const url = `https://api.github.com/repos/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/contents/${REPO_ICONE.cartella}` + (REPO_ICONE.ref ? `?ref=${encodeURIComponent(REPO_ICONE.ref)}` : '');
+            const url = `https://api.github.com/repos/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/git/trees/${encodeURIComponent(REPO_ICONE.ref || 'HEAD')}?recursive=1`;
             const risposta = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
             if (!risposta.ok) throw new Error('GitHub ha risposto ' + risposta.status);
-            const voci = await risposta.json();
-            if (!Array.isArray(voci)) throw new Error('Risposta inattesa da GitHub');
+            const dati = await risposta.json();
+            if (!dati || !Array.isArray(dati.tree)) throw new Error('Risposta inattesa da GitHub');
 
-            const nomi = voci
-                .filter(v => v.type === 'file' && ESTENSIONI_ICONE.test(v.name))
-                .map(v => v.name)
+            const percorsi = dati.tree
+                .filter(v => v.type === 'blob' && ESTENSIONI_ICONE.test(v.path))
+                .map(v => v.path)
                 .sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
 
-            try { sessionStorage.setItem(CHIAVE_CACHE_ICONE, JSON.stringify(nomi)); } catch (e) { /* ignora */ }
-            return nomi;
+            const risultato = { percorsi, troncato: !!dati.truncated };
+            try { sessionStorage.setItem(CHIAVE_CACHE_ICONE, JSON.stringify(risultato)); } catch (e) { /* ignora */ }
+            return risultato;
         }
 
-        function popolaSelectIcone(nomi) {
+        function cartellaDi(percorso) {
+            const i = percorso.lastIndexOf('/');
+            return i < 0 ? '' : percorso.slice(0, i);
+        }
+        function nomeFileDi(percorso) {
+            return percorso.slice(percorso.lastIndexOf('/') + 1);
+        }
+
+        function popolaSelectIcone(percorsi) {
             const select = document.getElementById('input_icona');
             const corrente = select.value;
-            select.innerHTML = '<option value="">-- Predefinita --</option>' +
-                nomi.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
-            select.value = corrente;
+            const gruppi = {};
+            percorsi.forEach(p => { const c = cartellaDi(p); (gruppi[c] = gruppi[c] || []).push(p); });
+            const cartelle = Object.keys(gruppi).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+
+            let html = '<option value="">-- Predefinita --</option>';
+            cartelle.forEach(c => {
+                html += `<optgroup label="${escapeHtml(c || '(radice)')}">` +
+                    gruppi[c].map(p => `<option value="${escapeHtml(p)}">${escapeHtml(nomeFileDi(p))}</option>`).join('') +
+                    '</optgroup>';
+            });
+            select.innerHTML = html;
+
+            const griglia = document.getElementById('icone_griglia');
+            griglia.innerHTML = cartelle.map(c =>
+                `<div class="ig-gruppo"><div class="ig-cartella">${escapeHtml(c || '(radice)')}</div><div class="ig-items">` +
+                gruppi[c].map(p => `<button type="button" class="ig-item" data-p="${escapeHtml(p)}" title="${escapeHtml(p)}"><img loading="lazy" alt="" src="${escapeHtml(urlIcona(p))}"></button>`).join('') +
+                '</div></div>').join('');
+
+            impostaIconaSelect(corrente);
+        }
+
+        function filtraGrigliaIcone(testo) {
+            const q = (testo || '').trim().toLowerCase();
+            document.querySelectorAll('#icone_griglia .ig-gruppo').forEach(g => {
+                let visibile = false;
+                g.querySelectorAll('.ig-item').forEach(b => {
+                    const ok = !q || b.dataset.p.toLowerCase().includes(q);
+                    b.style.display = ok ? '' : 'none';
+                    if (ok) visibile = true;
+                });
+                g.style.display = visibile ? '' : 'none';
+            });
+        }
+
+        function aggiornaAnteprimaIcona() {
+            const select = document.getElementById('input_icona');
+            const img = document.getElementById('icona_anteprima');
+            if (select.value) { img.src = urlIcona(select.value); img.style.display = ''; }
+            else { img.removeAttribute('src'); img.style.display = 'none'; }
+            document.querySelectorAll('#icone_griglia .ig-item').forEach(b => b.classList.toggle('sel', b.dataset.p === select.value));
         }
 
         async function caricaElencoIcone() {
             const stato = document.getElementById('icone_stato');
             try {
-                const nomi = await leggiIconeDaGitHub();
-                if (nomi.length === 0) throw new Error('Nessuna icona trovata nella cartella');
-                popolaSelectIcone(nomi);
-                stato.innerText = nomi.length + ' icone lette dalla cartella ' + REPO_ICONE.cartella + '.';
+                const { percorsi, troncato } = await leggiIconeDaGitHub();
+                if (percorsi.length === 0) throw new Error('Nessuna icona trovata nella repository');
+                popolaSelectIcone(percorsi);
+                const nCartelle = new Set(percorsi.map(cartellaDi)).size;
+                stato.innerText = `${percorsi.length} icone lette da ${nCartelle} ${nCartelle === 1 ? 'cartella' : 'cartelle'} della repository ${REPO_ICONE.repository}.` +
+                    (troncato ? ' (Elenco incompleto: GitHub ha troncato la risposta.)' : '');
             } catch (e) {
-                console.warn('Elenco icone da GitHub non disponibile, uso quello di riserva:', e);
-                stato.innerText = 'Elenco automatico non disponibile: uso l\'elenco di base.';
+                console.warn('Elenco icone da GitHub non disponibile:', e);
+                stato.innerText = 'Elenco icone non disponibile al momento (riprova ricaricando la pagina).';
             }
         }
 
-        // Seleziona l'icona salvata. Se non è più nell'elenco la aggiunge come voce
-        // temporanea, così non viene persa al salvataggio.
+        // Seleziona l'icona salvata. I vecchi valori senza cartella vengono cercati in CBALL.
+        // Se non è più nell'elenco la aggiunge come voce temporanea, così non viene persa al salvataggio.
         function impostaIconaSelect(valore) {
             const select = document.getElementById('input_icona');
             select.querySelectorAll('option[data-temporanea]').forEach(o => o.remove());
-            if (valore && !Array.from(select.options).some(o => o.value === valore)) {
+            const presente = v => Array.from(select.options).some(o => o.value === v);
+            valore = valore || '';
+            if (valore && !presente(valore) && valore.indexOf('/') < 0 && presente(REPO_ICONE.cartellaPredefinita + '/' + valore)) {
+                valore = REPO_ICONE.cartellaPredefinita + '/' + valore;
+            }
+            if (valore && !presente(valore)) {
                 const o = document.createElement('option');
                 o.value = valore;
                 o.textContent = valore + " (non presente nell'elenco)";
                 o.setAttribute('data-temporanea', '1');
                 select.appendChild(o);
             }
-            select.value = valore || '';
+            select.value = valore;
+            aggiornaAnteprimaIcona();
         }
+
+        document.getElementById('icone_griglia').addEventListener('click', (e) => {
+            const b = e.target.closest('.ig-item');
+            const select = document.getElementById('input_icona');
+            if (!b || select.disabled) return;
+            select.value = b.dataset.p;
+            aggiornaAnteprimaIcona();
+        });
 
         (async function avvio() {
             if (!ApiOrgani.loadCredentials()) {
@@ -353,14 +487,26 @@
                 migraAlberoLuoghi();
                 renderizzaAlbero();
                 renderizzaAlberoLuoghi();
+                statoSalvato = fotografiaStato();
+                aggiornaStatoBozza();
             } catch (e) { mostraErrore("Errore caricamento: " + e.message); }
         }
 
         async function salvaOnline() {
+            const btn = document.getElementById('btn_salva_online');
+            btn.disabled = true;
+            btn.innerText = 'Salvataggio…';
             try {
                 await ApiOrgani.saveDati(datiInMemoria);
-                alert("Salvataggio completato con successo su JSONBin!");
-            } catch (e) { alert("Errore durante il salvataggio."); }
+                statoSalvato = fotografiaStato();
+                toast('Salvato online con successo.', 'ok');
+            } catch (e) {
+                toast('Errore durante il salvataggio: ' + (e && e.message ? e.message : 'riprova'), 'err', 7000);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '💾 Salva online su JSONBin';
+                aggiornaStatoBozza();
+            }
         }
 
         function eseguiLogout() { ApiOrgani.logout(); location.reload(); }
@@ -517,7 +663,7 @@
                 const infoLuogo = trovaVoceLuogo(nodo.luogo);
                 const testoLuogo = infoLuogo ? ` · ${escapeHtml(infoLuogo.nome)}` : '';
                 const customStyle = nodo.icona ? ` style="--icona-custom: url('${escapeHtml(urlIcona(nodo.icona))}');"` : '';
-                const htmlTesto = `<span${customStyle}><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
+                const htmlTesto = `<span data-k="${escapeHtml(nodo.id_organo)}"${customStyle}><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
 
                 const actions = document.createElement('div');
                 actions.className = 'actions';
@@ -530,7 +676,8 @@
                 if (haFigli) {
                     const details = document.createElement('details');
                     details.className = 'node-item';
-                    details.open = false;
+                    details.open = apertiOrgani.has(nodo.id_organo);
+                    details.addEventListener('toggle', () => { if (details.open) apertiOrgani.add(nodo.id_organo); else apertiOrgani.delete(nodo.id_organo); });
 
                     const summary = document.createElement('summary');
                     summary.className = 'node-header';
@@ -613,13 +760,21 @@
 
             const categoria = document.getElementById('input_categoria').value;
             if (!categoria) {
-                alert("Seleziona il Tipo (Congresso o Assemblea) prima di continuare.");
+                avviso("Seleziona il Tipo (Congresso o Assemblea) prima di continuare.");
                 return;
             }
 
+            const idN = document.getElementById('input_id').value.trim();
+            const nomeN = document.getElementById('input_nome').value.trim();
+            if (!nomeN) { avviso("Inserisci il Nome Display."); return; }
+            if (!idN) { avviso("Inserisci l'ID dell'organo."); return; }
+            if ((tipo === 'add' || idN !== targetId) && /\s/.test(idN)) { avviso("L'ID non può contenere spazi."); return; }
+            const idEsistente = trovaNodoGenerico(datiInMemoria.alberoOrgani, idN, 'id_organo');
+            if (idEsistente && !(tipo === 'edit' && idN === targetId)) { avviso(`Esiste già un organo con ID "${idN}".`); return; }
+
             const nuovoNodo = {
-                id_organo: document.getElementById('input_id').value,
-                nome_display: document.getElementById('input_nome').value,
+                id_organo: idN,
+                nome_display: nomeN,
                 categoria: categoria,
                 luogo: document.getElementById('input_luogo').value,
                 link_sito: document.getElementById('input_link').value,
@@ -666,7 +821,9 @@
         }
 
         function eliminaNodo(id) {
-            if (confirm("Sei sicuro di voler eliminare questo organo e tutti i suoi figli?")) {
+            const _n = trovaNodoGenerico(datiInMemoria.alberoOrgani, id, 'id_organo');
+            const _sotto = _n ? raccogliIdNodi(_n, 'id_organo').length - 1 : 0;
+            if (confirm(`Eliminare "${_n ? _n.nome_display : id}"` + (_sotto ? ` e i suoi ${_sotto} sotto-organi` : '') + '?')) {
                 const nodo = trovaNodoGenerico(datiInMemoria.alberoOrgani, id, 'id_organo');
                 const idRimossi = nodo ? raccogliIdNodi(nodo, 'id_organo') : [id];
                 rimuoviDaArrayGenerico(datiInMemoria.alberoOrgani, id, 'id_organo');
@@ -801,7 +958,7 @@
                         }
                     }
                     const extra = dettagli.length ? `<em style="color:#888; font-weight:normal;">— ${escapeHtml(dettagli.join(' · '))}</em>` : '';
-                    const htmlTesto = `<span><strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
+                    const htmlTesto = `<span data-k="${escapeHtml([...percorso, chiave].join('/'))}"><strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
 
                     actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaFormLuogo('edit', 'voce', percorso, chiave)));
                     actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaElementoLuogo(percorso, chiave)));
@@ -816,7 +973,7 @@
                     ul.appendChild(li);
                 } else {
                     const n = contaVoci(valore);
-                    const htmlTesto = `<span><strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
+                    const htmlTesto = `<span data-k="${escapeHtml([...percorso, chiave].join('/'))}"><strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
                     const percorsoGruppo = [...percorso, chiave];
 
                     actions.appendChild(creaBottoneAzione('+ Voce', 'btn-add', () => abilitaFormLuogo('add', 'voce', percorsoGruppo, null)));
@@ -826,7 +983,9 @@
 
                     const details = document.createElement('details');
                     details.className = 'node-item';
-                    details.open = false;
+                    const chiaveAperto = percorsoGruppo.join('/');
+                    details.open = apertiLuoghi.has(chiaveAperto);
+                    details.addEventListener('toggle', () => { if (details.open) apertiLuoghi.add(chiaveAperto); else apertiLuoghi.delete(chiaveAperto); });
 
                     const summary = document.createElement('summary');
                     summary.className = 'node-header';
@@ -896,41 +1055,41 @@
             const modifica = azione === 'edit';
 
             if (!idNuovo) {
-                alert(eVoce ? "Inserisci l'ID del luogo." : "Inserisci il nome del gruppo.");
+                avviso(eVoce ? "Inserisci l'ID del luogo." : "Inserisci il nome del gruppo.");
                 return;
             }
             if (eVoce && !nome) {
-                alert("Inserisci il Nome del luogo.");
+                avviso("Inserisci il Nome del luogo.");
                 return;
             }
             const idCambiato = !modifica || idNuovo !== bersaglio.chiave;
             if (idCambiato && /\s/.test(idNuovo)) {
-                alert("L'ID non può contenere spazi (usa ad esempio underscore).");
+                avviso("L'ID non può contenere spazi (usa ad esempio underscore).");
                 return;
             }
 
             const destinazione = contenitoreAlPercorso(percorsoDest);
             const origine = modifica ? contenitoreAlPercorso(bersaglio.percorso) : null;
             if (!destinazione || (modifica && (!origine || !(bersaglio.chiave in origine)))) {
-                alert("Elemento non trovato: ricarica la pagina e riprova.");
+                avviso("Elemento non trovato: ricarica la pagina e riprova.");
                 return;
             }
 
             if (modifica && !eVoce) {
                 const propria = [...bersaglio.percorso, bersaglio.chiave];
                 if (percorsoDest.length >= propria.length && propria.every((k, i) => percorsoDest[i] === k)) {
-                    alert("Un gruppo non può essere spostato dentro se stesso.");
+                    avviso("Un gruppo non può essere spostato dentro se stesso.");
                     return;
                 }
             }
 
             const stessoElemento = modifica && destinazione === origine && idNuovo === bersaglio.chiave;
             if (!stessoElemento && Object.prototype.hasOwnProperty.call(destinazione, idNuovo)) {
-                alert(`In "${nomePercorso(percorsoDest)}" esiste già un elemento con ID "${idNuovo}".`);
+                avviso(`In "${nomePercorso(percorsoDest)}" esiste già un elemento con ID "${idNuovo}".`);
                 return;
             }
             if (eVoce && !(modifica && idNuovo === bersaglio.chiave) && trovaContenitoreLuogo(datiInMemoria.luoghi, idNuovo)) {
-                alert(`Esiste già un luogo con ID "${idNuovo}": gli ID delle voci devono essere unici in tutto il database.`);
+                avviso(`Esiste già un luogo con ID "${idNuovo}": gli ID delle voci devono essere unici in tutto il database.`);
                 return;
             }
 
@@ -984,6 +1143,189 @@
                 renderizzaAlbero();
             }
         }
+
+        /* =========================================================
+           USABILITÀ: notifiche, annulla, bozza non salvata, ricerca,
+           scorciatoie, evidenziazione del nodo in modifica.
+        ========================================================= */
+        function toast(messaggio, tipo, ms, azione) {
+            let box = document.getElementById('toast-box');
+            if (!box) { box = document.createElement('div'); box.id = 'toast-box'; document.body.appendChild(box); }
+            const t = document.createElement('div');
+            t.className = 'toast' + (tipo === 'err' ? ' err' : '');
+            t.setAttribute('role', tipo === 'err' ? 'alert' : 'status');
+            const m = document.createElement('span');
+            m.textContent = messaggio;
+            t.appendChild(m);
+            if (azione) {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.textContent = azione.testo;
+                b.onclick = () => { azione.fn(); t.remove(); };
+                t.appendChild(b);
+            }
+            box.appendChild(t);
+            setTimeout(() => t.remove(), ms || 3500);
+        }
+        function avviso(messaggio) { toast(messaggio, 'err', 6000); }
+
+        // --- Cronologia (Annulla) e stato "modifiche non salvate" ---
+        let statoSalvato = null;
+        const cronologia = [];
+        function fotografiaStato() {
+            return JSON.stringify({ luoghi: datiInMemoria.luoghi, alberoOrgani: datiInMemoria.alberoOrgani, alberoLuoghi: datiInMemoria.alberoLuoghi });
+        }
+        function modificheNonSalvate() {
+            return statoSalvato !== null && fotografiaStato() !== statoSalvato;
+        }
+        function aggiornaStatoBozza() {
+            const sporco = modificheNonSalvate();
+            const stato = document.getElementById('stato-bozza');
+            stato.textContent = sporco ? '● Modifiche non salvate' : 'Nessuna modifica';
+            stato.classList.toggle('dirty', sporco);
+            document.getElementById('btn_salva_online').classList.toggle('dirty', sporco);
+            document.getElementById('btn_annulla').disabled = cronologia.length === 0;
+        }
+        function annullaUltima() {
+            const prec = cronologia.pop();
+            if (!prec) return;
+            const st = JSON.parse(prec);
+            datiInMemoria.luoghi = st.luoghi;
+            datiInMemoria.alberoOrgani = st.alberoOrgani;
+            datiInMemoria.alberoLuoghi = st.alberoLuoghi;
+            chiudiFormOrgani();
+            chiudiFormLuoghi();
+            renderizzaAlbero();
+            renderizzaAlberoLuoghi();
+            aggiornaStatoBozza();
+            toast('Ultima modifica annullata.', 'ok', 2200);
+        }
+        window.addEventListener('beforeunload', (e) => {
+            if (modificheNonSalvate()) { e.preventDefault(); e.returnValue = ''; }
+        });
+
+        // Avvolge le funzioni che modificano i dati: registra l'annulla, aggiorna lo stato e avvisa.
+        function conRegistroModifiche(nomeFn, preparazione, messaggio, conAnnulla) {
+            const originale = window[nomeFn];
+            window[nomeFn] = function (...args) {
+                if (preparazione) preparazione();
+                const prima = fotografiaStato();
+                const r = originale.apply(this, args);
+                if (fotografiaStato() !== prima) {
+                    cronologia.push(prima);
+                    if (cronologia.length > 30) cronologia.shift();
+                    toast(messaggio, 'ok', conAnnulla ? 6000 : 2200, conAnnulla ? { testo: 'Annulla', fn: annullaUltima } : null);
+                }
+                aggiornaStatoBozza();
+                return r;
+            };
+        }
+        conRegistroModifiche('applicaModifiche', () => {
+            if (document.getElementById('azione_tipo').value === 'add') {
+                const t = document.getElementById('target_id').value;
+                if (t && t !== 'root') apertiOrgani.add(t);
+            }
+        }, 'Modifica applicata in bozza. Ricorda di salvare online.', false);
+        conRegistroModifiche('eliminaNodo', null, 'Organo eliminato (in bozza).', true);
+        conRegistroModifiche('applicaModificheLuogo', () => {
+            try {
+                const p = JSON.parse(document.getElementById('luoghi_input_gruppo').value || '[]');
+                for (let i = 1; i <= p.length; i++) apertiLuoghi.add(p.slice(0, i).join('/'));
+            } catch (e) { /* ignora */ }
+        }, 'Modifica applicata in bozza. Ricorda di salvare online.', false);
+        conRegistroModifiche('eliminaElementoLuogo', null, 'Elemento eliminato (in bozza).', true);
+
+        // --- Ricerca e Espandi/Comprimi ---
+        function filtraUl(ul, q, forza) {
+            let visibile = false;
+            Array.from(ul.children).forEach(item => {
+                const header = item.tagName === 'DETAILS' ? item.querySelector(':scope > summary') : item.querySelector(':scope > .node-header');
+                const span = header ? header.querySelector(':scope > span') : null;
+                const proprio = !!(q && span && span.textContent.toLowerCase().includes(q));
+                const mostraTutti = !q || forza || proprio;
+                const sub = item.querySelector(':scope > ul');
+                const figli = sub ? filtraUl(sub, q, mostraTutti) : false;
+                const mostra = mostraTutti || figli;
+                item.style.display = mostra ? '' : 'none';
+                if (q && figli && !mostraTutti && item.tagName === 'DETAILS') item.open = true;
+                if (mostra) visibile = true;
+            });
+            return visibile;
+        }
+        function filtraAlbero(idContenitore, testo) {
+            const ul = document.querySelector('#' + idContenitore + ' > ul');
+            if (ul) filtraUl(ul, (testo || '').trim().toLowerCase(), false);
+        }
+        function espandiTutto(idContenitore, apri) {
+            document.querySelectorAll('#' + idContenitore + ' details').forEach(d => { d.open = apri; });
+        }
+        ['renderizzaAlbero', 'renderizzaAlberoLuoghi'].forEach(nome => {
+            const originale = window[nome];
+            const [idCerca, idTree] = nome === 'renderizzaAlbero' ? ['cerca-organi', 'tree-container'] : ['cerca-luoghi', 'luoghi-tree-container'];
+            window[nome] = function (...args) {
+                const r = originale.apply(this, args);
+                const q = document.getElementById(idCerca).value;
+                if (q) filtraAlbero(idTree, q);
+                return r;
+            };
+        });
+
+        // --- Form: chiusura, evidenziazione, focus, scorciatoie ---
+        function evidenziaNodo(idContenitore, chiave) {
+            document.querySelectorAll('#' + idContenitore + ' .node-header.in-modifica').forEach(h => h.classList.remove('in-modifica'));
+            if (!chiave) return;
+            const span = Array.from(document.querySelectorAll('#' + idContenitore + ' span[data-k]')).find(x => x.dataset.k === chiave);
+            if (span) { const h = span.closest('.node-header'); if (h) h.classList.add('in-modifica'); }
+        }
+        function chiudiFormOrgani() {
+            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.getElementById('btn_salva_form').disabled = true;
+            document.getElementById('form-title').innerText = "Seleziona un'azione";
+            document.getElementById('form-context').innerText = 'Clicca su + o Modifica nell\'albero per iniziare.';
+            impostaIconaSelect('');
+            evidenziaNodo('tree-container', null);
+        }
+        function chiudiFormLuoghi() {
+            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.getElementById('luoghi_btn_salva_form').disabled = true;
+            document.getElementById('luoghi-form-title').innerText = "Seleziona un'azione";
+            document.getElementById('luoghi-form-context').innerText = 'Clicca su + o Modifica nell\'albero per iniziare.';
+            evidenziaNodo('luoghi-tree-container', null);
+        }
+        function dopoAperturaForm(idPannello, idCampo) {
+            const pannello = document.getElementById(idPannello);
+            if (window.matchMedia('(max-width: 720px)').matches) pannello.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const campo = document.getElementById(idCampo);
+            if (campo) campo.focus({ preventScroll: true });
+        }
+        const _abilitaForm = abilitaForm;
+        abilitaForm = function (tipo, targetId, data) {
+            _abilitaForm(tipo, targetId, data);
+            evidenziaNodo('tree-container', tipo === 'edit' ? targetId : null);
+            dopoAperturaForm('form-panel-organi', tipo === 'add' ? 'input_categoria' : 'input_nome');
+        };
+        const _abilitaFormLuogo = abilitaFormLuogo;
+        abilitaFormLuogo = function (azione, natura, percorso, chiave) {
+            _abilitaFormLuogo(azione, natura, percorso, chiave);
+            evidenziaNodo('luoghi-tree-container', azione === 'edit' ? [...percorso, chiave].join('/') : null);
+            dopoAperturaForm('form-panel-luoghi', natura === 'voce' ? 'luoghi_input_nome' : 'luoghi_input_id');
+        };
+
+        [['form-panel-organi', 'btn_salva_form', () => applicaModifiche(), chiudiFormOrgani],
+         ['form-panel-luoghi', 'luoghi_btn_salva_form', () => applicaModificheLuogo(), chiudiFormLuoghi]].forEach(([idPannello, idBtn, applica, chiudi]) => {
+            document.getElementById(idPannello).addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { chiudi(); return; }
+                if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'search' && !document.getElementById(idBtn).disabled) {
+                    e.preventDefault();
+                    applica();
+                }
+            });
+        });
+        document.addEventListener('keydown', (e) => {
+            const inCampo = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || ''));
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); salvaOnline(); }
+            else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !inCampo) { e.preventDefault(); annullaUltima(); }
+        });
     </script>
 </body>
 </html>
