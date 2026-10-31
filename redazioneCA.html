@@ -214,6 +214,7 @@
                             <div id="icone_griglia"></div>
                         </details>
                         <small class="icone-stato" id="icone_stato">Caricamento elenco icone…</small>
+                        <button type="button" class="btn-mini" id="btn_aggiorna_icone" style="margin-top:6px" onclick="caricaElencoIcone(true)" title="Rilegge subito la repository GitHub">↻ Aggiorna elenco icone</button>
                     </div>
 
                     <div class="form-azioni">
@@ -328,16 +329,18 @@
            "icona.png") sono interpretati come presenti in CBALL.
            L'elenco è in cache per la sessione (limite orario API).
         ========================================================= */
-        // 'ref' = commit/branch da cui leggere. Messo sul commit indicato; per leggere sempre
-        // l'ultima versione della repo metti il nome del branch (es. 'main') oppure ''.
+        // 'ref' = commit/branch da cui leggere. '' = sempre l'ultima versione della repository
+        // (ramo predefinito): le immagini aggiunte su GitHub compaiono senza toccare il codice.
+        // Per bloccare l'elenco a un commit preciso, metti qui l'hash del commit.
         const REPO_ICONE = {
             proprietario: 'RETEFORLIVESE',
             repository: 'IMG',
-            ref: '6580dcd2756a244f3b5e80fee7637b80cbfa7abf',
+            ref: '',
             cartellaPredefinita: 'CBALL'
         };
         const ESTENSIONI_ICONE = /\.(png|ico|gif|jpe?g|svg|webp)$/i;
-        const CHIAVE_CACHE_ICONE = 'img_tutte_cartelle_icone_v1';
+        const CHIAVE_CACHE_ICONE = 'img_tutte_cartelle_icone_v2';
+        const DURATA_CACHE_ICONE_MS = 60 * 1000; // l'API GitHub senza chiave ha un limite orario: si ricontrolla al massimo ogni minuto
 
         function urlIcona(percorso) {
             const p = percorso.indexOf('/') >= 0 ? percorso : REPO_ICONE.cartellaPredefinita + '/' + percorso;
@@ -345,15 +348,17 @@
             return base + p.split('/').map(encodeURIComponent).join('/');
         }
 
-        async function leggiIconeDaGitHub() {
-            try {
-                const inCache = sessionStorage.getItem(CHIAVE_CACHE_ICONE);
-                if (inCache) return JSON.parse(inCache);
-            } catch (e) { /* sessionStorage non disponibile: si procede senza cache */ }
+        async function leggiIconeDaGitHub(forza) {
+            if (!forza) {
+                try {
+                    const inCache = JSON.parse(sessionStorage.getItem(CHIAVE_CACHE_ICONE) || 'null');
+                    if (inCache && inCache.t && (Date.now() - inCache.t) < DURATA_CACHE_ICONE_MS) return inCache.dati;
+                } catch (e) { /* sessionStorage non disponibile: si procede senza cache */ }
+            }
 
             const url = `https://api.github.com/repos/${REPO_ICONE.proprietario}/${REPO_ICONE.repository}/git/trees/${encodeURIComponent(REPO_ICONE.ref || 'HEAD')}?recursive=1`;
-            const risposta = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
-            if (!risposta.ok) throw new Error('GitHub ha risposto ' + risposta.status);
+            const risposta = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } });
+            if (!risposta.ok) throw new Error('GitHub ha risposto ' + risposta.status + (risposta.status === 403 ? ' (limite di richieste raggiunto, riprova tra poco)' : ''));
             const dati = await risposta.json();
             if (!dati || !Array.isArray(dati.tree)) throw new Error('Risposta inattesa da GitHub');
 
@@ -363,7 +368,7 @@
                 .sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
 
             const risultato = { percorsi, troncato: !!dati.truncated };
-            try { sessionStorage.setItem(CHIAVE_CACHE_ICONE, JSON.stringify(risultato)); } catch (e) { /* ignora */ }
+            try { sessionStorage.setItem(CHIAVE_CACHE_ICONE, JSON.stringify({ t: Date.now(), dati: risultato })); } catch (e) { /* ignora */ }
             return risultato;
         }
 
@@ -420,10 +425,15 @@
             document.querySelectorAll('#icone_griglia .ig-item').forEach(b => b.classList.toggle('sel', b.dataset.p === select.value));
         }
 
-        async function caricaElencoIcone() {
+        let aggiornamentoIconeInCorso = false;
+        async function caricaElencoIcone(forza) {
+            if (aggiornamentoIconeInCorso) return;
+            aggiornamentoIconeInCorso = true;
             const stato = document.getElementById('icone_stato');
+            const btn = document.getElementById('btn_aggiorna_icone');
+            if (btn) btn.disabled = true;
             try {
-                const { percorsi, troncato } = await leggiIconeDaGitHub();
+                const { percorsi, troncato } = await leggiIconeDaGitHub(forza === true);
                 if (percorsi.length === 0) throw new Error('Nessuna icona trovata nella repository');
                 popolaSelectIcone(percorsi);
                 const nCartelle = new Set(percorsi.map(cartellaDi)).size;
@@ -431,9 +441,14 @@
                     (troncato ? ' (Elenco incompleto: GitHub ha troncato la risposta.)' : '');
             } catch (e) {
                 console.warn('Elenco icone da GitHub non disponibile:', e);
-                stato.innerText = 'Elenco icone non disponibile al momento (riprova ricaricando la pagina).';
+                stato.innerText = 'Elenco icone non disponibile: ' + e.message + '.';
+            } finally {
+                aggiornamentoIconeInCorso = false;
+                if (btn) btn.disabled = false;
             }
         }
+        // Aggiornamento automatico: quando torni sulla scheda (es. dopo aver caricato un'immagine su GitHub)
+        window.addEventListener('focus', () => { if (!document.getElementById('editor-panel').classList.contains('hidden')) caricaElencoIcone(false); });
 
         // Seleziona l'icona salvata. I vecchi valori senza cartella vengono cercati in CBALL.
         // Se non è più nell'elenco la aggiunge come voce temporanea, così non viene persa al salvataggio.
