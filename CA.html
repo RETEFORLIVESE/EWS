@@ -235,6 +235,9 @@
             display: none; 
         }
         
+        .riga-nome { display: flex; align-items: center; gap: 0.9rem; margin: 0.4rem 0 0.6rem; }
+        .dettagli-organo .riga-nome h2 { margin: 0; }
+        .icona-organo { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; border: 1px solid #000; box-sizing: border-box; background: #fff; padding: 3px; }
         .luogo-badge { 
             display: inline-block; 
             background: var(--ist-azure); 
@@ -404,7 +407,10 @@
 
             <div class="dettagli-organo" id="dettagli-panel">
                 <div class="luogo-badge" id="view-luogo">Luogo</div>
-                <h2 id="view-nome">Nome Organo</h2>
+                <div class="riga-nome">
+                    <img id="view-icona" class="icona-organo" alt="" style="display:none" onerror="this.style.display='none'">
+                    <h2 id="view-nome">Nome Organo</h2>
+                </div>
                 <p style="color: var(--ist-text); margin-bottom: 1.5rem;">ID Riferimento: <code id="view-id"></code></p>
                 
                 <div id="view-sito-box" style="display: none; margin-bottom: 2rem;">
@@ -1140,6 +1146,10 @@
             const panel = document.getElementById('dettagli-panel');
             panel.style.display = 'block';
             document.getElementById('view-nome').innerText = nodo.nome_display;
+            const imgIcona = document.getElementById('view-icona');
+            const fileIcona = (nodo.icona || '').toString().trim();
+            if (fileIcona) { imgIcona.src = urlIcona(fileIcona); imgIcona.style.display = ''; }
+            else { imgIcona.removeAttribute('src'); imgIcona.style.display = 'none'; }
             document.getElementById('view-id').innerText = nodo.id_organo;
             organoCorrente = nodo;
             mostraNorme(nodo);
