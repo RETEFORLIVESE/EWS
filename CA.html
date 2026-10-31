@@ -211,6 +211,14 @@
             background-size: contain; background-repeat: no-repeat; background-position: center;
         }
         
+        /* Icone personalizzate (scelte in redazione): bordo nero attorno all'immagine */
+        .sidebar summary.icona-personalizzata::before,
+        .nodo-foglia.icona-personalizzata::before {
+            border: 1px solid #000;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
         .figli-container { padding-left: 14px; margin-top: 4px; margin-bottom: 8px; border-left: 1px dashed var(--ist-line); margin-left: 18px; }
         
         .content { flex: 1; min-width: 0; padding: clamp(1.5rem, 4vw, 3rem); position: relative; }
@@ -555,11 +563,26 @@
 
         // Se l'organo ha un'icona scelta in redazione (campo "icona"), la applica alla voce
         // tramite la variabile CSS --icona-custom; altrimenti restano le icone di base.
+        // Le icone si leggono dalla repository GitHub IMG (tutte le cartelle). Il valore salvato
+        // è il percorso relativo (es. "CBALL/icona.png"); i vecchi valori senza cartella
+        // (es. "icona.png") sono cercati in CBALL.
+        const REPO_ICONE = {
+            proprietario: 'RETEFORLIVESE',
+            repository: 'IMG',
+            ref: '6580dcd2756a244f3b5e80fee7637b80cbfa7abf', // commit/branch; '' = ultima versione
+            cartellaPredefinita: 'CBALL'
+        };
+        function urlIcona(percorso) {
+            const p = percorso.indexOf('/') >= 0 ? percorso : REPO_ICONE.cartellaPredefinita + '/' + percorso;
+            const base = 'https://raw.githubusercontent.com/' + REPO_ICONE.proprietario + '/' + REPO_ICONE.repository + '/' + (REPO_ICONE.ref || 'HEAD') + '/';
+            return base + p.split('/').map(encodeURIComponent).join('/');
+        }
         function applicaIconaPersonalizzata(elemento, nodo) {
             const nomeFile = (nodo.icona || '').toString().trim();
             if (!nomeFile) return;
-            const percorso = 'Icons/' + encodeURIComponent(nomeFile).replace(/'/g, '%27');
+            const percorso = urlIcona(nomeFile).replace(/'/g, '%27');
             elemento.style.setProperty('--icona-custom', "url('" + percorso + "')");
+            elemento.classList.add('icona-personalizzata');
         }
 
         function creaElementiMenu(nodi) {
