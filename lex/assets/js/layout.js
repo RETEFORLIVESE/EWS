@@ -30,10 +30,10 @@ function renderTestata(paginaAttiva) {
       <div class="container">
         <ul>
           <li><a href="normaktiv.html" class="${paginaAttiva === "home" ? "attiva" : ""}">Home</a></li>
-          <li><a href="https://rtf-rose.vercel.app/lex/atto.html?id=costituzione-union-estji-2026" class="${paginaAttiva === "statuto" ? "attiva" : ""}">Statuto</a></li>
-          <li><a href="index.html?categoria=Regolamento" class="${paginaAttiva === "regolamenti" ? "attiva" : ""}">Regolamenti</a></li>
-          <li><a href="index.html?categoria=Codice" class="${paginaAttiva === "codici" ? "attiva" : ""}">Codici</a></li>
-          <li><a href="elezioni.html" class="${paginaAttiva === "elezioni" ? "attiva" : ""}">Elezioni</a></li>
+          <li><a href="https://ews-rose.vercel.app/lex/atto.html?id=costituzione-dell-unione-degli-stati-sociali-degli-estji" class="${paginaAttiva === "statuto" ? "attiva" : ""}">Statuto</a></li>
+          <li><a href="normaktiv.html?categoria=Regolamento" class="${paginaAttiva === "regolamenti" ? "attiva" : ""}">Regolamenti</a></li>
+          <li><a href="normaktiv.html?categoria=Testo Unico" class="${paginaAttiva === "testo unico" ? "attiva" : ""}">Testo Unico</a></li>
+          <li><a href="https://ews-rose.vercel.app/CEPU.html" class="${paginaAttiva === "elezioni" ? "attiva" : ""}">Elezioni</a></li>
           <li><a href="redazione.html" class="${paginaAttiva === "redazione" ? "attiva" : ""}">Redazione</a></li>
         </ul>
       </div>

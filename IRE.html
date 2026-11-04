@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#043a96">
+<title>IRE – Istituto per la Resilienza Economica</title>
+<link rel="icon" id="fav" href="data:,">
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#0f1f38;--mut:#5a6779;--line:#d9e0ea;--pri:#0b3d6e;--acc:#1d7fd6;--ok:#1b7a4b;--warn:#b26a00;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1420;--card:#152033;--ink:#e6edf7;--mut:#9aa8bd;--line:#26344d;--pri:#0a2c52;--acc:#5aaeff;--ok:#4cc38a;--warn:#e8a54a;--err:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pri);color:#fff}
+.top{max-width:1000px;margin:auto;padding:14px 18px;display:flex;align-items:center;gap:14px}
+#logo{width:48px;height:48px;border-radius:10px;background:#fff;object-fit:contain;flex:none}
+.top h1{font-size:20px;margin:0;line-height:1.2}.top small{opacity:.8;font-size:12.5px}
+nav{background:var(--pri);border-top:1px solid rgba(255,255,255,.15)}
+nav .in{max-width:1000px;margin:auto;display:flex;overflow-x:auto;padding:0 10px}
+nav a{color:#dbe8f7;text-decoration:none;padding:11px 14px;font-size:14.5px;white-space:nowrap;border-bottom:3px solid transparent}
+nav a.on{color:#fff;border-color:#5aaeff;font-weight:600}
+main{max-width:1000px;margin:auto;padding:22px 18px 50px}
+h2{font-size:24px;margin:0 0 4px}h3{font-size:17px;margin:22px 0 8px;color:var(--acc)}
+.sub{color:var(--mut);margin:0 0 18px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h4{margin:0 0 6px;font-size:16px}.card p{margin:0;color:var(--mut);font-size:14.5px}
+a.card{text-decoration:none;color:inherit;display:block}a.card:hover{border-color:var(--acc)}
+.ico{font-size:26px;margin-bottom:6px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--acc)}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mut);margin-right:6px}
+.pill.ok{color:var(--ok);border-color:var(--ok)}.pill.warn{color:var(--warn);border-color:var(--warn)}.pill.err{color:var(--err);border-color:var(--err)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}.bar input{flex:1;min-width:180px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 11px;max-width:100%}
+button{font:inherit;background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600}
+button.sec{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+.item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:block;text-decoration:none;color:inherit}
+.item:hover{border-color:var(--acc)}.item b{display:block;margin:3px 0}.item .m{color:var(--mut);font-size:13.5px}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:26px;text-align:center;color:var(--mut)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:14.5px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line)}
+th{font-size:12.5px;text-transform:uppercase;color:var(--mut);letter-spacing:.04em}
+form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+label{display:grid;gap:4px;font-size:13.5px;color:var(--mut)}.full{grid-column:1/-1}
+pre{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;font:13.5px/1.5 ui-monospace,Menlo,monospace;overflow-x:auto}
+.art{font-family:Georgia,"Times New Roman",serif;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
+.art p{margin:.6em 0}.art h5{font:700 15px system-ui,sans-serif;color:var(--acc);margin:18px 0 2px}
+footer{max-width:1000px;margin:auto;padding:0 18px 30px;color:var(--mut);font-size:13px}
+.org li{margin:4px 0}.view{display:none}.view.on{display:block}
+.back{display:inline-block;margin-bottom:12px;color:var(--acc);text-decoration:none;font-size:14px}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header><div class="top">
+<img id="logo" alt="Logo IRE">
+<div><h1>IRE – Istituto per la Resilienza Economica</h1><small>Estji Web System · Unione degli Stati Sociali degli Estji · Sede centrale: Taleen</small></div>
+</div>
+<nav><div class="in" id="nav"></div></nav></header>
+
+<main>
+<section class="view" id="v-home"></section><section class="view" id="v-istituto"></section>
+<section class="view" id="v-registro"></section><section class="view" id="v-iscrizione"></section>
+<section class="view" id="v-atti"></section><section class="view" id="v-servizi"></section>
+<section class="view" id="v-trasparenza"></section><section class="view" id="v-dettaglio"></section>
+</main>
+<footer>I documenti pubblicati nell’Estji Web System non hanno valore giuridico e sono ad uso interno della fazione.</footer>
+
+<script>
+/* =====================================================================
+   CONFIGURAZIONE – QUI MODIFICHI TUTTO
+   ===================================================================== */
+const CONFIG = {
+  /* ICONA: lascia "" per quella predefinita, oppure scrivi un link
+     (es. "https://ews-rose.vercel.app/IRE.png") o un codice data:image/... */
+  ICONA: "https://ews-rose.vercel.app/IRE.png",
+
+  /* ATTI: incolla qui i LINK degli atti. Il sito li legge da lì.
+     Formati accettati per ogni link:
+       - JSON di un singolo atto  (titolo, numero, data, tipo, stato, testo/articoli…)
+       - JSON "indice" con una lista di atti ( [...] oppure {"atti":[...]} )
+       - pagina HTML statica (prende titolo e testo)
+       - PDF (mostra solo scheda con link per aprirlo)
+     Puoi scrivere solo il link, oppure un oggetto per forzare/aggiungere dati:
+       "https://…/atto.json"
+       { url:"https://…/atto.json", tipo:"Delibera", titolo:"…", data:"2026-02-01" }  */
+  ATTI_LINKS: [
+    "https://ews-rose.vercel.app/lex/atto.html?id=testo-unico-sulla-gestione-industriale",
+    "https://ews-rose.vercel.app/lex/atto.html?id=legge-unitaria-sulla-gestione-delle-industrie"
+  ],
+
+  /* AVVISI in home: { data:"2026-02-01", testo:"…" } */
+  AVVISI: [],
+
+  /* REGISTRO IMPRESE (anagrafe, art. 16 c.3):
+     { nome:"", classe:"strategica"|"lavoratori", settore:"", stato:"", lavoratori:0,
+       comitato:"Costituito"|"Da costituire", esito:"Iscritta"|"In istruttoria"|"Respinta" }
+     Puoi anche mettere un link a un JSON con questa lista in REGISTRO_LINK. */
+  IMPRESE: [],
+  REGISTRO_LINK: ""
+};
+const TIPI_ATTO = ["Delibera","Rapporto trimestrale","Bilancio","Indirizzo strategico","Avviso","Comunicato","Normativa di riferimento","Altro"];
+/* ===================================================================== */
+
+const SEZIONI=[["home","Home"],["istituto","L’Istituto"],["registro","Registro imprese"],["iscrizione","Iscrizione"],["atti","Atti e pubblicazioni"],["servizi","Servizi"],["trasparenza","Trasparenza"]];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fd=d=>{if(!d)return"";const x=new Date(d);return isNaN(x)?String(d):x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"})};
+const classeLbl=c=>c==="strategica"?"Interesse strategico unitario":"Proprietà dei lavoratori";
+const pick=(o,ks)=>{for(const k of ks){if(o&&o[k]!=null&&o[k]!=="")return o[k]}return""};
+
+/* ---------- ICONA ---------- */
+const ICONA_DEFAULT="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 46"><rect width="46" height="46" rx="10" fill="#fff"/><path d="M8 36V20l15-9 15 9v16" fill="none" stroke="#0b3d6e" stroke-width="3" stroke-linejoin="round"/><path d="M14 36V24M23 36V24M32 36V24" stroke="#1d7fd6" stroke-width="3.5"/><path d="M6 37h34" stroke="#0b3d6e" stroke-width="3"/></svg>');
+function setIcona(){const src=CONFIG.ICONA||ICONA_DEFAULT;$("#logo").src=src;$("#fav").href=src;return src}
+setIcona();
+
+$("#nav").innerHTML=SEZIONI.map(([k,l])=>`<a href="#${k}" data-k="${k}">${l}</a>`).join("");
+
+/* ---------- LETTURA ATTI DA LINK ---------- */
+let ATTI=[];let attiState="loading";
+function normJSON(o,url,ov){
+  const art=pick(o,["articoli","articles","sezioni"]);
+  let testo=pick(o,["testo","text","contenuto","content","body"]);
+  const sommario=pick(o,["sommario","descrizione","description","summary","sottotitolo","subtitle"]);
+  return {url,
+    titolo:ov.titolo||pick(o,["titolo","title","nome","name"])||url.split("/").pop(),
+    numero:ov.numero||pick(o,["numero","number","num","id_atto"]),
+    data:ov.data||pick(o,["data","date","dataEmanazione","data_emanazione","emanazione"]),
+    tipo:ov.tipo||pick(o,["tipo","type","categoria","category"])||"Altro",
+    stato:ov.stato||pick(o,["stato","status"])||"Vigente",
+    promulgato:pick(o,["promulgatoDa","promulgato_da","emittente","autore","author"]),
+    sommario:ov.sommario||sommario,testo,articoli:Array.isArray(art)?art:null};
+}
+function normHTML(txt,url,ov){
+  const d=new DOMParser().parseFromString(txt,"text/html");
+  d.querySelectorAll("script,style,nav,header,footer").forEach(n=>n.remove());
+  const titolo=ov.titolo||(d.querySelector("h1")?.textContent||d.title||url).trim();
+  const par=[...d.querySelectorAll("h2,h3,h4,p,li")].map(n=>n.textContent.trim()).filter(Boolean);
+  return {url,titolo,numero:ov.numero||"",data:ov.data||"",tipo:ov.tipo||"Altro",stato:ov.stato||"Vigente",sommario:ov.sommario||par[0]||"",testo:par,articoli:null,vuoto:!par.length};
+}
+async function leggiLink(l){
+  const ov=typeof l==="string"?{}:l, url=typeof l==="string"?l:l.url;
+  const base={url,titolo:ov.titolo||url.split("/").pop(),numero:ov.numero||"",data:ov.data||"",tipo:ov.tipo||"Altro",stato:ov.stato||"Vigente",sommario:ov.sommario||"",testo:"",articoli:null};
+  if(/\.pdf(\?|$)/i.test(url)) return [{...base,pdf:true}];
+  try{
+    const r=await fetch(url);if(!r.ok)throw new Error("HTTP "+r.status);
+    const txt=await r.text();let j=null;try{j=JSON.parse(txt)}catch(e){}
+    if(j){const lista=Array.isArray(j)?j:(j.atti||j.acts||null);
+      if(lista)return lista.map(o=>normJSON(o,pick(o,["url","link"])||url,{}));
+      return [normJSON(j,url,ov)]}
+    const h=normHTML(txt,url,ov);
+    if(h.vuoto)h.errore="Pagina caricata via JavaScript: serve il link al file dati (JSON) dell’atto.";
+    return [h];
+  }catch(e){return [{...base,errore:"Impossibile leggere il link ("+e.message+"). Probabile blocco CORS o link errato."}]}
+}
+async function caricaAtti(){
+  const res=await Promise.all(CONFIG.ATTI_LINKS.map(leggiLink));
+  ATTI=res.flat().map((a,i)=>({...a,i}));
+  ATTI.sort((a,b)=>String(b.data).localeCompare(String(a.data)));
+  ATTI.forEach((a,i)=>a.i=i);
+  attiState="ok";renderAtti();renderUltimi();
+}
+
+/* ---------- HOME ---------- */
+$("#v-home").innerHTML=`<span class="tag">Ente pubblico economico</span>
+<h2>Istituto per la Resilienza Economica</h2>
+<p class="sub">Gestisce le partecipazioni unitarie e offre supporto tecnico-finanziario al sistema industriale dell’USSE, in coordinamento con il CTSU e il Consiglio Centrale di Pianificazione.</p>
+<div id="avvisi"></div>
+<div class="grid">
+<a class="card" href="#registro"><div class="ico">🗂️</div><h4>Registro imprese</h4><p>Anagrafe unitaria delle imprese e dei beni collettivi.</p></a>
+<a class="card" href="#iscrizione"><div class="ico">📝</div><h4>Iscrizione impresa</h4><p>Richiedi la registrazione di una nuova impresa.</p></a>
+<a class="card" href="#atti"><div class="ico">📑</div><h4>Atti e pubblicazioni</h4><p>Delibere, rapporti, bilanci, avvisi.</p></a>
+<a class="card" href="#servizi"><div class="ico">🤝</div><h4>Servizi alle imprese</h4><p>Consulenza, fondi, formazione, conciliazione.</p></a></div>
+<h3>Ultimi atti</h3><div id="ultimi"></div>`;
+$("#avvisi").innerHTML=CONFIG.AVVISI.map(a=>`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><span class="m">${fd(a.data)}</span><p style="color:var(--ink)">${esc(a.testo)}</p></div>`).join("");
+
+function attoRow(a){return `<a class="item" href="#atto-${a.i}"><span class="tag">${esc(a.tipo)}</span> ${a.numero?`<span class="pill">n. ${esc(a.numero)}</span>`:""}<span class="pill ${a.errore?"err":a.stato==="Vigente"?"ok":"warn"}">${esc(a.errore?"da verificare":a.stato)}</span><b>${esc(a.titolo)}</b><span class="m">${fd(a.data)}${a.data&&a.sommario?" — ":""}${esc(String(a.sommario).slice(0,200))}</span></a>`}
+function renderUltimi(){$("#ultimi").innerHTML=attiState==="loading"?`<div class="empty">Caricamento…</div>`:ATTI.slice(0,3).map(attoRow).join("")||`<div class="empty">Nessun atto pubblicato.</div>`}
+
+/* ---------- ISTITUTO ---------- */
+$("#v-istituto").innerHTML=`<h2>L’Istituto</h2><p class="sub">Istituito dalla Legge Unitaria sulla Gestione delle Industrie (9/2026), Titolo V.</p>
+<div class="art"><p><b>Natura (art. 14).</b> Ente pubblico economico con personalità giuridica e autonomia gestionale, sotto la vigilanza del Congresso Unitario e del Consiglio Centrale di Pianificazione. Subentra a Estji Industries (soppressa) per partecipazioni unitarie e servizi di supporto.</p>
+<p><b>Sede (art. 15).</b> Sede centrale a Taleen; uffici territoriali in ogni Stato Sociale, coordinati con le Sezioni Territoriali del CTSU.</p></div>
+<h3>Organi</h3><div class="grid">
+<div class="card"><h4>Consiglio di Indirizzo</h4><ul class="org"><li>3 rappr. del Congresso Unitario</li><li>2 rappr. del Consiglio Centrale di Pianificazione</li><li>2 rappr. del CTSU centrale</li><li>4 rappr. dei Congressi Statali (rotazione annuale)</li></ul></div>
+<div class="card"><h4>Direttore Generale</h4><p>Nominato per sorteggio da una rosa proposta da università e associazioni imprenditoriali pubbliche. Durata 2 anni, non rinnovabile.</p></div>
+<div class="card"><h4>Comitato Tecnico</h4><p>Esperti designati dalle Sezioni Territoriali del CTSU, con funzioni consultive obbligatorie.</p></div>
+<div class="card"><h4>Collegio dei Revisori</h4><p>Nominato dall’IVIdU; vigila su trasparenza e regolarità contabile.</p></div></div>
+<h3>Funzioni (art. 16)</h3><div class="grid">
+<div class="card"><h4>Industrie unitarie</h4><ul class="org"><li>Gestisce partecipazioni e quote per l’Unione</li><li>Vigila sulla conformità al piano</li><li>Propone indirizzi strategici di settore</li><li>Supporto a investimenti e ristrutturazioni</li></ul></div>
+<div class="card"><h4>Industrie dei lavoratori</h4><ul class="org"><li>Consulenza legale, amministrativa, finanziaria, tecnica</li><li>Fondi di rotazione e agevolazioni creditizie</li><li>Promozione di cooperative e reti</li><li>Formazione e innovazione</li><li>Vigilanza sulla conformità al piano</li></ul></div>
+<div class="card"><h4>Intero sistema</h4><ul class="org"><li>Anagrafe unitaria delle imprese e dei beni collettivi</li><li>Raccolta dati per CTSU e CCP</li><li>Studi e ricerche sui settori</li></ul></div></div>`;
+
+/* ---------- REGISTRO ---------- */
+let IMPRESE=[...CONFIG.IMPRESE];
+$("#v-registro").innerHTML=`<h2>Registro imprese</h2><p class="sub">Anagrafe unitaria delle imprese e dei beni collettivi (art. 16, c. 3).</p>
+<div class="bar"><input id="rq" type="search" placeholder="Cerca per nome, settore, Stato Sociale…"><select id="rc"><option value="">Tutte le classi</option><option value="strategica">Interesse strategico unitario</option><option value="lavoratori">Proprietà dei lavoratori</option></select></div><div id="rl"></div>`;
+function renderRegistro(){const q=$("#rq").value.toLowerCase(),c=$("#rc").value;
+ const r=IMPRESE.filter(i=>(!c||i.classe===c)&&(!q||[i.nome,i.settore,i.stato].join(" ").toLowerCase().includes(q)));
+ if(!r.length){$("#rl").innerHTML=`<div class="empty">${IMPRESE.length?"Nessun risultato.":"Il registro è ancora vuoto."}</div>`;return}
+ $("#rl").innerHTML=`<div class="tw"><table><tr><th>Impresa</th><th>Classe</th><th>Settore</th><th>Stato Sociale</th><th>Lavoratori</th><th>Comitato</th><th>Esito</th></tr>`+r.map(i=>`<tr><td><b>${esc(i.nome)}</b></td><td>${classeLbl(i.classe)}</td><td>${esc(i.settore)}</td><td>${esc(i.stato)}</td><td>${esc(i.lavoratori)}</td><td>${esc(i.comitato)}</td><td><span class="pill ${i.esito==="Iscritta"?"ok":"warn"}">${esc(i.esito)}</span></td></tr>`).join("")+`</table></div>`}
+$("#rq").oninput=renderRegistro;$("#rc").onchange=renderRegistro;renderRegistro();
+if(CONFIG.REGISTRO_LINK)fetch(CONFIG.REGISTRO_LINK).then(r=>r.json()).then(j=>{IMPRESE=IMPRESE.concat(Array.isArray(j)?j:(j.imprese||[]));renderRegistro()}).catch(()=>{$("#rl").innerHTML=`<div class="empty">Registro non leggibile dal link configurato.</div>`});
+
+/* ---------- ISCRIZIONE ---------- */
+$("#v-iscrizione").innerHTML=`<h2>Richiesta di iscrizione all’Anagrafe</h2><p class="sub">Compila il modulo: verrà generata la richiesta da inviare all’ufficio territoriale IRE del tuo Stato Sociale.</p>
+<form id="f"><label>Nome dell’impresa<input name="nome" required></label><label>Settore<input name="settore" required></label>
+<label>Stato Sociale<input name="stato" required></label><label>Numero di lavoratori<input name="lav" type="number" min="1" required></label>
+<label>Classe proprietaria<select name="classe"><option value="lavoratori">Proprietà collettiva dei lavoratori</option><option value="strategica">Interesse strategico unitario</option></select></label>
+<label>Comitato dei Lavoratori<select name="com"><option>Da costituire</option><option>Già costituito</option></select></label>
+<label>Referente (nick/ID Estji)<input name="ref" required></label><label class="full">Note<textarea name="note" rows="3"></textarea></label>
+<div class="full"><button type="submit">Genera richiesta</button></div></form><div id="out" style="margin-top:16px"></div>`;
+$("#f").onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));const n=+d.lav;
+ const m=n<10?"(sotto la soglia di 10 lavoratori dell’art. 5: verifica con l’ufficio IRE)":n<=20?3:n<=50?5:n<=100?7:"9 (fino a 11 per le grandi imprese strategiche)";
+ const t=`RICHIESTA DI ISCRIZIONE ALL’ANAGRAFE UNITARIA – IRE\nImpresa: ${d.nome}\nSettore: ${d.settore}\nStato Sociale: ${d.stato}\nClasse: ${classeLbl(d.classe)}\nLavoratori: ${d.lav}\nMembri del Comitato previsti (art. 5): ${m}\nComitato dei Lavoratori: ${d.com}\nReferente: ${d.ref}\nNote: ${d.note||"—"}\nData: ${new Date().toLocaleDateString("it-IT")}`;
+ $("#out").innerHTML=`<pre>${esc(t)}</pre><button class="sec" id="cp">Copia testo</button>`;
+ $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(t);$("#cp").textContent="Copiato"}catch(x){prompt("Copia:",t)}}};
+
+/* ---------- ATTI ---------- */
+$("#v-atti").innerHTML=`<h2>Atti e pubblicazioni</h2><p class="sub">Gli atti sono letti dai link inseriti in <code>CONFIG.ATTI_LINKS</code>.</p>
+<div class="bar"><input id="aq" type="search" placeholder="Cerca negli atti…"><select id="at"><option value="">Tutti i tipi</option>${TIPI_ATTO.map(t=>`<option>${t}</option>`).join("")}</select></div><div id="al"></div>`;
+function renderAtti(){
+ if(attiState==="loading"){$("#al").innerHTML=`<div class="empty">Caricamento degli atti…</div>`;return}
+ const q=$("#aq").value.toLowerCase(),t=$("#at").value;
+ const r=ATTI.filter(a=>(!t||a.tipo===t)&&(!q||[a.titolo,a.sommario,a.numero,a.tipo].join(" ").toLowerCase().includes(q)));
+ $("#al").innerHTML=r.map(attoRow).join("")||`<div class="empty">${CONFIG.ATTI_LINKS.length?"Nessun atto trovato.":"Nessun link inserito. Aggiungi i link in CONFIG.ATTI_LINKS."}</div>`}
+$("#aq").oninput=renderAtti;$("#at").onchange=renderAtti;
+
+function showAtto(i){const a=ATTI[i];
+ if(!a){$("#v-dettaglio").innerHTML=`<a class="back" href="#atti">← Tutti gli atti</a><div class="empty">${attiState==="loading"?"Caricamento…":"Atto non trovato."}</div>`;return}
+ let corpo="";
+ if(a.articoli)corpo=a.articoli.map(x=>{if(typeof x==="string")return`<p>${esc(x)}</p>`;
+   const tx=pick(x,["testo","text","contenuto","commi"]);const body=Array.isArray(tx)?tx.map(c=>`<p>${esc(typeof c==="string"?c:pick(c,["testo","text"]))}</p>`).join(""):`<p>${esc(tx)}</p>`;
+   return`<h5>${esc(pick(x,["numero","articolo","n"])?"Articolo "+pick(x,["numero","articolo","n"]):"")}${pick(x,["titolo","title","rubrica"])?" – "+esc(pick(x,["titolo","title","rubrica"])):""}</h5>${body}`}).join("");
+ else if(Array.isArray(a.testo))corpo=a.testo.map(p=>`<p>${esc(p)}</p>`).join("");
+ else if(a.testo)corpo=String(a.testo).split(/\n+/).map(p=>`<p>${esc(p)}</p>`).join("");
+ $("#v-dettaglio").innerHTML=`<a class="back" href="#atti">← Tutti gli atti</a><span class="tag">${esc(a.tipo)}</span> <span class="pill ${a.stato==="Vigente"?"ok":"warn"}">${esc(a.stato)}</span>
+ <h2>${esc(a.titolo)}</h2><p class="sub">${a.numero?`n. ${esc(a.numero)} · `:""}${fd(a.data)}${a.promulgato?" · "+esc(a.promulgato):""}</p>
+ ${a.errore?`<div class="card" style="border-left:4px solid var(--err);margin-bottom:12px"><p>${esc(a.errore)}</p></div>`:""}
+ ${a.pdf?`<div class="card"><p>Documento PDF. <a href="${esc(a.url)}" target="_blank" rel="noopener">Apri il PDF ↗</a></p></div>`:""}
+ ${corpo?`<div class="art">${corpo}</div>`:""}
+ <p class="sub" style="margin-top:12px">Fonte: <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.url)}</a></p>`}
+
+/* ---------- SERVIZI / TRASPARENZA ---------- */
+$("#v-servizi").innerHTML=`<h2>Servizi</h2><p class="sub">Supporto alle imprese (artt. 16 e 21).</p><div class="grid">
+<div class="card"><div class="ico">⚖️</div><h4>Consulenza</h4><p>Assistenza legale, amministrativa, finanziaria e tecnica.</p></div>
+<div class="card"><div class="ico">🔄</div><h4>Fondi di rotazione</h4><p>Agevolazioni creditizie per le industrie dei lavoratori.</p></div>
+<div class="card"><div class="ico">🏗️</div><h4>Cooperative e reti</h4><p>Promozione di cooperative e reti d’impresa.</p></div>
+<div class="card"><div class="ico">🎓</div><h4>Formazione</h4><p>Formazione professionale e innovazione.</p></div>
+<div class="card"><div class="ico">🤲</div><h4>Conciliazione</h4><p>Procedura obbligatoria per i conflitti collettivi di lavoro, con le organizzazioni sindacali (art. 21).</p></div>
+<div class="card"><div class="ico">📊</div><h4>Studi e dati</h4><p>Analisi e ricerche sui settori produttivi per CTSU e CCP.</p></div></div>`;
+$("#v-trasparenza").innerHTML=`<h2>Trasparenza e controlli</h2><p class="sub">Artt. 13, 17, 18 e 19 della Legge 9/2026.</p><div class="art">
+<p>L’IRE è soggetta alla vigilanza dell’<b>IVIdU</b> per prevenzione della corruzione, conflitti di interesse e trasparenza degli atti. Il Collegio dei Revisori è nominato dall’IVIdU.</p>
+<p>I <b>bilanci e i rapporti di attività</b> sono pubblici e discussi ogni anno dal Congresso Unitario: vedi <a href="#atti">Atti e pubblicazioni</a>.</p>
+<p>Per le industrie strategiche l’IRE redige <b>rapporti trimestrali</b> per il Consiglio Centrale di Pianificazione e il CTSU.</p></div>`;
+
+/* ---------- ROUTER ---------- */
+function route(){let h=(location.hash||"#home").slice(1),v=h;
+ if(h.startsWith("atto-")){showAtto(+h.slice(5));v="dettaglio"}
+ if(!$("#v-"+v))v="home";
+ document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));
+ document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("on",a.dataset.k===(v==="dettaglio"?"atti":v)));
+ scrollTo(0,0)}
+addEventListener("hashchange",route);
+renderAtti();renderUltimi();route();
+caricaAtti().then(route);
+</script>
+</body>
+</html>
