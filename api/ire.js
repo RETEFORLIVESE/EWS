@@ -1,0 +1,291 @@
+// api/ire.js — registro imprese dell'IRE (Istituto per la Resilienza Economica)
+// Salva tutto in IRE.json nella repo RETEFORLIVESE/DATA (stessi helper di atti.js).
+//
+//   GET                                   -> registro pubblico (solo campi pubblici, imprese non respinte).
+//                                            Con Authorization: Bearer <token redazione> restituisce tutto.
+//   POST { azione: "iscrivi", ... }       -> richiesta di iscrizione (pubblica). Risponde con un
+//                                            "codice di riferimento" mostrato UNA volta sola.
+//   POST { azione: "dichiarazione", id, codice, dichiarazione: {...} }
+//                                         -> dichiarazione patrimoniale (pubblica, ma protetta dal codice).
+//   POST { azione: "aggiorna", id, campi } / { azione: "elimina", id } /
+//        { azione: "verifica", id, anno, stato }
+//                                         -> gestione IRE (richiede Authorization: Bearer <token>).
+//
+// Forma di IRE.json:
+//   { "imprese": [ {
+//       id, nome, settore, classe, stato, statoCodice, lavoratori, comitato, referente, note,
+//       esito, dataRichiesta, dataIscrizione, codiceHash,
+//       dichiarazioni: [ { anno, data, liquidita, beni, crediti, debiti, attivo, passivo,
+//                          patrimonioNetto, descrizioneBeni, note, stato } ]
+//   } ] }
+//
+// ⚠️ È una funzione serverless in più: il piano gratuito di Vercel ne consente 12.
+
+import crypto from 'node:crypto';
+import { leggiFileJson, scriviFileJson } from './_github.js';
+import { sessioneDaRichiesta } from './_sessione.js';
+
+const FILE = 'IRE.json';
+const AMBITO_REDAZIONE = 'normaktiv';   // stesso login (password o Estji ID) della redazione NormAktiv
+const MAX_IN_ISTRUTTORIA = 300;         // freno anti-spam sulle richieste pubbliche in attesa
+const CLASSI = ['strategica', 'lavoratori'];
+const ESITI = ['In istruttoria', 'Iscritta', 'Respinta'];
+
+class ErroreHttp extends Error {
+    constructor(status, message) { super(message); this.status = status; }
+}
+
+// ---------------------------------------------------------------- utilità
+
+const dormi = ms => new Promise(r => setTimeout(r, ms));
+
+function testo(v, max, obbligatorio, etichetta) {
+    const s = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+    if (obbligatorio && !s) throw new ErroreHttp(400, `Campo obbligatorio mancante: ${etichetta}.`);
+    if (s.length > max) throw new ErroreHttp(400, `${etichetta} troppo lungo (massimo ${max} caratteri).`);
+    return s;
+}
+
+function testoLungo(v, max, etichetta) {   // mantiene gli a capo
+    const s = String(v == null ? '' : v).replace(/\r/g, '').trim();
+    if (s.length > max) throw new ErroreHttp(400, `${etichetta} troppo lungo (massimo ${max} caratteri).`);
+    return s;
+}
+
+function numero(v, etichetta) {
+    const n = Number(String(v == null || v === '' ? 0 : v).replace(',', '.'));
+    if (!Number.isFinite(n) || n < 0 || n > 1e15) {
+        throw new ErroreHttp(400, `${etichetta}: inserisci un numero valido, non negativo.`);
+    }
+    return Math.round(n * 100) / 100;
+}
+
+function hashCodice(codice) {
+    return crypto.createHash('sha256').update(String(codice).trim().toUpperCase()).digest('hex');
+}
+
+function codiceUguale(codice, hashSalvato) {
+    if (!codice || !hashSalvato) return false;
+    const a = Buffer.from(hashCodice(codice), 'hex');
+    const b = Buffer.from(String(hashSalvato), 'hex');
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function nuovoCodice() {
+    const h = crypto.randomBytes(6).toString('hex').toUpperCase();   // 12 caratteri
+    return `IRE-${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}`;
+}
+
+function estraiImprese(reg) {
+    if (Array.isArray(reg)) return reg;
+    if (reg && Array.isArray(reg.imprese)) return reg.imprese;
+    return [];
+}
+
+// Lettura-modifica-scrittura con qualche tentativo, per gestire due salvataggi ravvicinati
+// (GitHub rifiuta la scrittura se il file è cambiato nel frattempo).
+async function modifica(fn, messaggio) {
+    let ultimoErrore;
+    for (let tentativo = 0; tentativo < 3; tentativo++) {
+        const imprese = estraiImprese(await leggiFileJson(FILE, { imprese: [] }));
+        const risultato = fn(imprese);          // può lanciare ErroreHttp: in quel caso non si riprova
+        try {
+            await scriviFileJson(FILE, { imprese }, messaggio);
+            return risultato;
+        } catch (e) {
+            ultimoErrore = e;
+            await dormi(350 * (tentativo + 1));
+        }
+    }
+    throw ultimoErrore;
+}
+
+// Cerca il codice dello Stato Sociale in organi.json (luoghi → categoria → codice → nome).
+async function risolviStato(codice) {
+    const organi = await leggiFileJson('organi.json', {});
+    const luoghi = (organi && organi.luoghi) || {};
+    for (const categoria of Object.values(luoghi)) {
+        if (!categoria || typeof categoria !== 'object') continue;
+        if (Object.prototype.hasOwnProperty.call(categoria, codice)) {
+            const voce = categoria[codice];
+            return typeof voce === 'string' ? voce : (voce && voce.nome) || codice;
+        }
+    }
+    return null;
+}
+
+function vistaPubblica(i) {
+    const ultima = (i.dichiarazioni || []).reduce((m, d) => Math.max(m, d.anno || 0), 0);
+    return {
+        id: i.id, nome: i.nome, classe: i.classe, settore: i.settore, stato: i.stato,
+        lavoratori: i.lavoratori, comitato: i.comitato, esito: i.esito,
+        dichiarazioneAnno: ultima || null
+    };
+}
+
+function vistaRedazione(i) {
+    const { codiceHash, ...resto } = i;
+    return resto;
+}
+
+// ---------------------------------------------------------------- azioni
+
+async function gestisciGet(req, res) {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+        const imprese = estraiImprese(await leggiFileJson(FILE, { imprese: [] }));
+        const staff = sessioneDaRichiesta(req, AMBITO_REDAZIONE);
+        if (staff) return res.status(200).json({ imprese: imprese.map(vistaRedazione) });
+        return res.status(200).json({
+            imprese: imprese.filter(i => i.esito !== 'Respinta').map(vistaPubblica)
+        });
+    } catch (e) {
+        return res.status(500).json({ message: 'Errore lettura: ' + e.message });
+    }
+}
+
+async function gestisciIscrivi(corpo, res) {
+    if (corpo.sito) return res.status(200).json({ success: true });   // campo-trappola per i bot
+
+    const nome = testo(corpo.nome, 120, true, 'Nome dell’impresa');
+    const settore = testo(corpo.settore, 80, true, 'Settore');
+    const lavoratori = Math.floor(Number(corpo.lavoratori));
+    if (!Number.isFinite(lavoratori) || lavoratori < 1 || lavoratori > 1e7) {
+        throw new ErroreHttp(400, 'Numero di lavoratori non valido.');
+    }
+    const classe = CLASSI.includes(corpo.classe) ? corpo.classe : null;
+    if (!classe) throw new ErroreHttp(400, 'Classe proprietaria non valida.');
+    const comitato = /^(già costituito|costituito)$/i.test(String(corpo.comitato).trim())
+        ? 'Costituito' : 'Da costituire';
+    const referente = testo(corpo.referente, 80, true, 'Referente');
+    const note = testoLungo(corpo.note, 1000, 'Note');
+
+    const codiceStato = testo(corpo.stato, 80, true, 'Stato Sociale');
+    const nomeStato = await risolviStato(codiceStato);
+    if (!nomeStato) throw new ErroreHttp(400, 'Stato Sociale non riconosciuto.');
+
+    const codice = nuovoCodice();
+    const id = 'imp-' + crypto.randomBytes(4).toString('hex');
+
+    await modifica(imprese => {
+        if (imprese.filter(i => i.esito === 'In istruttoria').length >= MAX_IN_ISTRUTTORIA) {
+            throw new ErroreHttp(429, 'Troppe richieste in attesa: riprova più tardi.');
+        }
+        const gia = imprese.some(i => i.esito !== 'Respinta' && String(i.nome).toLowerCase() === nome.toLowerCase());
+        if (gia) throw new ErroreHttp(409, 'Esiste già un’impresa con questo nome nel registro o in istruttoria.');
+        imprese.push({
+            id, nome, settore, classe, stato: nomeStato, statoCodice: codiceStato, lavoratori, comitato,
+            referente, note, esito: 'In istruttoria',
+            dataRichiesta: new Date().toISOString(), dataIscrizione: null,
+            codiceHash: hashCodice(codice), dichiarazioni: []
+        });
+    }, `Richiesta di iscrizione IRE: ${nome}`);
+
+    return res.status(200).json({ success: true, id, codice, stato: nomeStato });
+}
+
+async function gestisciDichiarazione(corpo, res) {
+    const d = corpo.dichiarazione || {};
+    const anno = Math.floor(Number(d.anno));
+    if (!Number.isFinite(anno) || anno < 1900 || anno > 2200) throw new ErroreHttp(400, 'Anno di riferimento non valido.');
+
+    const liquidita = numero(d.liquidita, 'Liquidità');
+    const beni = numero(d.beni, 'Valore dei beni');
+    const crediti = numero(d.crediti, 'Crediti');
+    const debiti = numero(d.debiti, 'Debiti');
+    const attivo = Math.round((liquidita + beni + crediti) * 100) / 100;
+    const patrimonioNetto = Math.round((attivo - debiti) * 100) / 100;
+    const descrizioneBeni = testoLungo(d.descrizioneBeni, 2000, 'Descrizione dei beni');
+    const note = testoLungo(d.note, 1000, 'Note');
+
+    let nome = '';
+    await modifica(imprese => {
+        const imp = imprese.find(i => i.id === corpo.id);
+        // Stesso messaggio per "impresa inesistente" e "codice errato": non rivela quali id esistono.
+        if (!imp || !codiceUguale(corpo.codice, imp.codiceHash)) {
+            throw new ErroreHttp(403, 'Impresa o codice di riferimento non validi.');
+        }
+        if (imp.esito === 'Respinta') throw new ErroreHttp(403, 'La richiesta di iscrizione di questa impresa è stata respinta.');
+        nome = imp.nome;
+        if (!Array.isArray(imp.dichiarazioni)) imp.dichiarazioni = [];
+        const nuova = {
+            anno, data: new Date().toISOString(), liquidita, beni, crediti, debiti,
+            attivo, passivo: debiti, patrimonioNetto, descrizioneBeni, note, stato: 'Da verificare'
+        };
+        const k = imp.dichiarazioni.findIndex(x => x.anno === anno);
+        if (k >= 0) imp.dichiarazioni[k] = nuova; else imp.dichiarazioni.push(nuova);   // una per anno: la nuova sostituisce
+        imp.dichiarazioni.sort((a, b) => b.anno - a.anno);
+    }, `Dichiarazione patrimoniale ${anno}: ${corpo.id}`);
+
+    return res.status(200).json({ success: true, nome, anno, attivo, passivo: debiti, patrimonioNetto });
+}
+
+async function gestisciRedazione(req, corpo, res) {
+    const sessione = sessioneDaRichiesta(req, AMBITO_REDAZIONE);
+    if (!sessione) return res.status(401).json({ message: 'Sessione scaduta o non autorizzata: effettua il login della redazione.' });
+
+    await modifica(imprese => {
+        const k = imprese.findIndex(i => i.id === corpo.id);
+        if (k < 0) throw new ErroreHttp(404, 'Impresa non trovata.');
+        const imp = imprese[k];
+
+        if (corpo.azione === 'elimina') {
+            imprese.splice(k, 1);
+        } else if (corpo.azione === 'verifica') {
+            const dich = (imp.dichiarazioni || []).find(x => x.anno === Number(corpo.anno));
+            if (!dich) throw new ErroreHttp(404, 'Dichiarazione non trovata.');
+            if (!['Da verificare', 'Verificata', 'Respinta'].includes(corpo.stato)) throw new ErroreHttp(400, 'Stato non valido.');
+            dich.stato = corpo.stato;
+        } else {   // aggiorna
+            const c = corpo.campi || {};
+            if (c.esito !== undefined) {
+                if (!ESITI.includes(c.esito)) throw new ErroreHttp(400, 'Esito non valido.');
+                if (c.esito === 'Iscritta' && imp.esito !== 'Iscritta') imp.dataIscrizione = new Date().toISOString();
+                imp.esito = c.esito;
+            }
+            if (c.comitato !== undefined) imp.comitato = c.comitato === 'Costituito' ? 'Costituito' : 'Da costituire';
+            if (c.classe !== undefined) {
+                if (!CLASSI.includes(c.classe)) throw new ErroreHttp(400, 'Classe non valida.');
+                imp.classe = c.classe;
+            }
+            if (c.nome !== undefined) imp.nome = testo(c.nome, 120, true, 'Nome');
+            if (c.settore !== undefined) imp.settore = testo(c.settore, 80, true, 'Settore');
+            if (c.lavoratori !== undefined) imp.lavoratori = Math.max(1, Math.floor(Number(c.lavoratori)) || imp.lavoratori);
+            if (c.note !== undefined) imp.note = testoLungo(c.note, 1000, 'Note');
+        }
+    }, `IRE (${sessione.username}): ${corpo.azione} ${corpo.id}`);
+
+    return res.status(200).json({ success: true });
+}
+
+// ---------------------------------------------------------------- handler
+
+export default async function handler(req, res) {
+    try {
+        if (req.method === 'GET') return await gestisciGet(req, res);
+
+        if (req.method === 'POST') {
+            let corpo = req.body;
+            if (typeof corpo === 'string') {
+                try { corpo = JSON.parse(corpo); } catch (e) { corpo = {}; }
+            }
+            corpo = corpo || {};
+            res.setHeader('Cache-Control', 'no-store');
+            switch (corpo.azione) {
+                case 'iscrivi': return await gestisciIscrivi(corpo, res);
+                case 'dichiarazione': return await gestisciDichiarazione(corpo, res);
+                case 'aggiorna':
+                case 'elimina':
+                case 'verifica': return await gestisciRedazione(req, corpo, res);
+                default:
+                    return res.status(400).json({ message: 'Azione non riconosciuta.' });
+            }
+        }
+
+        res.setHeader('Allow', 'GET, POST');
+        return res.status(405).json({ message: 'Metodo non consentito' });
+    } catch (e) {
+        if (e instanceof ErroreHttp) return res.status(e.status).json({ success: false, message: e.message });
+        return res.status(500).json({ success: false, message: 'Errore del server: ' + e.message });
+    }
+}

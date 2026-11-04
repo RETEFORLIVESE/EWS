@@ -33,7 +33,8 @@ function estraiAtti(registro) {
 // altri file letti pubblicamente dal sito (es. organi.json).
 const RISORSE_PUBBLICHE = {
     atti: 'atti.json',
-    organi: 'organi.json'
+    organi: 'organi.json',
+    imprese: 'imprese.json'   // registro imprese letto da IRE.html
 };
 
 async function gestisciGet(req, res) {
@@ -49,7 +50,7 @@ async function gestisciGet(req, res) {
             return res.status(200).json({ atti: estraiAtti(registro) });
         }
         // Le altre risorse (es. organi.json) vengono restituite così come sono.
-        const dati = await leggiFileJson(file, {});
+        const dati = await leggiFileJson(file, chiave === 'imprese' ? { imprese: [] } : {});
         return res.status(200).json(dati);
     } catch (error) {
         return res.status(500).json({ message: 'Errore lettura: ' + error.message });

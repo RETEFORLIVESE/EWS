@@ -61,12 +61,13 @@ a{color:var(--acc)}
 
 <main>
 <section class="view" id="v-home"></section><section class="view" id="v-istituto"></section>
-<section class="view" id="v-registro"></section><section class="view" id="v-iscrizione"></section>
+<section class="view" id="v-registro"></section><section class="view" id="v-iscrizione"></section><section class="view" id="v-patrimoniale"></section>
 <section class="view" id="v-atti"></section><section class="view" id="v-servizi"></section>
 <section class="view" id="v-trasparenza"></section><section class="view" id="v-dettaglio"></section>
 </main>
 <footer>I documenti pubblicati nell’Estji Web System non hanno valore giuridico e sono ad uso interno della fazione.</footer>
 
+<script src="lex/assets/js/api-organi.js"></script>
 <script>
 /* =====================================================================
    CONFIGURAZIONE – QUI MODIFICHI TUTTO
@@ -85,9 +86,18 @@ const CONFIG = {
      Puoi scrivere solo il link, oppure un oggetto per forzare/aggiungere dati:
        "https://…/atto.json"
        { url:"https://…/atto.json", tipo:"Delibera", titolo:"…", data:"2026-02-01" }  */
+  /* ATTI DAL DATABASE DI NORMAKTIV: gli atti vengono letti direttamente da
+     ATTI_API (lo stesso endpoint /api/atti usato da NormAktiv, che legge atti.json).
+     ATTI_IDS = id degli atti di NormAktiv da mostrare qui; lascia [] per mostrarli tutti.
+     LEX_URL = pagina di NormAktiv a cui rimanda la "Fonte" di ogni atto.
+     Se IRE.html NON sta sullo stesso dominio dell'API, scrivi l'URL completo
+     (es. "https://ews-rose.vercel.app/api/atti"). */
+  ATTI_API: "/api/atti",
+  ATTI_IDS: ["testo-unico-sulla-gestione-industriale","legge-unitaria-sulla-gestione-delle-industrie"],
+  LEX_URL: "https://ews-rose.vercel.app/lex/atto.html?id=",
+
+  /* Link aggiuntivi (facoltativi): restano supportati come prima. */
   ATTI_LINKS: [
-    "https://ews-rose.vercel.app/lex/atto.html?id=testo-unico-sulla-gestione-industriale",
-    "https://ews-rose.vercel.app/lex/atto.html?id=legge-unitaria-sulla-gestione-delle-industrie"
   ],
 
   /* AVVISI in home: { data:"2026-02-01", testo:"…" } */
@@ -98,12 +108,21 @@ const CONFIG = {
        comitato:"Costituito"|"Da costituire", esito:"Iscritta"|"In istruttoria"|"Respinta" }
      Puoi anche mettere un link a un JSON con questa lista in REGISTRO_LINK. */
   IMPRESE: [],
-  REGISTRO_LINK: ""
+  REGISTRO_LINK: "",
+  /* Registro imprese dal database IRE.json (via /api/ire). Lascia "" per disattivare. */
+  REGISTRO_API: "/api/ire",
+
+  /* IRE_API: endpoint che salva iscrizioni e dichiarazioni patrimoniali in IRE.json (repo DATA).
+     CATEGORIA_STATI: nome della categoria di organi.json (dentro "luoghi") che contiene gli
+     Stati Sociali. Lascia "" per riconoscerla da sola (prima categoria con "stat" nel nome;
+     se non c'è, l'elenco mostra tutte le categorie raggruppate). */
+  IRE_API: "/api/ire",
+  CATEGORIA_STATI: ""
 };
 const TIPI_ATTO = ["Delibera","Rapporto trimestrale","Bilancio","Indirizzo strategico","Avviso","Comunicato","Normativa di riferimento","Altro"];
 /* ===================================================================== */
 
-const SEZIONI=[["home","Home"],["istituto","L’Istituto"],["registro","Registro imprese"],["iscrizione","Iscrizione"],["atti","Atti e pubblicazioni"],["servizi","Servizi"],["trasparenza","Trasparenza"]];
+const SEZIONI=[["home","Home"],["istituto","L’Istituto"],["registro","Registro imprese"],["iscrizione","Iscrizione"],["patrimoniale","Dichiarazione patrimoniale"],["atti","Atti e pubblicazioni"],["servizi","Servizi"],["trasparenza","Trasparenza"]];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fd=d=>{if(!d)return"";const x=new Date(d);return isNaN(x)?String(d):x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"})};
@@ -154,12 +173,40 @@ async function leggiLink(l){
     return [h];
   }catch(e){return [{...base,errore:"Impossibile leggere il link ("+e.message+"). Probabile blocco CORS o link errato."}]}
 }
+/* atto di NormAktiv (atti.json) -> formato usato da IRE */
+function normDB(a){
+  const cap=t=>t?String(t).charAt(0).toUpperCase()+String(t).slice(1):"";
+  const arts=Array.isArray(a.articoli)?a.articoli.map(x=>x&&x.numero?x:{titolo:(x&&(x.testo||x.rubrica))||"",testo:""}):null;
+  return {url:CONFIG.LEX_URL+encodeURIComponent(a.id),
+    titolo:a.titolo||a.id,numero:a.numero?(a.anno?a.numero+"/"+a.anno:a.numero):"",
+    data:a.dataEmanazione||"",tipo:cap(a.categoria)||"Altro",stato:cap(a.stato)||"Vigente",
+    promulgato:a.promulgatoDa||"",sommario:a.sommario||"",testo:"",articoli:arts};
+}
+async function leggiDB(){
+  if(!CONFIG.ATTI_API)return [];
+  try{
+    const r=await fetch(CONFIG.ATTI_API,{cache:"no-store"});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.message||"HTTP "+r.status);
+    let lista=Array.isArray(j.atti)?j.atti:[];
+    if(CONFIG.ATTI_IDS.length)lista=lista.filter(a=>CONFIG.ATTI_IDS.includes(a.id));
+    return lista.map(normDB);
+  }catch(e){
+    return [{url:CONFIG.ATTI_API,titolo:"Database NormAktiv",tipo:"Altro",stato:"Vigente",data:"",numero:"",sommario:"",testo:"",articoli:null,
+      errore:"Impossibile leggere gli atti dal database di NormAktiv ("+e.message+")."}];
+  }
+}
 async function caricaAtti(){
-  const res=await Promise.all(CONFIG.ATTI_LINKS.map(leggiLink));
+  const [db,...res]=await Promise.all([leggiDB(),...CONFIG.ATTI_LINKS.map(leggiLink)]);
+  res.unshift(db);
   ATTI=res.flat().map((a,i)=>({...a,i}));
   ATTI.sort((a,b)=>String(b.data).localeCompare(String(a.data)));
   ATTI.forEach((a,i)=>a.i=i);
-  attiState="ok";renderAtti();renderUltimi();
+  attiState="ok";
+  /* il filtro per tipo include anche le categorie presenti nel database */
+  const tipi=[...new Set([...TIPI_ATTO,...ATTI.map(a=>a.tipo)])];
+  $("#at").innerHTML=`<option value="">Tutti i tipi</option>`+tipi.map(t=>`<option>${esc(t)}</option>`).join("");
+  renderAtti();renderUltimi();
 }
 
 /* ---------- HOME ---------- */
@@ -199,32 +246,106 @@ $("#v-registro").innerHTML=`<h2>Registro imprese</h2><p class="sub">Anagrafe uni
 function renderRegistro(){const q=$("#rq").value.toLowerCase(),c=$("#rc").value;
  const r=IMPRESE.filter(i=>(!c||i.classe===c)&&(!q||[i.nome,i.settore,i.stato].join(" ").toLowerCase().includes(q)));
  if(!r.length){$("#rl").innerHTML=`<div class="empty">${IMPRESE.length?"Nessun risultato.":"Il registro è ancora vuoto."}</div>`;return}
- $("#rl").innerHTML=`<div class="tw"><table><tr><th>Impresa</th><th>Classe</th><th>Settore</th><th>Stato Sociale</th><th>Lavoratori</th><th>Comitato</th><th>Esito</th></tr>`+r.map(i=>`<tr><td><b>${esc(i.nome)}</b></td><td>${classeLbl(i.classe)}</td><td>${esc(i.settore)}</td><td>${esc(i.stato)}</td><td>${esc(i.lavoratori)}</td><td>${esc(i.comitato)}</td><td><span class="pill ${i.esito==="Iscritta"?"ok":"warn"}">${esc(i.esito)}</span></td></tr>`).join("")+`</table></div>`}
+ $("#rl").innerHTML=`<div class="tw"><table><tr><th>Impresa</th><th>Classe</th><th>Settore</th><th>Stato Sociale</th><th>Lavoratori</th><th>Comitato</th><th>Dich. patrimoniale</th><th>Esito</th></tr>`+r.map(i=>`<tr><td><b>${esc(i.nome)}</b></td><td>${classeLbl(i.classe)}</td><td>${esc(i.settore)}</td><td>${esc(i.stato)}</td><td>${esc(i.lavoratori)}</td><td>${esc(i.comitato)}</td><td>${i.dichiarazioneAnno?"Anno "+esc(i.dichiarazioneAnno):"—"}</td><td><span class="pill ${i.esito==="Iscritta"?"ok":"warn"}">${esc(i.esito)}</span></td></tr>`).join("")+`</table></div>`}
 $("#rq").oninput=renderRegistro;$("#rc").onchange=renderRegistro;renderRegistro();
+const IMPRESE_BASE=[...CONFIG.IMPRESE];
+function caricaRegistro(){
+ if(!CONFIG.REGISTRO_API)return Promise.resolve();
+ return fetch(CONFIG.REGISTRO_API,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(j=>{
+  IMPRESE=IMPRESE_BASE.concat(Array.isArray(j)?j:(j.imprese||[]));renderRegistro();riempiImprese()}).catch(()=>{});
+}
 if(CONFIG.REGISTRO_LINK)fetch(CONFIG.REGISTRO_LINK).then(r=>r.json()).then(j=>{IMPRESE=IMPRESE.concat(Array.isArray(j)?j:(j.imprese||[]));renderRegistro()}).catch(()=>{$("#rl").innerHTML=`<div class="empty">Registro non leggibile dal link configurato.</div>`});
 
 /* ---------- ISCRIZIONE ---------- */
-$("#v-iscrizione").innerHTML=`<h2>Richiesta di iscrizione all’Anagrafe</h2><p class="sub">Compila il modulo: verrà generata la richiesta da inviare all’ufficio territoriale IRE del tuo Stato Sociale.</p>
+$("#v-iscrizione").innerHTML=`<h2>Richiesta di iscrizione all’Anagrafe</h2><p class="sub">Compila il modulo: la richiesta viene registrata dall’IRE e resta “In istruttoria” fino alla valutazione. Riceverai un codice di riferimento da conservare.</p>
 <form id="f"><label>Nome dell’impresa<input name="nome" required></label><label>Settore<input name="settore" required></label>
-<label>Stato Sociale<input name="stato" required></label><label>Numero di lavoratori<input name="lav" type="number" min="1" required></label>
+<label>Stato Sociale<select name="stato" id="selStato" required><option value="">Caricamento…</option></select></label><label>Numero di lavoratori<input name="lav" type="number" min="1" required></label>
 <label>Classe proprietaria<select name="classe"><option value="lavoratori">Proprietà collettiva dei lavoratori</option><option value="strategica">Interesse strategico unitario</option></select></label>
 <label>Comitato dei Lavoratori<select name="com"><option>Da costituire</option><option>Già costituito</option></select></label>
 <label>Referente (nick/ID Estji)<input name="ref" required></label><label class="full">Note<textarea name="note" rows="3"></textarea></label>
-<div class="full"><button type="submit">Genera richiesta</button></div></form><div id="out" style="margin-top:16px"></div>`;
-$("#f").onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));const n=+d.lav;
+<input name="sito" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+<div class="full"><button type="submit">Invia richiesta</button></div></form><div id="out" style="margin-top:16px"></div>`;
+/* Stati Sociali letti da organi.json tramite ApiOrgani (lex/assets/js/api-organi.js) */
+async function caricaStati(){
+ const sel=$("#selStato");
+ try{
+  const dati=await ApiOrgani.loadDati();
+  const nome=v=>typeof v==="string"?v:(v&&v.nome)||"";
+  const cat=dati.luoghi||{};
+  let chiavi=CONFIG.CATEGORIA_STATI?[CONFIG.CATEGORIA_STATI]:Object.keys(cat).filter(k=>/stat/i.test(k)).slice(0,1);
+  const raggruppa=!chiavi.length;
+  if(raggruppa)chiavi=Object.keys(cat);
+  const gruppi=chiavi.map(k=>({k,voci:Object.entries(cat[k]||{}).filter(([,v])=>nome(v)).map(([c,v])=>[c,nome(v)]).sort((x,y)=>x[1].localeCompare(y[1],"it"))})).filter(g=>g.voci.length);
+  if(!gruppi.length)throw new Error("nessuno Stato Sociale");
+  const opts=g=>g.voci.map(([c,n])=>`<option value="${esc(c)}">${esc(n)}</option>`).join("");
+  sel.innerHTML=`<option value="">— Seleziona —</option>`+gruppi.map(g=>raggruppa?`<optgroup label="${esc(g.k)}">${opts(g)}</optgroup>`:opts(g)).join("");
+ }catch(e){
+  /* se l'elenco non è disponibile si può comunque scrivere a mano; il server segnalerà un nome non riconosciuto */
+  sel.outerHTML=`<input name="stato" id="selStato" required placeholder="Elenco non disponibile: scrivi il codice">`;
+ }
+}
+caricaStati();
+
+$("#f").onsubmit=async e=>{e.preventDefault();
+ const form=e.target,d=Object.fromEntries(new FormData(form)),n=+d.lav,btn=form.querySelector("button");
+ const sel=$("#selStato"),statoNome=sel.tagName==="SELECT"?(sel.selectedOptions[0]?.textContent||d.stato):d.stato;
  const m=n<10?"(sotto la soglia di 10 lavoratori dell’art. 5: verifica con l’ufficio IRE)":n<=20?3:n<=50?5:n<=100?7:"9 (fino a 11 per le grandi imprese strategiche)";
- const t=`RICHIESTA DI ISCRIZIONE ALL’ANAGRAFE UNITARIA – IRE\nImpresa: ${d.nome}\nSettore: ${d.settore}\nStato Sociale: ${d.stato}\nClasse: ${classeLbl(d.classe)}\nLavoratori: ${d.lav}\nMembri del Comitato previsti (art. 5): ${m}\nComitato dei Lavoratori: ${d.com}\nReferente: ${d.ref}\nNote: ${d.note||"—"}\nData: ${new Date().toLocaleDateString("it-IT")}`;
- $("#out").innerHTML=`<pre>${esc(t)}</pre><button class="sec" id="cp">Copia testo</button>`;
- $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(t);$("#cp").textContent="Copiato"}catch(x){prompt("Copia:",t)}}};
+ btn.disabled=true;btn.textContent="Invio in corso…";$("#out").innerHTML="";
+ try{
+  const r=await fetch(CONFIG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"iscrivi",nome:d.nome,settore:d.settore,stato:d.stato,lavoratori:d.lav,classe:d.classe,comitato:d.com,referente:d.ref,note:d.note,sito:d.sito})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.success)throw new Error(j.message||"HTTP "+r.status);
+  const t=`RICHIESTA DI ISCRIZIONE ALL’ANAGRAFE UNITARIA – IRE\nImpresa: ${d.nome}\nSettore: ${d.settore}\nStato Sociale: ${j.stato||statoNome}\nClasse: ${classeLbl(d.classe)}\nLavoratori: ${d.lav}\nMembri del Comitato previsti (art. 5): ${m}\nComitato dei Lavoratori: ${d.com}\nReferente: ${d.ref}\nNote: ${d.note||"—"}\nData: ${new Date().toLocaleDateString("it-IT")}\nCodice di riferimento: ${j.codice}`;
+  $("#out").innerHTML=`<div class="card" style="border-left:4px solid var(--ok);margin-bottom:12px"><h4>Richiesta registrata</h4><p>L’impresa è ora <b>In istruttoria</b>. Conserva questo codice: serve per la dichiarazione patrimoniale e <b>non verrà mostrato di nuovo</b>.</p><p style="margin-top:8px;font:700 20px ui-monospace,Menlo,monospace;color:var(--ink);user-select:all">${esc(j.codice)}</p></div><pre>${esc(t)}</pre><button class="sec" id="cp">Copia testo</button>`;
+  $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(t);$("#cp").textContent="Copiato"}catch(x){prompt("Copia:",t)}};
+  form.reset();caricaRegistro();
+ }catch(err){
+  $("#out").innerHTML=`<div class="card" style="border-left:4px solid var(--err)"><p>${esc(err.message)}</p></div>`;
+ }finally{btn.disabled=false;btn.textContent="Invia richiesta"}
+};
+
+/* ---------- DICHIARAZIONE PATRIMONIALE ---------- */
+$("#v-patrimoniale").innerHTML=`<h2>Dichiarazione patrimoniale</h2><p class="sub">Le imprese iscritte (o in istruttoria) dichiarano ogni anno la propria situazione patrimoniale. Serve il <b>codice di riferimento</b> ricevuto all’iscrizione. Una nuova dichiarazione per lo stesso anno sostituisce la precedente.</p>
+<form id="fp"><label>Impresa<select name="id" id="pi" required><option value="">Caricamento…</option></select></label>
+<label>Codice di riferimento<input name="codice" required placeholder="IRE-XXXX-XXXX-XXXX" autocomplete="off"></label>
+<label>Anno di riferimento<input name="anno" type="number" min="1900" max="2200" required value="${new Date().getFullYear()}"></label>
+<label>Liquidità<input name="liquidita" type="number" min="0" step="0.01" value="0"></label>
+<label>Valore dei beni (immobili, macchinari, scorte)<input name="beni" type="number" min="0" step="0.01" value="0"></label>
+<label>Crediti<input name="crediti" type="number" min="0" step="0.01" value="0"></label>
+<label>Debiti<input name="debiti" type="number" min="0" step="0.01" value="0"></label>
+<label class="full">Descrizione dei beni collettivi<textarea name="descrizioneBeni" rows="3" maxlength="2000"></textarea></label>
+<label class="full">Note<textarea name="note" rows="2" maxlength="1000"></textarea></label>
+<div class="full card" id="riep"></div>
+<div class="full"><button type="submit">Invia dichiarazione</button></div></form><div id="outp" style="margin-top:16px"></div>`;
+const eur=n=>Number(n||0).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2});
+function riepilogo(){const f=$("#fp"),v=k=>+f.elements[k].value||0,att=v("liquidita")+v("beni")+v("crediti"),net=att-v("debiti");
+ $("#riep").innerHTML=`<p>Totale attivo: <b>${eur(att)}</b> · Passivo (debiti): <b>${eur(v("debiti"))}</b> · Patrimonio netto: <b style="color:${net<0?"var(--err)":"var(--ok)"}">${eur(net)}</b></p>`}
+$("#fp").oninput=riepilogo;riepilogo();
+function riempiImprese(){const s=$("#pi"),cur=s.value,l=IMPRESE.filter(i=>i.id&&i.esito!=="Respinta");
+ s.innerHTML=`<option value="">${l.length?"— Seleziona l’impresa —":"Nessuna impresa registrata"}</option>`+l.map(i=>`<option value="${esc(i.id)}">${esc(i.nome)}${i.esito==="Iscritta"?"":" (in istruttoria)"}</option>`).join("");
+ s.value=cur}
+$("#fp").onsubmit=async e=>{e.preventDefault();
+ const f=e.target,d=Object.fromEntries(new FormData(f)),btn=f.querySelector("button");
+ btn.disabled=true;btn.textContent="Invio in corso…";$("#outp").innerHTML="";
+ try{
+  const r=await fetch(CONFIG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"dichiarazione",id:d.id,codice:d.codice,dichiarazione:{anno:d.anno,liquidita:d.liquidita,beni:d.beni,crediti:d.crediti,debiti:d.debiti,descrizioneBeni:d.descrizioneBeni,note:d.note}})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.success)throw new Error(j.message||"HTTP "+r.status);
+  $("#outp").innerHTML=`<div class="card" style="border-left:4px solid var(--ok)"><h4>Dichiarazione registrata</h4><p>${esc(j.nome)} · anno ${esc(j.anno)} · attivo ${eur(j.attivo)} · passivo ${eur(j.passivo)} · patrimonio netto ${eur(j.patrimonioNetto)}. Stato: <b>Da verificare</b>.</p></div>`;
+  f.elements.codice.value="";caricaRegistro();
+ }catch(err){
+  $("#outp").innerHTML=`<div class="card" style="border-left:4px solid var(--err)"><p>${esc(err.message)}</p></div>`;
+ }finally{btn.disabled=false;btn.textContent="Invia dichiarazione"}
+};
 
 /* ---------- ATTI ---------- */
-$("#v-atti").innerHTML=`<h2>Atti e pubblicazioni</h2><p class="sub">Gli atti sono letti dai link inseriti in <code>CONFIG.ATTI_LINKS</code>.</p>
+$("#v-atti").innerHTML=`<h2>Atti e pubblicazioni</h2><p class="sub">Gli atti sono letti direttamente dal database di NormAktiv.</p>
 <div class="bar"><input id="aq" type="search" placeholder="Cerca negli atti…"><select id="at"><option value="">Tutti i tipi</option>${TIPI_ATTO.map(t=>`<option>${t}</option>`).join("")}</select></div><div id="al"></div>`;
 function renderAtti(){
  if(attiState==="loading"){$("#al").innerHTML=`<div class="empty">Caricamento degli atti…</div>`;return}
  const q=$("#aq").value.toLowerCase(),t=$("#at").value;
  const r=ATTI.filter(a=>(!t||a.tipo===t)&&(!q||[a.titolo,a.sommario,a.numero,a.tipo].join(" ").toLowerCase().includes(q)));
- $("#al").innerHTML=r.map(attoRow).join("")||`<div class="empty">${CONFIG.ATTI_LINKS.length?"Nessun atto trovato.":"Nessun link inserito. Aggiungi i link in CONFIG.ATTI_LINKS."}</div>`}
+ $("#al").innerHTML=r.map(attoRow).join("")||`<div class="empty">${CONFIG.ATTI_LINKS.length?"Nessun atto trovato.":"Nessun atto disponibile."}</div>`}
 $("#aq").oninput=renderAtti;$("#at").onchange=renderAtti;
 
 function showAtto(i){const a=ATTI[i];
@@ -265,6 +386,7 @@ function route(){let h=(location.hash||"#home").slice(1),v=h;
 addEventListener("hashchange",route);
 renderAtti();renderUltimi();route();
 caricaAtti().then(route);
+caricaRegistro();
 </script>
 </body>
 </html>
