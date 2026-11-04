@@ -47,7 +47,20 @@ label{display:grid;gap:4px;font-size:13.5px;color:var(--mut)}.full{grid-column:1
 .back{display:inline-block;margin-bottom:12px;color:var(--acc);text-decoration:none;font-size:14px;cursor:pointer;background:none;border:0;padding:0;font-weight:400}
 .msg{border-left:4px solid var(--ok);margin:0 0 14px}.msg.e{border-color:var(--err)}
 .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 18px;font-size:14.5px}.kv span{color:var(--mut);display:block;font-size:12.5px}
-#qr{display:inline-block;background:#fff;padding:10px;border-radius:10px;min-height:220px;min-width:220px}
+.lp{min-height:calc(100vh - 230px);display:grid;place-items:center;padding:10px 0}
+.lc{width:min(440px,100%);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 30px 26px;box-shadow:0 8px 30px rgba(11,61,110,.10)}
+.lt{display:flex;align-items:center;gap:10px;font-size:25px;margin:0 0 14px;color:var(--ink)}
+.lt svg{width:24px;height:24px;flex:none;color:var(--pri-i,var(--acc))}
+.le{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--acc);margin-bottom:6px}
+.ls{color:var(--mut);font-family:Georgia,"Times New Roman",serif;font-size:15px;margin:0 0 22px}
+#loginBody{text-align:center}
+#qr{width:236px;height:236px;margin:0 auto;background:#fff;border-radius:6px;padding:12px;display:grid;place-items:center}
+#qr img,#qr canvas{display:block;width:100%!important;height:100%!important}
+#qr .qrw{color:#5a6779;font-size:14px}
+.lcap{font-family:Georgia,"Times New Roman",serif;font-size:15px;margin:26px 0 0;color:var(--ink)}
+.lnum{font-family:Georgia,"Times New Roman",serif;font-size:19px;margin:22px 0 4px;color:var(--ink)}
+.lnum b{font-size:24px;letter-spacing:.04em}
+#loginErr{text-align:center}.lerr{color:var(--err);margin:6px 0 16px}
 .num{font:900 54px/1 ui-monospace,Menlo,monospace;color:var(--acc);margin:10px 0}
 .code{font:700 20px ui-monospace,Menlo,monospace;user-select:all}
 .view{display:none}.view.on{display:block}
@@ -65,19 +78,17 @@ footer{max-width:1100px;margin:auto;padding:0 18px 30px;color:var(--mut);font-si
 
 <main>
 <section class="view" id="v-login">
-  <h2>Accesso alla redazione</h2>
-  <p class="sub">Accedi con Estji ID: scansiona il QR con il telefono e approva la richiesta.</p>
-  <div class="card" style="max-width:520px;text-align:center">
-    <div id="loginIdle"><button id="avvia" type="button">Accedi con Estji ID</button></div>
-    <div id="loginQr" hidden>
+  <div class="lp"><div class="lc">
+    <h2 class="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>Accesso redazione</h2>
+    <div class="le">Accedi con Estji ID</div>
+    <p class="ls">Inquadra il QR con il telefono e conferma l’accesso.</p>
+    <div id="loginBody">
       <div id="qr"></div>
-      <p id="qrLink" class="sub" style="margin:8px 0 0"></p>
-      <div id="numBox" hidden><p class="sub" style="margin:10px 0 0">Sul telefono scegli questo numero:</p><div class="num" id="num"></div></div>
-      <p id="loginSt" class="sub" style="margin-top:8px">In attesa dell’approvazione dal telefono…</p>
-      <button id="annulla" type="button" class="sec sm">Annulla</button>
+      <p class="lcap" id="loginSt">Inquadralo con il telefono e conferma l’accesso.</p>
+      <p class="lnum" id="numBox" hidden>Numero di controllo: <b id="num"></b></p>
     </div>
-  </div>
-  <div id="loginErr" style="margin-top:14px"></div>
+    <div id="loginErr"></div>
+  </div></div>
 </section>
 
 <section class="view" id="v-lista">
@@ -123,7 +134,7 @@ let SESS=null,IMPRESE=[];
 try{SESS=JSON.parse(sessionStorage.getItem(CFG.CHIAVE)||"null");if(!SESS||!SESS.token)SESS=null}catch(e){SESS=null}
 function salvaSess(s){SESS=s;try{sessionStorage.setItem(CFG.CHIAVE,JSON.stringify(s))}catch(e){}}
 function esci(msg){SESS=null;IMPRESE=[];try{sessionStorage.removeItem(CFG.CHIAVE)}catch(e){}
-  $("#who").hidden=true;show("login");$("#loginErr").innerHTML=msg?`<div class="card msg e"><p>${esc(msg)}</p></div>`:""}
+  $("#who").hidden=true;show("login");if(msg)$("#loginErr").innerHTML=`<p class="lerr">${esc(msg)}</p>`}
 $("#esci").onclick=()=>esci();
 
 async function api(corpo){
@@ -143,14 +154,18 @@ async function carica(){
 }
 
 /* ---------- accesso con Estji ID (QR) ---------- */
-let poll=null,verifier=null,richiestaId=null,scade=0;
+let poll=null,verifier=null,richiestaId=null,scade=0,avviando=false;
 const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
 async function sha256(t){return hex(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))}
-function fermaLogin(){clearInterval(poll);poll=null;$("#loginQr").hidden=true;$("#loginIdle").hidden=false;$("#qr").innerHTML="";$("#numBox").hidden=true}
-function errLogin(m){$("#loginErr").innerHTML=`<div class="card msg e"><p>${esc(m)}</p></div>`}
+function fermaPoll(){clearInterval(poll);poll=null}
+const CAP="Inquadralo con il telefono e conferma l’accesso.";
+function errLogin(m){fermaPoll();$("#qr").innerHTML="";$("#numBox").hidden=true;$("#loginBody").hidden=true;
+  $("#loginErr").innerHTML=`<p class="lerr">${esc(m)}</p><button id="rigen" type="button">Genera nuovo QR</button>`;$("#rigen").onclick=iniziaLogin}
 
-$("#avvia").onclick=async()=>{
-  $("#loginErr").innerHTML="";const b=$("#avvia");b.disabled=true;
+async function iniziaLogin(){
+  if(avviando||SESS)return;avviando=true;fermaPoll();
+  $("#loginErr").innerHTML="";$("#loginBody").hidden=false;$("#numBox").hidden=true;$("#loginSt").textContent=CAP;
+  $("#qr").innerHTML='<span class="qrw">Generazione del QR…</span>';
   try{
     verifier=hex(crypto.getRandomValues(new Uint8Array(32)));
     const r=await fetch(CFG.ESTJI_API,{method:"POST",headers:{"Content-Type":"application/json"},
@@ -158,39 +173,36 @@ $("#avvia").onclick=async()=>{
     const j=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(j.error||"Estji ID non raggiungibile (HTTP "+r.status+").");
     richiestaId=j.id;scade=Date.now()+(j.expires_in||120)*1000;
-    $("#loginIdle").hidden=true;$("#loginQr").hidden=false;
     $("#qr").innerHTML="";
-    if(window.QRCode)new QRCode($("#qr"),{text:j.qr_payload,width:200,height:200});
-    $("#qrLink").innerHTML=`Dal telefono: <a href="${esc(j.qr_payload)}" target="_blank" rel="noopener">apri il link di approvazione</a>`;
-    $("#numBox").hidden=j.numero==null;if(j.numero!=null)$("#num").textContent=j.numero;
-    $("#loginSt").textContent="In attesa dell’approvazione dal telefono…";
+    if(window.QRCode)new QRCode($("#qr"),{text:j.qr_payload,width:212,height:212,correctLevel:QRCode.CorrectLevel.M});
+    else $("#qr").innerHTML=`<a href="${esc(j.qr_payload)}" target="_blank" rel="noopener">Apri il link di approvazione</a>`;
+    if(j.numero!=null){$("#num").textContent=j.numero;$("#numBox").hidden=false}
     poll=setInterval(controlla,2000);
-  }catch(e){errLogin(e.message)}finally{b.disabled=false}
-};
-$("#annulla").onclick=fermaLogin;
+  }catch(e){errLogin(e.message)}finally{avviando=false}
+}
 
 async function controlla(){
-  if(Date.now()>scade){fermaLogin();return errLogin("QR scaduto: generane uno nuovo.")}
+  if(Date.now()>scade)return errLogin("QR scaduto: generane uno nuovo.");
   try{
     const r=await fetch(CFG.ESTJI_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"stato",id:richiestaId,verifier})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(j.error||"HTTP "+r.status);
     if(j.stato==="attesa")return;
-    clearInterval(poll);poll=null;
-    if(j.stato==="scaduta"){fermaLogin();return errLogin("QR scaduto: generane uno nuovo.")}
-    if(j.stato==="rifiutata"){fermaLogin();return errLogin("Richiesta rifiutata dal telefono.")}
+    fermaPoll();
+    if(j.stato==="scaduta")return errLogin("QR scaduto: generane uno nuovo.");
+    if(j.stato==="rifiutata")return errLogin("Richiesta rifiutata dal telefono.");
     if(j.stato==="approvata"){
       $("#loginSt").textContent="Approvato. Accesso in corso…";
       const a=await fetch(CFG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"accedi-estji",id_token:j.id_token})});
       const x=await a.json().catch(()=>({}));
       if(!a.ok||!x.success)throw new Error(x.message||"HTTP "+a.status);
-      salvaSess({token:x.token,username:x.username});fermaLogin();await avvia();
+      salvaSess({token:x.token,username:x.username});await avvia();
     }
-  }catch(e){fermaLogin();errLogin(e.message)}
+  }catch(e){errLogin(e.message)}
 }
 
 /* ---------- viste ---------- */
-function show(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));scrollTo(0,0)}
+function show(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));scrollTo(0,0);if(v==="login")iniziaLogin();else fermaPoll()}
 async function avvia(){
   if(!SESS)return show("login");
   $("#who").hidden=false;$("#whoN").textContent=SESS.username||"";
