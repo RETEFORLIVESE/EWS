@@ -1,144 +1,261 @@
-// assets/js/corte.js — sito pubblico: elenco delle pronunce e dettaglio (?id=...)
-(function () {
-  const { esc, htmlDiff, commiDi } = CorteDiff;
-  const ETICHETTE = { modifica: "Modifica", annullamento: "Annullamento", abrogazione: "Abrogazione" };
-  let pronunce = [], tipoAttivo = "Tutte", q = "";
+// api/corte.js — endpoint della Corte Costituzionale (file unico: store + diff + handler).
+//   GET  /api/corte                -> elenco pubblico delle pronunce (derivato dagli atti)
+//   GET  /api/corte?atti=1         -> (con token) elenco sintetico degli atti per la redazione
+//   GET  /api/corte?atto=<id>      -> (con token) atto completo da modificare
+//   POST {azione:"login", username, password}
+//   POST {azione:"login-estji", id_token}   -> accesso con Estji ID (portale "corte", permesso "corte.edit")
+//   POST {azione:"pubblica", ...}  -> (con token) applica la pronuncia all'atto
+//
+// Variabili d'ambiente (nel progetto "ews" ci sono già): AUTH_SECRET, GITHUB_TOKEN, GITHUB_DATA_REPO, GITHUB_DATA_BRANCH.
+// Facoltativa: CORTE_USERS = "utente1:password1:Nome,utente2:password2:Altro" per il login con password
+// (senza, si entra solo con Estji ID). CORTE_SECRET, se presente, sostituisce AUTH_SECRET per firmare le sessioni.
+//
+// NOTA: questo file sostituisce api/_corte-store.js e api/_corte-diff.js, che si possono eliminare.
+// Se cambi la logica di diffArticoli, aggiorna anche assets/js/corte-diff.js (copia lato browser).
 
-  const nomeStato = s => s === "annullato" ? "annullato" : s === "abrogato" ? "abrogato" : "vigente";
+import crypto from "crypto";
+import { leggiFileJson, scriviFileJson } from "./_github.js";
+import { verificaIdToken, haScope } from "./_estji-verifica.js";   // già presente nelle api dei portali
 
-  function filtrate() {
-    const t = q.trim().toLowerCase();
-    return pronunce.filter(p =>
-      (tipoAttivo === "Tutte" || p.tipo === tipoAttivo) &&
-      (!t || [p.oggetto, p.atto.titolo, p.numero + "/" + p.anno, p.motivazione].join(" ").toLowerCase().includes(t)));
+const TIPI = ["modifica", "annullamento", "abrogazione"];
+const PERICOLOSO = /<\s*(script|iframe|object|embed|style)|\son\w+\s*=|javascript:/i;
+
+/* =====================================================================
+   STORE — accesso agli atti: IDENTICO a NormAktiv (api/atti.js).
+   Gli atti sono in atti.json nella repo DATA (privata).
+   ===================================================================== */
+const FILE = "atti.json";
+
+// atti.json può essere un array oppure { atti: [...] } (stessa tolleranza di atti.js)
+function estraiAtti(registro) {
+  if (Array.isArray(registro)) return registro;
+  if (registro && Array.isArray(registro.atti)) return registro.atti;
+  return [];
+}
+
+async function leggiAtti() {
+  const registro = await leggiFileJson(FILE, { atti: [] });
+  return { atti: estraiAtti(registro) };
+}
+
+// Come salva-atti di NormAktiv, scrive sempre { atti: [...] }.
+async function scriviAtti(_letto, atti, messaggio) {
+  await scriviFileJson(FILE, { atti }, messaggio || "Corte Costituzionale: pubblicazione pronuncia");
+}
+
+/* =====================================================================
+   DIFF — confronto tra due versioni degli articoli
+   ===================================================================== */
+const eTitolo = a => !!a && a.tipo === "titolo";
+
+function commiDi(art) {
+  if (art && Array.isArray(art.commi) && art.commi.length) {
+    return art.commi.map(c => ({
+      testo: (c.testo || "").trim(),
+      sottocommi: (c.sottocommi || []).map(s => (s || "").trim()).filter(Boolean)
+    }));
   }
+  return [{ testo: ((art && art.testo) || "").trim(), sottocommi: [] }];
+}
+const chiaveArt = a => String(a.numero == null ? "" : a.numero).trim();
+const firmaArt = a => JSON.stringify({ r: (a.rubrica || "").trim(), c: commiDi(a) });
+const istantanea = a => ({ numero: chiaveArt(a), rubrica: (a.rubrica || "").trim(), commi: commiDi(a) });
 
-  function scheda(p) {
-    return `
-      <a class="scheda-atto scheda-atto--${esc(p.tipo)}" href="corte.html?id=${encodeURIComponent(p.id)}">
-        <div class="scheda-atto__meta">
-          <span class="badge-tipo ${esc(p.tipo)}">${ETICHETTE[p.tipo] || esc(p.tipo)}</span>
-          <span>Sentenza n. ${esc(p.numero)}/${esc(p.anno)} &middot; ${esc(p.data)}</span>
-        </div>
-        <h3 class="scheda-atto__titolo">${esc(p.oggetto)}</h3>
-        <p class="scheda-atto__sommario">Atto: ${esc(p.atto.titolo)}</p>
-      </a>`;
-  }
+function diffArticoli(prima, dopo) {
+  prima = prima || []; dopo = dopo || [];
+  const out = [];
+  const mapPrima = new Map(), mapDopo = new Map();
+  prima.filter(a => !eTitolo(a)).forEach(a => { if (!mapPrima.has(chiaveArt(a))) mapPrima.set(chiaveArt(a), a); });
+  dopo.filter(a => !eTitolo(a)).forEach(a => { if (!mapDopo.has(chiaveArt(a))) mapDopo.set(chiaveArt(a), a); });
+  mapPrima.forEach((a, k) => {
+    const b = mapDopo.get(k);
+    if (!b) out.push({ azione: "soppresso", riferimento: "Art. " + k, numero: k, prima: istantanea(a), dopo: null });
+    else if (firmaArt(a) !== firmaArt(b)) out.push({ azione: "modificato", riferimento: "Art. " + k, numero: k, prima: istantanea(a), dopo: istantanea(b) });
+  });
+  mapDopo.forEach((b, k) => {
+    if (!mapPrima.has(k)) out.push({ azione: "aggiunto", riferimento: "Art. " + k, numero: k, prima: null, dopo: istantanea(b) });
+  });
+  const tPrima = prima.filter(eTitolo).map(t => (t.testo || "").trim());
+  const tDopo = dopo.filter(eTitolo).map(t => (t.testo || "").trim());
+  tPrima.filter(t => !tDopo.includes(t)).forEach(t => out.push({ azione: "titolo-soppresso", riferimento: t, testoTitolo: t }));
+  tDopo.filter(t => !tPrima.includes(t)).forEach(t => out.push({ azione: "titolo-aggiunto", riferimento: t, testoTitolo: t }));
+  return out;
+}
 
-  function renderElenco() {
-    const r = filtrate();
-    document.getElementById("conteggio").textContent =
-      r.length === pronunce.length ? `${pronunce.length} pronunce pubblicate` : `${r.length} risultati su ${pronunce.length}`;
-    document.getElementById("elenco").innerHTML = r.length
-      ? r.map(scheda).join("") : `<div class="nessun-risultato">Nessuna pronuncia corrisponde alla ricerca.</div>`;
-    document.getElementById("filtri").innerHTML = ["Tutte", "modifica", "annullamento", "abrogazione"].map(t =>
-      `<button type="button" class="filtro ${t === tipoAttivo ? "attivo" : ""}" data-t="${t}">${t === "Tutte" ? "Tutte" : ETICHETTE[t]}</button>`).join("");
-  }
+/* =====================================================================
+   AUTENTICAZIONE
+   ===================================================================== */
+const b64 = b => Buffer.from(b).toString("base64url");
+// Chiave di firma derivata da AUTH_SECRET con una etichetta propria: le sessioni della Corte
+// non valgono per gli altri sistemi e viceversa.
+const haSegreto = () => !!(process.env.CORTE_SECRET || process.env.AUTH_SECRET);
+const hmac = s => crypto.createHmac("sha256",
+  crypto.createHmac("sha256", process.env.CORTE_SECRET || process.env.AUTH_SECRET || "").update("corte-sessione").digest())
+  .update(s).digest("base64url");
 
-  function vistaElenco(root) {
-    const atti = new Set(pronunce.map(p => p.atto.id));
-    const nulli = new Set(pronunce.filter(p => p.tipo !== "modifica").map(p => p.atto.id));
-    root.innerHTML = `
-      <section class="hero" style="margin:-1px -24px 0; padding-left:24px; padding-right:24px;">
-        <div class="container hero__inner" style="padding:0;">
-          <div>
-            <span class="hero__kicker">Giurisdizione costituzionale</span>
-            <h1 class="hero__titolo">Pronunce sugli atti normativi</h1>
-            <p class="hero__sottotitolo">La Corte può modificare un atto o dichiararlo nullo, annullandolo o abrogandolo.
-              Ogni pronuncia è applicata subito all'atto su NormAktiv e resta consultabile qui, con il confronto tra testo precedente e testo nuovo.</p>
-            <form id="form-ricerca" class="ricerca" role="search">
-              <input id="campo" type="text" placeholder="Cerca per oggetto, atto o numero&hellip;" autocomplete="off" />
-              <button type="submit">Cerca</button>
-            </form>
-          </div>
-          <div class="hero__pannello"><h2>Collegamenti</h2><ul>
-            <li><a href="normaktiv.html">NormAktiv<span>La raccolta ufficiale degli atti</span></a></li>
-            <li><a href="redazioneCorte.html">Area di redazione<span>Pubblica una nuova pronuncia</span></a></li>
-          </ul></div>
-        </div>
-      </section>
-      <section class="stats-band" style="margin:0 -24px; padding:0;"><div class="container">
-        <div class="stat-item"><b>${pronunce.length}</b><span>Pronunce</span></div>
-        <div class="stat-item"><b>${atti.size}</b><span>Atti toccati</span></div>
-        <div class="stat-item"><b>${nulli.size}</b><span>Atti annullati o abrogati</span></div>
-      </div></section>
-      <h2 class="sezione-titolo" style="margin-top:40px;">Elenco delle pronunce</h2>
-      <div id="filtri" class="filtri"></div>
-      <p id="conteggio" style="font-family:var(--font-chrome); font-size:.85rem; color:var(--inchiostro-tenue); margin:0 0 16px;"></p>
-      <div id="elenco" class="elenco-atti"></div>`;
-    renderElenco();
-    const campo = document.getElementById("campo");
-    campo.addEventListener("input", () => { q = campo.value; renderElenco(); });
-    document.getElementById("form-ricerca").addEventListener("submit", e => { e.preventDefault(); q = campo.value; renderElenco(); });
-    document.getElementById("filtri").addEventListener("click", e => {
-      const b = e.target.closest("[data-t]"); if (b) { tipoAttivo = b.dataset.t; renderElenco(); }
-    });
-  }
+function uguali(a, b) {
+  const x = Buffer.from(String(a)), y = Buffer.from(String(b));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+function utenti() {
+  return (process.env.CORTE_USERS || "").split(",").map(s => s.trim()).filter(Boolean).map(s => {
+    const [u, p, ...n] = s.split(":");
+    return { u, p, nome: n.join(":") || u };
+  });
+}
+function creaToken(u) {
+  const corpo = b64(JSON.stringify({ u: u.u, nome: u.nome, exp: Date.now() + 8 * 3600 * 1000 }));
+  return corpo + "." + hmac(corpo);
+}
+function leggiToken(req) {
+  const h = req.headers.authorization || "";
+  const t = h.startsWith("Bearer ") ? h.slice(7) : "";
+  const [corpo, firma] = t.split(".");
+  if (!corpo || !firma || !haSegreto() || !uguali(hmac(corpo), firma)) return null;
+  try {
+    const p = JSON.parse(Buffer.from(corpo, "base64url").toString("utf8"));
+    return p.exp > Date.now() ? p : null;
+  } catch (e) { return null; }
+}
 
-  function righeCommi(snap) {
-    if (!snap) return `<p class="vuoto">— (non presente)</p>`;
-    return `<p class="rubrica">${esc(snap.rubrica)}</p>` + snap.commi.map((c, i) =>
-      `<p>${snap.commi.length > 1 ? (i + 1) + ". " : ""}${esc(c.testo)}</p>` +
-      c.sottocommi.map((s, j) => `<p style="margin-left:18px">${String.fromCharCode(97 + j)}) ${esc(s)}</p>`).join("")).join("");
-  }
-  function confronto(m) {
-    if (m.azione === "titolo-aggiunto" || m.azione === "titolo-soppresso")
-      return `<div class="modifica-voce"><h3><span class="azione ${m.azione}">${m.azione === "titolo-aggiunto" ? "titolo aggiunto" : "titolo soppresso"}</span> ${esc(m.testoTitolo)}</h3></div>`;
-    let p = m.prima, d = m.dopo, hp = righeCommi(p), hd = righeCommi(d);
-    if (m.azione === "modificato") {
-      const rub = htmlDiff(p.rubrica, d.rubrica);
-      const n = Math.max(p.commi.length, d.commi.length);
-      let cp = "", cd = "";
-      for (let i = 0; i < n; i++) {
-        const a = p.commi[i], b = d.commi[i];
-        const t = htmlDiff(a ? a.testo : "", b ? b.testo : "");
-        const pre = n > 1 ? (i + 1) + ". " : "";
-        if (a) cp += `<p>${pre}${t.prima}</p>` + a.sottocommi.map((s, j) => {
-          const bs = b && b.sottocommi[j] != null ? b.sottocommi[j] : ""; return `<p style="margin-left:18px">${String.fromCharCode(97 + j)}) ${htmlDiff(s, bs).prima}</p>`; }).join("");
-        if (b) cd += `<p>${pre}${t.dopo}</p>` + b.sottocommi.map((s, j) => {
-          const as = a && a.sottocommi[j] != null ? a.sottocommi[j] : ""; return `<p style="margin-left:18px">${String.fromCharCode(97 + j)}) ${htmlDiff(as, s).dopo}</p>`; }).join("");
+/* =====================================================================
+   UTILITÀ
+   ===================================================================== */
+const testo = (v, max) => (v == null ? "" : String(v)).trim().slice(0, max);
+function errore(res, code, message) { res.status(code).json({ success: false, message }); }
+
+function pulisciArticoli(arr) {
+  if (!Array.isArray(arr) || !arr.length) throw new Error("Elenco articoli mancante.");
+  if (arr.length > 500) throw new Error("Troppi articoli.");
+  const out = arr.map(a => {
+    if (a && a.tipo === "titolo") return { tipo: "titolo", testo: testo(a.testo, 300) };
+    const commi = (Array.isArray(a.commi) ? a.commi : []).map(c => ({
+      testo: testo(c.testo, 20000),
+      sottocommi: (Array.isArray(c.sottocommi) ? c.sottocommi : []).map(s => testo(s, 10000)).filter(Boolean)
+    }));
+    if (!commi.length) commi.push({ testo: "", sottocommi: [] });
+    return { numero: testo(a.numero, 20) || "1", rubrica: testo(a.rubrica, 300), commi };
+  });
+  if (PERICOLOSO.test(JSON.stringify(out))) throw new Error("Il testo contiene codice non consentito.");
+  return out;
+}
+
+function pronunceDi(atti) {
+  const out = [];
+  atti.forEach(a => (a.pronunce || []).forEach(p => out.push({
+    ...p,
+    atto: { id: a.id, titolo: a.titolo, categoria: a.categoria, numero: a.numero, anno: a.anno, stato: a.stato }
+  })));
+  return out.sort((x, y) => (y.creataIl || "").localeCompare(x.creataIl || ""));
+}
+
+/* =====================================================================
+   HANDLER
+   ===================================================================== */
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  try {
+    if (req.method === "GET") {
+      const q = req.query || {};
+      const { atti } = await leggiAtti();
+
+      if (q.atti || q.atto) {
+        if (!leggiToken(req)) return errore(res, 401, "Sessione scaduta: effettua di nuovo l'accesso.");
+        if (q.atto) {
+          const a = atti.find(x => x.id === q.atto);
+          return a ? res.status(200).json({ success: true, atto: a }) : errore(res, 404, "Atto non trovato.");
+        }
+        return res.status(200).json({
+          success: true,
+          atti: atti.map(a => ({
+            id: a.id, titolo: a.titolo, categoria: a.categoria, numero: a.numero, anno: a.anno,
+            stato: a.stato, nArticoli: (a.articoli || []).filter(x => x.tipo !== "titolo").length
+          }))
+        });
       }
-      hp = `<p class="rubrica">${rub.prima}</p>${cp}`; hd = `<p class="rubrica">${rub.dopo}</p>${cd}`;
+      return res.status(200).json({ success: true, pronunce: pronunceDi(atti) });
     }
-    return `<div class="modifica-voce"><h3><span class="azione ${m.azione}">${m.azione}</span> ${esc(m.riferimento)}</h3>
-      <div class="confronto"><div class="prima"><h4>Prima</h4>${hp}</div><div class="dopo"><h4>Dopo</h4>${hd}</div></div></div>`;
-  }
 
-  function vistaDettaglio(root, id) {
-    const p = pronunce.find(x => x.id === id);
-    if (!p) { root.innerHTML = `<p class="breadcrumb"><a href="corte.html">Pronunce</a> &rsaquo; Non trovata</p><div class="nessun-risultato">Pronuncia non trovata. <a href="corte.html">Torna all'elenco</a>.</div>`; return; }
-    document.title = `Sentenza n. ${p.numero}/${p.anno} — Corte Costituzionale`;
-    const rif = p.tipo === "modifica" ? `<div class="blocco-corte"><h2>Modifiche apportate all'atto</h2>${(p.modifiche || []).map(confronto).join("")}</div>`
-      : `<div class="blocco-corte"><h2>Effetto sull'atto</h2><p class="testo-lungo">L'atto è stato ${p.tipo === "annullamento" ? "annullato (nullo)" : "abrogato"}${p.effetto ? " — " + esc(p.effetto) : ""}. Stato precedente: ${esc(nomeStato(p.statoPrecedente))}.</p></div>`;
-    root.innerHTML = `
-      <p class="breadcrumb"><a href="corte.html">Pronunce</a> &rsaquo; Sentenza n. ${esc(p.numero)}/${esc(p.anno)}</p>
-      <section class="intestazione-atto">
-        <div class="intestazione-atto__meta"><span class="badge-tipo ${esc(p.tipo)}">${ETICHETTE[p.tipo] || esc(p.tipo)}</span></div>
-        <h1>${esc(p.oggetto)}</h1>
-        <p>Sull'atto: <a href="atto.html?id=${encodeURIComponent(p.atto.id)}"><strong>${esc(p.atto.titolo)}</strong></a>
-          (n. ${esc(p.atto.numero)}/${esc(p.atto.anno)}, ora <em>${esc(nomeStato(p.atto.stato))}</em>)</p>
-        <dl class="intestazione-atto__dati">
-          <div><dt>Sentenza</dt><dd>${esc(p.numero)}/${esc(p.anno)}</dd></div>
-          <div><dt>Data</dt><dd>${esc(p.data)}</dd></div>
-          <div><dt>Decisa da</dt><dd>${esc(p.collegio || p.firmataDa || "—")}</dd></div>
-          ${p.effetto ? `<div><dt>Effetti</dt><dd>${esc(p.effetto)}</dd></div>` : ""}
-        </dl>
-        <div class="intestazione-atto__azioni" style="margin-top:16px;">
-          <a href="atto.html?id=${encodeURIComponent(p.atto.id)}" class="redazione-btn redazione-btn--primario" style="display:inline-block;">Vedi l'atto su NormAktiv</a>
-        </div>
-      </section>
-      <div class="blocco-corte"><h2>Motivazione</h2><p class="testo-lungo">${esc(p.motivazione)}</p></div>
-      <div class="blocco-corte dispositivo"><h2>Dispositivo</h2><p class="testo-lungo">${esc(p.dispositivo)}</p></div>
-      ${rif}`;
-  }
+    if (req.method !== "POST") return errore(res, 405, "Metodo non consentito.");
+    const b = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
 
-  async function init() {
-    renderTestataCorte("home"); renderFooterCorte();
-    const root = document.getElementById("corte-root");
-    try { pronunce = await CorteAPI.pronunce(); }
-    catch (e) { root.innerHTML = `<div class="nessun-risultato">Errore nel caricamento delle pronunce (${esc(e.message)}).</div>`; return; }
-    const id = new URLSearchParams(location.search).get("id");
-    id ? vistaDettaglio(root, id) : vistaElenco(root);
+    if (b.azione === "login") {
+      if (!haSegreto()) return errore(res, 500, "AUTH_SECRET non configurato.");
+      const u = utenti().find(x => uguali(x.u, testo(b.username, 80)) && uguali(x.p, testo(b.password, 200)));
+      if (!u) return errore(res, 401, "Credenziali errate");
+      return res.status(200).json({ success: true, token: creaToken(u), username: u.nome });
+    }
+
+    if (b.azione === "login-estji") {
+      if (!haSegreto()) return errore(res, 500, "AUTH_SECRET non configurato.");
+      let c;
+      try { c = await verificaIdToken(b.id_token, "corte"); }
+      catch (e) { return errore(res, 502, "Estji ID non raggiungibile: riprova tra poco."); }
+      if (!c) return errore(res, 401, "Accesso Estji ID non valido o scaduto.");
+      if (!haScope(c, "corte.edit")) {
+        const haRuolo = Array.isArray(c.roles) && c.roles.includes("giudice_corte");
+        return errore(res, 403, haRuolo && !c.vote_eligible
+          ? 'Hai il ruolo di giudice, ma il tuo Estji ID è ancora "In verifica": serve la verifica dello staff.'
+          : "Per la redazione della Corte serve il ruolo di Giudice Costituzionale.");
+      }
+      const nome = String(c.nick || c.sub || "Estji ID").slice(0, 80);
+      return res.status(200).json({ success: true, token: creaToken({ u: "estji:" + (c.sub || nome), nome }), username: nome });
+    }
+
+    if (b.azione === "pubblica") {
+      const sess = leggiToken(req);
+      if (!sess) return errore(res, 401, "Sessione scaduta: effettua di nuovo l'accesso.");
+
+      const tipo = testo(b.tipo, 20);
+      if (!TIPI.includes(tipo)) return errore(res, 400, "Tipo di pronuncia non valido.");
+      const meta = {
+        numero: testo(b.numero, 12), anno: testo(b.anno, 4), data: testo(b.data, 60),
+        oggetto: testo(b.oggetto, 300), motivazione: testo(b.motivazione, 20000),
+        dispositivo: testo(b.dispositivo, 5000), effetto: testo(b.effetto, 300),
+        collegio: testo(b.collegio, 500)
+      };
+      for (const k of ["numero", "anno", "data", "oggetto", "motivazione", "dispositivo"])
+        if (!meta[k]) return errore(res, 400, "Campo obbligatorio mancante: " + k + ".");
+      if (PERICOLOSO.test(JSON.stringify(meta))) return errore(res, 400, "Il testo contiene codice non consentito.");
+
+      const letto = await leggiAtti();           // riletto subito prima di scrivere
+      const atti = letto.atti;
+      const i = atti.findIndex(a => a.id === b.attoId);
+      if (i < 0) return errore(res, 404, "Atto non trovato.");
+      const atto = { ...atti[i] };
+
+      if (atto.stato === "annullato") return errore(res, 409, "L'atto è già stato annullato: non può essere ulteriormente modificato.");
+      if (tipo !== "annullamento" && atto.stato === "abrogato")
+        return errore(res, 409, "L'atto è già abrogato: si può solo annullare.");
+
+      const id = `s-${meta.anno}-${meta.numero}-${atto.id}`.slice(0, 120);
+      if ((atto.pronunce || []).some(p => p.id === id))
+        return errore(res, 409, "Esiste già una pronuncia con questo numero per questo atto.");
+
+      const pronuncia = {
+        id, tipo, ...meta,
+        creataIl: new Date().toISOString(), firmataDa: sess.nome,
+        statoPrecedente: atto.stato || "vigente", modifiche: []
+      };
+
+      if (tipo === "modifica") {
+        let nuovi;
+        try { nuovi = pulisciArticoli(b.articoli); } catch (e) { return errore(res, 400, e.message); }
+        pronuncia.modifiche = diffArticoli(atto.articoli || [], nuovi);
+        if (!pronuncia.modifiche.length) return errore(res, 400, "Nessuna modifica rilevata rispetto al testo vigente.");
+        atto.articoli = nuovi;
+      } else {
+        atto.stato = tipo === "annullamento" ? "annullato" : "abrogato";
+      }
+
+      atto.pronunce = [...(atto.pronunce || []), pronuncia];
+      atti[i] = atto;
+      await scriviAtti(letto, atti, `Corte Costituzionale: sentenza ${meta.numero}/${meta.anno} (${tipo}) su ${atto.id} — ${sess.nome}`);
+      return res.status(200).json({ success: true, pronuncia: { ...pronuncia, atto: { id: atto.id, titolo: atto.titolo } } });
+    }
+
+    return errore(res, 400, "Azione non riconosciuta.");
+  } catch (e) {
+    return errore(res, 500, e.message || "Errore del server");
   }
-  document.addEventListener("DOMContentLoaded", init);
-})();
+}
