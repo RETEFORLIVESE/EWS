@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/tessere", "destination": "/api/estji?r=tessere" }
+  ]
+}
