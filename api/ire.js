@@ -7,8 +7,10 @@
 //                                            "codice di riferimento" mostrato UNA volta sola.
 //   POST { azione: "dichiarazione", id, codice, dichiarazione: {...} }
 //                                         -> dichiarazione patrimoniale (pubblica, ma protetta dal codice).
+//   POST { azione: "accedi-estji", id_token } -> accesso della redazione con Estji ID (QR): verifica l'id_token
+//                                            e rilascia un token di sessione con ambito "ire".
 //   POST { azione: "aggiorna", id, campi } / { azione: "elimina", id } /
-//        { azione: "verifica", id, anno, stato }
+//        { azione: "verifica", id, anno, stato } / { azione: "nuovo-codice", id }
 //                                         -> gestione IRE (richiede Authorization: Bearer <token>).
 //
 // Forma di IRE.json:
@@ -23,10 +25,15 @@
 
 import crypto from 'node:crypto';
 import { leggiFileJson, scriviFileJson } from './_github.js';
-import { sessioneDaRichiesta } from './_sessione.js';
+import { sessioneDaRichiesta, creaToken } from './_sessione.js';
+import { verificaIdToken, haScope } from './_estji-verifica.js';
+import { redis, limite, ipDi } from './_idstore.js';
 
 const FILE = 'IRE.json';
-const AMBITO_REDAZIONE = 'normaktiv';   // stesso login (password o Estji ID) della redazione NormAktiv
+const AMBITO_REDAZIONE = 'normaktiv';   // i token classici (login con password) e quelli QR di NormAktiv valgono anche qui
+const AMBITO_IRE = 'ire';               // ambito dei token rilasciati dall'accesso con Estji ID di questo portale
+const CLIENT_ID = process.env.IRE_CLIENT_ID || 'ire';                 // ID del portale in PORTALI (_idstore.js)
+const SCOPE_REDAZIONE = process.env.IRE_SCOPE || 'ire.redazione';     // permesso Estji ID richiesto alla redazione
 const MAX_IN_ISTRUTTORIA = 300;         // freno anti-spam sulle richieste pubbliche in attesa
 const CLASSI = ['strategica', 'lavoratori'];
 const ESITI = ['In istruttoria', 'Iscritta', 'Respinta'];
@@ -74,6 +81,11 @@ function codiceUguale(codice, hashSalvato) {
 function nuovoCodice() {
     const h = crypto.randomBytes(6).toString('hex').toUpperCase();   // 12 caratteri
     return `IRE-${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}`;
+}
+
+// Sessione della redazione: token "ire" (Estji ID) oppure token di NormAktiv (password o QR).
+function sessioneRedazione(req) {
+    return sessioneDaRichiesta(req, AMBITO_IRE) || sessioneDaRichiesta(req, AMBITO_REDAZIONE);
 }
 
 function estraiImprese(reg) {
@@ -134,7 +146,7 @@ async function gestisciGet(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     try {
         const imprese = estraiImprese(await leggiFileJson(FILE, { imprese: [] }));
-        const staff = sessioneDaRichiesta(req, AMBITO_REDAZIONE);
+        const staff = sessioneRedazione(req);
         if (staff) return res.status(200).json({ imprese: imprese.map(vistaRedazione) });
         return res.status(200).json({
             imprese: imprese.filter(i => i.esito !== 'Respinta').map(vistaPubblica)
@@ -220,10 +232,28 @@ async function gestisciDichiarazione(corpo, res) {
     return res.status(200).json({ success: true, nome, anno, attivo, passivo: debiti, patrimonioNetto });
 }
 
+async function gestisciAccessoEstji(req, corpo, res) {
+    if (!(await limite('ireacc:' + ipDi(req), 20, 600))) {
+        throw new ErroreHttp(429, 'Troppi tentativi: riprova tra qualche minuto.');
+    }
+    let claims;
+    try { claims = await verificaIdToken(corpo.id_token, CLIENT_ID); }
+    catch (e) { throw new ErroreHttp(502, 'Estji ID non raggiungibile: riprova.'); }
+    if (!claims || !claims.jti) throw new ErroreHttp(401, 'Accesso con Estji ID non valido o scaduto: genera un nuovo QR.');
+    if (!haScope(claims, SCOPE_REDAZIONE)) throw new ErroreHttp(403, 'Questa identità non ha il permesso di accedere alla redazione IRE.');
+    // il token Estji ID vale una sola volta
+    if ((await redis('SET', 'idtok:' + claims.jti, '1', 'NX', 'EX', 700)) !== 'OK') {
+        throw new ErroreHttp(401, 'Questo accesso è già stato utilizzato.');
+    }
+    const username = claims.nick || claims.sub;
+    return res.status(200).json({ success: true, token: creaToken(username, AMBITO_IRE), username });
+}
+
 async function gestisciRedazione(req, corpo, res) {
-    const sessione = sessioneDaRichiesta(req, AMBITO_REDAZIONE);
+    const sessione = sessioneRedazione(req);
     if (!sessione) return res.status(401).json({ message: 'Sessione scaduta o non autorizzata: effettua il login della redazione.' });
 
+    let codiceNuovo = null;
     await modifica(imprese => {
         const k = imprese.findIndex(i => i.id === corpo.id);
         if (k < 0) throw new ErroreHttp(404, 'Impresa non trovata.');
@@ -231,6 +261,9 @@ async function gestisciRedazione(req, corpo, res) {
 
         if (corpo.azione === 'elimina') {
             imprese.splice(k, 1);
+        } else if (corpo.azione === 'nuovo-codice') {
+            codiceNuovo = nuovoCodice();           // il vecchio codice smette di funzionare
+            imp.codiceHash = hashCodice(codiceNuovo);
         } else if (corpo.azione === 'verifica') {
             const dich = (imp.dichiarazioni || []).find(x => x.anno === Number(corpo.anno));
             if (!dich) throw new ErroreHttp(404, 'Dichiarazione non trovata.');
@@ -255,7 +288,7 @@ async function gestisciRedazione(req, corpo, res) {
         }
     }, `IRE (${sessione.username}): ${corpo.azione} ${corpo.id}`);
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json(codiceNuovo ? { success: true, codice: codiceNuovo } : { success: true });
 }
 
 // ---------------------------------------------------------------- handler
@@ -274,7 +307,9 @@ export default async function handler(req, res) {
             switch (corpo.azione) {
                 case 'iscrivi': return await gestisciIscrivi(corpo, res);
                 case 'dichiarazione': return await gestisciDichiarazione(corpo, res);
+                case 'accedi-estji': return await gestisciAccessoEstji(req, corpo, res);
                 case 'aggiorna':
+                case 'nuovo-codice':
                 case 'elimina':
                 case 'verifica': return await gestisciRedazione(req, corpo, res);
                 default:

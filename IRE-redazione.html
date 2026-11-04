@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#043a96">
+<meta name="robots" content="noindex">
+<title>Redazione – Istituto per la Resilienza Economica</title>
+<link rel="icon" type="image/png" href="IRE.png">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#0f1f38;--mut:#5a6779;--line:#d9e0ea;--pri:#0b3d6e;--acc:#1d7fd6;--ok:#1b7a4b;--warn:#b26a00;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1420;--card:#152033;--ink:#e6edf7;--mut:#9aa8bd;--line:#26344d;--pri:#0a2c52;--acc:#5aaeff;--ok:#4cc38a;--warn:#e8a54a;--err:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pri);color:#fff}
+.top{max-width:1100px;margin:auto;padding:14px 18px;display:flex;align-items:center;gap:14px}
+#logo{width:48px;height:48px;border-radius:10px;background:#fff;object-fit:contain;flex:none}
+.top h1{font-size:20px;margin:0;line-height:1.2}.top small{opacity:.8;font-size:12.5px}
+.top .sp{flex:1}.top .who{font-size:13.5px;opacity:.9;text-align:right}
+.top button{background:transparent;border:1px solid rgba(255,255,255,.6);padding:6px 12px;font-size:13.5px}
+main{max-width:1100px;margin:auto;padding:22px 18px 50px}
+h2{font-size:24px;margin:0 0 4px}h3{font-size:17px;margin:22px 0 8px;color:var(--acc)}
+.sub{color:var(--mut);margin:0 0 18px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h4{margin:0 0 6px;font-size:16px}.card p{margin:0;color:var(--mut);font-size:14.5px}
+.stat b{display:block;font-size:28px;line-height:1.1}.stat span{color:var(--mut);font-size:13.5px}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mut);margin-right:6px;white-space:nowrap}
+.pill.ok{color:var(--ok);border-color:var(--ok)}.pill.warn{color:var(--warn);border-color:var(--warn)}.pill.err{color:var(--err);border-color:var(--err)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 14px}.bar input{flex:1;min-width:180px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 11px;max-width:100%}
+button{font:inherit;background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600}
+button:disabled{opacity:.6;cursor:default}
+button.sec{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+button.ok{background:var(--ok)}button.err{background:var(--err)}button.sm{padding:5px 10px;font-size:13px}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:26px;text-align:center;color:var(--mut)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:14.5px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;text-transform:uppercase;color:var(--mut);letter-spacing:.04em}
+tr.r{cursor:pointer}tr.r:hover td{background:rgba(29,127,214,.07)}
+td.n{text-align:right;white-space:nowrap}
+form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+label{display:grid;gap:4px;font-size:13.5px;color:var(--mut)}.full{grid-column:1/-1}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.back{display:inline-block;margin-bottom:12px;color:var(--acc);text-decoration:none;font-size:14px;cursor:pointer;background:none;border:0;padding:0;font-weight:400}
+.msg{border-left:4px solid var(--ok);margin:0 0 14px}.msg.e{border-color:var(--err)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 18px;font-size:14.5px}.kv span{color:var(--mut);display:block;font-size:12.5px}
+#qr{display:inline-block;background:#fff;padding:10px;border-radius:10px;min-height:220px;min-width:220px}
+.num{font:900 54px/1 ui-monospace,Menlo,monospace;color:var(--acc);margin:10px 0}
+.code{font:700 20px ui-monospace,Menlo,monospace;user-select:all}
+.view{display:none}.view.on{display:block}
+details summary{cursor:pointer;color:var(--acc);font-size:13.5px}
+footer{max-width:1100px;margin:auto;padding:0 18px 30px;color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<header><div class="top">
+<img id="logo" alt="Logo IRE">
+<div><h1>Istituto per la Resilienza Economica</h1><small>Redazione · gestione del registro imprese</small></div>
+<div class="sp"></div>
+<div class="who" id="who" hidden><span id="whoN"></span> <button id="esci" type="button">Esci</button></div>
+</div></header>
+
+<main>
+<section class="view" id="v-login">
+  <h2>Accesso alla redazione</h2>
+  <p class="sub">Accedi con Estji ID: scansiona il QR con il telefono e approva la richiesta.</p>
+  <div class="card" style="max-width:520px;text-align:center">
+    <div id="loginIdle"><button id="avvia" type="button">Accedi con Estji ID</button></div>
+    <div id="loginQr" hidden>
+      <div id="qr"></div>
+      <p id="qrLink" class="sub" style="margin:8px 0 0"></p>
+      <div id="numBox" hidden><p class="sub" style="margin:10px 0 0">Sul telefono scegli questo numero:</p><div class="num" id="num"></div></div>
+      <p id="loginSt" class="sub" style="margin-top:8px">In attesa dell’approvazione dal telefono…</p>
+      <button id="annulla" type="button" class="sec sm">Annulla</button>
+    </div>
+  </div>
+  <div id="loginErr" style="margin-top:14px"></div>
+</section>
+
+<section class="view" id="v-lista">
+  <h2>Registro imprese</h2>
+  <p class="sub">Richieste di iscrizione, imprese iscritte e dichiarazioni patrimoniali.</p>
+  <div class="grid" id="stat"></div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Cerca per nome, settore, Stato Sociale, referente…">
+    <select id="fe"><option value="">Tutti gli esiti</option><option>In istruttoria</option><option>Iscritta</option><option>Respinta</option></select>
+    <select id="fd"><option value="">Tutte le dichiarazioni</option><option value="da">Con dichiarazioni da verificare</option><option value="nessuna">Senza dichiarazioni</option></select>
+    <button id="ricarica" type="button" class="sec">Ricarica</button>
+  </div>
+  <div id="lista"></div>
+</section>
+
+<section class="view" id="v-dett"></section>
+</main>
+<footer>Area riservata alla redazione IRE. Le azioni sono registrate nello storico del repository con il tuo nome utente.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ===== CONFIGURAZIONE ===== */
+const CFG={
+  IRE_API:"/api/ire",
+  ESTJI_API:"https://ews-rose.vercel.app/api/estji",   /* endpoint di Estji ID (ISS + /api/estji) */
+  CLIENT_ID:"ire",                                      /* deve coincidere con IRE_CLIENT_ID sul server e con PORTALI in _idstore.js */
+  SCOPES:["ire.redazione"],                             /* deve coincidere con IRE_SCOPE sul server */
+  ICONA:"https://ews-rose.vercel.app/IRE.png",
+  CHIAVE:"ire_sessione"
+};
+/* ========================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fd=d=>{if(!d)return"—";const x=new Date(d);return isNaN(x)?String(d):x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"})};
+const eur=n=>Number(n||0).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2});
+const classeLbl=c=>c==="strategica"?"Interesse strategico unitario":"Proprietà dei lavoratori";
+const pillEsito=e=>`<span class="pill ${e==="Iscritta"?"ok":e==="Respinta"?"err":"warn"}">${esc(e)}</span>`;
+const pillDich=s=>`<span class="pill ${s==="Verificata"?"ok":s==="Respinta"?"err":"warn"}">${esc(s)}</span>`;
+$("#logo").src=CFG.ICONA;
+
+/* ---------- sessione ---------- */
+let SESS=null,IMPRESE=[];
+try{SESS=JSON.parse(sessionStorage.getItem(CFG.CHIAVE)||"null");if(!SESS||!SESS.token)SESS=null}catch(e){SESS=null}
+function salvaSess(s){SESS=s;try{sessionStorage.setItem(CFG.CHIAVE,JSON.stringify(s))}catch(e){}}
+function esci(msg){SESS=null;IMPRESE=[];try{sessionStorage.removeItem(CFG.CHIAVE)}catch(e){}
+  $("#who").hidden=true;show("login");$("#loginErr").innerHTML=msg?`<div class="card msg e"><p>${esc(msg)}</p></div>`:""}
+$("#esci").onclick=()=>esci();
+
+async function api(corpo){
+  const r=await fetch(CFG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SESS.token},body:JSON.stringify(corpo)});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401){esci("Sessione scaduta: accedi di nuovo.");throw new Error("Sessione scaduta.")}
+  if(!r.ok||j.success===false)throw new Error(j.message||"HTTP "+r.status);
+  return j;
+}
+async function carica(){
+  const r=await fetch(CFG.IRE_API,{cache:"no-store",headers:{"Authorization":"Bearer "+SESS.token}});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.message||"HTTP "+r.status);
+  IMPRESE=j.imprese||[];
+  /* se il token non è più valido il server risponde con la vista pubblica (senza referente/dataRichiesta) */
+  if(IMPRESE.length&&!("dataRichiesta" in IMPRESE[0]))return esci("Sessione scaduta: accedi di nuovo.");
+}
+
+/* ---------- accesso con Estji ID (QR) ---------- */
+let poll=null,verifier=null,richiestaId=null,scade=0;
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+async function sha256(t){return hex(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))}
+function fermaLogin(){clearInterval(poll);poll=null;$("#loginQr").hidden=true;$("#loginIdle").hidden=false;$("#qr").innerHTML="";$("#numBox").hidden=true}
+function errLogin(m){$("#loginErr").innerHTML=`<div class="card msg e"><p>${esc(m)}</p></div>`}
+
+$("#avvia").onclick=async()=>{
+  $("#loginErr").innerHTML="";const b=$("#avvia");b.disabled=true;
+  try{
+    verifier=hex(crypto.getRandomValues(new Uint8Array(32)));
+    const r=await fetch(CFG.ESTJI_API,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({azione:"richiedi",client_id:CFG.CLIENT_ID,scopes:CFG.SCOPES,vh:await sha256(verifier)})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error||"Estji ID non raggiungibile (HTTP "+r.status+").");
+    richiestaId=j.id;scade=Date.now()+(j.expires_in||120)*1000;
+    $("#loginIdle").hidden=true;$("#loginQr").hidden=false;
+    $("#qr").innerHTML="";
+    if(window.QRCode)new QRCode($("#qr"),{text:j.qr_payload,width:200,height:200});
+    $("#qrLink").innerHTML=`Dal telefono: <a href="${esc(j.qr_payload)}" target="_blank" rel="noopener">apri il link di approvazione</a>`;
+    $("#numBox").hidden=j.numero==null;if(j.numero!=null)$("#num").textContent=j.numero;
+    $("#loginSt").textContent="In attesa dell’approvazione dal telefono…";
+    poll=setInterval(controlla,2000);
+  }catch(e){errLogin(e.message)}finally{b.disabled=false}
+};
+$("#annulla").onclick=fermaLogin;
+
+async function controlla(){
+  if(Date.now()>scade){fermaLogin();return errLogin("QR scaduto: generane uno nuovo.")}
+  try{
+    const r=await fetch(CFG.ESTJI_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"stato",id:richiestaId,verifier})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error||"HTTP "+r.status);
+    if(j.stato==="attesa")return;
+    clearInterval(poll);poll=null;
+    if(j.stato==="scaduta"){fermaLogin();return errLogin("QR scaduto: generane uno nuovo.")}
+    if(j.stato==="rifiutata"){fermaLogin();return errLogin("Richiesta rifiutata dal telefono.")}
+    if(j.stato==="approvata"){
+      $("#loginSt").textContent="Approvato. Accesso in corso…";
+      const a=await fetch(CFG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"accedi-estji",id_token:j.id_token})});
+      const x=await a.json().catch(()=>({}));
+      if(!a.ok||!x.success)throw new Error(x.message||"HTTP "+a.status);
+      salvaSess({token:x.token,username:x.username});fermaLogin();await avvia();
+    }
+  }catch(e){fermaLogin();errLogin(e.message)}
+}
+
+/* ---------- viste ---------- */
+function show(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));scrollTo(0,0)}
+async function avvia(){
+  if(!SESS)return show("login");
+  $("#who").hidden=false;$("#whoN").textContent=SESS.username||"";
+  try{await carica()}catch(e){if(SESS){show("lista");$("#lista").innerHTML=`<div class="card msg e"><p>${esc(e.message)}</p></div>`}return}
+  if(!SESS)return;
+  routa();
+}
+const ultimaDich=i=>(i.dichiarazioni||[])[0]||null;
+const nDaVerificare=i=>(i.dichiarazioni||[]).filter(d=>d.stato==="Da verificare").length;
+
+function renderLista(){
+  const c=e=>IMPRESE.filter(i=>i.esito===e).length;
+  const dv=IMPRESE.reduce((n,i)=>n+nDaVerificare(i),0);
+  $("#stat").innerHTML=[["In istruttoria",c("In istruttoria")],["Iscritte",c("Iscritta")],["Respinte",c("Respinta")],["Dichiarazioni da verificare",dv]]
+    .map(([l,n])=>`<div class="card stat"><b>${n}</b><span>${l}</span></div>`).join("");
+  const q=$("#q").value.toLowerCase(),fe=$("#fe").value,fdc=$("#fd").value;
+  const r=IMPRESE.filter(i=>(!fe||i.esito===fe)
+    &&(!fdc||(fdc==="da"?nDaVerificare(i)>0:!(i.dichiarazioni||[]).length))
+    &&(!q||[i.nome,i.settore,i.stato,i.referente,i.id].join(" ").toLowerCase().includes(q)))
+    .sort((a,b)=>(a.esito==="In istruttoria"?0:1)-(b.esito==="In istruttoria"?0:1)||String(b.dataRichiesta).localeCompare(String(a.dataRichiesta)));
+  if(!r.length){$("#lista").innerHTML=`<div class="empty">${IMPRESE.length?"Nessun risultato.":"Nessuna impresa nel registro."}</div>`;return}
+  $("#lista").innerHTML=`<div class="tw"><table><tr><th>Impresa</th><th>Classe</th><th>Stato Sociale</th><th class="n">Lav.</th><th>Richiesta</th><th>Dichiarazioni</th><th>Esito</th></tr>`
+   +r.map(i=>{const n=nDaVerificare(i),u=ultimaDich(i);
+    return `<tr class="r" data-id="${esc(i.id)}"><td><b>${esc(i.nome)}</b><br><span style="color:var(--mut);font-size:13px">${esc(i.settore)}</span></td><td>${classeLbl(i.classe)}</td><td>${esc(i.stato)}</td><td class="n">${esc(i.lavoratori)}</td><td>${fd(i.dataRichiesta)}</td>`
+    +`<td>${u?`${u.anno}${n?` <span class="pill warn">${n} da verificare</span>`:""}`:"—"}</td><td>${pillEsito(i.esito)}</td></tr>`}).join("")+`</table></div>`;
+  $("#lista").querySelectorAll("tr.r").forEach(t=>t.onclick=()=>{location.hash="#imp-"+t.dataset.id});
+}
+["q"].forEach(k=>$("#"+k).oninput=renderLista);$("#fe").onchange=renderLista;$("#fd").onchange=renderLista;
+$("#ricarica").onclick=async()=>{try{await carica();renderLista()}catch(e){$("#lista").innerHTML=`<div class="card msg e"><p>${esc(e.message)}</p></div>`}};
+
+function esito(msg,errore){const o=$("#dEsito");if(o)o.innerHTML=`<div class="card msg ${errore?"e":""}"><p>${msg}</p></div>`}
+
+function renderDett(id){
+  const i=IMPRESE.find(x=>x.id===id);
+  if(!i){$("#v-dett").innerHTML=`<button class="back" onclick="location.hash='#lista'">← Tutte le imprese</button><div class="empty">Impresa non trovata.</div>`;return}
+  const sel=(v,l)=>`<option${v===l?" selected":""}>${l}</option>`;
+  const dich=(i.dichiarazioni||[]).map(d=>`<tr><td><b>${d.anno}</b><br><span style="color:var(--mut);font-size:12.5px">${fd(d.data)}</span></td>
+    <td class="n">${eur(d.liquidita)}</td><td class="n">${eur(d.beni)}</td><td class="n">${eur(d.crediti)}</td><td class="n">${eur(d.debiti)}</td>
+    <td class="n"><b>${eur(d.attivo)}</b></td><td class="n"><b style="color:${d.patrimonioNetto<0?"var(--err)":"var(--ok)"}">${eur(d.patrimonioNetto)}</b></td>
+    <td>${pillDich(d.stato)}${(d.descrizioneBeni||d.note)?`<details><summary>Dettagli</summary>${d.descrizioneBeni?`<p><b>Beni:</b> ${esc(d.descrizioneBeni).replace(/\n/g,"<br>")}</p>`:""}${d.note?`<p><b>Note:</b> ${esc(d.note).replace(/\n/g,"<br>")}</p>`:""}</details>`:""}</td>
+    <td><div class="acts">${["Verificata","Respinta","Da verificare"].filter(s=>s!==d.stato).map(s=>`<button type="button" class="sm ${s==="Verificata"?"ok":s==="Respinta"?"err":"sec"}" data-v="${d.anno}|${s}">${s==="Da verificare"?"Rimetti in verifica":s==="Verificata"?"Verifica":"Respingi"}</button>`).join("")}</div></td></tr>`).join("");
+  $("#v-dett").innerHTML=`<button class="back" onclick="location.hash='#lista'">← Tutte le imprese</button>
+  <h2>${esc(i.nome)} ${pillEsito(i.esito)}</h2><p class="sub">${esc(i.id)}</p>
+  <div id="dEsito"></div>
+  <div class="card"><div class="kv">
+    <div><span>Stato Sociale</span>${esc(i.stato)}</div><div><span>Referente</span>${esc(i.referente)}</div>
+    <div><span>Richiesta del</span>${fd(i.dataRichiesta)}</div><div><span>Iscritta il</span>${fd(i.dataIscrizione)}</div></div></div>
+  <h3>Valutazione della richiesta</h3>
+  <div class="acts"><button type="button" class="ok" data-e="Iscritta"${i.esito==="Iscritta"?" disabled":""}>Iscrivi all’anagrafe</button>
+  <button type="button" class="err" data-e="Respinta"${i.esito==="Respinta"?" disabled":""}>Respingi</button>
+  <button type="button" class="sec" data-e="In istruttoria"${i.esito==="In istruttoria"?" disabled":""}>Rimetti in istruttoria</button></div>
+  <h3>Dati dell’impresa</h3>
+  <form id="fm"><label>Nome<input name="nome" value="${esc(i.nome)}" required maxlength="120"></label>
+  <label>Settore<input name="settore" value="${esc(i.settore)}" required maxlength="80"></label>
+  <label>Lavoratori<input name="lavoratori" type="number" min="1" value="${esc(i.lavoratori)}" required></label>
+  <label>Classe<select name="classe"><option value="lavoratori"${i.classe==="lavoratori"?" selected":""}>Proprietà dei lavoratori</option><option value="strategica"${i.classe==="strategica"?" selected":""}>Interesse strategico unitario</option></select></label>
+  <label>Comitato dei Lavoratori<select name="comitato">${sel(i.comitato,"Costituito")}${sel(i.comitato,"Da costituire")}</select></label>
+  <label class="full">Note<textarea name="note" rows="3" maxlength="1000">${esc(i.note)}</textarea></label>
+  <div class="full"><button type="submit">Salva modifiche</button></div></form>
+  <h3>Dichiarazioni patrimoniali</h3>
+  ${dich?`<div class="tw"><table><tr><th>Anno</th><th class="n">Liquidità</th><th class="n">Beni</th><th class="n">Crediti</th><th class="n">Debiti</th><th class="n">Attivo</th><th class="n">Netto</th><th>Stato</th><th></th></tr>${dich}</table></div>`:`<div class="empty">Nessuna dichiarazione presentata.</div>`}
+  <h3>Altre azioni</h3>
+  <div class="acts"><button type="button" class="sec" id="nc">Genera nuovo codice di riferimento</button><button type="button" class="err" id="del">Elimina impresa</button></div>
+  <p class="sub" style="margin-top:8px">Il nuovo codice sostituisce il precedente (che smette di funzionare) e viene mostrato una sola volta: comunicalo al referente.</p>`;
+
+  const finisci=async(testo)=>{await carica();if(!SESS)return;renderDett(id);esito(testo)};
+  $("#v-dett").querySelectorAll("[data-e]").forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{await api({azione:"aggiorna",id,campi:{esito:b.dataset.e}});await finisci("Esito aggiornato: <b>"+esc(b.dataset.e)+"</b>.")}
+    catch(e){esito(esc(e.message),true);b.disabled=false}});
+  $("#fm").onsubmit=async ev=>{ev.preventDefault();const d=Object.fromEntries(new FormData(ev.target)),b=ev.target.querySelector("button");b.disabled=true;
+    try{await api({azione:"aggiorna",id,campi:{nome:d.nome,settore:d.settore,lavoratori:d.lavoratori,classe:d.classe,comitato:d.comitato,note:d.note}});await finisci("Modifiche salvate.")}
+    catch(e){esito(esc(e.message),true);b.disabled=false}};
+  $("#v-dett").querySelectorAll("[data-v]").forEach(b=>b.onclick=async()=>{const[anno,stato]=b.dataset.v.split("|");b.disabled=true;
+    try{await api({azione:"verifica",id,anno:+anno,stato});await finisci("Dichiarazione "+anno+": <b>"+esc(stato)+"</b>.")}
+    catch(e){esito(esc(e.message),true);b.disabled=false}});
+  $("#nc").onclick=async()=>{if(!confirm("Generare un nuovo codice? Il vecchio non funzionerà più."))return;
+    try{const j=await api({azione:"nuovo-codice",id});esito(`Nuovo codice (mostrato una sola volta):<br><span class="code">${esc(j.codice)}</span>`)}
+    catch(e){esito(esc(e.message),true)}};
+  $("#del").onclick=async()=>{if(!confirm("Eliminare definitivamente «"+i.nome+"» e tutte le sue dichiarazioni?"))return;
+    try{await api({azione:"elimina",id});await carica();location.hash="#lista";routa()}
+    catch(e){esito(esc(e.message),true)}};
+}
+
+function routa(){
+  if(!SESS)return show("login");
+  const h=(location.hash||"#lista").slice(1);
+  if(h.startsWith("imp-")){renderDett(h.slice(4));show("dett")}
+  else{renderLista();show("lista")}
+}
+addEventListener("hashchange",routa);
+avvia();
+</script>
+</body>
+</html>
