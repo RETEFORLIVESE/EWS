@@ -16,7 +16,7 @@ const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove v
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
-const SCRIPT = /\.(m?js|cjs|jsx|ts|map)$/i;                  // i file di codice non si cercano e non si leggono
+const SCRIPT = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map)$/i;   // codice e stili (.js, .css...): mai cercati, mai letti, mai nei risultati
 // Dati di DATA che si cercano come "schede": ognuna descrive dove sta la lista nel JSON,
 // come si presenta il risultato e a quale pagina del SITO rimanda.
 const via = (...v) => v.filter(Boolean).join(' · ');
