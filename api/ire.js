@@ -7,6 +7,9 @@
 //                                            "codice di riferimento" mostrato UNA volta sola.
 //   POST { azione: "dichiarazione", id, codice, dichiarazione: {...} }
 //                                         -> dichiarazione patrimoniale (pubblica, ma protetta dal codice).
+//   POST { azione: "richiesta", tipo: fondo|assistenza|trasformazione, id, codice, richiesta: {...} }
+//                                         -> Legge 12/2026 artt. 13, 14, 18 (pubblica, protetta dal codice).
+//   POST { azione: "richiesta-stato", id, richiestaId, stato, note } -> gestione IRE.
 //   POST { azione: "accedi-estji", id_token } -> accesso della redazione con Estji ID (QR): verifica l'id_token
 //                                            e rilascia un token di sessione con ambito "ire".
 //   POST { azione: "aggiorna", id, campi } / { azione: "elimina", id } /
@@ -36,7 +39,22 @@ const CLIENT_ID = process.env.IRE_CLIENT_ID || 'ire';                 // ID del 
 const SCOPE_REDAZIONE = process.env.IRE_SCOPE || 'ire.edit';     // permesso Estji ID richiesto alla redazione
 const MAX_IN_ISTRUTTORIA = 300;         // freno anti-spam sulle richieste pubbliche in attesa
 const CLASSI = ['strategica', 'lavoratori'];
-const ESITI = ['In istruttoria', 'Iscritta', 'Respinta'];
+const ESITI = ['In istruttoria', 'Iscritta', 'Respinta', 'In liquidazione', 'Sciolta'];
+// Legge 12/2026 (cooperative e collettivi)
+const FORME = ['Cooperativa', 'Collettivo di lavoratori', 'Consorzio cooperativo', 'Altra impresa'];
+const MIN_SOCI = { 'Cooperativa': 5, 'Collettivo di lavoratori': 3 };   // art. 5 c.1 e art. 16 c.2
+const TIPOLOGIE = ['Produzione e lavoro', 'Agricola', 'Consumo', 'Credito', 'Sociale', 'Abitazione'];   // art. 7
+const ATTI_COSTITUTIVI = ['Atto pubblico', 'Scrittura privata autenticata'];   // art. 5 c.3
+const MOTIVI_SCIOGLIMENTO = ['Deliberazione dell’Assemblea dei soci', 'Impossibilità di raggiungere lo scopo sociale', 'Gravi violazioni della legge o dello statuto', 'Perdita del numero minimo di soci'];   // art. 21 c.1
+const AGEVOLAZIONI = ['Finanziamento a tasso agevolato', 'Garanzia per operazioni di credito', 'Contributo per progetto di innovazione'];   // art. 13 c.3
+const ASSISTENZE = ['Consulenza legale', 'Consulenza amministrativa', 'Consulenza finanziaria', 'Consulenza tecnica', 'Formazione professionale', 'Pianificazione e marketing'];   // art. 14 c.1
+const TIPI_RICHIESTA = ['fondo', 'assistenza', 'trasformazione'];
+const STATI_RICHIESTA = ['Ricevuta', 'In istruttoria', 'Accolta', 'Respinta'];
+const formaDi = i => i.forma || 'Altra impresa';
+function scelta(v, lista, etichetta) {
+    if (!lista.includes(v)) throw new ErroreHttp(400, `${etichetta} non valido.`);
+    return v;
+}
 
 class ErroreHttp extends Error {
     constructor(status, message) { super(message); this.status = status; }
@@ -131,6 +149,7 @@ function vistaPubblica(i) {
     return {
         id: i.id, nome: i.nome, classe: i.classe, settore: i.settore, stato: i.stato,
         lavoratori: i.lavoratori, comitato: i.comitato, esito: i.esito,
+        forma: formaDi(i), tipologia: i.tipologia || '',
         dichiarazioneAnno: ultima || null
     };
 }
@@ -172,6 +191,24 @@ async function gestisciIscrivi(corpo, res) {
     const referente = testo(corpo.referente, 80, true, 'Referente');
     const note = testoLungo(corpo.note, 1000, 'Note');
 
+    const forma = scelta(corpo.forma || 'Altra impresa', FORME, 'Forma');
+    if (MIN_SOCI[forma] && lavoratori < MIN_SOCI[forma]) {
+        throw new ErroreHttp(400, `Numero minimo di lavoratori per ${forma === 'Cooperativa' ? 'una cooperativa' : 'un collettivo'}: ${MIN_SOCI[forma]}.`);
+    }
+    let tipologia = '', oggetto = '', atto = '', documento = '', attestazione = false;
+    if (forma === 'Cooperativa') {
+        tipologia = scelta(corpo.tipologia, TIPOLOGIE, 'Tipologia di cooperativa');
+        oggetto = testoLungo(corpo.oggetto, 500, 'Oggetto sociale');
+        if (!oggetto) throw new ErroreHttp(400, 'Campo obbligatorio mancante: Oggetto sociale.');
+        atto = scelta(corpo.atto, ATTI_COSTITUTIVI, 'Atto costitutivo');
+    }
+    if (MIN_SOCI[forma]) {
+        if (!corpo.attestazione) throw new ErroreHttp(400, 'Devi confermare la dichiarazione sui requisiti (artt. 5 e 16 della Legge 12/2026).');
+        attestazione = true;
+        documento = testo(corpo.documento, 300, false, 'Link al documento');
+        if (documento && !/^https?:\/\//i.test(documento)) throw new ErroreHttp(400, 'Il link al documento deve iniziare con http:// o https://.');
+    }
+
     const codiceStato = testo(corpo.stato, 80, true, 'Stato Sociale');
     const nomeStato = await risolviStato(codiceStato);
     if (!nomeStato) throw new ErroreHttp(400, 'Stato Sociale non riconosciuto.');
@@ -187,6 +224,7 @@ async function gestisciIscrivi(corpo, res) {
         if (gia) throw new ErroreHttp(409, 'Esiste già un’impresa con questo nome nel registro o in istruttoria.');
         imprese.push({
             id, nome, settore, classe, stato: nomeStato, statoCodice: codiceStato, lavoratori, comitato,
+            forma, tipologia, oggetto, atto, documento, attestazione, richieste: [],
             referente, note, esito: 'In istruttoria',
             dataRichiesta: new Date().toISOString(), dataIscrizione: null,
             codiceHash: hashCodice(codice), dichiarazioni: []
@@ -218,6 +256,7 @@ async function gestisciDichiarazione(corpo, res) {
             throw new ErroreHttp(403, 'Impresa o codice di riferimento non validi.');
         }
         if (imp.esito === 'Respinta') throw new ErroreHttp(403, 'La richiesta di iscrizione di questa impresa è stata respinta.');
+        if (imp.esito === 'Sciolta') throw new ErroreHttp(403, 'Questa impresa è stata sciolta.');
         nome = imp.nome;
         if (!Array.isArray(imp.dichiarazioni)) imp.dichiarazioni = [];
         const nuova = {
@@ -230,6 +269,48 @@ async function gestisciDichiarazione(corpo, res) {
     }, `Dichiarazione patrimoniale ${anno}: ${corpo.id}`);
 
     return res.status(200).json({ success: true, nome, anno, attivo, passivo: debiti, patrimonioNetto });
+}
+
+// Richieste di imprese già nel registro (protette dal codice): Fondo di rotazione (art. 13),
+// assistenza tecnica (art. 14), trasformazione di un collettivo in cooperativa (art. 18).
+async function gestisciRichiesta(corpo, res) {
+    const tipo = scelta(corpo.tipo, TIPI_RICHIESTA, 'Tipo di richiesta');
+    const r = corpo.richiesta || {};
+    const dettagli = {};
+    if (tipo === 'fondo') {
+        dettagli.agevolazione = scelta(r.agevolazione, AGEVOLAZIONI, 'Tipo di agevolazione');
+        dettagli.importo = numero(r.importo, 'Importo');
+        dettagli.finalita = testoLungo(r.finalita, 1000, 'Finalità');
+        if (!dettagli.finalita) throw new ErroreHttp(400, 'Campo obbligatorio mancante: Finalità.');
+    } else if (tipo === 'assistenza') {
+        dettagli.servizio = scelta(r.servizio, ASSISTENZE, 'Servizio');
+        dettagli.descrizione = testoLungo(r.descrizione, 1000, 'Descrizione');
+        if (!dettagli.descrizione) throw new ErroreHttp(400, 'Campo obbligatorio mancante: Descrizione.');
+    } else {
+        dettagli.tipologia = scelta(r.tipologia, TIPOLOGIE, 'Tipologia di cooperativa');
+        dettagli.lavoratori = Math.floor(Number(r.lavoratori));
+        if (!(dettagli.lavoratori >= MIN_SOCI['Cooperativa'])) throw new ErroreHttp(400, `Una cooperativa richiede almeno ${MIN_SOCI['Cooperativa']} lavoratori (art. 5).`);
+        if (!r.deliberata) throw new ErroreHttp(400, 'Devi confermare che la trasformazione è stata deliberata a maggioranza dei lavoratori (art. 18, c. 2).');
+    }
+    let nome = '', idRichiesta = 'ric-' + crypto.randomBytes(4).toString('hex');
+    await modifica(imprese => {
+        const imp = imprese.find(i => i.id === corpo.id);
+        if (!imp || !codiceUguale(corpo.codice, imp.codiceHash)) throw new ErroreHttp(403, 'Impresa o codice di riferimento non validi.');
+        if (imp.esito === 'Respinta' || imp.esito === 'Sciolta') throw new ErroreHttp(403, 'Impresa non abilitata a presentare richieste.');
+        if (tipo === 'fondo' && !(formaDi(imp) === 'Cooperativa' && imp.esito === 'Iscritta')) {
+            throw new ErroreHttp(403, 'Il Fondo di rotazione è riservato alle cooperative iscritte all’Anagrafe (artt. 8 e 13).');
+        }
+        if (tipo === 'trasformazione' && formaDi(imp) !== 'Collettivo di lavoratori') {
+            throw new ErroreHttp(403, 'Solo un collettivo di lavoratori può trasformarsi in cooperativa (art. 18).');
+        }
+        if (!Array.isArray(imp.richieste)) imp.richieste = [];
+        if (imp.richieste.filter(x => x.stato === 'Ricevuta' || x.stato === 'In istruttoria').length >= 10) {
+            throw new ErroreHttp(429, 'Troppe richieste in attesa per questa impresa.');
+        }
+        nome = imp.nome;
+        imp.richieste.unshift({ id: idRichiesta, tipo, data: new Date().toISOString(), dettagli, stato: 'Ricevuta', note: '' });
+    }, `Richiesta ${tipo} IRE: ${corpo.id}`);
+    return res.status(200).json({ success: true, nome, idRichiesta });
 }
 
 async function gestisciAccessoEstji(req, corpo, res) {
@@ -264,6 +345,17 @@ async function gestisciRedazione(req, corpo, res) {
         } else if (corpo.azione === 'nuovo-codice') {
             codiceNuovo = nuovoCodice();           // il vecchio codice smette di funzionare
             imp.codiceHash = hashCodice(codiceNuovo);
+        } else if (corpo.azione === 'richiesta-stato') {
+            const ric = (imp.richieste || []).find(x => x.id === corpo.richiestaId);
+            if (!ric) throw new ErroreHttp(404, 'Richiesta non trovata.');
+            ric.stato = scelta(corpo.stato, STATI_RICHIESTA, 'Stato');
+            if (corpo.note !== undefined) ric.note = testoLungo(corpo.note, 500, 'Note');
+            if (ric.tipo === 'trasformazione' && ric.stato === 'Accolta') {   // art. 18 c.3: personalità giuridica e agevolazioni
+                imp.forma = 'Cooperativa';
+                imp.tipologia = ric.dettagli.tipologia;
+                imp.lavoratori = ric.dettagli.lavoratori;
+                imp.dataTrasformazione = new Date().toISOString();
+            }
         } else if (corpo.azione === 'verifica') {
             const dich = (imp.dichiarazioni || []).find(x => x.anno === Number(corpo.anno));
             if (!dich) throw new ErroreHttp(404, 'Dichiarazione non trovata.');
@@ -271,8 +363,22 @@ async function gestisciRedazione(req, corpo, res) {
             dich.stato = corpo.stato;
         } else {   // aggiorna
             const c = corpo.campi || {};
+            if (c.forma !== undefined) imp.forma = scelta(c.forma, FORME, 'Forma');
+            if (c.tipologia !== undefined) imp.tipologia = c.tipologia ? scelta(c.tipologia, TIPOLOGIE, 'Tipologia') : '';
+            if (c.registrazioneCEFS !== undefined) imp.registrazioneCEFS = testo(c.registrazioneCEFS, 120, false, 'Riferimento CEFS');
+            if (c.scioglimento !== undefined) {   // art. 21
+                const sc = c.scioglimento || {};
+                imp.scioglimento = {
+                    motivo: sc.motivo ? scelta(sc.motivo, MOTIVI_SCIOGLIMENTO, 'Motivo') : '',
+                    liquidatore: testo(sc.liquidatore, 120, false, 'Liquidatore'),
+                    destinazionePatrimonio: testo(sc.destinazionePatrimonio, 300, false, 'Destinazione del patrimonio')
+                };
+            }
             if (c.esito !== undefined) {
                 if (!ESITI.includes(c.esito)) throw new ErroreHttp(400, 'Esito non valido.');
+                if ((c.esito === 'In liquidazione' || c.esito === 'Sciolta') && formaDi(imp) !== 'Cooperativa') {
+                    throw new ErroreHttp(400, 'Lo scioglimento riguarda solo le cooperative (art. 21).');
+                }
                 if (c.esito === 'Iscritta' && imp.esito !== 'Iscritta') imp.dataIscrizione = new Date().toISOString();
                 imp.esito = c.esito;
             }
@@ -308,6 +414,8 @@ export default async function handler(req, res) {
                 case 'iscrivi': return await gestisciIscrivi(corpo, res);
                 case 'dichiarazione': return await gestisciDichiarazione(corpo, res);
                 case 'accedi-estji': return await gestisciAccessoEstji(req, corpo, res);
+                case 'richiesta': return await gestisciRichiesta(corpo, res);
+                case 'richiesta-stato':
                 case 'aggiorna':
                 case 'nuovo-codice':
                 case 'elimina':

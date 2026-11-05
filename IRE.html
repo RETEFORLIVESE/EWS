@@ -64,7 +64,7 @@ a{color:var(--acc)}
 
 <main>
 <section class="view" id="v-home"></section><section class="view" id="v-istituto"></section>
-<section class="view" id="v-registro"></section><section class="view" id="v-iscrizione"></section><section class="view" id="v-patrimoniale"></section>
+<section class="view" id="v-cooperative"></section><section class="view" id="v-richieste"></section><section class="view" id="v-registro"></section><section class="view" id="v-iscrizione"></section><section class="view" id="v-patrimoniale"></section>
 <section class="view" id="v-atti"></section><section class="view" id="v-servizi"></section>
 <section class="view" id="v-trasparenza"></section><section class="view" id="v-dettaglio"></section>
 </main>
@@ -96,7 +96,7 @@ const CONFIG = {
      Se IRE.html NON sta sullo stesso dominio dell'API, scrivi l'URL completo
      (es. "https://ews-rose.vercel.app/api/atti"). */
   ATTI_API: "/api/atti",
-  ATTI_IDS: ["testo-unico-sulla-gestione-industriale","legge-unitaria-sulla-gestione-delle-industrie"],
+  ATTI_IDS: ["testo-unico-sulla-gestione-industriale","legge-unitaria-sulla-gestione-delle-industrie","legge-sulle-cooperative-popolari-e-collettivi-di-lavoratori"],
   LEX_URL: "https://ews-rose.vercel.app/lex/atto.html?id=",
 
   /* Link aggiuntivi (facoltativi): restano supportati come prima. */
@@ -104,7 +104,7 @@ const CONFIG = {
   ],
 
   /* AVVISI in home: { data:"2026-02-01", testo:"…" } */
-  AVVISI: [],
+  AVVISI: [{ data:"2026-02-05", testo:"Legge 12/2026 sulle Cooperative Popolari e i Collettivi di Lavoratori: le cooperative e i collettivi esistenti devono adeguarsi entro sei mesi dall’entrata in vigore (art. 22). L’AUPI fornisce assistenza tecnica per l’adeguamento; l’IRE gestisce il Fondo di rotazione e l’assistenza tecnica." }],
 
   /* REGISTRO IMPRESE (anagrafe, art. 16 c.3):
      { nome:"", classe:"strategica"|"lavoratori", settore:"", stato:"", lavoratori:0,
@@ -125,10 +125,12 @@ const CONFIG = {
 const TIPI_ATTO = ["Delibera","Rapporto trimestrale","Bilancio","Indirizzo strategico","Avviso","Comunicato","Normativa di riferimento","Altro"];
 /* ===================================================================== */
 
-const SEZIONI=[["home","Home"],["istituto","L’Istituto"],["registro","Registro imprese"],["iscrizione","Iscrizione"],["patrimoniale","Dichiarazione patrimoniale"],["atti","Atti e pubblicazioni"],["servizi","Servizi"],["trasparenza","Trasparenza"]];
+const SEZIONI=[["home","Home"],["istituto","L’Istituto"],["cooperative","Cooperative e collettivi"],["richieste","Richieste"],["registro","Registro imprese"],["iscrizione","Iscrizione"],["patrimoniale","Dichiarazione patrimoniale"],["atti","Atti e pubblicazioni"],["servizi","Servizi"],["trasparenza","Trasparenza"]];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fd=d=>{if(!d)return"";const x=new Date(d);return isNaN(x)?String(d):x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"})};
+const TIPOLOGIE=["Produzione e lavoro","Agricola","Consumo","Credito","Sociale","Abitazione"];
+const opt=l=>l.map(x=>`<option>${esc(x)}</option>`).join("");
 const classeLbl=c=>c==="strategica"?"Interesse strategico unitario":"Proprietà dei lavoratori";
 const pick=(o,ks)=>{for(const k of ks){if(o&&o[k]!=null&&o[k]!=="")return o[k]}return""};
 
@@ -220,6 +222,8 @@ $("#v-home").innerHTML=`<span class="tag">Ente pubblico economico</span>
 <div class="grid">
 <a class="card" href="#registro"><div class="ico">🗂️</div><h4>Registro imprese</h4><p>Anagrafe unitaria delle imprese e dei beni collettivi.</p></a>
 <a class="card" href="#iscrizione"><div class="ico">📝</div><h4>Iscrizione impresa</h4><p>Richiedi la registrazione di una nuova impresa.</p></a>
+<a class="card" href="#cooperative"><div class="ico">🤝</div><h4>Cooperative e collettivi</h4><p>Come costituirli, requisiti e regole (Legge 12/2026).</p></a>
+<a class="card" href="#richieste"><div class="ico">💶</div><h4>Fondo di rotazione</h4><p>Finanziamenti, garanzie e assistenza tecnica per le cooperative.</p></a>
 <a class="card" href="#atti"><div class="ico">📑</div><h4>Atti e pubblicazioni</h4><p>Delibere, rapporti, bilanci, avvisi.</p></a>
 <a class="card" href="#servizi"><div class="ico">🤝</div><h4>Servizi alle imprese</h4><p>Consulenza, fondi, formazione, conciliazione.</p></a></div>
 <h3>Ultimi atti</h3><div id="ultimi"></div>`;
@@ -229,7 +233,7 @@ function attoRow(a){return `<a class="item" href="#atto-${a.i}"><span class="tag
 function renderUltimi(){$("#ultimi").innerHTML=attiState==="loading"?`<div class="empty">Caricamento…</div>`:ATTI.slice(0,3).map(attoRow).join("")||`<div class="empty">Nessun atto pubblicato.</div>`}
 
 /* ---------- ISTITUTO ---------- */
-$("#v-istituto").innerHTML=`<h2>L’Istituto</h2><p class="sub">Istituito dalla Legge Unitaria sulla Gestione delle Industrie (9/2026), Titolo V.</p>
+$("#v-istituto").innerHTML=`<h2>L’Istituto</h2><p class="sub">Istituito dalla Legge Unitaria sulla Gestione delle Industrie (9/2026), Titolo V. Competenze ampliate dalla Legge 12/2026 sulle cooperative e i collettivi.</p>
 <div class="art"><p><b>Natura (art. 14).</b> Ente pubblico economico con personalità giuridica e autonomia gestionale, sotto la vigilanza del Congresso Unitario e del Consiglio Centrale di Pianificazione. Subentra a Estji Industries (soppressa) per partecipazioni unitarie e servizi di supporto.</p>
 <p><b>Sede (art. 15).</b> Sede centrale a Taleen; uffici territoriali in ogni Stato Sociale, coordinati con le Sezioni Territoriali del CTSU.</p></div>
 <h3>Organi</h3><div class="grid">
@@ -240,17 +244,58 @@ $("#v-istituto").innerHTML=`<h2>L’Istituto</h2><p class="sub">Istituito dalla 
 <h3>Funzioni (art. 16)</h3><div class="grid">
 <div class="card"><h4>Industrie unitarie</h4><ul class="org"><li>Gestisce partecipazioni e quote per l’Unione</li><li>Vigila sulla conformità al piano</li><li>Propone indirizzi strategici di settore</li><li>Supporto a investimenti e ristrutturazioni</li></ul></div>
 <div class="card"><h4>Industrie dei lavoratori</h4><ul class="org"><li>Consulenza legale, amministrativa, finanziaria, tecnica</li><li>Fondi di rotazione e agevolazioni creditizie</li><li>Promozione di cooperative e reti</li><li>Formazione e innovazione</li><li>Vigilanza sulla conformità al piano</li></ul></div>
+<div class="card"><h4>Cooperative (L. 12/2026)</h4><ul class="org"><li>Gestisce il Fondo di rotazione (art. 13)</li><li>Assistenza tecnica e formazione (art. 14)</li><li>Promozione e trasformazione di imprese in cooperative (art. 15)</li><li>Segnala lo scioglimento al Congresso Statale e viene sentito sul liquidatore (art. 21)</li><li>Concorre al regolamento attuativo (art. 23)</li></ul></div>
 <div class="card"><h4>Intero sistema</h4><ul class="org"><li>Anagrafe unitaria delle imprese e dei beni collettivi</li><li>Raccolta dati per CTSU e CCP</li><li>Studi e ricerche sui settori</li></ul></div></div>`;
+
+/* ---------- COOPERATIVE E COLLETTIVI (Legge 12/2026) ---------- */
+$("#v-cooperative").innerHTML=`<h2>Cooperative e collettivi di lavoratori</h2><p class="sub">Legge 12/2026 (5 febbraio 2026): costituzione, funzionamento e sostegno. Per quanto non previsto si applica la Legge 9/2026; in caso di contrasto prevale la 12/2026 (art. 4).</p>
+<div class="grid">
+<div class="card"><h4>Cooperativa (artt. 5–8)</h4><ul class="org"><li>Almeno 5 lavoratori, di almeno 16 anni, cittadini o residenti legali</li><li>Nessuna condanna definitiva per reati contro la PA, corruzione, peculato, furto, truffa aggravata o reati finanziari</li><li>Atto pubblico o scrittura privata autenticata</li><li>Statuto depositato all’Anagrafe unitaria; modifiche a maggioranza dei due terzi</li><li>La registrazione dà personalità giuridica, accesso alle agevolazioni e partecipazione alla pianificazione; è effettuata dalla Commissione Economica e Finanziaria Statale tramite gli uffici territoriali</li></ul></div>
+<div class="card"><h4>Tipologie (art. 7)</h4><ul class="org"><li>Produzione e lavoro</li><li>Agricole</li><li>Di consumo</li><li>Di credito</li><li>Sociali</li><li>Di abitazione</li><li>Consorzi per servizi comuni</li></ul></div>
+<div class="card"><h4>Collettivo di lavoratori (artt. 16–18)</h4><ul class="org"><li>Almeno 3 lavoratori, senza personalità giuridica</li><li>Retto da un accordo collettivo e registrato all’Anagrafe</li><li>Coordinatore e, se serve, comitato di gestione</li><li>Può trasformarsi in cooperativa a maggioranza dei lavoratori: si ottengono personalità giuridica e agevolazioni</li></ul></div>
+<div class="card"><h4>Funzionamento (artt. 9–11)</h4><ul class="org"><li>Organi: Assemblea dei soci, Consiglio di amministrazione, Collegio dei revisori</li><li>Un socio, un voto; delibere a maggioranza dei presenti</li><li>Due terzi dei soci per modifiche statutarie, fusioni, scorpori e scioglimento</li><li>Utili: riserva legale, fondi di sviluppo, scopi sociali e culturali, poi ripartizione tra i soci in proporzione al lavoro prestato</li></ul></div>
+<div class="card"><h4>Controlli (artt. 19–21)</h4><ul class="org"><li>Vigilanza dell’IVIdU su corruzione, conflitti di interesse e trasparenza</li><li>Il CdA dichiara ogni anno la propria situazione patrimoniale</li><li>Relazione annuale all’Assemblea di Sezione e al Congresso Distrettuale o Metropolitano</li><li>Scioglimento deliberato dal Congresso Statale su segnalazione di IVIdU o IRE; patrimonio residuo a scopi sociali o ad altre cooperative</li></ul></div>
+<div class="card"><h4>Adeguamento (art. 22)</h4><p>Le cooperative e i collettivi esistenti si adeguano entro sei mesi dall’entrata in vigore e mantengono i benefici già concessi. Assistenza tecnica dell’AUPI.</p></div></div>
+<p class="sub" style="margin-top:16px">Le agevolazioni fiscali (art. 12) sono abrogate. Le procedure di dettaglio sono fissate dal regolamento attuativo (art. 23). <a href="#iscrizione">Richiedi l’iscrizione</a> · <a href="#richieste">Fondo e assistenza</a></p>`;
+
+/* ---------- RICHIESTE: Fondo (art. 13), assistenza (art. 14), trasformazione (art. 18) ---------- */
+$("#v-richieste").innerHTML=`<h2>Richieste all’IRE</h2><p class="sub">Per le imprese già nel registro. Serve il <b>codice di riferimento</b> ricevuto all’iscrizione. Il Fondo di rotazione è riservato alle cooperative iscritte.</p>
+<form id="fr"><label class="full">Tipo di richiesta<select name="tipo" id="rt"><option value="fondo">Fondo di rotazione</option><option value="assistenza">Assistenza tecnica</option><option value="trasformazione">Trasformazione di un collettivo in cooperativa</option></select></label>
+<label>Impresa<select name="id" id="ri" required><option value="">Caricamento…</option></select></label>
+<label>Codice di riferimento<input name="codice" required placeholder="IRE-XXXX-XXXX-XXXX" autocomplete="off"></label>
+<label data-t="fondo">Agevolazione<select name="agevolazione">${opt(["Finanziamento a tasso agevolato","Garanzia per operazioni di credito","Contributo per progetto di innovazione"])}</select></label>
+<label data-t="fondo">Importo richiesto<input name="importo" type="number" min="0" step="0.01" value="0"></label>
+<label class="full" data-t="fondo">Finalità (costituzione, sviluppo, innovazione)<textarea name="finalita" rows="3" maxlength="1000" required></textarea></label>
+<label data-t="assistenza">Servizio<select name="servizio">${opt(["Consulenza legale","Consulenza amministrativa","Consulenza finanziaria","Consulenza tecnica","Formazione professionale","Pianificazione e marketing"])}</select></label>
+<label class="full" data-t="assistenza">Di cosa hai bisogno<textarea name="descrizione" rows="3" maxlength="1000" required></textarea></label>
+<label data-t="trasformazione">Tipologia di cooperativa<select name="tipologia">${opt(TIPOLOGIE)}</select></label>
+<label data-t="trasformazione">Numero di lavoratori (minimo 5)<input name="lavoratori" type="number" min="5" required></label>
+<label class="full" data-t="trasformazione" style="display:flex;gap:8px;align-items:flex-start;color:var(--ink)"><input type="checkbox" name="deliberata" required style="margin-top:4px"><span>Dichiaro che la trasformazione è stata deliberata a maggioranza dei lavoratori (art. 18, c. 2).</span></label>
+<div class="full"><button type="submit">Invia richiesta</button></div></form><div id="outr" style="margin-top:16px"></div>`;
+function mostraTipo(){const t=$("#rt").value;document.querySelectorAll("#fr [data-t]").forEach(l=>{const on=l.dataset.t===t;l.hidden=!on;l.style.display=on?(l.querySelector("input[type=checkbox]")?"flex":""):"none";l.querySelectorAll("input,select,textarea").forEach(x=>x.disabled=!on)})}
+$("#rt").onchange=mostraTipo;mostraTipo();
+$("#fr").onsubmit=async e=>{e.preventDefault();
+ const f=e.target,d=Object.fromEntries(new FormData(f)),btn=f.querySelector("button[type=submit]");
+ const ric=d.tipo==="fondo"?{agevolazione:d.agevolazione,importo:d.importo,finalita:d.finalita}:d.tipo==="assistenza"?{servizio:d.servizio,descrizione:d.descrizione}:{tipologia:d.tipologia,lavoratori:d.lavoratori,deliberata:!!d.deliberata};
+ btn.disabled=true;btn.textContent="Invio in corso…";$("#outr").innerHTML="";
+ try{
+  const r=await fetch(CONFIG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"richiesta",tipo:d.tipo,id:d.id,codice:d.codice,richiesta:ric})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.success)throw new Error(j.message||"HTTP "+r.status);
+  $("#outr").innerHTML=`<div class="card" style="border-left:4px solid var(--ok)"><h4>Richiesta registrata</h4><p>${esc(j.nome)}: richiesta ricevuta. Riferimento <b>${esc(j.idRichiesta)}</b>. L’IRE la valuterà e la redazione ti contatterà.</p></div>`;
+  f.elements.codice.value="";
+ }catch(err){$("#outr").innerHTML=`<div class="card" style="border-left:4px solid var(--err)"><p>${esc(err.message)}</p></div>`}
+ finally{btn.disabled=false;btn.textContent="Invia richiesta"}};
 
 /* ---------- REGISTRO ---------- */
 let IMPRESE=[...CONFIG.IMPRESE];
-$("#v-registro").innerHTML=`<h2>Registro imprese</h2><p class="sub">Anagrafe unitaria delle imprese e dei beni collettivi (art. 16, c. 3).</p>
-<div class="bar"><input id="rq" type="search" placeholder="Cerca per nome, settore, Stato Sociale…"><select id="rc"><option value="">Tutte le classi</option><option value="strategica">Interesse strategico unitario</option><option value="lavoratori">Proprietà dei lavoratori</option></select></div><div id="rl"></div>`;
-function renderRegistro(){const q=$("#rq").value.toLowerCase(),c=$("#rc").value;
- const r=IMPRESE.filter(i=>(!c||i.classe===c)&&(!q||[i.nome,i.settore,i.stato].join(" ").toLowerCase().includes(q)));
+$("#v-registro").innerHTML=`<h2>Registro imprese</h2><p class="sub">Anagrafe unitaria delle imprese e dei beni collettivi (L. 9/2026 art. 16, c. 3). Comprende cooperative, collettivi e consorzi cooperativi (L. 12/2026).</p>
+<div class="bar"><input id="rq" type="search" placeholder="Cerca per nome, settore, Stato Sociale…"><select id="rc"><option value="">Tutte le classi</option><option value="strategica">Interesse strategico unitario</option><option value="lavoratori">Proprietà dei lavoratori</option></select><select id="rf"><option value="">Tutte le forme</option><option>Cooperativa</option><option>Collettivo di lavoratori</option><option>Consorzio cooperativo</option><option>Altra impresa</option></select></div><div id="rl"></div>`;
+function renderRegistro(){const q=$("#rq").value.toLowerCase(),c=$("#rc").value,fo=$("#rf").value;
+ const r=IMPRESE.filter(i=>(!c||i.classe===c)&&(!fo||(i.forma||"Altra impresa")===fo)&&(!q||[i.nome,i.settore,i.stato,i.tipologia].join(" ").toLowerCase().includes(q)));
  if(!r.length){$("#rl").innerHTML=`<div class="empty">${IMPRESE.length?"Nessun risultato.":"Il registro è ancora vuoto."}</div>`;return}
- $("#rl").innerHTML=`<div class="tw"><table><tr><th>Impresa</th><th>Classe</th><th>Settore</th><th>Stato Sociale</th><th>Lavoratori</th><th>Comitato</th><th>Dich. patrimoniale</th><th>Esito</th></tr>`+r.map(i=>`<tr><td><b>${esc(i.nome)}</b></td><td>${classeLbl(i.classe)}</td><td>${esc(i.settore)}</td><td>${esc(i.stato)}</td><td>${esc(i.lavoratori)}</td><td>${esc(i.comitato)}</td><td>${i.dichiarazioneAnno?"Anno "+esc(i.dichiarazioneAnno):"—"}</td><td><span class="pill ${i.esito==="Iscritta"?"ok":"warn"}">${esc(i.esito)}</span></td></tr>`).join("")+`</table></div>`}
-$("#rq").oninput=renderRegistro;$("#rc").onchange=renderRegistro;renderRegistro();
+ $("#rl").innerHTML=`<div class="tw"><table><tr><th>Impresa</th><th>Forma</th><th>Classe</th><th>Settore</th><th>Stato Sociale</th><th>Lavoratori</th><th>Comitato</th><th>Dich. patrimoniale</th><th>Esito</th></tr>`+r.map(i=>`<tr><td><b>${esc(i.nome)}</b></td><td>${esc(i.forma||"Altra impresa")}${i.tipologia?`<br><small>${esc(i.tipologia)}</small>`:""}</td><td>${classeLbl(i.classe)}</td><td>${esc(i.settore)}</td><td>${esc(i.stato)}</td><td>${esc(i.lavoratori)}</td><td>${esc(i.comitato)}</td><td>${i.dichiarazioneAnno?"Anno "+esc(i.dichiarazioneAnno):"—"}</td><td><span class="pill ${i.esito==="Iscritta"?"ok":i.esito==="Sciolta"?"err":"warn"}">${esc(i.esito)}</span></td></tr>`).join("")+`</table></div>`}
+$("#rq").oninput=renderRegistro;$("#rc").onchange=renderRegistro;$("#rf").onchange=renderRegistro;renderRegistro();
 const IMPRESE_BASE=[...CONFIG.IMPRESE];
 function caricaRegistro(){
  if(!CONFIG.REGISTRO_API)return Promise.resolve();
@@ -261,13 +306,22 @@ if(CONFIG.REGISTRO_LINK)fetch(CONFIG.REGISTRO_LINK).then(r=>r.json()).then(j=>{I
 
 /* ---------- ISCRIZIONE ---------- */
 $("#v-iscrizione").innerHTML=`<h2>Richiesta di iscrizione all’Anagrafe</h2><p class="sub">Compila il modulo: la richiesta viene registrata dall’IRE e resta “In istruttoria” fino alla valutazione. Riceverai un codice di riferimento da conservare.</p>
-<form id="f"><label>Nome dell’impresa<input name="nome" required></label><label>Settore<input name="settore" required></label>
+<form id="f"><label>Forma<select name="forma" id="ff"><option>Cooperativa</option><option>Collettivo di lavoratori</option><option>Consorzio cooperativo</option><option>Altra impresa</option></select></label><label data-f="Cooperativa">Tipologia di cooperativa (art. 7)<select name="tipologia">${opt(TIPOLOGIE)}</select></label>
+<label>Nome dell’impresa<input name="nome" required></label><label>Settore<input name="settore" required></label>
 <label>Stato Sociale<select name="stato" id="selStato" required><option value="">Caricamento…</option></select></label><label>Numero di lavoratori<input name="lav" type="number" min="1" required></label>
 <label>Classe proprietaria<select name="classe"><option value="lavoratori">Proprietà collettiva dei lavoratori</option><option value="strategica">Interesse strategico unitario</option></select></label>
 <label>Comitato dei Lavoratori<select name="com"><option>Da costituire</option><option>Già costituito</option></select></label>
-<label>Referente (nick/ID Estji)<input name="ref" required></label><label class="full">Note<textarea name="note" rows="3"></textarea></label>
+<label>Referente (nick/ID Estji)<input name="ref" required></label><label data-f="Cooperativa">Atto costitutivo (art. 5, c. 3)<select name="atto"><option>Atto pubblico</option><option>Scrittura privata autenticata</option></select></label>
+<label data-f="Cooperativa,Collettivo di lavoratori">Link allo statuto o all’accordo collettivo (facoltativo)<input name="documento" type="url" maxlength="300" placeholder="https://…"></label>
+<label class="full" data-f="Cooperativa">Oggetto sociale (art. 6, c. 1, lett. b)<textarea name="oggetto" rows="2" maxlength="500"></textarea></label>
+<label class="full" data-f="Cooperativa,Collettivo di lavoratori" style="display:flex;gap:8px;align-items:flex-start;color:var(--ink)"><input type="checkbox" name="attestazione" style="margin-top:4px"><span id="attT"></span></label>
+<label class="full">Note<textarea name="note" rows="3"></textarea></label>
 <input name="sito" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 <div class="full"><button type="submit">Invia richiesta</button></div></form><div id="out" style="margin-top:16px"></div>`;
+const ATT={"Cooperativa":"Dichiaro che i soci fondatori sono almeno cinque, cittadini dell’USSE o residenti legali, hanno compiuto 16 anni e non hanno condanne definitive per i reati indicati all’art. 5, c. 2, lett. c) della Legge 12/2026, e che lo statuto contiene quanto richiesto dall’art. 6.","Collettivo di lavoratori":"Dichiaro che il collettivo è composto da almeno tre lavoratori ed è retto da un accordo collettivo (art. 16 della Legge 12/2026)."};
+function mostraForma(){const v=$("#ff").value;$("#attT").textContent=ATT[v]||"";
+ document.querySelectorAll("#f [data-f]").forEach(l=>{const on=l.dataset.f.split(",").includes(v);l.hidden=!on;l.style.display=on?(l.classList.contains("full")&&l.querySelector("input[type=checkbox]")?"flex":""):"none";l.querySelectorAll("input,select,textarea").forEach(x=>{x.disabled=!on;if(x.name==="attestazione"||x.name==="oggetto")x.required=on})})}
+$("#ff").onchange=mostraForma;mostraForma();
 /* Stati Sociali letti da organi.json tramite ApiOrgani (lex/assets/js/api-organi.js) */
 async function caricaStati(){
  const sel=$("#selStato");
@@ -292,16 +346,18 @@ caricaStati();
 $("#f").onsubmit=async e=>{e.preventDefault();
  const form=e.target,d=Object.fromEntries(new FormData(form)),n=+d.lav,btn=form.querySelector("button");
  const sel=$("#selStato"),statoNome=sel.tagName==="SELECT"?(sel.selectedOptions[0]?.textContent||d.stato):d.stato;
- const m=n<10?"(sotto la soglia di 10 lavoratori dell’art. 5: verifica con l’ufficio IRE)":n<=20?3:n<=50?5:n<=100?7:"9 (fino a 11 per le grandi imprese strategiche)";
+ const minimo={"Cooperativa":5,"Collettivo di lavoratori":3}[d.forma];
+ if(minimo&&n<minimo){$("#out").innerHTML=`<div class="card" style="border-left:4px solid var(--err)"><p>${d.forma==="Cooperativa"?"Una cooperativa":"Un collettivo"} richiede almeno ${minimo} lavoratori (Legge 12/2026).</p></div>`;return}
+ const m=n<10?"(sotto la soglia di 10 lavoratori della tabella dell’art. 5 della L. 9/2026: verifica con l’ufficio IRE)":n<=20?3:n<=50?5:n<=100?7:"9 (fino a 11 per le grandi imprese strategiche)";
  btn.disabled=true;btn.textContent="Invio in corso…";$("#out").innerHTML="";
  try{
-  const r=await fetch(CONFIG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"iscrivi",nome:d.nome,settore:d.settore,stato:d.stato,lavoratori:d.lav,classe:d.classe,comitato:d.com,referente:d.ref,note:d.note,sito:d.sito})});
+  const r=await fetch(CONFIG.IRE_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({azione:"iscrivi",forma:d.forma,tipologia:d.tipologia,atto:d.atto,oggetto:d.oggetto,documento:d.documento,attestazione:!!d.attestazione,nome:d.nome,settore:d.settore,stato:d.stato,lavoratori:d.lav,classe:d.classe,comitato:d.com,referente:d.ref,note:d.note,sito:d.sito})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok||!j.success)throw new Error(j.message||"HTTP "+r.status);
-  const t=`RICHIESTA DI ISCRIZIONE ALL’ANAGRAFE UNITARIA – IRE\nImpresa: ${d.nome}\nSettore: ${d.settore}\nStato Sociale: ${j.stato||statoNome}\nClasse: ${classeLbl(d.classe)}\nLavoratori: ${d.lav}\nMembri del Comitato previsti (art. 5): ${m}\nComitato dei Lavoratori: ${d.com}\nReferente: ${d.ref}\nNote: ${d.note||"—"}\nData: ${new Date().toLocaleDateString("it-IT")}\nCodice di riferimento: ${j.codice}`;
+  const t=`RICHIESTA DI ISCRIZIONE ALL’ANAGRAFE UNITARIA – IRE\nImpresa: ${d.nome}\nForma: ${d.forma}${d.tipologia?" – "+d.tipologia:""}\nSettore: ${d.settore}\nStato Sociale: ${j.stato||statoNome}\nClasse: ${classeLbl(d.classe)}\nLavoratori: ${d.lav}\nMembri del Comitato previsti (art. 5): ${m}\nComitato dei Lavoratori: ${d.com}\nReferente: ${d.ref}\nNote: ${d.note||"—"}\nData: ${new Date().toLocaleDateString("it-IT")}\nCodice di riferimento: ${j.codice}`;
   $("#out").innerHTML=`<div class="card" style="border-left:4px solid var(--ok);margin-bottom:12px"><h4>Richiesta registrata</h4><p>L’impresa è ora <b>In istruttoria</b>. Conserva questo codice: serve per la dichiarazione patrimoniale e <b>non verrà mostrato di nuovo</b>.</p><p style="margin-top:8px;font:700 20px ui-monospace,Menlo,monospace;color:var(--ink);user-select:all">${esc(j.codice)}</p></div><pre>${esc(t)}</pre><button class="sec" id="cp">Copia testo</button>`;
   $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(t);$("#cp").textContent="Copiato"}catch(x){prompt("Copia:",t)}};
-  form.reset();caricaRegistro();
+  form.reset();mostraForma();caricaRegistro();
  }catch(err){
   $("#out").innerHTML=`<div class="card" style="border-left:4px solid var(--err)"><p>${esc(err.message)}</p></div>`;
  }finally{btn.disabled=false;btn.textContent="Invia richiesta"}
@@ -324,9 +380,9 @@ const eur=n=>Number(n||0).toLocaleString("it-IT",{minimumFractionDigits:2,maximu
 function riepilogo(){const f=$("#fp"),v=k=>+f.elements[k].value||0,att=v("liquidita")+v("beni")+v("crediti"),net=att-v("debiti");
  $("#riep").innerHTML=`<p>Totale attivo: <b>${eur(att)}</b> · Passivo (debiti): <b>${eur(v("debiti"))}</b> · Patrimonio netto: <b style="color:${net<0?"var(--err)":"var(--ok)"}">${eur(net)}</b></p>`}
 $("#fp").oninput=riepilogo;riepilogo();
-function riempiImprese(){const s=$("#pi"),cur=s.value,l=IMPRESE.filter(i=>i.id&&i.esito!=="Respinta");
+function riempiImprese(){const s=$("#pi"),cur=s.value,l=IMPRESE.filter(i=>i.id&&i.esito!=="Respinta"&&i.esito!=="Sciolta");
  s.innerHTML=`<option value="">${l.length?"— Seleziona l’impresa —":"Nessuna impresa registrata"}</option>`+l.map(i=>`<option value="${esc(i.id)}">${esc(i.nome)}${i.esito==="Iscritta"?"":" (in istruttoria)"}</option>`).join("");
- s.value=cur}
+ s.value=cur;const r=$("#ri");if(r){const c2=r.value;r.innerHTML=s.innerHTML.replace("— Seleziona l’impresa —","— Seleziona l’impresa —");r.value=c2}}
 $("#fp").onsubmit=async e=>{e.preventDefault();
  const f=e.target,d=Object.fromEntries(new FormData(f)),btn=f.querySelector("button");
  btn.disabled=true;btn.textContent="Invio in corso…";$("#outp").innerHTML="";
@@ -367,16 +423,18 @@ function showAtto(i){const a=ATTI[i];
  <p class="sub" style="margin-top:12px">Fonte: <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.url)}</a></p>`}
 
 /* ---------- SERVIZI / TRASPARENZA ---------- */
-$("#v-servizi").innerHTML=`<h2>Servizi</h2><p class="sub">Supporto alle imprese (artt. 16 e 21).</p><div class="grid">
+$("#v-servizi").innerHTML=`<h2>Servizi</h2><p class="sub">Supporto alle imprese (L. 9/2026 artt. 16 e 21; L. 12/2026 artt. 13–15).</p><div class="grid">
 <div class="card"><div class="ico">⚖️</div><h4>Consulenza</h4><p>Assistenza legale, amministrativa, finanziaria e tecnica.</p></div>
-<div class="card"><div class="ico">🔄</div><h4>Fondi di rotazione</h4><p>Agevolazioni creditizie per le industrie dei lavoratori.</p></div>
-<div class="card"><div class="ico">🏗️</div><h4>Cooperative e reti</h4><p>Promozione di cooperative e reti d’impresa.</p></div>
+<a class="card" href="#richieste"><div class="ico">🔄</div><h4>Fondo di rotazione</h4><p>Finanziamenti a tasso agevolato, garanzie e contributi per l’innovazione alle cooperative (L. 12/2026, art. 13).</p></a>
+<a class="card" href="#cooperative"><div class="ico">🏗️</div><h4>Cooperative e reti</h4><p>Promozione di cooperative, reti e trasformazione di imprese in cooperative (art. 15).</p></a>
+<a class="card" href="#richieste"><div class="ico">🛠️</div><h4>Assistenza tecnica</h4><p>Consulenza legale, amministrativa, finanziaria e tecnica; formazione; supporto a pianificazione e marketing (art. 14).</p></a>
 <div class="card"><div class="ico">🎓</div><h4>Formazione</h4><p>Formazione professionale e innovazione.</p></div>
 <div class="card"><div class="ico">🤲</div><h4>Conciliazione</h4><p>Procedura obbligatoria per i conflitti collettivi di lavoro, con le organizzazioni sindacali (art. 21).</p></div>
 <div class="card"><div class="ico">📊</div><h4>Studi e dati</h4><p>Analisi e ricerche sui settori produttivi per CTSU e CCP.</p></div></div>`;
-$("#v-trasparenza").innerHTML=`<h2>Trasparenza e controlli</h2><p class="sub">Artt. 13, 17, 18 e 19 della Legge 9/2026.</p><div class="art">
+$("#v-trasparenza").innerHTML=`<h2>Trasparenza e controlli</h2><p class="sub">Artt. 13, 17, 18 e 19 della Legge 9/2026; artt. 19–21 della Legge 12/2026.</p><div class="art">
 <p>L’IRE è soggetta alla vigilanza dell’<b>IVIdU</b> per prevenzione della corruzione, conflitti di interesse e trasparenza degli atti. Il Collegio dei Revisori è nominato dall’IVIdU.</p>
 <p>I <b>bilanci e i rapporti di attività</b> sono pubblici e discussi ogni anno dal Congresso Unitario: vedi <a href="#atti">Atti e pubblicazioni</a>.</p>
+<p>Cooperative e collettivi sono sotto la vigilanza dell’IVIdU, che può ispezionare i documenti; i membri del CdA dichiarano ogni anno la situazione patrimoniale e le realtà riferiscono annualmente all’Assemblea di Sezione (L. 12/2026, artt. 19–20). Lo scioglimento di una cooperativa è deliberato dal Congresso Statale su segnalazione dell’IVIdU o dell’IRE (art. 21).</p>
 <p>Per le industrie strategiche l’IRE redige <b>rapporti trimestrali</b> per il Consiglio Centrale di Pianificazione e il CTSU.</p></div>`;
 
 /* ---------- ROUTER ---------- */
