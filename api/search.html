@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EWS - Motore di Ricerca</title>
+<style>
+body{margin:0;padding:8px;background:#008080;color:#000;font:16px/1.4 "Times New Roman",Times,serif}
+a{color:#0000ee}a:visited{color:#551a8b}a:active{color:#f00}
+#win{max-width:860px;margin:0 auto;background:#c0c0c0;border:2px solid;border-color:#fff #404040 #404040 #fff;box-shadow:2px 2px 0 #000}
+#bar{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;font:bold 14px Arial,sans-serif;padding:3px 6px;display:flex;justify-content:space-between}
+#bar span.x{background:#c0c0c0;color:#000;border:2px solid;border-color:#fff #404040 #404040 #fff;padding:0 6px;font-weight:bold}
+#in{padding:12px 16px}
+h1{font:bold 34px "Times New Roman",serif;text-align:center;margin:6px 0;color:#000080;text-shadow:2px 2px #808080}
+.sub{text-align:center;margin:0 0 8px;font-style:italic}
+.new{color:#f00;font:bold 13px Arial,sans-serif;animation:bl 1s steps(2,start) infinite}
+@keyframes bl{to{visibility:hidden}}
+hr{border:0;border-top:2px solid #808080;border-bottom:2px solid #fff;margin:10px 0}
+#box{background:#fff;border:2px solid;border-color:#808080 #fff #fff #808080;padding:10px}
+input[type=text]{width:70%;min-width:160px;font:16px "Courier New",monospace;padding:3px;border:2px solid;border-color:#808080 #fff #fff #808080;background:#fff}
+.btn{font:14px Arial,sans-serif;background:#c0c0c0;border:2px solid;border-color:#fff #404040 #404040 #fff;padding:3px 12px;cursor:pointer;color:#000}
+.btn:active,.btn.on{border-color:#404040 #fff #fff #404040;background:#b0b0b0;font-weight:bold}
+.row{margin:8px 0;font:13px Arial,sans-serif}
+.row b{display:inline-block;min-width:70px}
+#st{font:bold 14px Arial,sans-serif;background:#000080;color:#fff;padding:2px 6px;margin:10px 0}
+.r{margin:0 0 14px;overflow:hidden}
+.r img{float:left;width:90px;height:70px;object-fit:cover;border:2px solid;border-color:#808080 #fff #fff #808080;margin:0 10px 0 0}
+.r .t{font-size:18px}
+.r .d{font-size:14px}
+.r .u{font:12px "Courier New",monospace;color:#008000;word-break:break-all}
+.r .k{font:bold 11px Arial,sans-serif;background:#ffff00;border:1px solid #000;padding:0 4px;margin-right:4px}
+.go{font:bold 13px Arial,sans-serif}
+.err{color:#f00;font-weight:bold}
+#foot{text-align:center;font:12px Arial,sans-serif;color:#000}
+#cnt{font:bold 14px "Courier New",monospace;background:#000;color:#0f0;padding:1px 6px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<div id="win">
+  <div id="bar"><span>EWS database</span><span class="x">X</span></div>
+  <div id="in">
+    <hr>
+    <div id="box">
+      <form id="f">
+        <b>Cerca:</b>
+        <input type="text" id="q" placeholder="atto, progetto, luogo, immagine..." autofocus>
+        <input type="submit" class="btn" value="Vai!">
+      </form>
+      <div class="row" id="rp"></div>
+      <div class="row" id="rt"></div>
+    </div>
+    <div id="st">Pronto.</div>
+    <div id="out"></div>
+    <hr>
+    <p id="foot">Questo sito e' ottimizzato per Netscape Navigator 4.0 a 800x600.<br>
+    Visitatori: <span id="cnt">000042</span><br>(c) 1996-2026 Rete for Livese</p>
+  </div>
+</div>
+<script>
+var API = "/api/data?cerca=1"; // api/data.js
+var repo = "all", data = [], typeF = "tutti";
+var KEY = new URLSearchParams(location.search).get("k") || "";
+var q = document.getElementById("q"), out = document.getElementById("out"),
+    st = document.getElementById("st"), rp = document.getElementById("rp"), rt = document.getElementById("rt");
+
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function btns(list, cur, attr){
+  return list.map(function(x){return '<button type="button" class="btn '+(cur===x[0]?'on':'')+'" data-'+attr+'="'+x[0]+'">'+x[1]+'</button> '}).join("");
+}
+function renderChips(){
+  rp.innerHTML = "<b>Dove:</b> " + btns([["all","Tutto"],["EWS","Siti"],["IMG","Immagini"],["DATA","Dati"]], repo, "r");
+  if (data.length){
+    var types = ["tutti"].concat(Array.from(new Set(data.map(function(d){return d.type}))));
+    rt.innerHTML = "<b>Tipo:</b> " + btns(types.map(function(t){return [t,t]}), typeF, "t");
+  } else rt.innerHTML = "";
+}
+document.getElementById("box").onclick = function(e){
+  var r = e.target.getAttribute("data-r"), t = e.target.getAttribute("data-t");
+  if (r){ repo = r; if (q.value.trim().length>1) search(); else renderChips(); }
+  if (t){ typeF = t; show(); renderChips(); }
+};
+
+function show(){
+  var list = data.filter(function(d){return typeF==="tutti"||d.type===typeF});
+  out.innerHTML = list.map(function(d,i){
+    var img = (d.type==="img" && d.raw) ? '<img loading="lazy" src="'+esc(d.raw)+'" alt="">' : '';
+    var desc = d.snippet ? esc(d.snippet.slice(0,160)) : esc(d.path);
+    var go = d.label ? ' <span class="go">[ <a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.label)+'</a> ]</span>' : '';
+    return '<div class="r">'+img+
+      '<div class="t">'+(i+1)+'. <a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.name)+'</a>'+go+'</div>'+
+      '<div class="d"><span class="k">'+esc(d.repo)+'</span><span class="k">'+esc(d.type)+'</span>'+desc+'</div>'+
+      (d.snippet ? '<div class="d"><i>'+esc(d.path)+'</i></div>' : '')+
+      '<div class="u">'+esc(d.url)+'</div></div>';
+  }).join("");
+  st.textContent = list.length + " documenti trovati.";
+}
+
+function search(){
+  var term = q.value.trim();
+  if (term.length < 2) return;
+  st.textContent = "Ricerca in corso... attendere prego..."; out.innerHTML = "";
+  fetch(API+"&q="+encodeURIComponent(term)+"&repo="+repo+"&k="+encodeURIComponent(KEY))
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if (j.error){ st.innerHTML = '<span class="err" style="color:#ff0">'+esc(j.error)+'</span>'; return; }
+      data = j.results; typeF = "tutti"; renderChips(); show();
+      if (j.errors && j.errors.length) st.textContent += " (Errori: "+j.errors.join(", ")+")";
+    })
+    .catch(function(){ st.textContent = "Errore di rete. Controllare il modem."; });
+}
+document.getElementById("f").onsubmit = function(e){ e.preventDefault(); search(); };
+renderChips();
+</script>
+</body>
+</html>
