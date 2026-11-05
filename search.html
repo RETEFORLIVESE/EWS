@@ -3,263 +3,276 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EWS - Motore di Ricerca</title>
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/ICO/serverW95.ico">
-<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/ICO/serverW95.ico">
-<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<title>EWS - Ricerca</title>
 <style>
-:root{
-  --o1:#ffb347;--o2:#ff8c1a;--o3:#e85d00;--o4:#a83a00;
-  --txt:#fff4e8;--mut:#e2c3a2;
-  --glass:rgba(24,16,10,.58);
-  --line:rgba(255,185,110,.42);
-}
 *{box-sizing:border-box}
-html{min-height:100%}
-body{
-  margin:0;padding:0;min-height:100vh;color:var(--txt);
-  font:16px/1.45 "Segoe UI","Frutiger","Myriad Pro","Trebuchet MS",Helvetica,Arial,sans-serif;
-  background:
-    radial-gradient(ellipse 70% 50% at 15% 0%,rgba(255,140,20,.5),transparent 60%),
-    radial-gradient(ellipse 60% 45% at 95% 100%,rgba(255,90,0,.45),transparent 60%),
-    radial-gradient(ellipse 40% 30% at 60% 55%,rgba(255,120,0,.12),transparent 70%),
-    linear-gradient(180deg,#050505 0%,#150a03 55%,#000 100%);
-  background-attachment:fixed;overflow-x:hidden;
-}
-a{color:var(--o1)}a:visited{color:#e8a76a}a:hover{color:#fff}
+html,body{margin:0;padding:0}
+body{background:#fff;color:#222;font:13px/1.4 arial,sans-serif;min-height:100vh;position:relative}
+a{color:#2200c1;cursor:pointer}
+a:visited{color:#551a8b}
+a:hover{text-decoration:underline}
 
-/* bolle */
-.bub{position:fixed;border-radius:50%;pointer-events:none;z-index:0;
-  background:radial-gradient(circle at 30% 27%,rgba(255,255,255,.6),rgba(255,170,70,.2) 34%,rgba(255,110,0,.08) 68%,transparent 71%);
-  border:1px solid rgba(255,200,130,.35);box-shadow:inset 0 -8px 18px rgba(255,120,0,.18);
-  animation:fl 15s ease-in-out infinite alternate}
-.b1{width:150px;height:150px;left:-30px;top:12%}
-.b2{width:70px;height:70px;right:6%;top:9%;animation-duration:11s}
-.b3{width:110px;height:110px;right:-20px;top:52%;animation-duration:18s}
-.b4{width:46px;height:46px;left:9%;bottom:14%;animation-duration:12s}
-.b5{width:90px;height:90px;left:44%;bottom:-24px;animation-duration:16s}
-@keyframes fl{to{transform:translate(18px,-34px)}}
+/* ---- logo ---- */
+#logo{display:inline-block;font:bold 38px/1 Georgia,"Book Antiqua","Times New Roman",serif;letter-spacing:-1px;text-decoration:none;user-select:none}
+#logo:hover{text-decoration:none}
+#logo .a{color:#2244cc}#logo .b{color:#cc2222}#logo .c{color:#eeaa00}#logo .d{color:#229933}
 
-/* finestra di vetro */
-#win{position:relative;z-index:1;width:100%;min-height:100vh;margin:0;border-radius:0;border-width:0 0 0 0;overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 28%,rgba(0,0,0,.4)),var(--glass);
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
-  border:1px solid var(--line);
-  box-shadow:0 24px 70px rgba(0,0,0,.75),0 0 46px rgba(255,120,0,.2),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.04)}
-#win::before{content:"";position:absolute;left:-10%;right:-10%;top:0;height:150px;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));border-radius:0 0 50% 50%/0 0 100% 100%}
-#in{position:relative;min-height:100vh;padding:28px clamp(16px,4vw,64px) 22px}
-#out{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:14px;align-items:start}
-#out .r,#out .empty{margin:0}
-#out .empty{grid-column:1/-1}
-#box{width:100%}
+/* ---- barra superiore ---- */
+#top{display:flex;align-items:center;gap:22px;padding:16px 64px 12px 18px}
+#f{display:flex;align-items:center;gap:8px;flex:1;max-width:640px}
+#q{flex:1;min-width:0;height:30px;font:16px arial,sans-serif;color:#000;padding:3px 8px;background:#fff;
+   border:1px solid #d9d9d9;border-top-color:#c0c0c0;outline:0}
+#q:hover{border-color:#b9b9b9;border-top-color:#a0a0a0;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
+#q:focus{border-color:#4d90fe;box-shadow:inset 0 1px 2px rgba(0,0,0,.15)}
+.go{height:30px;padding:0 16px;font:bold 11px arial,sans-serif;color:#444;cursor:pointer;border-radius:2px;
+    background:linear-gradient(#f5f5f5,#f1f1f1);border:1px solid #dcdcdc}
+.go:hover{border-color:#c6c6c6;color:#222;box-shadow:0 1px 1px rgba(0,0,0,.1);background:linear-gradient(#f8f8f8,#f1f1f1)}
+.go:active{box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
 
-/* titolo */
-.head{display:flex;align-items:center;justify-content:center;gap:14px;margin:2px 0 4px}
-.orb{flex:none;width:58px;height:58px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 120%,#ffd08a 0%,var(--o2) 35%,var(--o4) 80%);
-  box-shadow:0 6px 18px rgba(255,110,0,.6),inset 0 -6px 12px rgba(120,30,0,.55),inset 0 0 0 1px rgba(255,220,170,.6)}
-.orb::before{content:"";position:absolute;left:7px;right:7px;top:4px;height:24px;border-radius:50%;
-  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.05))}
-.orb svg{position:relative;width:28px;height:28px;filter:drop-shadow(0 1px 1px rgba(120,30,0,.7))}
-h1{margin:0;font:600 38px/1 "Segoe UI","Frutiger","Trebuchet MS",Arial,sans-serif;letter-spacing:-.5px;
-  background:linear-gradient(180deg,#fff 0%,#ffd9a8 38%,var(--o2) 52%,var(--o3) 100%);
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 2px 6px rgba(255,110,0,.45))}
-h1 small{font-weight:300;font-size:20px;letter-spacing:0}
-.sub{text-align:center;margin:0 0 16px;color:var(--mut);font-size:14px}
+/* ---- ingranaggio ---- */
+#gear{position:absolute;right:16px;top:14px;width:34px;height:34px;padding:0;border:1px solid transparent;border-radius:2px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#gear svg{width:22px;height:22px;fill:#777}
+#gear:hover{border-color:#ccc;background:#f8f8f8}#gear:hover svg{fill:#333}
+#gear[aria-expanded=true]{border-color:#ccc;background:#eee;box-shadow:inset 0 1px 2px rgba(0,0,0,.12)}
+#cfg{position:absolute;right:16px;top:52px;z-index:10;width:340px;max-width:calc(100vw - 20px);background:#fff;border:1px solid #bbb;
+     box-shadow:0 2px 6px rgba(0,0,0,.25);padding:14px 16px 16px;display:none}
+#cfg.open{display:block}
+#cfg h2{margin:0 0 10px;font:bold 15px arial,sans-serif;color:#222;padding-bottom:6px;border-bottom:1px solid #ebebeb}
+#cfg h3{margin:12px 0 6px;font:bold 13px arial,sans-serif;color:#222}
+#cfg .opts{display:flex;flex-wrap:wrap;gap:6px}
+#cfg .opt{font:12px arial,sans-serif;color:#444;cursor:pointer;padding:4px 11px;border-radius:2px;background:linear-gradient(#f5f5f5,#f1f1f1);border:1px solid #dcdcdc}
+#cfg .opt:hover{border-color:#c6c6c6;color:#222}
+#cfg .opt.on{font-weight:bold;color:#222;border-color:#4d90fe;background:linear-gradient(#fff,#f3f7ff);box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
+#cfg .opt small{color:#888;font-weight:normal}
+#cfg .hint{margin:0;color:#777;font-size:12px}
 
-/* casella di ricerca */
-#box{padding:14px;border-radius:20px;border:1px solid rgba(255,200,140,.28);
-  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02)),rgba(0,0,0,.28);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 22px rgba(0,0,0,.4)}
-#f{display:flex;gap:10px}
-input[type=text]{flex:1;min-width:0;font:17px "Segoe UI","Trebuchet MS",Arial,sans-serif;color:#fff;padding:12px 18px;
-  border-radius:999px;border:1px solid rgba(255,190,120,.45);outline:0;
-  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(30,18,8,.55));
-  box-shadow:inset 0 3px 8px rgba(0,0,0,.65),inset 0 -1px 0 rgba(255,255,255,.12);transition:box-shadow .2s,border-color .2s}
-input[type=text]::placeholder{color:#b99a7b}
-input[type=text]:focus{border-color:var(--o1);box-shadow:inset 0 3px 8px rgba(0,0,0,.65),0 0 0 3px rgba(255,140,20,.35),0 0 22px rgba(255,120,0,.55)}
+/* ---- barra dei risultati ---- */
+#bar{display:none;margin:0;padding:0 64px 0 18px;height:28px;line-height:27px;background:#f0f7f9;border-top:1px solid #6b90da;border-bottom:1px solid #c5d7ef;font-size:13px;color:#222}
+#bar b{font-weight:bold}
+#bar .stat{color:#7a7a7a;margin-left:12px}
 
-/* bottoni lucidi */
-.btn{font:600 14px "Segoe UI","Trebuchet MS",Arial,sans-serif;color:#fff;cursor:pointer;position:relative;overflow:hidden;
-  padding:7px 16px;border-radius:999px;border:1px solid rgba(255,200,140,.4);
-  background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.06) 48%,rgba(0,0,0,.3) 52%,rgba(255,255,255,.06) 100%),rgba(40,26,14,.8);
-  box-shadow:0 2px 6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 2px rgba(0,0,0,.7);transition:filter .15s,transform .1s}
-.btn:hover{filter:brightness(1.25)}
-.btn:active{transform:translateY(1px)}
-.btn.on,.btn.big,.open{
-  background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.14) 48%,rgba(255,255,255,0) 52%),linear-gradient(180deg,var(--o1),var(--o2) 45%,var(--o3));
-  border-color:#ffd9a8;box-shadow:0 3px 14px rgba(255,110,0,.55),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -2px 4px rgba(130,40,0,.5);
-  text-shadow:0 1px 1px rgba(120,30,0,.8)}
-.btn.big{font-size:16px;padding:10px 26px}
-.btn small{font-weight:400;opacity:.85}
-.row{margin:12px 0 0;display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:13px}
-.row b{min-width:54px;color:var(--o1);font-weight:600;letter-spacing:.4px;text-transform:uppercase;font-size:11px}
+/* ---- risultati (niente box, solo testo come Google) ---- */
+#out{padding:6px 64px 10px 18px;max-width:760px}
+#out.wide{max-width:none}
+.r{margin:0 0 20px;font-size:13px;line-height:1.35;clear:both;overflow:hidden}
+.r .t{font-size:18px;font-weight:normal;line-height:1.25;margin:0}
+.r .t a{color:#2200c1;text-decoration:underline}
+.r .t a:visited{color:#551a8b}
+.r .u{color:#008000;font-size:14px;margin:1px 0 1px;word-break:break-all}
+.r .u i{font-style:normal;color:#808080}
+.r .d{color:#333;font-size:13px;max-width:600px}
+.r .d b{color:#000}
+.r .p{color:#808080;font-size:13px}
+.r .th{float:left;width:92px;height:68px;margin:3px 12px 0 0;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;background:#fafafa;overflow:hidden;text-decoration:none}
+.r .th img{max-width:100%;max-height:100%;display:block}
+.empty{max-width:600px;margin:10px 0 0;font-size:14px;line-height:1.6}
+.empty .big{font-size:14px}
+.empty ul{margin:8px 0 0 20px;padding:0}
+.err{color:#c00}
+#load{display:none;padding:18px 64px 0 18px;color:#777;font-size:14px}
 
-/* stato */
-#st{margin:16px 0 14px;padding:7px 18px;border-radius:999px;font-weight:600;font-size:14px;color:#fff;position:relative;overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,.04) 50%,rgba(0,0,0,.25) 52%),rgba(120,50,0,.65);
-  border:1px solid rgba(255,190,120,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 16px rgba(255,110,0,.2)}
-#st.load{background-image:linear-gradient(90deg,transparent,rgba(255,200,120,.55),transparent),linear-gradient(180deg,rgba(255,255,255,.2),rgba(0,0,0,.2));
-  background-size:40% 100%,100% 100%;background-repeat:no-repeat;background-position:-40% 0,0 0;animation:sh 1.1s linear infinite}
-@keyframes sh{to{background-position:140% 0,0 0}}
-.err{color:#ffd24a}
+/* ---- pagine ---- */
+#pager{display:none;padding:8px 64px 30px 18px;font-size:14px}
+#pager a,#pager span{display:inline-block;margin:0 10px 0 0;padding:2px 0;text-decoration:none}
+#pager a:hover{text-decoration:underline}
+#pager .cur{font-weight:bold;color:#000}
+#pager .lg{font:bold 26px Georgia,serif;display:block;margin:0 0 6px}
 
-/* risultati */
-.r{position:relative;margin:0 0 12px;padding:12px;display:flex;gap:14px;border-radius:18px;overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03) 40%,rgba(0,0,0,.18)),rgba(18,12,8,.55);
-  border:1px solid rgba(255,190,120,.28);box-shadow:0 5px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.22);
-  transition:transform .15s,border-color .15s,box-shadow .15s}
-.r:hover{transform:translateY(-2px);border-color:var(--o2);box-shadow:0 10px 26px rgba(0,0,0,.55),0 0 22px rgba(255,120,0,.3),inset 0 1px 0 rgba(255,255,255,.3)}
-.r .th{flex:none;width:112px;height:84px;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;text-decoration:none;position:relative;
-  background:radial-gradient(circle at 50% 0%,rgba(255,150,40,.45),rgba(0,0,0,.5));
-  border:1px solid rgba(255,200,140,.5);box-shadow:inset 0 0 12px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.5)}
-.r .th::after{content:"";position:absolute;left:0;right:0;top:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));pointer-events:none}
-.r .th img{width:100%;height:100%;object-fit:cover;display:block}
-.r .tx{min-width:0;flex:1}
-.r .t{font-size:18px;font-weight:600;word-break:break-word}
-.r .t a{text-decoration:none;color:#fff}
-.r .t a:hover{color:var(--o1);text-decoration:underline}
-.r .d{font-size:14px;margin-top:3px;color:#f1dcc6}
-.r .p{font-size:12px;margin-top:4px;color:var(--mut);word-break:break-word}
-.r .k{display:inline-block;margin:0 7px 0 0;padding:0 9px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#2a1200;border-radius:999px;
-  background:linear-gradient(180deg,#ffe3b8,var(--o1) 55%,var(--o2));box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 1px 4px rgba(255,110,0,.5)}
-.open{display:inline-block;margin-top:9px;padding:5px 16px;border-radius:999px;font-weight:600;font-size:13px;text-decoration:none;color:#fff;border:1px solid #ffd9a8}
-.open:visited{color:#fff}.open:hover{filter:brightness(1.12);color:#fff}
-.empty{padding:20px;border-radius:18px;text-align:center;color:var(--txt);
-  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.15)),rgba(18,12,8,.55);border:1px solid rgba(255,190,120,.3)}
+#foot{border-top:1px solid #e4e4e4;margin-top:20px;padding:14px 18px;color:#777;font-size:12px;background:#f2f2f2;text-align:center}
+#hometxt{display:none;text-align:center;color:#777;font-size:13px;margin-top:22px}
 
-#foot{margin:14px 0 0;text-align:center;font-size:12px;color:var(--mut)}
-hr{border:0;height:1px;margin:14px 0 0;background:linear-gradient(90deg,transparent,rgba(255,170,80,.6),transparent)}
+/* ---- pagina iniziale ---- */
+body.home #top{flex-direction:column;gap:22px;justify-content:center;padding:0 16px;margin-top:21vh}
+body.home #logo{font-size:86px;letter-spacing:-3px}
+body.home #f{flex-direction:column;width:100%;max-width:570px;gap:18px}
+body.home #q{width:100%;height:38px;font-size:17px;padding:5px 9px}
+body.home .go{height:30px;padding:0 20px}
+body.home #bar,body.home #out,body.home #pager,body.home #load{display:none!important}
+body.home #hometxt{display:block}
+body.home #foot{position:absolute;left:0;right:0;bottom:0;margin:0}
 
-/* telefono: tutto in colonna */
+/* ---- telefono: tutto in colonna ---- */
 @media (max-width:700px){
-  #in{padding:18px 14px 16px}
-  .head{flex-direction:column;gap:8px}
-  h1{font-size:32px}.orb{width:52px;height:52px}.orb svg{width:24px;height:24px}
-  #f{flex-direction:column}.btn.big{width:100%}
-  .row{flex-direction:column;align-items:stretch}
-  .row b{min-width:0}
-  .row .btn{width:100%;text-align:left}
-  #out{grid-template-columns:1fr}
-  .r{flex-direction:column;gap:10px}
-  .r .th{width:100%;height:150px;font-size:44px}
-  .open{display:block;text-align:center;padding:9px 16px}
+  #top{flex-direction:column;align-items:stretch;gap:10px;padding:14px 14px 10px}
+  #logo{align-self:flex-start;font-size:34px}
+  #f{max-width:none;width:100%}
+  #bar{padding:0 14px;height:auto;line-height:1.5;padding-top:4px;padding-bottom:4px}
+  #bar .stat{display:block;margin:0}
+  #out{padding:6px 14px 6px;max-width:none}
+  #pager,#load{padding-left:14px;padding-right:14px}
+  .r .th{float:none;width:100%;height:150px;margin:0 0 6px}
+  #gear{right:10px;top:10px}
+  #cfg{left:10px;right:10px;top:50px;width:auto;max-width:none}
+  body.home #top{margin-top:14vh}
+  body.home #logo{align-self:center;font-size:64px}
+  body.home #f{align-items:stretch}
+  body.home .go{align-self:center}
 }
-@media (prefers-reduced-motion:reduce){.bub,#st.load{animation:none}.r{transition:none}}
 </style>
 </head>
-<body>
-<div class="bub b1" aria-hidden="true"></div><div class="bub b2" aria-hidden="true"></div>
-<div class="bub b3" aria-hidden="true"></div><div class="bub b4" aria-hidden="true"></div>
-<div class="bub b5" aria-hidden="true"></div>
-<div id="win">
-  <div id="in">
-    <div class="head">
-      <div class="orb" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="10" cy="10" r="6.2"/><path d="M15 15l5.5 5.5"/></svg>
-      </div>
-      <h1>EWS <small>Ricerca</small></h1>
-    </div>
-    <p class="sub">Pagine, immagini, atti, progetti, wiki ed elezioni: scrivi una parola e premi Invio.</p>
-    <div id="box">
-      <form id="f" autocomplete="off">
-        <input type="text" id="q" placeholder="es. legge, Taleen, referendum, logo..." autofocus aria-label="Cerca">
-        <input type="submit" class="btn big" value="Cerca">
-      </form>
-      <div class="row" id="rp"></div>
-      <div class="row" id="rt"></div>
-    </div>
-    <div id="st">Pronto. Scrivi almeno 2 lettere.</div>
-    <div id="out"></div>
-    <hr>
-    <p id="foot">&copy; 2026 EWS</p>
-  </div>
+<body class="home">
+
+<button id="gear" type="button" aria-label="Impostazioni di ricerca" aria-expanded="false" aria-controls="cfg" title="Impostazioni di ricerca">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+</button>
+
+<div id="cfg" role="dialog" aria-label="Impostazioni di ricerca">
+  <h2>Impostazioni di ricerca</h2>
+  <h3>Dove</h3>
+  <div class="opts" id="rp"></div>
+  <h3>Tipo</h3>
+  <div class="opts" id="rt"></div>
 </div>
+
+<div id="top">
+  <a id="logo" href="./" aria-label="EWS - pagina iniziale"><span class="a">E</span><span class="b">W</span><span class="c">S</span></a>
+  <form id="f" autocomplete="off" role="search">
+    <input type="text" id="q" aria-label="Cerca" autofocus>
+    <input type="submit" class="go" value="Cerca">
+  </form>
+</div>
+<div id="hometxt">Pagine, immagini, atti, progetti, wiki ed elezioni. Usa l'ingranaggio in alto a destra per scegliere dove e cosa cercare.</div>
+
+<div id="bar"><b>Risultati</b><span class="stat" id="stat"></span></div>
+<div id="load">Ricerca in corso...</div>
+<div id="out"></div>
+<div id="pager"></div>
+<div id="foot">&copy; 2026 EWS</div>
+
 <script>
 var API = "/api/data?cerca=1"; // api/data.js
-var repo = "all", data = [], typeF = "tutti", timer = null, seq = 0;
+var PER = 10;
+var repo = "all", data = [], typeF = "tutti", page = 1, timer = null, seq = 0, ultima = "";
 var KEY = new URLSearchParams(location.search).get("k") || "";
-var q = document.getElementById("q"), out = document.getElementById("out"),
-    st = document.getElementById("st"), rp = document.getElementById("rp"), rt = document.getElementById("rt");
+var q = document.getElementById("q"), out = document.getElementById("out"), bar = document.getElementById("bar"),
+    stat = document.getElementById("stat"), pager = document.getElementById("pager"), load = document.getElementById("load"),
+    rp = document.getElementById("rp"), rt = document.getElementById("rt"), cfg = document.getElementById("cfg"), gear = document.getElementById("gear");
 
 var TIPI = {
-  tutti:["Tutti",""], pagina:["Pagine","📄"], img:["Immagini","🖼️"],
-  documento:["Documenti","📝"], dato:["Dati","📊"],
-  atto:["Atti","⚖️"], progetto:["Progetti","📌"],
-  wiki:["Wiki","📚"], elezione:["Elezioni","🗳️"], altro:["Altro","📁"]
+  tutti:"Tutti", pagina:"Pagine", img:"Immagini", documento:"Documenti", dato:"Dati",
+  atto:"Atti", progetto:"Progetti", wiki:"Wiki", elezione:"Elezioni", altro:"Altro"
 };
 var ORDINE = ["pagina","wiki","atto","progetto","elezione","documento","img","dato","altro"];
 
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function nomeTipo(t){return (TIPI[t]||[t])[0]}
-function icona(t){return (TIPI[t]||["","📁"])[1]||"📁"}
+function nomeTipo(t){return TIPI[t]||t}
+function rx(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
 
-function btns(list, cur, attr){
-  return list.map(function(x){return '<button type="button" class="btn '+(cur===x[0]?'on':'')+'" data-'+attr+'="'+esc(x[0])+'">'+x[1]+'</button>'}).join("");
+// evidenzia in grassetto le parole cercate (come Google)
+function hl(text, termini){
+  text = String(text);
+  if (!termini.length) return esc(text);
+  var re = new RegExp("(" + termini.map(rx).join("|") + ")", "gi");
+  return text.split(re).map(function(p,i){return i%2 ? "<b>"+esc(p)+"</b>" : esc(p)}).join("");
 }
-function renderChips(){
-  rp.innerHTML = "<b>Dove</b>" + btns([["all","Tutto"],["EWS","Pagine del sito"],["IMG","Immagini"],["DATA","Atti e dati"]], repo, "r");
+// indirizzo "da mostrare": senza https:// e decodificato
+function vediUrl(u){
+  var s = u.replace(/^https?:\/\//,"");
+  try { s = decodeURIComponent(s); } catch(e){}
+  return s;
+}
+
+/* ---------- impostazioni (ingranaggio) ---------- */
+function opts(list, cur, attr){
+  return list.map(function(x){return '<button type="button" class="opt'+(cur===x[0]?' on':'')+'" data-'+attr+'="'+esc(x[0])+'">'+x[1]+'</button>'}).join("");
+}
+function renderCfg(){
+  rp.innerHTML = opts([["all","Tutto"],["EWS","Pagine del sito"],["IMG","Immagini"],["DATA","Atti e dati"]], repo, "r");
   if (data.length){
     var cont = {}; data.forEach(function(d){cont[d.type]=(cont[d.type]||0)+1});
     var tipi = ORDINE.filter(function(t){return cont[t]}).concat(Object.keys(cont).filter(function(t){return ORDINE.indexOf(t)<0}));
-    var lista = [["tutti","Tutti <small>("+data.length+")</small>"]].concat(tipi.map(function(t){return [t, icona(t)+" "+nomeTipo(t)+" <small>("+cont[t]+")</small>"]}));
-    rt.innerHTML = "<b>Tipo</b>" + btns(lista, typeF, "t");
-  } else rt.innerHTML = "";
+    var lista = [["tutti","Tutti <small>("+data.length+")</small>"]].concat(tipi.map(function(t){return [t, esc(nomeTipo(t))+" <small>("+cont[t]+")</small>"]}));
+    rt.innerHTML = opts(lista, typeF, "t");
+  } else rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per tipo di risultato.</p>';
 }
-document.getElementById("box").onclick = function(e){
+function apriCfg(on){
+  cfg.classList.toggle("open", on);
+  gear.setAttribute("aria-expanded", on ? "true" : "false");
+}
+gear.onclick = function(e){ e.stopPropagation(); apriCfg(!cfg.classList.contains("open")); };
+cfg.onclick = function(e){
+  e.stopPropagation();
   var b = e.target.closest("button"); if (!b) return;
   var r = b.getAttribute("data-r"), t = b.getAttribute("data-t");
-  if (r){ repo = r; if (q.value.trim().length>1) search(); else renderChips(); }
-  if (t){ typeF = t; show(); renderChips(); }
+  if (r){ repo = r; if (q.value.trim().length>1) search(); else renderCfg(); }
+  if (t){ typeF = t; page = 1; show(); renderCfg(); }
 };
+document.onclick = function(){ apriCfg(false); };
+document.onkeydown = function(e){ if (e.key === "Escape") apriCfg(false); };
+
+/* ---------- risultati ---------- */
+function termini(){ return q.value.trim().toLowerCase().split(/\s+/).filter(function(t){return t.length>1}); }
 
 function show(){
   var list = data.filter(function(d){return typeF==="tutti"||d.type===typeF});
+  var tm = ultima.toLowerCase().split(/\s+/).filter(function(t){return t.length>1});
+  bar.style.display = "block";
+  var filtro = (repo!=="all" || typeF!=="tutti") ? " (filtro attivo: " + [repo!=="all"?repo:"", typeF!=="tutti"?nomeTipo(typeF):""].filter(Boolean).join(", ") + ")" : "";
   if (!list.length){
-    out.innerHTML = '<div class="empty"><b>Nessun risultato.</b><br>Prova con una parola più corta o diversa, controlla l\'ortografia, oppure scegli "Tutto" in "Dove".</div>';
-    st.textContent = "0 risultati.";
+    stat.textContent = "";
+    out.innerHTML = '<div class="empty"><span class="big">La ricerca di <b>'+esc(ultima)+'</b> non ha prodotto risultati.</span>'+
+      '<ul><li>Controlla che le parole siano scritte correttamente.</li><li>Prova con parole diverse o più generiche.</li>'+
+      '<li>Controlla le impostazioni (ingranaggio in alto a destra): potresti aver filtrato troppo.</li></ul></div>';
+    pager.style.display = "none";
     return;
   }
-  out.innerHTML = list.map(function(d){
+  stat.textContent = "Circa " + list.length + (list.length===1 ? " risultato" : " risultati") + filtro;
+  var pagine = Math.ceil(list.length / PER);
+  if (page > pagine) page = pagine;
+  var fetta = list.slice((page-1)*PER, page*PER);
+  out.innerHTML = fetta.map(function(d){
     var th = (d.type==="img" && d.raw)
-      ? '<img loading="lazy" src="'+esc(d.raw)+'" alt="" onerror="this.parentNode.textContent=\'🖼️\'">'
-      : icona(d.type);
-    var desc = d.snippet ? esc(d.snippet.slice(0,200)) : "";
-    var dove = d.path;
-    var apri = esc(d.label || "Apri");
-    return '<div class="r">'+
-      '<a class="th" href="'+esc(d.url)+'" target="_blank" rel="noopener" tabindex="-1">'+th+'</a>'+
-      '<div class="tx">'+
-        '<div class="t"><a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.name)+'</a></div>'+
-        '<div class="d"><span class="k">'+esc(nomeTipo(d.type))+'</span>'+desc+'</div>'+
-        (dove ? '<div class="p">'+esc(dove)+'</div>' : '')+
-        '<a class="open" href="'+esc(d.url)+'" target="_blank" rel="noopener">'+apri+' &raquo;</a>'+
-      '</div></div>';
+      ? '<a class="th" href="'+esc(d.url)+'" target="_blank" rel="noopener" tabindex="-1"><img loading="lazy" src="'+esc(d.raw)+'" alt="" onerror="this.parentNode.style.display=\'none\'"></a>' : '';
+    return '<div class="r">'+th+
+      '<h3 class="t"><a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+hl(d.name,tm)+'</a></h3>'+
+      '<div class="u">'+esc(vediUrl(d.url))+' <i>- '+esc(nomeTipo(d.type))+'</i></div>'+
+      (d.snippet ? '<div class="d">'+hl(d.snippet.slice(0,220),tm)+'</div>' : '')+
+      (d.path ? '<div class="p">'+hl(d.path,tm)+'</div>' : '')+
+    '</div>';
   }).join("");
-  st.textContent = list.length + (list.length===1 ? " risultato trovato." : " risultati trovati.");
+  // numeri di pagina
+  if (pagine > 1){
+    var h = '<span class="lg"><span style="color:#2244cc">E</span><span style="color:#cc2222">W</span><span style="color:#eeaa00">S</span></span>';
+    if (page > 1) h += '<a data-p="'+(page-1)+'">&laquo; Precedente</a>';
+    for (var i=1;i<=pagine;i++) h += i===page ? '<span class="cur">'+i+'</span>' : '<a data-p="'+i+'">'+i+'</a>';
+    if (page < pagine) h += '<a data-p="'+(page+1)+'">Successiva &raquo;</a>';
+    pager.innerHTML = h; pager.style.display = "block";
+  } else pager.style.display = "none";
+}
+pager.onclick = function(e){
+  var p = e.target.getAttribute && e.target.getAttribute("data-p"); if (!p) return;
+  page = +p; show(); window.scrollTo(0,0);
+};
+
+function vaiHome(){
+  seq++; data = []; ultima = "";
+  document.body.className = "home";
+  out.innerHTML = ""; renderCfg();
 }
 
 function search(){
   var term = q.value.trim();
-  if (term.length < 2){ data = []; out.innerHTML = ""; st.className = ""; st.textContent = "Pronto. Scrivi almeno 2 lettere."; renderChips(); return; }
+  if (!term){ vaiHome(); return; }
+  if (term.length < 2) return;
+  ultima = term;
   var mio = ++seq;
-  st.className = "load"; st.textContent = "Ricerca in corso..."; out.innerHTML = "";
+  document.body.className = "";
+  load.style.display = "block"; out.innerHTML = ""; pager.style.display = "none"; bar.style.display = "block"; stat.textContent = "";
   fetch(API+"&q="+encodeURIComponent(term)+"&repo="+repo+"&k="+encodeURIComponent(KEY))
     .then(function(r){return r.json()})
     .then(function(j){
       if (mio !== seq) return;                       // risposta vecchia: ignorata
-      st.className = "";
-      if (j.error){ st.innerHTML = '<span class="err">'+esc(j.error)+'</span>'; return; }
-      data = j.results; typeF = "tutti"; renderChips(); show();
-      if (j.errors && j.errors.length) st.textContent += " (Alcune fonti non hanno risposto: "+j.errors.join(", ")+")";
+      load.style.display = "none";
+      if (j.error){ out.innerHTML = '<div class="empty err">'+esc(j.error)+'</div>'; return; }
+      data = j.results; typeF = "tutti"; page = 1; renderCfg(); show();
+      if (j.errors && j.errors.length) stat.textContent += " – alcune fonti non hanno risposto: " + j.errors.join(", ");
     })
-    .catch(function(){ if (mio !== seq) return; st.className = ""; st.textContent = "Errore di rete. Riprova tra poco."; });
+    .catch(function(){ if (mio !== seq) return; load.style.display = "none"; out.innerHTML = '<div class="empty err">Errore di rete. Riprova tra poco.</div>'; });
 }
-q.oninput = function(){ clearTimeout(timer); timer = setTimeout(search, 450); };   // cerca mentre scrivi
+q.oninput = function(){ clearTimeout(timer); timer = setTimeout(search, 500); };   // cerca mentre scrivi
 document.getElementById("f").onsubmit = function(e){ e.preventDefault(); clearTimeout(timer); search(); };
-renderChips();
+document.getElementById("logo").onclick = function(e){ e.preventDefault(); q.value = ""; vaiHome(); q.focus(); };
+renderCfg();
 </script>
 </body>
 </html>
