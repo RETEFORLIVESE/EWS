@@ -7,21 +7,96 @@
 //   DATA_REPO     (facoltativa)   default "RETEFORLIVESE/DATA"
 //   DATA_BRANCH   (facoltativa)   default: il ramo predefinito del repo
 //   _ACCESS_KEY   (facoltativa)   se impostata, la ricerca richiede ?k=<chiave>
+//   SITO_IMG      (facoltativa)   indirizzo online delle immagini (default: lo stesso di NormAktiv)
 const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   // unitext.json NON va qui: contiene le bozze, UniText si legge solo da /api/unitext
 
 // ---------------------------------------------------------------- RICERCA
-const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv
+const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
+const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
-const DATASET = {                                            // file di DATA con schede che hanno "id"
-  'atti.json':     { chiave: 'atti',     pagina: '/lex/atto.html',     tipo: 'atto' },
-  'progetti.json': { chiave: 'progetti', pagina: '/lex/progetto.html', tipo: 'progetto' },
+const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
+const SCRIPT = /\.(m?js|cjs|jsx|ts|map)$/i;                  // i file di codice non si cercano e non si leggono
+// Dati di DATA che si cercano come "schede": ognuna descrive dove sta la lista nel JSON,
+// come si presenta il risultato e a quale pagina del SITO rimanda.
+const via = (...v) => v.filter(Boolean).join(' · ');
+const DATASET = {
+  'atti.json': {
+    chiave: 'atti', tipo: 'atto', label: 'Apri su NormAktiv',
+    scheda: (it) => ({
+      name: it.titolo || it.nome || it.id,
+      path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
+      snippet: it.sommario || it.descrizione || '',
+      url: SITO + '/lex/atto.html?id=' + encodeURIComponent(it.id),
+    }),
+  },
+  'progetti.json': {
+    chiave: 'progetti', tipo: 'progetto', label: 'Apri su NormAktiv',
+    scheda: (it) => ({
+      name: it.titolo || it.nome || it.id,
+      path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
+      snippet: it.sommario || it.descrizione || '',
+      url: SITO + '/lex/progetto.html?id=' + encodeURIComponent(it.id),
+    }),
+  },
+  'wiki.json': {                                             // pagine della wiki -> /lex/wiki.html#id
+    chiave: 'pagine', tipo: 'wiki', label: 'Apri sulla Wiki',
+    scheda: (it) => ({
+      name: it.titolo || it.id,
+      path: via(it.categoria, ...(Array.isArray(it.tag) ? it.tag : [])),
+      snippet: it.sommario || '',
+      url: SITO + '/lex/wiki.html#' + encodeURIComponent(it.id),
+    }),
+  },
+  'elezioni.json': {                                         // consultazioni -> /CEPU.html?tipo=..&data=..&comune=..
+    chiave: 'elezioni', tipo: 'elezione', label: 'Apri i risultati',
+    scheda: (it) => {
+      const partiti = (it.risultati_partiti || []).map((p) => p.nome).filter(Boolean);
+      return {
+        name: via(it.tipo, it.comune, it.data),
+        path: via(it.data, it.affluenza ? 'affluenza ' + it.affluenza : '', it.id_organo),
+        snippet: via(it.area, it.candidato_vincente ? 'Vincitore: ' + it.candidato_vincente : '', partiti.length ? partiti.join(', ') : ''),
+        url: SITO + '/CEPU.html?' + new URLSearchParams({ tipo: it.tipo_codice || '', data: it.data || '', comune: it.comune || '' }).toString(),
+      };
+    },
+  },
 };
+
+// testo "da leggere" di una scheda: niente link, immagini o marcatori wiki (per cercare e per mostrare l'estratto)
+const testoPulito = (s) => String(s || '')
+  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')                     // immagini markdown
+  .replace(/\[([^\]]*)\]\(([^)]*)\)/g, '$1')                 // [testo](url) -> testo
+  .replace(/https?:\/\/\S+/g, ' ')                           // indirizzi nudi
+  .replace(/\{\{infobox[^\n]*\n?|\}\}|\[\[|\]\]|[#*{}|]/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+
+// piccolo estratto attorno alla prima parola trovata
+function estratto(plain, termini) {
+  const basso = plain.toLowerCase();
+  let i = -1;
+  for (const t of termini) { i = basso.indexOf(t); if (i >= 0) break; }
+  if (i < 0) return plain.slice(0, 160);
+  const da = Math.max(0, i - 60);
+  return (da > 0 ? '… ' : '') + plain.slice(da, da + 180) + (da + 180 < plain.length ? ' …' : '');
+}
 const memoria = {};
 
 const nomeFile = (p) => p.split('/').pop().toLowerCase();
 const datasetDi = (p) => DATASET[nomeFile(p)];
-const escluso = (p) => ESCLUSI.includes(nomeFile(p));
+const escluso = (p) => ESCLUSI.includes(nomeFile(p)) || SCRIPT.test(p) || IGNORATI.test(p);
+
+// indirizzo pubblico sul SITO (non sulla repo): lex/atto.html -> https://sito/lex/atto.html
+// (index.html diventa la cartella: lex/index.html -> https://sito/lex/)
+function urlSito(base, p) {
+  const pulito = p.replace(/(^|\/)index\.html?$/i, '$1');
+  return base + '/' + pulito.split('/').map(encodeURIComponent).join('/');
+}
+
+// nome leggibile: "legge-regionale_2024.html" -> "legge regionale 2024"
+const nomeBello = (p) => {
+  const f = p.split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+  return f || p.split('/').pop();
+};
 
 function intestazioni(raw) {
   const h = {
@@ -43,7 +118,7 @@ async function inMemoria(chiave, calcola) {
 
 const tipoFile = (p) =>
   /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(p) ? 'img' :
-  /\.(html?|css|js)$/i.test(p) ? 'sito' :
+  /\.html?$/i.test(p) ? 'pagina' :
   /\.(pdf|docx?|txt|md)$/i.test(p) ? 'documento' :
   /\.(json|csv|xlsx?|geojson)$/i.test(p) ? 'dato' : 'altro';
 
@@ -69,25 +144,32 @@ async function cercaNeiDataset(repo, termini) {
       if (!r.ok) throw new Error(percorso + ': GitHub ' + r.status);
       const json = await r.json();
       const lista = Array.isArray(json) ? json : json[cfg.chiave] || [];
-      return lista.map((it) => ({
-        it,
-        titolo: String(it.titolo || it.nome || it.id || '').toLowerCase(),
-        sommario: String(it.sommario || it.descrizione || '').toLowerCase(),
-        testo: (JSON.stringify(it) + ' ' + (it.categoria || '') + ' ' + it.numero + '/' + it.anno).toLowerCase(),
-      }));
+      return lista.map((it) => {
+        const s = cfg.scheda(it);
+        // si cerca nel contenuto leggibile, non negli indirizzi delle immagini o nei colori
+        const plain = testoPulito(it.contenuto);
+        const dati = JSON.stringify(it, (k, v) => (k === 'logo' || k === 'colore' || k === 'immagine' || k === 'contenuto' ? undefined : v), ' ')
+          .replace(/[{}\[\]":,]/g, ' ').replace(/\s+/g, ' ');
+        return {
+          s, plain,
+          titolo: String(s.name || '').toLowerCase(),
+          sommario: String(s.snippet || '').toLowerCase(),
+          testo: (s.name + ' ' + s.path + ' ' + dati + ' ' + plain + ' ' + (it.numero || '') + '/' + (it.anno || '')).toLowerCase(),
+        };
+      });
     });
-    for (const { it, titolo, sommario, testo } of schede) {
+    for (const { s, plain, titolo, sommario, testo } of schede) {
       if (!termini.every((t) => testo.includes(t))) continue;
       let score = 20;
       for (const t of termini) score += titolo.includes(t) ? 20 : sommario.includes(t) ? 8 : 0;
       risultati.push({
         repo: 'DATA',
         type: cfg.tipo,
-        name: it.titolo || it.nome || it.id,
-        path: [it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato].filter(Boolean).join(' · '),
-        snippet: it.sommario || it.descrizione || '',
-        url: SITO + cfg.pagina + '?id=' + encodeURIComponent(it.id),
-        label: 'Apri su NormAktiv',
+        name: s.name,
+        path: s.path,
+        snippet: s.snippet || estratto(plain, termini),
+        url: s.url,
+        label: cfg.label,
         score,
       });
     }
@@ -98,7 +180,7 @@ async function cercaNeiDataset(repo, termini) {
 async function cercaNellaRepo(nome, repo, termini, q) {
   const trovati = new Map();
   for (const p of await elencoFile(repo)) {
-    if (datasetDi(p) || escluso(p)) continue;                // atti/progetti = schede; bozze = mai
+    if (datasetDi(p) || escluso(p)) continue;                // atti/progetti = schede; bozze, script e cartelle tecniche = mai
     const basso = p.toLowerCase();
     if (termini.every((t) => basso.includes(t))) {
       const f = nomeFile(p);
@@ -117,15 +199,22 @@ async function cercaNellaRepo(nome, repo, termini, q) {
       }
     } catch (_) { /* la ricerca nel contenuto e' facoltativa */ }
   }
-  return [...trovati.values()].map((o) => ({
-    repo: nome,
-    path: o.path,
-    score: o.score,
-    name: o.path.split('/').pop(),
-    type: tipoFile(o.path),
-    url: 'https://github.com/' + repo + '/blob/HEAD/' + o.path,
-    raw: nome === 'DATA' ? null : 'https://raw.githubusercontent.com/' + repo + '/HEAD/' + o.path,
-  }));
+  return [...trovati.values()].map((o) => {
+    const tipo = tipoFile(o.path);
+    // EWS e IMG: si apre il SITO online. DATA e' privata e non ha un sito: resta il link alla repo.
+    const sulSito = nome === 'EWS' ? urlSito(SITO, o.path) : nome === 'IMG' ? urlSito(SITO_IMG, o.path) : null;
+    return {
+      repo: nome,
+      path: o.path,
+      score: o.score,
+      name: tipo === 'pagina' || tipo === 'documento' ? nomeBello(o.path) : o.path.split('/').pop(),
+      file: o.path.split('/').pop(),
+      type: tipo,
+      url: sulSito || 'https://github.com/' + repo + '/blob/HEAD/' + o.path,
+      label: sulSito ? (tipo === 'img' ? 'Apri immagine' : 'Apri pagina') : '',
+      raw: tipo === 'img' ? sulSito : null,               // anteprima: dal sito, mai da raw.githubusercontent
+    };
+  });
 }
 
 async function cercaTutto(req, res) {

@@ -5,111 +5,245 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EWS - Motore di Ricerca</title>
 <style>
-body{margin:0;padding:8px;background:#008080;color:#000;font:16px/1.4 "Times New Roman",Times,serif}
-a{color:#0000ee}a:visited{color:#551a8b}a:active{color:#f00}
-#win{max-width:860px;margin:0 auto;background:#c0c0c0;border:2px solid;border-color:#fff #404040 #404040 #fff;box-shadow:2px 2px 0 #000}
-#bar{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;font:bold 14px Arial,sans-serif;padding:3px 6px;display:flex;justify-content:space-between}
-#bar span.x{background:#c0c0c0;color:#000;border:2px solid;border-color:#fff #404040 #404040 #fff;padding:0 6px;font-weight:bold}
-#in{padding:12px 16px}
-h1{font:bold 34px "Times New Roman",serif;text-align:center;margin:6px 0;color:#000080;text-shadow:2px 2px #808080}
-.sub{text-align:center;margin:0 0 8px;font-style:italic}
-.new{color:#f00;font:bold 13px Arial,sans-serif;animation:bl 1s steps(2,start) infinite}
-@keyframes bl{to{visibility:hidden}}
-hr{border:0;border-top:2px solid #808080;border-bottom:2px solid #fff;margin:10px 0}
-#box{background:#fff;border:2px solid;border-color:#808080 #fff #fff #808080;padding:10px}
-input[type=text]{width:70%;min-width:160px;font:16px "Courier New",monospace;padding:3px;border:2px solid;border-color:#808080 #fff #fff #808080;background:#fff}
-.btn{font:14px Arial,sans-serif;background:#c0c0c0;border:2px solid;border-color:#fff #404040 #404040 #fff;padding:3px 12px;cursor:pointer;color:#000}
-.btn:active,.btn.on{border-color:#404040 #fff #fff #404040;background:#b0b0b0;font-weight:bold}
-.row{margin:8px 0;font:13px Arial,sans-serif}
-.row b{display:inline-block;min-width:70px}
-#st{font:bold 14px Arial,sans-serif;background:#000080;color:#fff;padding:2px 6px;margin:10px 0}
-.r{margin:0 0 14px;overflow:hidden}
-.r img{float:left;width:90px;height:70px;object-fit:cover;border:2px solid;border-color:#808080 #fff #fff #808080;margin:0 10px 0 0}
-.r .t{font-size:18px}
-.r .d{font-size:14px}
-.r .u{font:12px "Courier New",monospace;color:#008000;word-break:break-all}
-.r .k{font:bold 11px Arial,sans-serif;background:#ffff00;border:1px solid #000;padding:0 4px;margin-right:4px}
-.go{font:bold 13px Arial,sans-serif}
-.err{color:#f00;font-weight:bold}
-#foot{text-align:center;font:12px Arial,sans-serif;color:#000}
-#cnt{font:bold 14px "Courier New",monospace;background:#000;color:#0f0;padding:1px 6px;letter-spacing:2px}
+:root{
+  --o1:#ffb347;--o2:#ff8c1a;--o3:#e85d00;--o4:#a83a00;
+  --txt:#fff4e8;--mut:#e2c3a2;
+  --glass:rgba(24,16,10,.58);
+  --line:rgba(255,185,110,.42);
+}
+*{box-sizing:border-box}
+html{min-height:100%}
+body{
+  margin:0;padding:18px 12px 40px;min-height:100vh;color:var(--txt);
+  font:16px/1.45 "Segoe UI","Frutiger","Myriad Pro","Trebuchet MS",Helvetica,Arial,sans-serif;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%,rgba(255,140,20,.5),transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 100%,rgba(255,90,0,.45),transparent 60%),
+    radial-gradient(ellipse 40% 30% at 60% 55%,rgba(255,120,0,.12),transparent 70%),
+    linear-gradient(180deg,#050505 0%,#150a03 55%,#000 100%);
+  background-attachment:fixed;overflow-x:hidden;
+}
+a{color:var(--o1)}a:visited{color:#e8a76a}a:hover{color:#fff}
+
+/* bolle */
+.bub{position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 30% 27%,rgba(255,255,255,.6),rgba(255,170,70,.2) 34%,rgba(255,110,0,.08) 68%,transparent 71%);
+  border:1px solid rgba(255,200,130,.35);box-shadow:inset 0 -8px 18px rgba(255,120,0,.18);
+  animation:fl 15s ease-in-out infinite alternate}
+.b1{width:150px;height:150px;left:-30px;top:12%}
+.b2{width:70px;height:70px;right:6%;top:9%;animation-duration:11s}
+.b3{width:110px;height:110px;right:-20px;top:52%;animation-duration:18s}
+.b4{width:46px;height:46px;left:9%;bottom:14%;animation-duration:12s}
+.b5{width:90px;height:90px;left:44%;bottom:-24px;animation-duration:16s}
+@keyframes fl{to{transform:translate(18px,-34px)}}
+
+/* finestra di vetro */
+#win{position:relative;z-index:1;max-width:900px;margin:0 auto;border-radius:24px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 28%,rgba(0,0,0,.4)),var(--glass);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  border:1px solid var(--line);
+  box-shadow:0 24px 70px rgba(0,0,0,.75),0 0 46px rgba(255,120,0,.2),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.04)}
+#win::before{content:"";position:absolute;left:-10%;right:-10%;top:0;height:150px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));border-radius:0 0 50% 50%/0 0 100% 100%}
+#in{position:relative;padding:22px 24px 18px}
+
+/* titolo */
+.head{display:flex;align-items:center;justify-content:center;gap:14px;margin:2px 0 4px}
+.orb{flex:none;width:58px;height:58px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 120%,#ffd08a 0%,var(--o2) 35%,var(--o4) 80%);
+  box-shadow:0 6px 18px rgba(255,110,0,.6),inset 0 -6px 12px rgba(120,30,0,.55),inset 0 0 0 1px rgba(255,220,170,.6)}
+.orb::before{content:"";position:absolute;left:7px;right:7px;top:4px;height:24px;border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.05))}
+.orb svg{position:relative;width:28px;height:28px;filter:drop-shadow(0 1px 1px rgba(120,30,0,.7))}
+h1{margin:0;font:600 38px/1 "Segoe UI","Frutiger","Trebuchet MS",Arial,sans-serif;letter-spacing:-.5px;
+  background:linear-gradient(180deg,#fff 0%,#ffd9a8 38%,var(--o2) 52%,var(--o3) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 2px 6px rgba(255,110,0,.45))}
+h1 small{font-weight:300;font-size:20px;letter-spacing:0}
+.sub{text-align:center;margin:0 0 16px;color:var(--mut);font-size:14px}
+
+/* casella di ricerca */
+#box{padding:14px;border-radius:20px;border:1px solid rgba(255,200,140,.28);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02)),rgba(0,0,0,.28);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 22px rgba(0,0,0,.4)}
+#f{display:flex;gap:10px}
+input[type=text]{flex:1;min-width:0;font:17px "Segoe UI","Trebuchet MS",Arial,sans-serif;color:#fff;padding:12px 18px;
+  border-radius:999px;border:1px solid rgba(255,190,120,.45);outline:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(30,18,8,.55));
+  box-shadow:inset 0 3px 8px rgba(0,0,0,.65),inset 0 -1px 0 rgba(255,255,255,.12);transition:box-shadow .2s,border-color .2s}
+input[type=text]::placeholder{color:#b99a7b}
+input[type=text]:focus{border-color:var(--o1);box-shadow:inset 0 3px 8px rgba(0,0,0,.65),0 0 0 3px rgba(255,140,20,.35),0 0 22px rgba(255,120,0,.55)}
+
+/* bottoni lucidi */
+.btn{font:600 14px "Segoe UI","Trebuchet MS",Arial,sans-serif;color:#fff;cursor:pointer;position:relative;overflow:hidden;
+  padding:7px 16px;border-radius:999px;border:1px solid rgba(255,200,140,.4);
+  background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.06) 48%,rgba(0,0,0,.3) 52%,rgba(255,255,255,.06) 100%),rgba(40,26,14,.8);
+  box-shadow:0 2px 6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 2px rgba(0,0,0,.7);transition:filter .15s,transform .1s}
+.btn:hover{filter:brightness(1.25)}
+.btn:active{transform:translateY(1px)}
+.btn.on,.btn.big,.open{
+  background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.14) 48%,rgba(255,255,255,0) 52%),linear-gradient(180deg,var(--o1),var(--o2) 45%,var(--o3));
+  border-color:#ffd9a8;box-shadow:0 3px 14px rgba(255,110,0,.55),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -2px 4px rgba(130,40,0,.5);
+  text-shadow:0 1px 1px rgba(120,30,0,.8)}
+.btn.big{font-size:16px;padding:10px 26px}
+.btn small{font-weight:400;opacity:.85}
+.row{margin:12px 0 0;display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:13px}
+.row b{min-width:54px;color:var(--o1);font-weight:600;letter-spacing:.4px;text-transform:uppercase;font-size:11px}
+
+/* stato */
+#st{margin:16px 0 14px;padding:7px 18px;border-radius:999px;font-weight:600;font-size:14px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,.04) 50%,rgba(0,0,0,.25) 52%),rgba(120,50,0,.65);
+  border:1px solid rgba(255,190,120,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 16px rgba(255,110,0,.2)}
+#st.load{background-image:linear-gradient(90deg,transparent,rgba(255,200,120,.55),transparent),linear-gradient(180deg,rgba(255,255,255,.2),rgba(0,0,0,.2));
+  background-size:40% 100%,100% 100%;background-repeat:no-repeat;background-position:-40% 0,0 0;animation:sh 1.1s linear infinite}
+@keyframes sh{to{background-position:140% 0,0 0}}
+.err{color:#ffd24a}
+
+/* risultati */
+.r{position:relative;margin:0 0 12px;padding:12px;display:flex;gap:14px;border-radius:18px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03) 40%,rgba(0,0,0,.18)),rgba(18,12,8,.55);
+  border:1px solid rgba(255,190,120,.28);box-shadow:0 5px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.22);
+  transition:transform .15s,border-color .15s,box-shadow .15s}
+.r:hover{transform:translateY(-2px);border-color:var(--o2);box-shadow:0 10px 26px rgba(0,0,0,.55),0 0 22px rgba(255,120,0,.3),inset 0 1px 0 rgba(255,255,255,.3)}
+.r .th{flex:none;width:112px;height:84px;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;text-decoration:none;position:relative;
+  background:radial-gradient(circle at 50% 0%,rgba(255,150,40,.45),rgba(0,0,0,.5));
+  border:1px solid rgba(255,200,140,.5);box-shadow:inset 0 0 12px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.5)}
+.r .th::after{content:"";position:absolute;left:0;right:0;top:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));pointer-events:none}
+.r .th img{width:100%;height:100%;object-fit:cover;display:block}
+.r .tx{min-width:0;flex:1}
+.r .t{font-size:18px;font-weight:600;word-break:break-word}
+.r .t a{text-decoration:none;color:#fff}
+.r .t a:hover{color:var(--o1);text-decoration:underline}
+.r .d{font-size:14px;margin-top:3px;color:#f1dcc6}
+.r .p{font-size:12px;margin-top:4px;color:var(--mut);word-break:break-word}
+.r .k{display:inline-block;margin:0 7px 0 0;padding:0 9px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#2a1200;border-radius:999px;
+  background:linear-gradient(180deg,#ffe3b8,var(--o1) 55%,var(--o2));box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 1px 4px rgba(255,110,0,.5)}
+.open{display:inline-block;margin-top:9px;padding:5px 16px;border-radius:999px;font-weight:600;font-size:13px;text-decoration:none;color:#fff;border:1px solid #ffd9a8}
+.open:visited{color:#fff}.open:hover{filter:brightness(1.12);color:#fff}
+.empty{padding:20px;border-radius:18px;text-align:center;color:var(--txt);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.15)),rgba(18,12,8,.55);border:1px solid rgba(255,190,120,.3)}
+
+#foot{margin:14px 0 0;text-align:center;font-size:12px;color:var(--mut)}
+hr{border:0;height:1px;margin:14px 0 0;background:linear-gradient(90deg,transparent,rgba(255,170,80,.6),transparent)}
+
+@media (max-width:560px){
+  #in{padding:16px 14px 14px}
+  h1{font-size:30px}.orb{width:46px;height:46px}.orb svg{width:22px;height:22px}
+  #f{flex-wrap:wrap}.btn.big{width:100%}
+  .r .th{width:74px;height:58px;font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){.bub,#st.load{animation:none}.r{transition:none}}
 </style>
 </head>
 <body>
+<div class="bub b1" aria-hidden="true"></div><div class="bub b2" aria-hidden="true"></div>
+<div class="bub b3" aria-hidden="true"></div><div class="bub b4" aria-hidden="true"></div>
+<div class="bub b5" aria-hidden="true"></div>
 <div id="win">
-  <div id="bar"><span>EWS database</span><span class="x">X</span></div>
   <div id="in">
-    <hr>
+    <div class="head">
+      <div class="orb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="10" cy="10" r="6.2"/><path d="M15 15l5.5 5.5"/></svg>
+      </div>
+      <h1>EWS <small>Ricerca</small></h1>
+    </div>
+    <p class="sub">Pagine, immagini, atti, progetti, wiki ed elezioni: scrivi una parola e premi Invio.</p>
     <div id="box">
-      <form id="f">
-        <b>Cerca:</b>
-        <input type="text" id="q" placeholder="atto, progetto, luogo, immagine..." autofocus>
-        <input type="submit" class="btn" value="Vai!">
+      <form id="f" autocomplete="off">
+        <input type="text" id="q" placeholder="es. legge, Taleen, referendum, logo..." autofocus aria-label="Cerca">
+        <input type="submit" class="btn big" value="Cerca">
       </form>
       <div class="row" id="rp"></div>
       <div class="row" id="rt"></div>
     </div>
-    <div id="st">Pronto.</div>
+    <div id="st">Pronto. Scrivi almeno 2 lettere.</div>
     <div id="out"></div>
     <hr>
-    <p id="foot">Questo sito e' ottimizzato 800x600.<br>
-    Visitatori: <span id="cnt">000042</span><br>(c) 2026 EWS</p>
+    <p id="foot">&copy; 2026 EWS</p>
   </div>
 </div>
 <script>
 var API = "/api/data?cerca=1"; // api/data.js
-var repo = "all", data = [], typeF = "tutti";
+var repo = "all", data = [], typeF = "tutti", timer = null, seq = 0;
 var KEY = new URLSearchParams(location.search).get("k") || "";
 var q = document.getElementById("q"), out = document.getElementById("out"),
     st = document.getElementById("st"), rp = document.getElementById("rp"), rt = document.getElementById("rt");
 
+var TIPI = {
+  tutti:["Tutti",""], pagina:["Pagine","📄"], img:["Immagini","🖼️"],
+  documento:["Documenti","📝"], dato:["Dati","📊"],
+  atto:["Atti","⚖️"], progetto:["Progetti","📌"],
+  wiki:["Wiki","📚"], elezione:["Elezioni","🗳️"], altro:["Altro","📁"]
+};
+var ORDINE = ["pagina","wiki","atto","progetto","elezione","documento","img","dato","altro"];
+
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function nomeTipo(t){return (TIPI[t]||[t])[0]}
+function icona(t){return (TIPI[t]||["","📁"])[1]||"📁"}
 
 function btns(list, cur, attr){
-  return list.map(function(x){return '<button type="button" class="btn '+(cur===x[0]?'on':'')+'" data-'+attr+'="'+x[0]+'">'+x[1]+'</button> '}).join("");
+  return list.map(function(x){return '<button type="button" class="btn '+(cur===x[0]?'on':'')+'" data-'+attr+'="'+esc(x[0])+'">'+x[1]+'</button>'}).join("");
 }
 function renderChips(){
-  rp.innerHTML = "<b>Dove:</b> " + btns([["all","Tutto"],["EWS","Siti"],["IMG","Immagini"],["DATA","Dati"]], repo, "r");
+  rp.innerHTML = "<b>Dove</b>" + btns([["all","Tutto"],["EWS","Pagine del sito"],["IMG","Immagini"],["DATA","Atti e dati"]], repo, "r");
   if (data.length){
-    var types = ["tutti"].concat(Array.from(new Set(data.map(function(d){return d.type}))));
-    rt.innerHTML = "<b>Tipo:</b> " + btns(types.map(function(t){return [t,t]}), typeF, "t");
+    var cont = {}; data.forEach(function(d){cont[d.type]=(cont[d.type]||0)+1});
+    var tipi = ORDINE.filter(function(t){return cont[t]}).concat(Object.keys(cont).filter(function(t){return ORDINE.indexOf(t)<0}));
+    var lista = [["tutti","Tutti <small>("+data.length+")</small>"]].concat(tipi.map(function(t){return [t, icona(t)+" "+nomeTipo(t)+" <small>("+cont[t]+")</small>"]}));
+    rt.innerHTML = "<b>Tipo</b>" + btns(lista, typeF, "t");
   } else rt.innerHTML = "";
 }
 document.getElementById("box").onclick = function(e){
-  var r = e.target.getAttribute("data-r"), t = e.target.getAttribute("data-t");
+  var b = e.target.closest("button"); if (!b) return;
+  var r = b.getAttribute("data-r"), t = b.getAttribute("data-t");
   if (r){ repo = r; if (q.value.trim().length>1) search(); else renderChips(); }
   if (t){ typeF = t; show(); renderChips(); }
 };
 
 function show(){
   var list = data.filter(function(d){return typeF==="tutti"||d.type===typeF});
-  out.innerHTML = list.map(function(d,i){
-    var img = (d.type==="img" && d.raw) ? '<img loading="lazy" src="'+esc(d.raw)+'" alt="">' : '';
-    var desc = d.snippet ? esc(d.snippet.slice(0,160)) : esc(d.path);
-    var go = d.label ? ' <span class="go">[ <a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.label)+'</a> ]</span>' : '';
-    return '<div class="r">'+img+
-      '<div class="t">'+(i+1)+'. <a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.name)+'</a>'+go+'</div>'+
-      '<div class="d"><span class="k">'+esc(d.repo)+'</span><span class="k">'+esc(d.type)+'</span>'+desc+'</div>'+
-      (d.snippet ? '<div class="d"><i>'+esc(d.path)+'</i></div>' : '')+
-      '<div class="u">'+esc(d.url)+'</div></div>';
+  if (!list.length){
+    out.innerHTML = '<div class="empty"><b>Nessun risultato.</b><br>Prova con una parola più corta o diversa, controlla l\'ortografia, oppure scegli "Tutto" in "Dove".</div>';
+    st.textContent = "0 risultati.";
+    return;
+  }
+  out.innerHTML = list.map(function(d){
+    var th = (d.type==="img" && d.raw)
+      ? '<img loading="lazy" src="'+esc(d.raw)+'" alt="" onerror="this.parentNode.textContent=\'🖼️\'">'
+      : icona(d.type);
+    var desc = d.snippet ? esc(d.snippet.slice(0,200)) : "";
+    var dove = d.path;
+    var apri = esc(d.label || "Apri");
+    return '<div class="r">'+
+      '<a class="th" href="'+esc(d.url)+'" target="_blank" rel="noopener" tabindex="-1">'+th+'</a>'+
+      '<div class="tx">'+
+        '<div class="t"><a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.name)+'</a></div>'+
+        '<div class="d"><span class="k">'+esc(nomeTipo(d.type))+'</span>'+desc+'</div>'+
+        (dove ? '<div class="p">'+esc(dove)+'</div>' : '')+
+        '<a class="open" href="'+esc(d.url)+'" target="_blank" rel="noopener">'+apri+' &raquo;</a>'+
+      '</div></div>';
   }).join("");
-  st.textContent = list.length + " documenti trovati.";
+  st.textContent = list.length + (list.length===1 ? " risultato trovato." : " risultati trovati.");
 }
 
 function search(){
   var term = q.value.trim();
-  if (term.length < 2) return;
-  st.textContent = "Ricerca in corso... attendere prego..."; out.innerHTML = "";
+  if (term.length < 2){ data = []; out.innerHTML = ""; st.className = ""; st.textContent = "Pronto. Scrivi almeno 2 lettere."; renderChips(); return; }
+  var mio = ++seq;
+  st.className = "load"; st.textContent = "Ricerca in corso..."; out.innerHTML = "";
   fetch(API+"&q="+encodeURIComponent(term)+"&repo="+repo+"&k="+encodeURIComponent(KEY))
     .then(function(r){return r.json()})
     .then(function(j){
-      if (j.error){ st.innerHTML = '<span class="err" style="color:#ff0">'+esc(j.error)+'</span>'; return; }
+      if (mio !== seq) return;                       // risposta vecchia: ignorata
+      st.className = "";
+      if (j.error){ st.innerHTML = '<span class="err">'+esc(j.error)+'</span>'; return; }
       data = j.results; typeF = "tutti"; renderChips(); show();
-      if (j.errors && j.errors.length) st.textContent += " (Errori: "+j.errors.join(", ")+")";
+      if (j.errors && j.errors.length) st.textContent += " (Alcune fonti non hanno risposto: "+j.errors.join(", ")+")";
     })
-    .catch(function(){ st.textContent = "Errore di rete. Controllare il modem."; });
+    .catch(function(){ if (mio !== seq) return; st.className = ""; st.textContent = "Errore di rete. Riprova tra poco."; });
 }
-document.getElementById("f").onsubmit = function(e){ e.preventDefault(); search(); };
+q.oninput = function(){ clearTimeout(timer); timer = setTimeout(search, 450); };   // cerca mentre scrivi
+document.getElementById("f").onsubmit = function(e){ e.preventDefault(); clearTimeout(timer); search(); };
 renderChips();
 </script>
 </body>
