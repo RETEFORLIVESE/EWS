@@ -79,17 +79,51 @@ a:hover{text-decoration:underline}
 #pager .lg{font:bold 26px Georgia,serif;display:block;margin:0 0 6px}
 
 #foot{border-top:1px solid #e4e4e4;margin-top:20px;padding:14px 18px;color:#777;font-size:12px;background:#f2f2f2;text-align:center}
-#hometxt{display:none;text-align:center;color:#777;font-size:13px;margin-top:22px}
+#safari{display:none}
 
-/* ---- pagina iniziale ---- */
-body.home #top{flex-direction:column;gap:22px;justify-content:center;padding:0 16px;margin-top:21vh}
-body.home #logo{font-size:86px;letter-spacing:-3px}
-body.home #f{flex-direction:column;width:100%;max-width:570px;gap:18px}
-body.home #q{width:100%;height:38px;font-size:17px;padding:5px 9px}
-body.home .go{height:30px;padding:0 20px}
-body.home #bar,body.home #out,body.home #pager,body.home #load{display:none!important}
-body.home #hometxt{display:block}
-body.home #foot{position:absolute;left:0;right:0;bottom:0;margin:0}
+/* ---- pagina iniziale (stile pagina iniziale di Safari) ---- */
+body.home{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helvetica,Arial,sans-serif;color:#fff;
+  background:
+    radial-gradient(60% 55% at 12% 12%,#8fb4ff 0%,transparent 62%),
+    radial-gradient(55% 50% at 88% 8%,#c9a0ff 0%,transparent 60%),
+    radial-gradient(60% 55% at 80% 95%,#ff9fc6 0%,transparent 62%),
+    radial-gradient(50% 45% at 10% 95%,#6fd6d0 0%,transparent 60%),
+    #4a5bb5;
+  background-attachment:fixed}
+body.home #top{display:block;padding:0 20px;margin:0;padding-top:max(14vh,56px)}
+body.home #logo{display:none}
+body.home #f{max-width:560px;width:100%;margin:0 auto;display:block}
+body.home .go{display:none}
+body.home #q{width:100%;height:46px;padding:0 18px 0 46px;font:17px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helvetica,Arial,sans-serif;color:#fff;
+  border:0;border-radius:14px;outline:0;
+  background:rgba(255,255,255,.26) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5l5 5'/%3E%3C/svg%3E") no-repeat 15px 50%/19px 19px;
+  -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+  box-shadow:0 8px 30px rgba(20,20,80,.22),inset 0 0 0 1px rgba(255,255,255,.28)}
+body.home #q::placeholder{color:rgba(255,255,255,.82)}
+body.home #q:hover{background-color:rgba(255,255,255,.32)}
+body.home #q:focus{background-color:rgba(255,255,255,.36);box-shadow:0 8px 34px rgba(20,20,80,.3),inset 0 0 0 2px rgba(255,255,255,.7)}
+body.home #bar,body.home #out,body.home #pager,body.home #load,body.home #foot{display:none!important}
+body.home #safari{display:block;max-width:680px;margin:46px auto 0;padding:0 20px 90px}
+#safari h2{margin:0 0 14px;font-size:20px;font-weight:700;letter-spacing:-.2px;text-shadow:0 1px 8px rgba(30,30,100,.25)}
+#fav{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:20px 8px;margin-bottom:38px}
+.tile{background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;font:inherit}
+.tile .ic{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;
+  box-shadow:0 6px 16px rgba(20,20,80,.28),inset 0 1px 0 rgba(255,255,255,.45);transition:transform .15s,box-shadow .15s}
+.tile:hover .ic{transform:translateY(-2px) scale(1.04)}
+.tile:active .ic{transform:scale(.94)}
+.tile .lb{font-size:12px;text-shadow:0 1px 6px rgba(30,30,100,.35)}
+.tile.on .ic{box-shadow:0 0 0 3px #fff,0 6px 18px rgba(20,20,80,.35)}
+.tile.on .lb{font-weight:700}
+#rec{display:flex;flex-wrap:wrap;gap:8px}
+#rec button{font:14px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helvetica,Arial,sans-serif;color:#fff;cursor:pointer;padding:8px 14px;border-radius:999px;border:0;
+  background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+#rec button:hover{background:rgba(255,255,255,.34)}
+body.home #gear{position:fixed;top:auto;right:18px;bottom:18px;width:42px;height:42px;border-radius:50%;border:0;
+  background:rgba(255,255,255,.26);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 4px 14px rgba(20,20,80,.25)}
+body.home #gear svg{fill:#fff}
+body.home #gear:hover{background:rgba(255,255,255,.4);border:0}
+body.home #cfg{position:fixed;top:auto;right:18px;bottom:70px}
 
 /* ---- telefono: tutto in colonna ---- */
 @media (max-width:700px){
@@ -103,10 +137,10 @@ body.home #foot{position:absolute;left:0;right:0;bottom:0;margin:0}
   .r .th{float:none;width:100%;height:150px;margin:0 0 6px}
   #gear{right:10px;top:10px}
   #cfg{left:10px;right:10px;top:50px;width:auto;max-width:none}
-  body.home #top{margin-top:14vh}
-  body.home #logo{align-self:center;font-size:64px}
-  body.home #f{align-items:stretch}
-  body.home .go{align-self:center}
+  body.home #top{display:block;padding:max(10vh,40px) 16px 0}
+  body.home #safari{padding:0 16px 90px;margin-top:34px}
+  #fav{grid-template-columns:repeat(4,1fr);gap:18px 6px}
+  body.home #cfg{left:10px;right:10px;bottom:70px;top:auto}
 }
 </style>
 </head>
@@ -127,11 +161,15 @@ body.home #foot{position:absolute;left:0;right:0;bottom:0;margin:0}
 <div id="top">
   <a id="logo" href="./" aria-label="EWS - pagina iniziale"><span class="a">E</span><span class="b">W</span><span class="c">S</span></a>
   <form id="f" autocomplete="off" role="search">
-    <input type="text" id="q" aria-label="Cerca" autofocus>
+    <input type="text" id="q" aria-label="Cerca" placeholder="Cerca in EWS" autofocus>
     <input type="submit" class="go" value="Cerca">
   </form>
 </div>
-<div id="hometxt">Pagine, immagini, atti, progetti, wiki ed elezioni. Usa l'ingranaggio in alto a destra per scegliere dove e cosa cercare.</div>
+<div id="safari">
+  <h2>Preferiti</h2>
+  <div id="fav"></div>
+  <div id="recwrap" style="display:none"><h2>Ricerche recenti</h2><div id="rec"></div></div>
+</div>
 
 <div id="bar"><b>Risultati</b><span class="stat" id="stat"></span></div>
 <div id="load">Ricerca in corso...</div>
@@ -142,7 +180,35 @@ body.home #foot{position:absolute;left:0;right:0;bottom:0;margin:0}
 <script>
 var API = "/api/data?cerca=1"; // api/data.js
 var PER = 10;
-var repo = "all", data = [], typeF = "tutti", page = 1, timer = null, seq = 0, ultima = "";
+var repo = "all", pref = "", data = [], typeF = "tutti", page = 1, timer = null, seq = 0, ultima = "";
+
+/* ---------- pagina iniziale: preferiti e ricerche recenti ---------- */
+var PREF = [   // [etichetta, dove, tipo preferito, icona, sfondo]
+  ["Tutto",     "all",  "",         "🔍", "linear-gradient(160deg,#9aa7ff,#5a64e0)"],
+  ["Pagine",    "EWS",  "",         "🌐", "linear-gradient(160deg,#5ac8fa,#007aff)"],
+  ["Immagini",  "IMG",  "",         "🖼️", "linear-gradient(160deg,#ffb36b,#ff5e7a)"],
+  ["Atti",      "DATA", "atto",     "⚖️", "linear-gradient(160deg,#8e8cff,#5856d6)"],
+  ["Progetti",  "DATA", "progetto", "📌", "linear-gradient(160deg,#ffd75e,#ff9f0a)"],
+  ["Wiki",      "DATA", "wiki",     "📚", "linear-gradient(160deg,#6be58a,#2fb457)"],
+  ["Elezioni",  "DATA", "elezione", "🗳️", "linear-gradient(160deg,#ff8a80,#ff3b30)"]
+];
+function leggiRecenti(){ try { return JSON.parse(localStorage.getItem("ews_recenti")||"[]"); } catch(e){ return []; } }
+function salvaRecente(t){
+  try {
+    var l = leggiRecenti().filter(function(x){return x.toLowerCase()!==t.toLowerCase()});
+    l.unshift(t); localStorage.setItem("ews_recenti", JSON.stringify(l.slice(0,8)));
+  } catch(e){}
+}
+function renderHome(){
+  var fav = document.getElementById("fav");
+  fav.innerHTML = PREF.map(function(p,i){
+    var on = p[1]===repo && p[2]===pref;
+    return '<button type="button" class="tile'+(on?' on':'')+'" data-i="'+i+'"><span class="ic" style="background:'+p[4]+'">'+p[3]+'</span><span class="lb">'+esc(p[0])+'</span></button>';
+  }).join("");
+  var rec = leggiRecenti();
+  document.getElementById("recwrap").style.display = rec.length ? "block" : "none";
+  document.getElementById("rec").innerHTML = rec.map(function(t){return '<button type="button" data-q="'+esc(t)+'">'+esc(t)+'</button>'}).join("");
+}
 var KEY = new URLSearchParams(location.search).get("k") || "";
 var q = document.getElementById("q"), out = document.getElementById("out"), bar = document.getElementById("bar"),
     stat = document.getElementById("stat"), pager = document.getElementById("pager"), load = document.getElementById("load"),
@@ -194,8 +260,18 @@ cfg.onclick = function(e){
   e.stopPropagation();
   var b = e.target.closest("button"); if (!b) return;
   var r = b.getAttribute("data-r"), t = b.getAttribute("data-t");
-  if (r){ repo = r; if (q.value.trim().length>1) search(); else renderCfg(); }
-  if (t){ typeF = t; page = 1; show(); renderCfg(); }
+  if (r){ repo = r; pref = ""; if (q.value.trim().length>1) search(); else renderCfg(); }
+  if (t){ typeF = t; pref = t==="tutti" ? "" : t; page = 1; show(); renderCfg(); }
+};
+document.getElementById("safari").onclick = function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  if (b.hasAttribute("data-i")){
+    var p = PREF[+b.getAttribute("data-i")];
+    repo = p[1]; pref = p[2];
+    if (q.value.trim().length>1) search(); else { renderCfg(); renderHome(); q.focus(); }
+  } else if (b.hasAttribute("data-q")){
+    q.value = b.getAttribute("data-q"); search();
+  }
 };
 document.onclick = function(){ apriCfg(false); };
 document.onkeydown = function(e){ if (e.key === "Escape") apriCfg(false); };
@@ -247,7 +323,7 @@ pager.onclick = function(e){
 function vaiHome(){
   seq++; data = []; ultima = "";
   document.body.className = "home";
-  out.innerHTML = ""; renderCfg();
+  out.innerHTML = ""; renderCfg(); renderHome();
 }
 
 function search(){
@@ -264,7 +340,10 @@ function search(){
       if (mio !== seq) return;                       // risposta vecchia: ignorata
       load.style.display = "none";
       if (j.error){ out.innerHTML = '<div class="empty err">'+esc(j.error)+'</div>'; return; }
-      data = j.results; typeF = "tutti"; page = 1; renderCfg(); show();
+      data = j.results; page = 1;
+      typeF = (pref && data.some(function(d){return d.type===pref})) ? pref : "tutti";
+      if (data.length) salvaRecente(term);
+      renderCfg(); show();
       if (j.errors && j.errors.length) stat.textContent += " – alcune fonti non hanno risposto: " + j.errors.join(", ");
     })
     .catch(function(){ if (mio !== seq) return; load.style.display = "none"; out.innerHTML = '<div class="empty err">Errore di rete. Riprova tra poco.</div>'; });
@@ -272,7 +351,7 @@ function search(){
 q.oninput = function(){ clearTimeout(timer); timer = setTimeout(search, 500); };   // cerca mentre scrivi
 document.getElementById("f").onsubmit = function(e){ e.preventDefault(); clearTimeout(timer); search(); };
 document.getElementById("logo").onclick = function(e){ e.preventDefault(); q.value = ""; vaiHome(); q.focus(); };
-renderCfg();
+renderCfg(); renderHome();
 </script>
 </body>
 </html>
