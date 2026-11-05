@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EWS - Ricerca</title>
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/ICO/serverW95.ico">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/ICO/serverW95.ico">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<meta name="color-scheme" content="light dark">
+<script>try{var _t=localStorage.getItem("ews_tema");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
 <style>
 /* =========================================================
    EWS Ricerca - stile unico (home e risultati abbinati)
@@ -14,17 +19,50 @@
   --glass-hi:rgba(255,255,255,.36);
   --ring:inset 0 0 0 1px rgba(255,255,255,.3);
   --blue:#007aff;
+  color-scheme:light;
+  --wall:radial-gradient(60% 55% at 12% 12%,#8fb4ff 0%,transparent 62%),
+         radial-gradient(55% 50% at 88% 8%,#c9a0ff 0%,transparent 60%),
+         radial-gradient(60% 55% at 80% 95%,#ff9fc6 0%,transparent 62%),
+         radial-gradient(50% 45% at 10% 95%,#6fd6d0 0%,transparent 60%),#4a5bb5;
+  --topbg:rgba(70,80,170,.36);
+  --panel:rgba(255,255,255,.92);--ptxt:#222;--pline:#e6e6ea;
+  --link:#1a0dab;--visited:#681da8;--url:#0b7a3b;--muted:#70757a;--desc:#3c4043;--strong:#000;
+  --cfgbg:rgba(255,255,255,.93);--cfgtxt:#1d1d1f;--cfgmut:#6e6e73;--opt:#ececf0;--opth:#e0e0e6;
+  --thumb:#f6f6f8;--thumbline:#ddd;--pagerh:#eef4ff;--ul:#444;--err:#c5221f;
+}
+/* tema scuro: scelto a mano ... */
+:root[data-theme=dark]{
+  color-scheme:dark;
+  --wall:radial-gradient(60% 55% at 12% 12%,#3a4f9e 0%,transparent 62%),
+         radial-gradient(55% 50% at 88% 8%,#5b3a8f 0%,transparent 60%),
+         radial-gradient(60% 55% at 80% 95%,#8a3a66 0%,transparent 62%),
+         radial-gradient(50% 45% at 10% 95%,#1f6a6a 0%,transparent 60%),#0d1024;
+  --topbg:rgba(12,14,34,.55);
+  --panel:rgba(26,28,42,.9);--ptxt:#e8e8ee;--pline:rgba(255,255,255,.1);
+  --link:#8ab4f8;--visited:#c58af9;--url:#81c995;--muted:#9aa0a6;--desc:#c4c7cc;--strong:#fff;
+  --cfgbg:rgba(32,34,50,.96);--cfgtxt:#f2f2f7;--cfgmut:#9a9ab0;--opt:#3a3d52;--opth:#474a62;
+  --thumb:#2a2c3d;--thumbline:#444;--pagerh:#2a3350;--ul:#b8b8c4;--err:#ff8a80;
+}
+/* ... oppure automatico, in base al telefono/computer */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    color-scheme:dark;
+    --wall:radial-gradient(60% 55% at 12% 12%,#3a4f9e 0%,transparent 62%),
+           radial-gradient(55% 50% at 88% 8%,#5b3a8f 0%,transparent 60%),
+           radial-gradient(60% 55% at 80% 95%,#8a3a66 0%,transparent 62%),
+           radial-gradient(50% 45% at 10% 95%,#1f6a6a 0%,transparent 60%),#0d1024;
+    --topbg:rgba(12,14,34,.55);
+    --panel:rgba(26,28,42,.9);--ptxt:#e8e8ee;--pline:rgba(255,255,255,.1);
+    --link:#8ab4f8;--visited:#c58af9;--url:#81c995;--muted:#9aa0a6;--desc:#c4c7cc;--strong:#fff;
+    --cfgbg:rgba(32,34,50,.96);--cfgtxt:#f2f2f7;--cfgmut:#9a9ab0;--opt:#3a3d52;--opth:#474a62;
+    --thumb:#2a2c3d;--thumbline:#444;--pagerh:#2a3350;--ul:#b8b8c4;--err:#ff8a80;
+  }
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   min-height:100vh;color:#fff;font:14px/1.45 var(--font);
-  background:
-    radial-gradient(60% 55% at 12% 12%,#8fb4ff 0%,transparent 62%),
-    radial-gradient(55% 50% at 88% 8%,#c9a0ff 0%,transparent 60%),
-    radial-gradient(60% 55% at 80% 95%,#ff9fc6 0%,transparent 62%),
-    radial-gradient(50% 45% at 10% 95%,#6fd6d0 0%,transparent 60%),
-    #4a5bb5;
+  background:var(--wall);
   background-attachment:fixed;
 }
 button{font-family:inherit}
@@ -34,7 +72,7 @@ button{font-family:inherit}
   position:sticky;top:0;z-index:5;
   display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"logo form gear";
   align-items:center;gap:18px;padding:12px clamp(14px,3vw,28px);
-  background:rgba(70,80,170,.36);
+  background:var(--topbg);
   -webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);
   border-bottom:1px solid rgba(255,255,255,.22);
 }
@@ -43,7 +81,7 @@ button{font-family:inherit}
 
 /* barra di ricerca */
 .sb{position:relative}
-.sb .lens{position:absolute;left:14px;top:50%;width:18px;height:18px;margin-top:-9px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;pointer-events:none}
+.sb .lens{position:absolute;z-index:1;left:14px;top:50%;width:18px;height:18px;margin-top:-9px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;pointer-events:none}
 #q{
   width:100%;height:42px;padding:0 42px 0 42px;border:0;border-radius:13px;outline:0;
   font:16px var(--font);color:#fff;background:var(--glass);box-shadow:var(--ring);
@@ -71,19 +109,19 @@ button{font-family:inherit}
 /* pannello impostazioni */
 #cfg{
   display:none;position:fixed;z-index:20;top:62px;right:clamp(14px,3vw,28px);width:350px;max-width:calc(100vw - 20px);
-  padding:16px 18px 18px;color:#1d1d1f;border-radius:16px;
-  background:rgba(255,255,255,.93);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  padding:16px 18px 18px;color:var(--cfgtxt);border-radius:16px;
+  background:var(--cfgbg);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
   box-shadow:0 14px 44px rgba(20,20,80,.35),0 0 0 1px rgba(0,0,0,.06);
 }
 #cfg.open{display:block}
 #cfg h2{margin:0 0 4px;font:700 16px var(--font)}
-#cfg h3{margin:14px 0 8px;font:600 12px var(--font);letter-spacing:.5px;text-transform:uppercase;color:#6e6e73}
+#cfg h3{margin:14px 0 8px;font:600 12px var(--font);letter-spacing:.5px;text-transform:uppercase;color:var(--cfgmut)}
 #cfg .opts{display:flex;flex-wrap:wrap;gap:7px}
-#cfg .opt{font:13px var(--font);color:#1d1d1f;cursor:pointer;padding:6px 13px;border-radius:999px;border:0;background:#ececf0}
-#cfg .opt:hover{background:#e0e0e6}
+#cfg .opt{font:13px var(--font);color:var(--cfgtxt);cursor:pointer;padding:6px 13px;border-radius:999px;border:0;background:var(--opt)}
+#cfg .opt:hover{background:var(--opth)}
 #cfg .opt.on{background:var(--blue);color:#fff;font-weight:600}
 #cfg .opt small{opacity:.7;font-weight:400}
-#cfg .hint{margin:0;color:#6e6e73;font-size:13px}
+#cfg .hint{margin:0;color:var(--cfgmut);font-size:13px}
 
 /* ---------- risultati ---------- */
 #main{max-width:900px;margin:0 auto;padding:14px clamp(14px,3vw,28px) 30px}
@@ -91,30 +129,30 @@ button{font-family:inherit}
 #bar b{font-weight:600}
 #load{display:none;margin:0 4px 12px;font-size:14px;color:#fff}
 #res{
-  color:#222;padding:10px 26px 12px;border-radius:18px;
-  background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  color:var(--ptxt);padding:10px 26px 12px;border-radius:18px;
+  background:var(--panel);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   box-shadow:0 12px 40px rgba(20,20,80,.25),0 0 0 1px rgba(255,255,255,.5);
 }
 #out{display:block}
 .r{margin:16px 0 22px;overflow:hidden}
 .r .t{margin:0;font-size:18px;font-weight:normal;line-height:1.25;word-break:break-word}
-.r .t a{color:#1a0dab;text-decoration:none}
+.r .t a{color:var(--link);text-decoration:none}
 .r .t a:hover{text-decoration:underline}
-.r .t a:visited{color:#681da8}
-.r .u{margin:2px 0;color:#0b7a3b;font-size:13px;word-break:break-all}
-.r .u i{font-style:normal;color:#70757a}
-.r .d{color:#3c4043;font-size:14px;max-width:640px}
-.r .d b{color:#000}
-.r .p{margin-top:2px;color:#70757a;font-size:13px}
-.r .th{float:left;width:92px;height:68px;margin:3px 14px 0 0;border:1px solid #ddd;border-radius:8px;background:#f6f6f8;
+.r .t a:visited{color:var(--visited)}
+.r .u{margin:2px 0;color:var(--url);font-size:13px;word-break:break-all}
+.r .u i{font-style:normal;color:var(--muted)}
+.r .d{color:var(--desc);font-size:14px;max-width:640px}
+.r .d b{color:var(--strong)}
+.r .p{margin-top:2px;color:var(--muted);font-size:13px}
+.r .th{float:left;width:92px;height:68px;margin:3px 14px 0 0;border:1px solid var(--thumbline);border-radius:8px;background:var(--thumb);
   display:flex;align-items:center;justify-content:center;overflow:hidden}
 .r .th img{max-width:100%;max-height:100%;display:block}
-.empty{padding:16px 0 10px;font-size:15px;line-height:1.6;color:#222}
-.empty ul{margin:8px 0 0 20px;padding:0;font-size:14px;color:#444}
-.empty.err{color:#c5221f}
-#pager{display:none;margin:0 -6px;padding:10px 0 4px;border-top:1px solid #e6e6ea;font-size:14px;color:#222}
+.empty{padding:16px 0 10px;font-size:15px;line-height:1.6;color:var(--ptxt)}
+.empty ul{margin:8px 0 0 20px;padding:0;font-size:14px;color:var(--ul)}
+.empty.err{color:var(--err)}
+#pager{display:none;margin:0 -6px;padding:10px 0 4px;border-top:1px solid var(--pline);font-size:14px;color:var(--ptxt)}
 #pager a,#pager span{display:inline-block;margin:0 4px;padding:4px 10px;border-radius:8px;text-decoration:none;color:var(--blue);cursor:pointer}
-#pager a:hover{background:#eef4ff}
+#pager a:hover{background:var(--pagerh)}
 #pager .cur{background:var(--blue);color:#fff;font-weight:600;cursor:default}
 #foot{padding:6px 16px 24px;text-align:center;font-size:12px;color:rgba(255,255,255,.85)}
 
@@ -189,6 +227,8 @@ body.home #cfg{top:auto;bottom:70px;right:18px}
   <div class="opts" id="rp"></div>
   <h3>Tipo</h3>
   <div class="opts" id="rt"></div>
+  <h3>Aspetto</h3>
+  <div class="opts" id="rm"></div>
 </div>
 
 <section id="safari" aria-label="Pagina iniziale">
@@ -221,7 +261,16 @@ var repo = "all", pref = "", data = [], typeF = "tutti", page = 1, ultima = "", 
 /* elementi */
 function $(id){ return document.getElementById(id); }
 var q = $("q"), sb = $("sb"), clr = $("clr"), hint = $("hint"), bar = $("bar"), load = $("load"),
-    out = $("out"), pager = $("pager"), cfg = $("cfg"), gear = $("gear"), rp = $("rp"), rt = $("rt");
+    out = $("out"), pager = $("pager"), cfg = $("cfg"), gear = $("gear"), rp = $("rp"), rt = $("rt"), rm = $("rm");
+
+/* ---------- aspetto: automatico / chiaro / scuro ---------- */
+var tema = "auto";
+try { var _s = localStorage.getItem("ews_tema"); if (_s === "dark" || _s === "light") tema = _s; } catch(e){}
+function applicaTema(){
+  var el = document.documentElement;
+  if (tema === "auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme", tema);
+  try { if (tema === "auto") localStorage.removeItem("ews_tema"); else localStorage.setItem("ews_tema", tema); } catch(e){}
+}
 
 /* tipi di risultato */
 var TIPI = { tutti:"Tutti", pagina:"Pagine", img:"Immagini", documento:"Documenti", dato:"Dati",
@@ -310,6 +359,7 @@ function renderCfg(){
   } else {
     rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per tipo di risultato.</p>';
   }
+  rm.innerHTML = opts([["auto","Automatico"],["light","Chiaro"],["dark","Scuro"]], tema, "m");
 }
 function apriCfg(on){
   cfg.classList.toggle("open", on);
@@ -319,7 +369,8 @@ gear.addEventListener("click", function(e){ e.stopPropagation(); apriCfg(!cfg.cl
 cfg.addEventListener("click", function(e){
   e.stopPropagation();
   var b = e.target.closest("button"); if (!b) return;
-  var r = b.getAttribute("data-r"), t = b.getAttribute("data-t");
+  var r = b.getAttribute("data-r"), t = b.getAttribute("data-t"), m = b.getAttribute("data-m");
+  if (m !== null){ tema = m; applicaTema(); renderCfg(); return; }
   if (r !== null){
     repo = r; pref = "";
     if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); }
@@ -451,7 +502,7 @@ $("safari").addEventListener("click", function(e){
 });
 
 /* ---------- avvio ---------- */
-renderCfg(); renderHome();
+applicaTema(); renderCfg(); renderHome();
 var q0 = (new URLSearchParams(location.search).get("q") || "").trim();
 if (q0.length > 1){ q.value = q0; aggiornaBarra(); search(); }
 })();
