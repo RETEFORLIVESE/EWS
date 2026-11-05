@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EWS - Motore di Ricerca</title>
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/ICO/serverW95.ico">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/ICO/serverW95.ico">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --o1:#ffb347;--o2:#ff8c1a;--o3:#e85d00;--o4:#a83a00;
@@ -14,7 +17,7 @@
 *{box-sizing:border-box}
 html{min-height:100%}
 body{
-  margin:0;padding:18px 12px 40px;min-height:100vh;color:var(--txt);
+  margin:0;padding:0;min-height:100vh;color:var(--txt);
   font:16px/1.45 "Segoe UI","Frutiger","Myriad Pro","Trebuchet MS",Helvetica,Arial,sans-serif;
   background:
     radial-gradient(ellipse 70% 50% at 15% 0%,rgba(255,140,20,.5),transparent 60%),
@@ -38,14 +41,18 @@ a{color:var(--o1)}a:visited{color:#e8a76a}a:hover{color:#fff}
 @keyframes fl{to{transform:translate(18px,-34px)}}
 
 /* finestra di vetro */
-#win{position:relative;z-index:1;max-width:900px;margin:0 auto;border-radius:24px;overflow:hidden;
+#win{position:relative;z-index:1;width:100%;min-height:100vh;margin:0;border-radius:0;border-width:0 0 0 0;overflow:hidden;
   background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 28%,rgba(0,0,0,.4)),var(--glass);
   -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
   border:1px solid var(--line);
   box-shadow:0 24px 70px rgba(0,0,0,.75),0 0 46px rgba(255,120,0,.2),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.04)}
 #win::before{content:"";position:absolute;left:-10%;right:-10%;top:0;height:150px;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));border-radius:0 0 50% 50%/0 0 100% 100%}
-#in{position:relative;padding:22px 24px 18px}
+#in{position:relative;min-height:100vh;padding:28px clamp(16px,4vw,64px) 22px}
+#out{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:14px;align-items:start}
+#out .r,#out .empty{margin:0}
+#out .empty{grid-column:1/-1}
+#box{width:100%}
 
 /* titolo */
 .head{display:flex;align-items:center;justify-content:center;gap:14px;margin:2px 0 4px}
@@ -126,11 +133,19 @@ input[type=text]:focus{border-color:var(--o1);box-shadow:inset 0 3px 8px rgba(0,
 #foot{margin:14px 0 0;text-align:center;font-size:12px;color:var(--mut)}
 hr{border:0;height:1px;margin:14px 0 0;background:linear-gradient(90deg,transparent,rgba(255,170,80,.6),transparent)}
 
-@media (max-width:560px){
-  #in{padding:16px 14px 14px}
-  h1{font-size:30px}.orb{width:46px;height:46px}.orb svg{width:22px;height:22px}
-  #f{flex-wrap:wrap}.btn.big{width:100%}
-  .r .th{width:74px;height:58px;font-size:26px}
+/* telefono: tutto in colonna */
+@media (max-width:700px){
+  #in{padding:18px 14px 16px}
+  .head{flex-direction:column;gap:8px}
+  h1{font-size:32px}.orb{width:52px;height:52px}.orb svg{width:24px;height:24px}
+  #f{flex-direction:column}.btn.big{width:100%}
+  .row{flex-direction:column;align-items:stretch}
+  .row b{min-width:0}
+  .row .btn{width:100%;text-align:left}
+  #out{grid-template-columns:1fr}
+  .r{flex-direction:column;gap:10px}
+  .r .th{width:100%;height:150px;font-size:44px}
+  .open{display:block;text-align:center;padding:9px 16px}
 }
 @media (prefers-reduced-motion:reduce){.bub,#st.load{animation:none}.r{transition:none}}
 </style>
