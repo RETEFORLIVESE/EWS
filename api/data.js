@@ -175,6 +175,70 @@ function allegatiDi(json, lista, cfg) {
   return out;
 }
 
+// ---- PANNELLO WIKI (come il riquadro di Google): se la ricerca coincide con una pagina della wiki ----
+const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+// quanto la pagina corrisponde a cio' che si cerca: 3 = titolo (o id) identico, 2 = il titolo inizia con le parole cercate,
+// 1 = tutte le parole cercate sono nel titolo, 0 = no. (Le parole parziali non contano: scrivendo "ita" non compare "Italia".)
+function rangoWiki(it, nome, termini) {
+  const n = norm(termini.join(' ')), t = norm(nome);
+  if (!n || !t) return 0;
+  if (t === n || norm(it.id) === n) return 3;
+  if (t.startsWith(n + ' ')) return 2;
+  const parole = t.split(' ');
+  return norm(termini.join(' ')).split(' ').every((w) => parole.includes(w)) ? 1 : 0;
+}
+
+// markup wiki/markdown -> testo semplice
+const senzaMarkup = (x) => String(x || '')
+  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+  .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2').replace(/\[\[([^\]]*)\]\]/g, '$1')
+  .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+  .replace(/\{\{[^}]*\}\}/g, ' ').replace(/<[^>]*>/g, ' ')
+  .replace(/https?:\/\/\S+/g, ' ')
+  .replace(/'{2,}|\*{1,3}|_{2,}|`/g, '').replace(/\s+/g, ' ').trim();
+
+function accorcia(x, max) {
+  if (x.length <= max) return x;
+  const taglio = x.slice(0, max);
+  const punto = Math.max(taglio.lastIndexOf('. '), taglio.lastIndexOf('! '), taglio.lastIndexOf('? '));
+  if (punto > max * 0.5) return taglio.slice(0, punto + 1);
+  return taglio.replace(/\s+\S*$/, '') + '…';
+}
+
+function pannelloWiki(it, s) {
+  const md = typeof it.contenuto === 'string' ? it.contenuto : '';
+  // scheda infobox {{infobox ... }}: righe "chiave = valore" (o "chiave: valore"); la prima immagine trovata fa da miniatura
+  const blocco = (md.match(/\{\{\s*infobox[\s\S]*?\}\}/i) || [''])[0];
+  const campi = [];
+  let img = '';
+  for (const riga of blocco.split('\n').slice(1)) {
+    const m = riga.match(/^\s*\|?\s*([^=|:{}]{1,40}?)\s*[=:]\s*(.+?)\s*\|?\s*$/);
+    if (!m) continue;
+    const k = m[1].trim(), v = m[2].trim();
+    if (/immagine|image|img|foto|stemma|bandiera|logo/i.test(k)) { const u = soloHttp((v.match(/https?:\/\/[^\s)|\]]+/) || [''])[0]); if (u && !img) img = u; continue; }
+    if (/didascalia|larghezza|dimension|posizione|allineament|colore|stile|^id$/i.test(k)) continue;
+    const val = accorcia(senzaMarkup(v), 90);
+    if (val && campi.length < 5) campi.push([k.charAt(0).toUpperCase() + k.slice(1), val]);
+  }
+  const corpo = md.replace(blocco, ' ');
+  if (!img) img = soloHttp(it.immagine || it.copertina || it.logo) || soloHttp((corpo.match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)/) || [])[1]);
+  // estratto: primo paragrafo di testo vero (niente titoli, immagini, elenchi)
+  let estratto = '';
+  for (const b of corpo.split(/\n\s*\n/)) {
+    const t = senzaMarkup(b.split('\n').filter((r) => !/^\s*(#|[-*+]\s|\d+\.\s|\|)/.test(r)).join(' '));
+    if (t.length >= 40) { estratto = accorcia(t, 340); break; }
+  }
+  if (!estratto) estratto = accorcia(senzaMarkup(it.sommario), 340);
+  return {
+    titolo: s.name,
+    categoria: it.categoria || '',
+    tag: (Array.isArray(it.tag) ? it.tag : []).slice(0, 4),
+    estratto, immagine: img, campi,
+    url: s.url, label: 'Leggi sulla Wiki', icon: '',
+  };
+}
+
 const memoria = {};
 
 const nomeFile = (p) => p.split('/').pop().toLowerCase();
@@ -231,6 +295,7 @@ const dataRepo = () => process.env.DATA_REPO || 'RETEFORLIVESE/DATA';
 
 async function cercaNeiDataset(repo, termini) {
   const risultati = [];
+  let migliore = null, nCand = 0;
   const ref = process.env.DATA_BRANCH ? '?ref=' + encodeURIComponent(process.env.DATA_BRANCH) : '';
   const file = (await elencoFile(repo)).filter(datasetDi);
   for (const percorso of file) {
@@ -247,6 +312,7 @@ async function cercaNeiDataset(repo, termini) {
         const dati = cfg.html ? testoDi(it, nested).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ') : testoDi(it, nested);
         return {
           tipo: (cfg.allegati && classifica(it)) || cfg.tipo, label: cfg.label, proprio: false,
+          raw: cfg.tipo === 'wiki' ? it : null,
           s, plain,
           titolo: String(s.name || '').toLowerCase(),
           sommario: String(s.snippet || '').toLowerCase(),
@@ -265,8 +331,15 @@ async function cercaNeiDataset(repo, termini) {
       }
       return voci;
     });
-    for (const { tipo, label, proprio, s, plain, titolo, sommario, testo } of schede) {
+    for (const { tipo, label, proprio, raw, s, plain, titolo, sommario, testo } of schede) {
       if (!termini.every((t) => testo.includes(t))) continue;
+      if (raw) {                                             // pagina della wiki: candidata al pannello
+        const rg = rangoWiki(raw, s.name, termini);
+        if (rg) {
+          nCand++;
+          if (!migliore || rg > migliore.rg || (rg === migliore.rg && String(s.name).length < String(migliore.s.name).length)) migliore = { rg, raw, s };
+        }
+      }
       let score = 20;
       for (const t of termini) score += titolo.includes(t) ? 20 : sommario.includes(t) ? 8 : 0;
       risultati.push({
@@ -283,6 +356,8 @@ async function cercaNeiDataset(repo, termini) {
       });
     }
   }
+  // pannello: titolo identico o che inizia con le parole cercate; se e' solo "contiene le parole", solo quando e' l'unica candidata
+  if (migliore && (migliore.rg >= 2 || nCand === 1)) risultati.panel = pannelloWiki(migliore.raw, migliore.s);
   return risultati;
 }
 
@@ -459,12 +534,17 @@ async function cercaTutto(req, res) {
 
     const results = esiti.flatMap((e) => (e.status === 'fulfilled' ? e.value : []));
     const errors = esiti.filter((e) => e.status === 'rejected').map((e) => e.reason.message);
+    let panel = null;                                         // riquadro "dalla wiki" (solo nella sezione Tutti)
+    if (!soloImg) {
+      panel = esiti.map((e) => (e.status === 'fulfilled' && e.value && e.value.panel) || null).find(Boolean) || null;
+      if (panel) panel.icon = (await logoDi(SITO + '/lex/wiki.html', 'lex/wiki.html').catch(() => '')) || ICONA;
+    }
     // i siti (pagine) vengono per primi; atti, sentenze e dossier in fondo; a parita' di gruppo conta il punteggio
     results.sort((a, b) => (PRIORITA[a.type] ?? 4) - (PRIORITA[b.type] ?? 4) || b.score - a.score || String(a.name).localeCompare(String(b.name)));
     const fuori = results.slice(0, soloImg ? 400 : 200);
     if (!soloImg) await arricchisciIcone(fuori);              // logo della pagina (letto dal suo HTML)
     else fuori.forEach((d) => { delete d._url; delete d._rp; });
-    res.status(200).json({ count: results.length, results: fuori, errors });
+    res.status(200).json({ count: results.length, results: fuori, errors, panel });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

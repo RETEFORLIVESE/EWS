@@ -142,6 +142,23 @@ body[data-modo=img] #main{max-width:1200px}
 #pager .cur{background:var(--grad);color:#fff;font-weight:600;cursor:default}
 #foot{padding:6px 16px 24px;text-align:center;font-size:12px;color:rgba(255,255,255,.8)}
 
+/* pannello wiki (come il riquadro di Google) */
+.pn{margin:6px 6px 12px;padding:16px 18px 16px;border-radius:20px;background:var(--rowh);box-shadow:inset 0 0 0 1px var(--pline),inset 4px 0 0 #1fa34a;overflow:hidden}
+.pn .pk{display:flex;align-items:center;gap:9px;margin:0 0 8px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.pn .pk .fav{width:22px;height:22px;border-radius:7px;padding:3px;font-size:11px;line-height:16px}
+.pn .pt{margin:0 0 3px;font-size:24px;font-weight:650;line-height:1.2;letter-spacing:-.02em;color:var(--ptxt);word-break:break-word}
+.pn .pt a{color:inherit;text-decoration:none}
+.pn .pt a:hover{text-decoration:underline;text-underline-offset:3px}
+.pn .pc{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.pn .pi{float:right;width:132px;max-height:150px;margin:0 0 8px 16px;padding:5px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--thumbline);object-fit:contain;display:block}
+.pn .px{margin:0 0 12px;font-size:14.5px;line-height:1.55;color:var(--desc)}
+.pn dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 16px;margin:0 0 14px;font-size:13.5px;clear:both}
+.pn dt{color:var(--muted);font-weight:600}
+.pn dd{margin:0;color:var(--ptxt);overflow-wrap:break-word}
+.pn .pg{display:inline-block;padding:9px 20px;border-radius:999px;background:var(--grad);color:#fff;font-weight:600;font-size:14px;text-decoration:none;box-shadow:0 8px 20px -6px rgba(90,80,230,.7)}
+.pn .pg:hover{filter:brightness(1.1)}
+@media (max-width:700px){.pn{margin:4px 2px 10px;padding:14px}.pn .pt{font-size:21px}.pn .pi{width:96px}}
+
 /* immagini */
 #res.imgmode{padding:16px 16px 18px}
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:18px 14px}
@@ -305,6 +322,7 @@ var KEY = new URLSearchParams(location.search).get("k") || "";
 
 /* stato */
 var modo = "web";                       // "web" = Tutti, "img" = Immagini
+var panel = null;                       // riquadro "dalla wiki" restituito dalla ricerca
 var repo = "all", pref = "", data = [], typeF = "tutti", fmt = "tutti", page = 1, nImg = PER_IMG, imgList = [],
     ultima = "", timer = null, seq = 0, lbI = -1, lbFocus = null;
 
@@ -489,6 +507,26 @@ function show(){
   if (modo === "img") showImg(); else showWeb();
 }
 
+/* pannello wiki: piccolo estratto + dati principali, con rimando alla pagina della wiki */
+function pannelloHtml(){
+  var pn = panel;
+  if (!pn || !pn.url || !pn.titolo) return "";
+  var lett = esc(String(pn.titolo).charAt(0).toUpperCase());
+  var ico = pn.icon ? '<img class="fav" src="' + esc(pn.icon) + '" alt="" data-l="' + lett + '">' : '<span class="fav">' + lett + "</span>";
+  var meta = [pn.categoria].concat(pn.tag || []).filter(Boolean).map(esc).join(" · ");
+  var dl = (pn.campi && pn.campi.length)
+    ? "<dl>" + pn.campi.map(function(c){ return "<dt>" + esc(c[0]) + "</dt><dd>" + esc(c[1]) + "</dd>"; }).join("") + "</dl>" : "";
+  return '<aside class="pn" aria-label="Dalla wiki">' +
+    '<div class="pk">' + ico + "<span>Dalla Wiki</span></div>" +
+    (pn.immagine ? '<img class="pi" loading="lazy" src="' + esc(pn.immagine) + '" alt="">' : "") +
+    '<h2 class="pt"><a href="' + esc(pn.url) + '" target="_blank" rel="noopener">' + esc(pn.titolo) + "</a></h2>" +
+    (meta ? '<p class="pc">' + meta + "</p>" : "") +
+    (pn.estratto ? '<p class="px">' + esc(pn.estratto) + "</p>" : "") +
+    dl +
+    '<a class="pg" href="' + esc(pn.url) + '" target="_blank" rel="noopener">' + esc(pn.label || "Leggi sulla Wiki") + " &rarr;</a>" +
+    "</aside>";
+}
+
 /* sezione Tutti: elenco di testo, con il logo del sito accanto a ogni risultato */
 function showWeb(){
   var list = data.filter(function(d){ return typeF === "tutti" || d.type === typeF; });
@@ -512,7 +550,8 @@ function showWeb(){
 
   var pagine = Math.ceil(list.length / PER);
   if (page > pagine) page = pagine;
-  out.innerHTML = list.slice((page - 1) * PER, page * PER).map(function(d, i, arr){
+  var pnl = (page === 1 && (typeF === "tutti" || typeF === "wiki") && (repo === "all" || repo === "DATA")) ? pannelloHtml() : "";
+  out.innerHTML = pnl + list.slice((page - 1) * PER, page * PER).map(function(d, i, arr){
     var sep = (typeF === "tutti" && i > 0 && d.type !== "pagina" && arr[i - 1].type === "pagina") ? '<div class="sep" role="separator"><span>Altri risultati</span></div>' : "";
     var sg = sorgente(d.url);
     var fbk = sg.origin ? sg.origin + "/favicon.ico" : "";
@@ -643,6 +682,7 @@ document.addEventListener("error", function(e){
   } else if (t.id === "lbi"){ lb.classList.add("broken"); }
   else if (t.closest(".gi")){ t.closest(".gi").classList.add("rotta"); }
   else if (t.closest(".th")){ t.closest(".th").style.display = "none"; }
+  else if (t.classList.contains("pi")){ t.style.display = "none"; }
 }, true);
 
 /* ---------- indirizzo della pagina: ?q=...&tab=img si puo' condividere e ricaricare ---------- */
@@ -661,6 +701,7 @@ var SKEL = new Array(5).join('<div class="sk"><b></b><span></span><span></span><
 function applica(j, term){
   load.style.display = "none"; res.classList.remove("busy");
   if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
+  panel = (modo === "web" && j.panel) ? j.panel : null;
   data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
   data = data.filter(function(d){ return modo === "img" ? d.type === "img" : d.type !== "img"; });   // "Tutti" non mostra mai immagini
   var PRI = { pagina:0, wiki:1, progetto:2, elezione:2, documento:2, img:2, atto:3, sentenza:3, dossier:3 };   /* siti per primi, atti in fondo (ordine stabile: dentro il gruppo resta il punteggio) */
