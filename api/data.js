@@ -102,6 +102,17 @@ function classifica(it) {                                   // un atto che e' in
 }
 const ETICHETTA = { sentenza: 'Sentenza', dossier: 'Dossier' };
 
+// Pagine dedicate: la sentenza si apre da /lex/corte.html?id=<id della sentenza>,
+// il dossier da /lex/dossier.html?id=<id dell'ATTO> (l'id interno del dossier, es. "principale", non basta: e' univoco solo dentro l'atto).
+function urlAllegato(e, tipo, genitore) {
+  if (tipo === 'sentenza' && e && e.id) return SITO + '/lex/corte.html?id=' + encodeURIComponent(e.id);
+  if (tipo === 'dossier') {
+    const idAtto = (genitore && genitore.id) || (e && (e.id_atto || e.atto_id || e.atto));
+    if (idAtto) return SITO + '/lex/dossier.html?id=' + encodeURIComponent(idAtto);
+  }
+  return '';
+}
+
 function schedaAllegato(e, tipo, genitore, urlGenitore, cfg) {
   if (typeof e === 'string') e = soloHttp(e) ? { url: e } : { titolo: e };
   const nGen = genitore && (genitore.titolo || genitore.nome || genitore.id) ? String(genitore.titolo || genitore.nome || genitore.id) : '';
@@ -121,9 +132,10 @@ function schedaAllegato(e, tipo, genitore, urlGenitore, cfg) {
       ? via('Corte Costituzionale', num, e.data || '', e.effetto || '', nGen ? 'in: ' + nGen : '')
       : via('Dossier', e.ente || '', e.data || '', nGen ? 'in: ' + nGen : ''),
     snippet: testoPulito(primo(e.massima, e.sommario, e.sintesi, e.presentazione, e.motivazione, e.descrizione, e.dispositivo, e.sottotitolo)),
-    url: proprio || urlGenitore,
+    url: proprio || urlAllegato(e, tipo, genitore) || urlGenitore,
   };
-  return { tipo, label: proprio ? 'Apri il documento' : cfg.label, s, plain, dati: testoDi(e, (k) => RUMORE.has(k)), proprio: !!proprio };
+  const labelPagina = tipo === 'sentenza' ? 'Apri sulla Corte Costituzionale' : tipo === 'dossier' ? 'Apri il dossier' : cfg.label;
+  return { tipo, label: proprio ? 'Apri il documento' : labelPagina, s, plain, dati: testoDi(e, (k) => RUMORE.has(k)), proprio: !!proprio };
 }
 
 function allegatiDi(json, lista, cfg) {
@@ -296,7 +308,7 @@ async function cercaNellaRepo(nome, repo, termini, q, soloImg) {
       }
     } catch (_) { /* la ricerca nel contenuto e' facoltativa */ }
   }
-  return [...trovati.values()].map((o) => {
+  return [...trovati.values()].filter((o) => !(infos.get(o.path) || {}).nascondi).map((o) => {
     const tipo = tipoFile(o.path);
     const info = infos.get(o.path);
     // EWS e IMG: si apre il SITO online. DATA e' privata e non ha un sito: resta il link alla repo.
@@ -361,9 +373,10 @@ async function htmlDi(url, percorsoRepo) {
 //   <meta name="ews-nome" content="UniText">                     nome mostrato nella ricerca
 //   <meta name="ews-descrizione" content="Bozze e testi">        riga grigia sotto il titolo (se manca: il percorso, es. lex/unitext.html)
 //   <meta name="ews-tag" content="uni, testi, bozze">            parole extra per trovare la pagina (separate da virgola o ;)
+//   <meta name="ews-nascondi" content="true">                    la pagina non compare mai nei risultati
 const decodifica = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
 function metaDaHtml(html) {
-  const out = { nome: '', descrizione: '', tag: [] };
+  const out = { nome: '', descrizione: '', tag: [], nascondi: false };
   const tag = String(html).slice(0, 80000).match(/<meta\b[^>]*>/gi) || [];
   for (const t of tag) {
     const a = {};
@@ -373,6 +386,7 @@ function metaDaHtml(html) {
     const v = decodifica(a.content);
     if (nome === 'ews-nome') out.nome = v;
     else if (nome === 'ews-descrizione') out.descrizione = v;
+    else if (nome === 'ews-nascondi') out.nascondi = /^(true|1|si|sì|yes)$/i.test(v);
     else if (nome === 'ews-tag') out.tag = v.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
   }
   return out;
