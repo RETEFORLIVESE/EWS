@@ -142,9 +142,9 @@ label{font-size:13px;color:var(--mute);display:block;margin-bottom:3px}
 
  <section id="trasporti">
   <h2 class="d">Rete di trasporto</h2>
-  <p class="lead">Art. 10 · rete pubblica gratuita gestita dalla Commissione per le Risorse e i Trasporti. La mappa qui sotto è la pagina <b>IDU.html</b>, collegata in tempo reale: ogni modifica a IDU si vede anche qui.</p>
+  <p class="lead">Art. 10 · rete pubblica gratuita gestita dalla Commissione per le Risorse e i Trasporti. Qui compare solo la <b>mappa</b> della pagina <b>IDU.html</b>, collegata in tempo reale: ogni modifica alla mappa in IDU si vede anche qui.</p>
   <iframe class="frame" id="idu" src="/IDU.html" title="Mappa dei trasporti IDU" loading="lazy"></iframe>
-  <p class="note">Se la mappa non appare, tieni <b>IDU.html</b> (e <b>IDU.png</b>) nella stessa cartella di questo file. <a href="IDU.html" target="_blank" rel="noopener" style="color:var(--acc)">Apri a schermo intero ↗</a></p>
+  <p class="note">Se la mappa non appare, controlla che <b>IDU.html</b> sia raggiungibile dal sito. <a href="/IDU.html#mappa" target="_blank" rel="noopener" style="color:var(--acc)">Apri la mappa nella pagina IDU ↗</a></p>
  </section>
 
  <section id="cittadino">
@@ -296,6 +296,18 @@ var LOGO_FILE="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/COAT/Est
  var saved=ld("logo",null);show(saved||LOGO_FILE);
  $("#lg").onclick=function(e){if(e.shiftKey){sv("logo",null);show(LOGO_FILE);return}$("#lgf").click()};
  $("#lgf").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){sv("logo",r.result);show(r.result)};r.readAsDataURL(f)}})();
+/* ===== MAPPA IDU: mostra solo la sezione #mappa di IDU.html ===== */
+(function(){var f=$("#idu");
+ function fit(){try{var d=f.contentDocument;f.style.height=Math.max(d.documentElement.scrollHeight,d.body.scrollHeight)+"px"}catch(e){}}
+ function theme(){try{var t=document.documentElement.dataset.theme,r=f.contentDocument.documentElement;if(t)r.dataset.theme=t;else r.removeAttribute("data-theme")}catch(e){}}
+ f.addEventListener("load",function(){
+  try{var d=f.contentDocument;if(!d||!d.getElementById("mappa"))throw 0;
+   var st=d.createElement("style");
+   st.textContent="body>*:not(#mappa):not(script):not(style):not(link){display:none!important}body{background:transparent!important;margin:0}body::before,body::after{display:none!important}#mappa{background:transparent!important}";
+   d.head.appendChild(st);theme();fit();setTimeout(fit,400);setTimeout(fit,1500);
+   if(d.defaultView.ResizeObserver)new d.defaultView.ResizeObserver(fit).observe(d.body)}
+  catch(e){if(!f.dataset.fb){f.dataset.fb=1;f.style.height="78vh";f.src=f.getAttribute("src").split("#")[0]+"#mappa"}}});
+ addEventListener("resize",fit);$("#th").addEventListener("click",theme)})();
 </script>
 </body>
 </html>
