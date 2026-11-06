@@ -42,6 +42,16 @@ const DATASET = {
       url: SITO + '/lex/progetto.html?id=' + encodeURIComponent(it.id),
     }),
   },
+  'ctsu.json': {                                             // progetti del CTSU -> /lex/ctsu.html?id=<id>
+    chiave: 'progetti', tipo: 'progetto', label: 'Apri sul CTSU', pagina: '/lex/ctsu.html',
+    escludi: ['copertina', 'galleria'], html: true,          // niente indirizzi di immagini nel testo cercato; i tag HTML delle sezioni vengono tolti
+    scheda: (it) => ({
+      name: it.titolo || it.nome || it.id,
+      path: via('CTSU', it.categoria, it.stato, it.organo_responsabile),
+      snippet: it.sommario || it.descrizione || '',
+      url: SITO + '/lex/ctsu.html?id=' + encodeURIComponent(it.id),
+    }),
+  },
   'wiki.json': {                                             // pagine della wiki -> /lex/wiki.html#id
     chiave: 'pagine', tipo: 'wiki', label: 'Apri sulla Wiki', pagina: '/lex/wiki.html',
     scheda: (it) => ({
@@ -230,11 +240,11 @@ async function cercaNeiDataset(repo, termini) {
       if (!r.ok) throw new Error(percorso + ': GitHub ' + r.status);
       const json = await r.json();
       const lista = Array.isArray(json) ? json : json[cfg.chiave] || [];
-      const nested = (k) => cfg.allegati && RX_ALLEGATI.test(k);      // le liste di sentenze/dossier sono risultati a parte
+      const nested = (k) => (cfg.allegati && RX_ALLEGATI.test(k)) || (cfg.escludi && cfg.escludi.includes(k));   // sentenze/dossier sono risultati a parte; copertina/galleria non sono testo
       const voci = lista.map((it) => {
         const s = cfg.scheda(it);
         const plain = testoPulito(it.contenuto);
-        const dati = testoDi(it, nested);
+        const dati = cfg.html ? testoDi(it, nested).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ') : testoDi(it, nested);
         return {
           tipo: (cfg.allegati && classifica(it)) || cfg.tipo, label: cfg.label, proprio: false,
           s, plain,
