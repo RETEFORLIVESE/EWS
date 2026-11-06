@@ -31,7 +31,7 @@ nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px sol
 .nav{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:4px;padding:8px 12px;overflow-x:auto}
 .nav a{color:var(--ink);text-decoration:none;font-weight:500;font-size:14px;padding:7px 14px;border-radius:99px;white-space:nowrap}
 .nav a:hover,.nav a.on{background:var(--acc);color:var(--bg)}
-.nav #lg{margin-left:auto}.nav #th{margin-left:4px}
+.nav #th{margin-left:auto}
 button,.btn{font:inherit;cursor:pointer}
 .ico{background:var(--tint);border:1px solid var(--line);color:var(--ink);border-radius:99px;width:38px;height:34px}
 main{max-width:1040px;margin:0 auto;padding:0 16px}
@@ -110,7 +110,6 @@ label{font-size:13px;color:var(--mute);display:block;margin-bottom:3px}
 </header>
 <nav><div class="nav">
  <a href="#home">Stato</a><a href="#distretti">Distretti</a><a href="#trasporti">Trasporti</a><a href="#cittadino">Cittadino</a><a href="#economia">Economia</a><a href="#sessioni">Sessioni</a>
- <button class="ico" id="lg" title="Cambia logo" aria-label="Cambia logo">✎</button><input type="file" id="lgf" accept="image/*" hidden>
  <button class="ico" id="th" title="Tema chiaro/scuro" aria-label="Cambia tema">◐</button>
 </div></nav>
 <main>
@@ -284,18 +283,13 @@ function rs_(){var t=new Date().toISOString().slice(0,10);sess.sort(function(a,b
 $("#sadd").onclick=function(){var x=$("#sx").value;if(!x)return;sess.push({d:$("#sd").value,x:x,o:$("#so").value.trim()});sv("sess",sess);$("#so").value="";rs_()};
 rr();rp();rb();ro();rs_();
 
-/* ===== LOGO =====
- Tre modi per cambiarlo:
- 1) Metti un file "logo.png" nella stessa cartella del sito (o cambia LOGO_FILE qui sotto, anche con un URL).
- 2) Clicca il pulsante ✎ nel menu e scegli un'immagine dal tuo computer (resta salvata nel browser).
- 3) Tieni premuto Maiusc mentre clicchi ✎ per tornare al logo di default. */
+/* ===== LOGO: cambia LOGO_FILE con il file o l'URL del logo ===== */
 var LOGO_FILE="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/COAT/EstjiLinn.png";
 (function(){var im=$("#logoimg"),sg=$("#logosvg");
  function show(u){im.onload=function(){im.hidden=false;sg.style.display="none";var f=document.querySelector("link[rel=icon]")||document.head.appendChild(Object.assign(document.createElement("link"),{rel:"icon"}));f.href=u};
   im.onerror=function(){im.hidden=true;sg.style.display=""};im.src=u}
- var saved=ld("logo",null);show(saved||LOGO_FILE);
- $("#lg").onclick=function(e){if(e.shiftKey){sv("logo",null);show(LOGO_FILE);return}$("#lgf").click()};
- $("#lgf").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){sv("logo",r.result);show(r.result)};r.readAsDataURL(f)}})();
+ show(LOGO_FILE);
+})();
 /* ===== MAPPA IDU: mostra solo la sezione #mappa di IDU.html ===== */
 (function(){var f=$("#idu");
  function fit(){try{var d=f.contentDocument;f.style.height=Math.max(d.documentElement.scrollHeight,d.body.scrollHeight)+"px"}catch(e){}}
