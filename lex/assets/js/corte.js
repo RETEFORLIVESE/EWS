@@ -46,6 +46,14 @@
   .cc-rub{font-weight:600;margin:0 0 .4rem}
   .cc-col del{background:#e74c3c33;text-decoration:line-through}
   .cc-col ins{background:#27ae6033;text-decoration:none}
+  .cc-testata{border:1px solid #8885;border-left:4px solid #888;border-radius:4px;padding:1rem 1.2rem;margin:.5rem 0 1.2rem}
+  .cc-testata .cc-titolo{margin:0}
+  .cc-lead{font-size:1.1rem;line-height:1.45;margin:.7rem 0 1rem}
+  .cc-dati{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem 1.5rem;margin:0;padding-top:.8rem;border-top:1px solid #8885}
+  .cc-dati dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;opacity:.65;margin:0 0 .15rem}
+  .cc-dati dd{margin:0;font-size:.92rem}
+  .cc-pareri{align-items:start}
+  .cc-pareri .cc-lbl{font-size:.8rem;font-weight:600;margin:0 0 .5rem}
   .cc-vuoto,.cc-err{padding:2rem 0;text-align:center}
   .cc-err{color:#c0392b}
   `;
@@ -161,16 +169,24 @@
     document.title = titoloSentenza(p) + " — Corte Costituzionale";
     root.innerHTML = `
       <a class="cc-indietro" href="corte.html">← Tutte le pronunce</a>
-      <div class="cc-riga">
-        <h2 class="cc-titolo">${esc(titoloSentenza(p))}</h2>
-        <span class="cc-badge t-${tipo}">${esc(TIPI[tipo])}</span>
+      <header class="cc-testata t-${tipo}">
+        <div class="cc-riga">
+          <h2 class="cc-titolo">${esc(titoloSentenza(p))}</h2>
+          <span class="cc-badge">${esc(TIPI[tipo])}</span>
+        </div>
+        <p class="cc-lead">${esc(p.oggetto)}</p>
+        <dl class="cc-dati">
+          <div><dt>Data</dt><dd>${esc(dataDi(p) || "—")}</dd></div>
+          <div><dt>Atto</dt><dd>${esc(a.titolo || a.id || "—")}${a.stato ? " <span class=\"cc-meta\">(" + esc(STATI[a.stato] || a.stato) + ")</span>" : ""}</dd></div>
+          ${p.effetto ? `<div><dt>Effetto</dt><dd>${esc(p.effetto)}</dd></div>` : ""}
+          ${p.firmataDa ? `<div><dt>Firmata da</dt><dd>${esc(p.firmataDa)}</dd></div>` : ""}
+          ${p.collegio ? `<div><dt>Collegio</dt><dd>${esc(p.collegio)}</dd></div>` : ""}
+        </dl>
+      </header>
+      <div class="cc-colonne cc-pareri">
+        <section class="cc-col"><h3 class="cc-lbl">Motivazione</h3><p class="cc-testo">${esc(p.motivazione)}</p></section>
+        <section class="cc-col"><h3 class="cc-lbl">Dispositivo</h3><p class="cc-testo">${esc(p.dispositivo)}</p></section>
       </div>
-      <p class="cc-meta">${esc(dataDi(p))}${p.collegio ? " · Collegio: " + esc(p.collegio) : ""}${p.firmataDa ? " · Firmata da " + esc(p.firmataDa) : ""}</p>
-      <p class="cc-meta">Atto: ${esc(a.titolo || a.id || "—")}${a.stato ? " (" + esc(STATI[a.stato] || a.stato) + ")" : ""}</p>
-      <h3 class="cc-sez">Oggetto</h3><p class="cc-testo">${esc(p.oggetto)}</p>
-      <h3 class="cc-sez">Motivazione</h3><p class="cc-testo">${esc(p.motivazione)}</p>
-      <h3 class="cc-sez">Dispositivo</h3><p class="cc-testo">${esc(p.dispositivo)}</p>
-      ${p.effetto ? `<h3 class="cc-sez">Effetto</h3><p class="cc-testo">${esc(p.effetto)}</p>` : ""}
       ${sezioneTesti(p)}
       <a class="cc-indietro" href="corte.html">← Tutte le pronunce</a>`;
     window.scrollTo(0, 0);
