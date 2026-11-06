@@ -45,7 +45,7 @@ const DATASET = {
   },
   'ctsu.json': {                                             // progetti del CTSU -> /lex/ctsu.html?id=<id>
     chiave: 'progetti', tipo: 'progetto', label: 'Apri sul CTSU', pagina: '/lex/ctsu.html',
-    pagine: ['/lex/ctsu.html', '/lex/CTSU.html', '/ctsu.html', '/CTSU.html'],   // pagine da cui leggere il logo (si prova la prima che ne ha uno)
+    pagine: ['/lex/ctsu.html', '/lex/CTSU.html', 'lex/progetto.html', '/CTSU.html'],   // pagine da cui leggere il logo (si prova la prima che ne ha uno)
     icona: ICONA_CTSU,
     escludi: ['copertina', 'galleria'], html: true,          // niente indirizzi di immagini nel testo cercato; i tag HTML delle sezioni vengono tolti
     scheda: (it) => ({
