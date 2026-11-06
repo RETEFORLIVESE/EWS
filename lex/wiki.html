@@ -7,7 +7,8 @@
 <title>Estji Wiki</title>
 <link rel="icon" type="image/png" href="/Wiki.png" />
 <link rel="apple-touch-icon" href="/Wiki.png" />
-<link rel="stylesheet" href="assets/css/wiki.css?v=16">
+<link rel="preload" href="assets/js/wiki-core.js?v=13" as="script">
+<link rel="stylesheet" href="assets/css/wiki.css?v=18">
 </head>
 <body>
 <div class="site">
@@ -75,9 +76,21 @@
     }).join('');
   }
 
+  // VELOCITÀ: i testi normalizzati si calcolano una volta sola per pagina (prima a ogni tasto premuto)
+  function idx(p) {
+    return p._n || (p._n = {
+      t: Wiki.norm(p.titolo),
+      g: Wiki.norm((p.tag || []).join(' ') + ' ' + Wiki.catDi(p).join(' ')),
+      s: Wiki.norm(p.sommario),
+      c: Wiki.norm(p.contenuto),
+      cats: Wiki.catDi(p).map(n => Wiki.norm(n)),
+      lc: String(p.contenuto || '').toLowerCase()
+    });
+  }
+  const LIMITE = 40; let limite = LIMITE, ultima = '';
   // punteggio: titolo pesa più dei tag, che pesano più del sommario e del contenuto
   function punteggio(p, parole) {
-    const t = Wiki.norm(p.titolo), g = Wiki.norm((p.tag || []).join(' ') + ' ' + Wiki.catDi(p).join(' ')), s = Wiki.norm(p.sommario), c = Wiki.norm(p.contenuto);
+    const n = idx(p), t = n.t, g = n.g, s = n.s, c = n.c;
     let tot = 0;
     for (const w of parole) {
       const x = (t.startsWith(w) ? 12 : 0) + (t.includes(w) ? 8 : 0) + (g.includes(w) ? 5 : 0) + (s.includes(w) ? 3 : 0) + (c.includes(w) ? 1 : 0);
@@ -99,12 +112,15 @@
 
   function cerca() {
     const q = $('q').value.trim(), parole = Wiki.norm(q).split(/\s+/).filter(Boolean);
-    let ris = pagine.filter(p => !cat || Wiki.catDi(p).some(n => Wiki.norm(n) === Wiki.norm(cat))).map(p => ({ p, s: parole.length ? punteggio(p, parole) : 1 })).filter(r => r.s > 0);
+    const chiave = q + '|' + cat; if (chiave !== ultima) { ultima = chiave; limite = LIMITE; }
+    const nc = Wiki.norm(cat);
+    let ris = pagine.filter(p => !cat || idx(p).cats.includes(nc)).map(p => ({ p, s: parole.length ? punteggio(p, parole) : 1 })).filter(r => r.s > 0);
     ris.sort((a, b) => parole.length ? b.s - a.s : Wiki.norm(a.p.titolo).localeCompare(Wiki.norm(b.p.titolo)));
     $('count').textContent = ris.length + (ris.length === 1 ? ' pagina' : ' pagine') + (q ? ` per “${q}”` : ' nella wiki');
-    $('lista').innerHTML = ris.length ? ris.map(({ p }) => `
+    $('lista').innerHTML = ris.length ? ris.slice(0, limite).map(({ p }) => `
       <a class="card" href="#${E(p.id)}"><div class="meta">${p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : ''}${(p.tag || []).slice(0, 4).map(t => `<span>#${E(t)}</span>`).join('')}</div>
-      <h3>${ePortale(p) ? '🏠 ' : ''}${evidenzia(p.titolo, parole)}</h3><p>${evidenzia(estratto(p, parole), parole)}</p></a>`).join('')
+      <h3>${ePortale(p) ? '🏠 ' : ''}${evidenzia(p.titolo, parole)}</h3><p>${evidenzia(estratto(p, parole), parole)}</p></a>`).join('') +
+        (ris.length > limite ? `<p style="text-align:center"><button type="button" class="btn" id="piu">Mostra altre ${Math.min(LIMITE, ris.length - limite)} di ${ris.length - limite} pagine</button></p>` : '')
       : `<div class="note" style="text-align:center;padding:18px">Nessun risultato. <a href="redazione-wiki.html?nuova=${encodeURIComponent(q)}">Scrivi la pagina “${E(q || 'nuova')}”</a></div>`;
     const u = new URL(location.href); q ? u.searchParams.set('q', q) : u.searchParams.delete('q'); history.replaceState(null, '', u);
   }
@@ -148,12 +164,13 @@
     $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
     const eCat = /^\s*categoria\s*:/i.test(p.titolo), el = eCat ? Wiki.catElenco(pagine) : null;   // pagina di categoria: sotto il testo l'elenco automatico
     $('pCat').innerHTML = (eCat ? Wiki.catVista(el.find(x => x.id === p.id) || { nome: p.titolo.replace(/^\s*categoria\s*:\s*/i, ''), membri: [] }, el) : '') + Wiki.catBox(Wiki.catDi(p), pagine);
-    const rif = eCat ? [] : pagine.filter(x => x.id !== p.id && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
+    const rif = eCat ? [] : pagine.filter(x => x.id !== p.id && idx(x).lc.includes('[[' + p.titolo.toLowerCase()) && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
     $('pLink').innerHTML = rif.length ? `<div class="bar" style="margin-top:12px">Pagine che rimandano a questa</div><div class="chips">${rif.map(x => `<a class="chip" href="#${E(x.id)}">${E(x.titolo)}</a>`).join('')}</div>` : '';
     indice(); window.scrollTo(0, 0);
   }
 
-  $('q').addEventListener('input', cerca);
+  let attesa; $('q').addEventListener('input', () => { clearTimeout(attesa); attesa = setTimeout(cerca, 150); });
+  $('lista').addEventListener('click', e => { if (e.target.closest('#piu')) { limite += LIMITE; cerca(); } });
   $('cats').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { cat = b.dataset.c; chips(); cerca(); } });
   $('indietro').addEventListener('click', e => { e.preventDefault(); history.pushState(null, '', location.pathname + location.search); route(); });
   $('pMeta').addEventListener('click', e => { const a = e.target.closest('[data-t]'); if (a) { e.preventDefault(); history.pushState(null, '', location.pathname); $('q').value = a.dataset.t; route(); cerca(); } });
