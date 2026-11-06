@@ -1,583 +1,815 @@
-// Vercel Serverless Function: legge un JSON dal repo privato RETEFORLIVESE/DATA
-// e lo restituisce al browser, senza mai esporre il token.
-// In piu': con ?cerca=1 fa da motore di ricerca su EWS, IMG e DATA (vedi cercaTutto).
-//
-// Variabili d'ambiente (Vercel > Project > Settings > Environment Variables):
-//   GITHUB_TOKEN  (obbligatoria)  token fine-grained con sola lettura "Contents" sul repo DATA
-//   DATA_REPO     (facoltativa)   default "RETEFORLIVESE/DATA"
-//   DATA_BRANCH   (facoltativa)   default: il ramo predefinito del repo
-//   _ACCESS_KEY   (facoltativa)   se impostata, la ricerca richiede ?k=<chiave>
-//   SITO_IMG      (facoltativa)   indirizzo online delle immagini (default: lo stesso di NormAktiv)
-const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   // unitext.json NON va qui: contiene le bozze, UniText si legge solo da /api/unitext
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EWS - Ricerca</title>
+<link rel="icon" type="image/png" href="/EstjiSearch.png" />
+<link rel="apple-touch-icon" href="/EstjiSearch.png" />
+<link rel="stylesheet" href="assets/css/wiki.css?v=15">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#2d2f9e">
+<script>try{var _t=localStorage.getItem("ews_tema");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<style>
+:root{--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--display:ui-rounded,"SF Pro Rounded","Hiragino Maru Gothic ProN","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+--glass:rgba(255,255,255,.2);--glass-hi:rgba(255,255,255,.3);--ring:inset 0 1px 0 rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.24);
+--blue:#0a84ff;--grad:linear-gradient(135deg,#4f8cff,#8a5cff);color-scheme:light;
+--base:#2d2f9e;--b1:#4f9dff;--b2:#a463ff;--b3:#ff5fa2;--b4:#1fc2b4;--topbg:rgba(45,47,150,.4);
+--panel:rgba(255,255,255,.95);--ptxt:#1c1c28;--pline:rgba(30,30,80,.09);--link:#3342d6;--visited:#7a3fb8;--url:#0b7a3b;--muted:#6b6f7b;--desc:#3b3f4a;--strong:#000;
+--mark:rgba(255,205,60,.5);--rowh:rgba(70,80,200,.07);--chipmix:#000;--cfgbg:rgba(255,255,255,.88);--cfgtxt:#1d1d1f;--cfgmut:#6e6e73;--opt:rgba(60,60,110,.09);--opth:rgba(60,60,110,.16);
+--thumbline:rgba(30,30,80,.12);--pagerh:#eef0ff;--ul:#444;--err:#c5221f;--imgbg:#f4f5f9}
+:root[data-theme=dark]{color-scheme:dark;--base:#070817;--b1:rgba(40,80,230,.8);--b2:rgba(130,50,220,.75);--b3:rgba(210,40,120,.65);--b4:rgba(15,150,140,.65);
+--topbg:rgba(8,9,26,.55);--panel:rgba(22,24,40,.86);--ptxt:#ececf3;--pline:rgba(255,255,255,.09);--link:#a9b8ff;--visited:#d0a2fb;--url:#7fd69a;--muted:#9a9fb0;--desc:#c6c9d3;--strong:#fff;
+--mark:rgba(120,140,255,.38);--rowh:rgba(140,150,255,.1);--chipmix:#fff;--cfgbg:rgba(28,30,48,.88);--cfgtxt:#f2f2f7;--cfgmut:#9a9ab0;--opt:rgba(255,255,255,.1);--opth:rgba(255,255,255,.18);
+--thumbline:rgba(255,255,255,.14);--pagerh:rgba(120,140,255,.18);--ul:#b8b8c4;--err:#ff8a80;}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--base:#070817;--b1:rgba(40,80,230,.8);--b2:rgba(130,50,220,.75);--b3:rgba(210,40,120,.65);--b4:rgba(15,150,140,.65);
+--topbg:rgba(8,9,26,.55);--panel:rgba(22,24,40,.86);--ptxt:#ececf3;--pline:rgba(255,255,255,.09);--link:#a9b8ff;--visited:#d0a2fb;--url:#7fd69a;--muted:#9a9fb0;--desc:#c6c9d3;--strong:#fff;
+--mark:rgba(120,140,255,.38);--rowh:rgba(140,150,255,.1);--chipmix:#fff;--cfgbg:rgba(28,30,48,.88);--cfgtxt:#f2f2f7;--cfgmut:#9a9ab0;--opt:rgba(255,255,255,.1);--opth:rgba(255,255,255,.18);
+--thumbline:rgba(255,255,255,.14);--pagerh:rgba(120,140,255,.18);--ul:#b8b8c4;--err:#ff8a80;}}
+*{box-sizing:border-box}
+html{background:var(--base)}
+html,body{margin:0;padding:0}
+body{min-height:100vh;min-height:100dvh;color:#fff;font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#res :focus-visible,#cfg :focus-visible{outline-color:var(--blue)}
+/* sfondo: aurora che si muove lentamente + grana */
+body::before{content:"";position:fixed;inset:-25%;z-index:-1;pointer-events:none;
+ background:radial-gradient(34% 36% at 22% 28%,var(--b1),transparent 72%),radial-gradient(30% 34% at 78% 22%,var(--b2),transparent 72%),
+ radial-gradient(36% 38% at 72% 80%,var(--b3),transparent 72%),radial-gradient(32% 34% at 20% 78%,var(--b4),transparent 72%);
+ animation:drift 40s ease-in-out infinite alternate;will-change:transform}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.13;mix-blend-mode:overlay;
+ background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+@keyframes drift{from{transform:translate3d(-3%,2%,0) rotate(0) scale(1)}to{transform:translate3d(3%,-3%,0) rotate(10deg) scale(1.12)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(-4px)}}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.97)}}
 
-// ---------------------------------------------------------------- RICERCA
-const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
-const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
-const ICONA = process.env.SITO_LOGO || '';                   // ultima riserva per il logo (facoltativa); il logo vero si legge dall'HTML della pagina
-const ICONA_SENTENZE = SITO + '/lex/CorteCostituzionale.png';   // favicon delle sentenze
-const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
-const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
-const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
-const JSONF = /\.(json|jsonl|geojson)$/i;                    // file JSON: mai nei risultati (i dati di DATA si cercano come schede)
-const SCRIPT = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map)$/i;   // codice e stili (.js, .css...): mai cercati, mai letti, mai nei risultati
-// Dati di DATA che si cercano come "schede": ognuna descrive dove sta la lista nel JSON,
-// come si presenta il risultato e a quale pagina del SITO rimanda.
-const via = (...v) => v.filter(Boolean).join(' · ');
-const DATASET = {
-  'atti.json': {
-    chiave: 'atti', tipo: 'atto', allegati: true, label: 'Apri su NormAktiv', pagina: '/lex/atto.html',
-    scheda: (it) => ({
-      name: it.titolo || it.nome || it.id,
-      path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
-      snippet: it.sommario || it.descrizione || '',
-      url: SITO + '/lex/atto.html?id=' + encodeURIComponent(it.id),
-    }),
-  },
-  'progetti.json': {
-    chiave: 'progetti', tipo: 'progetto', label: 'Apri su NormAktiv', pagina: '/lex/progetto.html',
-    scheda: (it) => ({
-      name: it.titolo || it.nome || it.id,
-      path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
-      snippet: it.sommario || it.descrizione || '',
-      url: SITO + '/lex/progetto.html?id=' + encodeURIComponent(it.id),
-    }),
-  },
-  'ctsu.json': {                                             // progetti del CTSU -> /lex/ctsu.html?id=<id>
-    chiave: 'progetti', tipo: 'progetto', label: 'Apri sul CTSU', pagina: '/lex/ctsu.html',
-    escludi: ['copertina', 'galleria'], html: true,          // niente indirizzi di immagini nel testo cercato; i tag HTML delle sezioni vengono tolti
-    scheda: (it) => ({
-      name: it.titolo || it.nome || it.id,
-      path: via('CTSU', it.categoria, it.stato, it.organo_responsabile),
-      snippet: it.sommario || it.descrizione || '',
-      url: SITO + '/lex/ctsu.html?id=' + encodeURIComponent(it.id),
-    }),
-  },
-  'wiki.json': {                                             // pagine della wiki -> /lex/wiki.html#id
-    chiave: 'pagine', tipo: 'wiki', label: 'Apri sulla Wiki', pagina: '/lex/wiki.html',
-    scheda: (it) => ({
-      name: it.titolo || it.id,
-      path: via(it.categoria, ...(Array.isArray(it.tag) ? it.tag : [])),
-      snippet: it.sommario || '',
-      url: SITO + '/lex/wiki.html#' + encodeURIComponent(it.id),
-    }),
-  },
-  'elezioni.json': {                                         // consultazioni -> /CEPU.html?tipo=..&data=..&comune=..
-    chiave: 'elezioni', tipo: 'elezione', label: 'Apri i risultati', pagina: '/CEPU.html',
-    scheda: (it) => {
-      const partiti = (it.risultati_partiti || []).map((p) => p.nome).filter(Boolean);
-      return {
-        name: via(it.tipo, it.comune, it.data),
-        path: via(it.data, it.affluenza ? 'affluenza ' + it.affluenza : '', it.id_organo),
-        snippet: via(it.area, it.candidato_vincente ? 'Vincitore: ' + it.candidato_vincente : '', partiti.length ? partiti.join(', ') : ''),
-        url: SITO + '/CEPU.html?' + new URLSearchParams({ tipo: it.tipo_codice || '', data: it.data || '', comune: it.comune || '' }).toString(),
-      };
-    },
-  },
-};
+/* barra superiore */
+#top{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"logo form gear" ". tabs .";align-items:center;gap:10px 20px;
+ padding:12px clamp(14px,3vw,28px);background:var(--topbg);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+ border-bottom:1px solid rgba(255,255,255,.16);box-shadow:0 10px 30px -14px rgba(10,10,60,.5)}
+#logo{grid-area:logo;text-decoration:none;font:800 28px/1 var(--display);letter-spacing:-.05em;padding-bottom:.1em;color:#fff;
+ background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.68));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#tagline{display:none}
+#f{grid-area:form;width:100%;max-width:640px;margin:0}
+#tabs{grid-area:tabs;justify-self:start;display:inline-flex;gap:2px;padding:3px;border-radius:13px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+#tabs button{border:0;background:none;color:rgba(255,255,255,.9);font:600 13.5px var(--font);padding:7px 16px;border-radius:10px;cursor:pointer;transition:background .18s,color .18s}
+#tabs button:hover{background:rgba(255,255,255,.16);color:#fff}
+#tabs button.on{background:#fff;color:#2a2f99;box-shadow:0 2px 10px rgba(10,10,70,.3)}
 
-// prima immagine (https) di un testo markdown: ![](https://...)
-// testo "da leggere" di una scheda: niente link, immagini o marcatori wiki (per cercare e per mostrare l'estratto)
-const testoPulito = (s) => String(s || '')
-  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')                     // immagini markdown
-  .replace(/\[([^\]]*)\]\(([^)]*)\)/g, '$1')                 // [testo](url) -> testo
-  .replace(/https?:\/\/\S+/g, ' ')                           // indirizzi nudi
-  .replace(/\{\{infobox[^\n]*\n?|\}\}|\[\[|\]\]|[#*{}|]/g, ' ')
-  .replace(/\s+/g, ' ').trim();
+/* ricerca */
+.sb{position:relative;display:flex;align-items:center;min-height:46px;border-radius:16px;background:var(--glass);box-shadow:var(--ring);
+ -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);transition:background .2s,box-shadow .2s}
+.sb:hover{background:var(--glass-hi)}
+.sb:focus-within{background:var(--glass-hi);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85),0 10px 40px -4px rgba(120,140,255,.6)}
+.sb .lens{position:absolute;z-index:1;left:15px;top:50%;width:18px;height:18px;margin-top:-9px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;pointer-events:none}
+#q{display:block;flex:1;width:100%;min-width:0;min-height:46px;margin:0;padding:10px 46px 10px 44px;border:0;border-radius:16px;outline:0;background:transparent;color:#fff;font:16px/24px var(--font);text-overflow:ellipsis;-webkit-appearance:none;appearance:none}
+#q::placeholder{color:rgba(255,255,255,.78);opacity:1}
+#clr{position:absolute;right:10px;top:50%;width:24px;height:24px;margin-top:-12px;border:0;border-radius:50%;padding:0;background:rgba(255,255,255,.35);color:#fff;font:17px/24px var(--font);text-align:center;cursor:pointer;display:none}
+#clr:hover{background:rgba(255,255,255,.55)}
+.sb.has #clr{display:block}
+#kbd{display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);padding:2px 8px;border-radius:7px;font:600 12px/18px var(--font);color:rgba(255,255,255,.85);background:rgba(255,255,255,.15);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);pointer-events:none}
+@media (hover:hover) and (pointer:fine){.sb:not(.has):not(:focus-within) #kbd{display:block}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#hint{display:none;margin:8px 4px 0;font-size:13px;color:#fff;text-shadow:0 1px 6px rgba(30,30,100,.4)}
+#hint.on{display:block}
+#gear{grid-area:gear;width:42px;height:42px;padding:0;border:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--glass);box-shadow:var(--ring);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);transition:background .15s}
+#gear svg{width:21px;height:21px;fill:#fff;transition:transform .5s cubic-bezier(.3,1.4,.5,1)}
+#gear:hover,#gear[aria-expanded=true]{background:var(--glass-hi)}
+#gear:hover svg{transform:rotate(60deg)}
 
-// piccolo estratto attorno alla prima parola trovata
-function estratto(plain, termini) {
-  const basso = plain.toLowerCase();
-  let i = -1;
-  for (const t of termini) { i = basso.indexOf(t); if (i >= 0) break; }
-  if (i < 0) return plain.slice(0, 160);
-  const da = Math.max(0, i - 60);
-  return (da > 0 ? '… ' : '') + plain.slice(da, da + 180) + (da + 180 < plain.length ? ' …' : '');
+/* impostazioni */
+#cfg{display:none;position:fixed;z-index:20;top:68px;right:clamp(14px,3vw,28px);width:360px;max-width:calc(100vw - 20px);padding:18px 18px 20px;color:var(--cfgtxt);border-radius:22px;transform-origin:top right;
+ background:var(--cfgbg);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+ box-shadow:0 24px 60px -10px rgba(10,10,60,.55),inset 0 1px 0 rgba(255,255,255,.4),0 0 0 1px rgba(255,255,255,.18)}
+#cfg.open{display:block;animation:pop .18s ease-out}
+#cfg h2{margin:0 0 4px;font:700 17px var(--font)}
+#cfg h3{margin:16px 0 8px;font:600 13px var(--font);color:var(--cfgmut)}
+#cfg .opts{display:flex;flex-wrap:wrap;gap:7px}
+#cfg .opt{font:13px var(--font);color:var(--cfgtxt);cursor:pointer;padding:7px 14px;border-radius:999px;border:0;background:var(--opt);transition:background .15s}
+#cfg .opt:hover{background:var(--opth)}
+#cfg .opt.on{background:var(--grad);color:#fff;font-weight:600;box-shadow:0 4px 12px -3px rgba(90,80,230,.6)}
+#cfg .opt small{opacity:.7;font-weight:400}
+#cfg .hint{margin:0;color:var(--cfgmut);font-size:13px}
+
+/* risultati */
+#main{max-width:880px;margin:0 auto;padding:18px clamp(14px,3vw,28px) 34px}
+body[data-modo=img] #main{max-width:1200px}
+#bar{margin:2px 6px 14px;font-size:13px;color:rgba(255,255,255,.94);text-shadow:0 1px 6px rgba(30,30,100,.4);min-height:18px}
+#bar b{font-weight:600}
+#load{display:none;margin:6px 6px 14px;font-size:14px;color:#fff}
+#load::before{content:"";display:inline-block;width:15px;height:15px;margin-right:10px;vertical-align:-3px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite}
+#res{color:var(--ptxt);padding:8px 12px 10px;border-radius:24px;background:var(--panel);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+ box-shadow:0 24px 60px -16px rgba(10,10,70,.55),0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.6)}
+#res:has(#out:empty){display:none}
+#res.busy #out{opacity:.5;transition:opacity .15s}
+.sk{padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.sk b,.sk span{display:block;height:12px;width:92%;border-radius:6px;background:linear-gradient(90deg,var(--pline) 25%,var(--rowh) 50%,var(--pline) 75%);background-size:200% 100%;animation:shim 1.2s linear infinite}
+.sk b{width:50%;height:15px}.sk span+span{width:68%}
+@keyframes shim{to{background-position:-200% 0}}
+.r{margin:0;padding:14px 16px 15px;overflow:hidden;border-radius:16px;transition:background .15s}
+.r:hover{background:var(--rowh)}
+.sep{display:flex;align-items:center;gap:12px;margin:10px 16px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--pline)}
+
+.r .t{margin:0;font-size:18.5px;font-weight:500;line-height:1.28;letter-spacing:-.012em;word-break:break-word}
+.r .t a{color:var(--link);text-decoration:none}
+.r .t a:hover{text-decoration:underline;text-underline-offset:3px}
+.r .t a:visited{color:var(--visited)}
+.r .t b{font-weight:700}
+.r .src{display:flex;align-items:center;gap:11px;margin:0 0 7px;min-width:0}
+.r .fav{flex:none;width:30px;height:30px;border-radius:9px;background:#fff;box-shadow:inset 0 0 0 1px var(--thumbline);padding:4px;object-fit:contain;display:block;text-align:center;font:700 13px/22px var(--font);color:#555}
+.r .sn{min-width:0;line-height:1.3}
+.r .sn .h{display:block;font-size:13.5px;font-weight:500;color:var(--ptxt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r .sn .pth{display:block;font-size:12px;color:var(--url);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp{--c:#8e8e99;display:inline-block;margin-left:6px;padding:1px 9px;border-radius:999px;font:600 11px/17px var(--font);font-style:normal;vertical-align:1px;color:var(--c);background:rgba(120,120,150,.14)}
+@supports (color:color-mix(in srgb,red,blue)){.tp{color:color-mix(in srgb,var(--c) 70%,var(--chipmix));background:color-mix(in srgb,var(--c) 15%,transparent)}}
+.tp[data-t=pagina]{--c:#0a84ff}.tp[data-t=wiki]{--c:#1fa34a}.tp[data-t=atto]{--c:#6a5ae0}.tp[data-t=progetto]{--c:#e08a00}.tp[data-t=sentenza]{--c:#c2336b}.tp[data-t=dossier]{--c:#0e8f8f}
+.tp[data-t=elezione]{--c:#e5392f}.tp[data-t=documento]{--c:#0f9d94}.tp[data-t=dato]{--c:#0891b2}.tp[data-t=img]{--c:#d6407d}
+.r .d{color:var(--desc);font-size:14px;max-width:640px}
+.r .d b{color:var(--strong);font-weight:600;background:linear-gradient(transparent 60%,var(--mark) 60%)}
+.r .p{margin-top:3px;color:var(--muted);font-size:13px}
+.r .th{float:left;width:92px;height:68px;margin:3px 14px 0 0;border-radius:12px;background:var(--imgbg);box-shadow:inset 0 0 0 1px var(--thumbline);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.r .th img{width:100%;height:100%;object-fit:contain;padding:4px;display:block}
+.empty{padding:18px 16px 12px;font-size:15px;line-height:1.6;color:var(--ptxt)}
+.empty ul{margin:8px 0 0 20px;padding:0;font-size:14px;color:var(--ul)}
+.empty.err{color:var(--err)}
+#pager{display:none;margin:6px 0 0;padding:12px 0 6px;border-top:1px solid var(--pline);font-size:14px;color:var(--ptxt);text-align:center}
+#pager a,#pager span{display:inline-block;min-width:34px;margin:2px;padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--blue);cursor:pointer}
+#pager a:hover{background:var(--pagerh)}
+#pager .cur{background:var(--grad);color:#fff;font-weight:600;cursor:default}
+#foot{padding:6px 16px 24px;text-align:center;font-size:12px;color:rgba(255,255,255,.8)}
+
+/* pannello wiki (come il riquadro di Google) */
+.pn{position:relative;display:flow-root;margin:6px 6px 12px;padding:16px 18px 16px;border-radius:20px;background:var(--rowh);box-shadow:inset 0 0 0 1px var(--pline),inset 4px 0 0 #1fa34a}
+.pn .pk{display:flex;align-items:center;gap:9px;margin:0 0 8px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.pn .pk .fav{width:22px;height:22px;border-radius:7px;padding:3px;font-size:11px;line-height:16px}
+.pn .pm{position:relative;margin-left:auto}
+.pn .pmb{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);font:15px/30px var(--font);cursor:pointer}
+.pn .pmb:hover,.pn .pmb[aria-expanded=true]{background:var(--opth);color:var(--ptxt)}
+.pn .pml{position:absolute;right:0;top:34px;z-index:5;min-width:150px;padding:6px;border-radius:14px;background:var(--cfgbg);color:var(--cfgtxt);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 14px 36px -10px rgba(10,10,70,.5),0 0 0 1px var(--pline)}
+.pn .pml[hidden]{display:none}
+.pn .pml button{display:block;width:100%;padding:9px 12px;border:0;border-radius:9px;background:none;color:inherit;font:500 14px var(--font);text-align:left;cursor:pointer}
+.pn .pml button:hover{background:var(--opt)}
+.pn .pt{margin:0 0 3px;font-size:24px;font-weight:650;line-height:1.2;letter-spacing:-.02em;color:var(--ptxt);word-break:break-word}
+.pn .pt a{color:inherit;text-decoration:none}
+.pn .pt a:hover{text-decoration:underline;text-underline-offset:3px}
+.pn .pc{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.pn .pi{float:right;width:132px;max-height:150px;margin:0 0 8px 16px;padding:5px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--thumbline);object-fit:contain;display:block}
+.pn .px{margin:0 0 12px;font-size:14.5px;line-height:1.55;color:var(--desc)}
+.pn .pg{display:inline-block;padding:8px 18px;border-radius:999px;background:transparent;color:var(--link);font-weight:600;font-size:14px;text-decoration:none;box-shadow:inset 0 0 0 1.5px var(--link);transition:background .15s}
+.pn .pg:hover{background:var(--pagerh)}
+.pn.rid .pi,.pn.rid .pc,.pn.rid .px,.pn.rid .pg{display:none}
+.pn.rid .pk{margin-bottom:4px}.pn.rid .pt{margin:0}
+@media (max-width:700px){.pn{margin:4px 2px 10px;padding:14px}.pn .pt{font-size:21px}.pn .pi{width:96px}}
+
+/* immagini */
+#res.imgmode{padding:16px 16px 18px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:18px 14px}
+.gi{display:block;width:100%;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gi.rotta{display:none}
+.gi .gf{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:var(--imgbg);box-shadow:inset 0 0 0 1px var(--thumbline);transition:transform .2s,box-shadow .2s}
+.gi:hover .gf{transform:translateY(-3px);box-shadow:0 14px 28px -10px rgba(20,20,90,.5),inset 0 0 0 1px var(--thumbline)}
+.gi:focus-visible .gf{outline:3px solid var(--blue);outline-offset:2px}
+.gi .gf img{width:100%;height:100%;object-fit:contain;padding:10px;display:block;transition:transform .25s}
+.gi:hover .gf img{transform:scale(1.05)}
+.gi .gc{display:block;margin-top:8px;font-size:13px;font-weight:500;color:var(--ptxt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gi .gs{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.morew{text-align:center;padding:20px 0 4px}
+.morew button{font:600 14px var(--font);color:#fff;background:var(--grad);border:0;border-radius:999px;padding:11px 24px;cursor:pointer;box-shadow:0 8px 20px -6px rgba(90,80,230,.7)}
+.morew button:hover{filter:brightness(1.08)}
+#lb{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;color:#fff;background:rgba(6,8,22,.84);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%)}
+#lb.open{display:flex}
+#lb .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:60px 76px 6px}
+#lbi{max-width:100%;max-height:100%;min-width:200px;min-height:200px;object-fit:contain;background:var(--imgbg);border-radius:18px;box-shadow:0 30px 70px rgba(0,0,0,.6)}
+#lb.broken #lbi{opacity:.15}
+#lbmsg{display:none;position:absolute;left:0;right:0;top:46%;text-align:center;font-size:14px;padding:0 20px}
+#lb.broken #lbmsg{display:block}
+#lb .cap{flex:none;padding:10px 20px calc(16px + env(safe-area-inset-bottom));text-align:center}
+#lbt{font:600 16px var(--font);word-break:break-word}
+#lbs{margin-top:2px;font-size:12px;opacity:.75;word-break:break-all}
+#lbc{margin-top:2px;font-size:12px;opacity:.6}
+#lba{display:inline-block;margin-top:10px;padding:10px 24px;border-radius:999px;background:var(--grad);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 8px 20px -6px rgba(90,80,230,.7)}
+#lba:hover{filter:brightness(1.1)}
+#lb .nav,#lbx{position:absolute;border:0;border-radius:50%;cursor:pointer;padding:0;color:#fff;background:rgba(255,255,255,.16);box-shadow:var(--ring);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#lb .nav{top:50%;margin-top:-22px;width:44px;height:44px;font:28px/42px var(--font)}
+#lb .nav:hover:not(:disabled),#lbx:hover{background:rgba(255,255,255,.3)}
+#lb .nav:disabled{opacity:.25;cursor:default}
+#lbp{left:16px}#lbn{right:16px}
+#lbx{top:12px;right:14px;width:44px;height:44px;font:30px/42px var(--font);z-index:2}
+
+/* pagina iniziale */
+#safari{display:none}
+body.home #top{position:static;display:block;padding:max(11vh,52px) 20px 0;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.home #logo{display:block;width:max-content;max-width:100%;margin:0 auto 8px;font-size:clamp(88px,22vw,156px);line-height:.92;letter-spacing:-.06em;padding:0 .04em .1em;
+ filter:drop-shadow(0 10px 36px rgba(20,10,110,.5));animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
+body.home #tagline{display:block;max-width:34ch;margin:0 auto 28px;text-align:center;font-size:16px;line-height:1.45;color:rgba(255,255,255,.88);text-shadow:0 1px 8px rgba(30,30,100,.35)}
+body.home #f{max-width:600px;margin:0 auto}
+body.home .sb{min-height:54px;border-radius:20px;box-shadow:0 14px 40px -10px rgba(20,20,90,.45),var(--ring)}
+body.home .sb:focus-within{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85),0 14px 48px -4px rgba(120,140,255,.65)}
+body.home #q{min-height:54px;padding:13px 50px 13px 48px;font-size:17px;line-height:28px;border-radius:20px}
+body.home .sb .lens{left:18px}
+body.home #hint{max-width:600px;margin:8px auto 0}
+body.home #main,body.home #foot,body.home #tabs{display:none}
+body.home #safari{display:block;max-width:680px;margin:52px auto 0;padding:0 20px 90px}
+body.home #gear{position:fixed;right:18px;bottom:18px;width:46px;height:46px;z-index:6}
+body.home #cfg{top:auto;bottom:74px;right:18px;transform-origin:bottom right}
+#safari h2{margin:0 0 16px;font-size:16px;font-weight:650;letter-spacing:-.1px;color:rgba(255,255,255,.92);text-shadow:0 1px 8px rgba(30,30,100,.3)}
+#fav{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:22px 8px;margin-bottom:42px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:9px;padding:0;border:0;background:none;color:#fff;font:inherit;cursor:pointer}
+.tile .ic{width:68px;height:68px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:30px;
+ box-shadow:0 12px 22px -8px rgba(10,10,70,.55),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -10px 16px rgba(0,0,0,.1);transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
+.tile:hover .ic{transform:translateY(-3px) scale(1.06)}
+.tile:active .ic{transform:scale(.94)}
+.tile .lb{font-size:12.5px;font-weight:500;text-shadow:0 1px 6px rgba(30,30,100,.4)}
+.tile.on .ic{box-shadow:0 0 0 3px #fff,0 0 28px rgba(255,255,255,.5),0 12px 22px -8px rgba(10,10,70,.55)}
+.tile.on .lb{font-weight:700}
+#rec{display:flex;flex-wrap:wrap;gap:8px}
+#rec button{font:14px var(--font);color:#fff;cursor:pointer;padding:9px 16px;border:0;border-radius:999px;background:rgba(255,255,255,.18);box-shadow:var(--ring);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);transition:background .15s,transform .15s}
+#rec button:hover{background:rgba(255,255,255,.32);transform:translateY(-1px)}
+
+@media (max-width:700px){
+ #top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"logo gear" "form form" "tabs tabs";gap:10px 12px;padding:10px 14px 12px}
+ #logo{font-size:25px}
+ #f{max-width:none}
+ #res{padding:6px 6px 8px;border-radius:20px}
+ .r{padding:12px 12px 13px}
+ .r .th{float:right;width:84px;height:84px;margin:2px 0 8px 12px}
+ .r .sn .h{white-space:normal;overflow-wrap:break-word}
+ .r .sn .pth{white-space:normal;word-break:break-all}
+ #res.imgmode{padding:12px 12px 14px}
+ #grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:14px 10px}
+ .gi .gf{border-radius:14px}
+ .gi .gc{font-size:12px}
+ #lb .stage{padding:64px 10px 4px}
+ #lb .nav{display:none}
+ #lba{display:block;margin:12px auto 0;max-width:340px}
+ #cfg{left:10px;right:10px;width:auto;max-width:none;top:60px}
+ body.home #top{padding:max(10vh,40px) 16px 0}
+ body.home #safari{margin-top:40px;padding:0 16px 90px}
+ body.home #cfg{left:10px;right:10px;top:auto;bottom:74px}
+ #fav{grid-template-columns:repeat(4,1fr);gap:20px 6px}
+}
+@media (prefers-reduced-motion:reduce){body::before,body.home #logo,#cfg.open{animation:none}.tile .ic,#gear svg{transition:none}}
+</style>
+</head>
+<body class="home">
+
+<header id="top">
+  <a id="logo" href="./" aria-label="EWS - pagina iniziale">EWS</a>
+  <p id="tagline">Un’unica ricerca per pagine, atti, progetti, wiki e immagini.</p>
+  <form id="f" role="search" autocomplete="off">
+    <div class="sb" id="sb">
+      <svg class="lens" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/></svg>
+      <input type="text" id="q" name="q" placeholder="Cerca in EWS" aria-label="Cerca"
+             autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" maxlength="120" autofocus>
+      <button type="button" id="clr" aria-label="Cancella">&times;</button>
+      <kbd id="kbd" aria-hidden="true">/</kbd>
+    </div>
+    <input type="submit" class="sr" value="Cerca" tabindex="-1">
+    <div id="hint">Scrivi almeno 2 caratteri per cercare.</div>
+  </form>
+  <button id="gear" type="button" aria-label="Impostazioni di ricerca" aria-expanded="false" aria-controls="cfg" title="Impostazioni di ricerca">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+  </button>
+  <nav id="tabs" role="tablist" aria-label="Sezioni di ricerca">
+    <button type="button" role="tab" data-modo="web" aria-selected="true">Tutti</button>
+    <button type="button" role="tab" data-modo="img" aria-selected="false">Immagini</button>
+  </nav>
+</header>
+
+<div id="cfg" role="dialog" aria-label="Impostazioni di ricerca">
+  <h2>Impostazioni di ricerca</h2>
+  <h3>Dove</h3>
+  <div class="opts" id="rp"></div>
+  <h3 id="rtt">Tipo</h3>
+  <div class="opts" id="rt"></div>
+  <h3>Aspetto</h3>
+  <div class="opts" id="rm"></div>
+</div>
+
+<section id="safari" aria-label="Pagina iniziale">
+  <h2>Preferiti</h2>
+  <div id="fav"></div>
+  <div id="recwrap" style="display:none"><h2>Ricerche recenti</h2><div id="rec"></div></div>
+</section>
+
+<main id="main">
+  <div id="bar"></div>
+  <div id="load">Ricerca in corso...</div>
+  <div id="res">
+    <div id="out"></div>
+    <div id="pager"></div>
+  </div>
+</main>
+<footer id="foot">&copy; 2026 EWS</footer>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Anteprima immagine" aria-hidden="true">
+  <button type="button" id="lbx" aria-label="Chiudi">&times;</button>
+  <button type="button" class="nav" id="lbp" aria-label="Immagine precedente">&lsaquo;</button>
+  <button type="button" class="nav" id="lbn" aria-label="Immagine successiva">&rsaquo;</button>
+  <div class="stage"><img id="lbi" alt=""><div id="lbmsg">Impossibile caricare l'immagine. Prova con &ldquo;Apri immagine&rdquo;.</div></div>
+  <div class="cap">
+    <div id="lbt"></div><div id="lbs"></div><div id="lbc"></div>
+    <a id="lba" href="#" target="_blank" rel="noopener">Apri immagine</a>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var API = "/api/data?cerca=1";          // api/data.js
+var PER = 10;                           // risultati per pagina (Tutti)
+var PER_IMG = 48;                       // immagini mostrate per volta (Immagini)
+var KEY = new URLSearchParams(location.search).get("k") || "";
+
+/* stato */
+var modo = "web";                       // "web" = Tutti, "img" = Immagini
+var panel = null;                       // riquadro "dalla wiki" restituito dalla ricerca
+var repo = "all", pref = "", data = [], typeF = "tutti", fmt = "tutti", page = 1, nImg = PER_IMG, imgList = [],
+    ultima = "", timer = null, seq = 0, lbI = -1, lbFocus = null;
+
+/* elementi */
+function $(id){ return document.getElementById(id); }
+var q = $("q"), sb = $("sb"), clr = $("clr"), hint = $("hint"), bar = $("bar"), load = $("load"), res = $("res"),
+    out = $("out"), pager = $("pager"), cfg = $("cfg"), gear = $("gear"), rp = $("rp"), rt = $("rt"), rtt = $("rtt"), rm = $("rm"),
+    tabs = $("tabs"), lb = $("lb"), lbi = $("lbi");
+
+/* ---------- aspetto: automatico / chiaro / scuro ---------- */
+var tema = "auto";
+try { var _s = localStorage.getItem("ews_tema"); if (_s === "dark" || _s === "light") tema = _s; } catch(e){}
+function applicaTema(){
+  var el = document.documentElement;
+  if (tema === "auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme", tema);
+  try { if (tema === "auto") localStorage.removeItem("ews_tema"); else localStorage.setItem("ews_tema", tema); } catch(e){}
 }
 
-// ---- sentenze della Corte Costituzionale e dossier, scritti dentro atti.json ----
-// Si riconoscono in 3 modi: (a) liste dentro ogni atto con una chiave tipo "sentenze", "dossier", "corte_costituzionale";
-// (b) liste a livello alto del file (accanto a "atti"); (c) atti la cui categoria/tipo dice "sentenza" o "dossier".
-const RX_ALLEGATI = /pronunc|sentenz|dossier|cortecost|corte_cost|corte-cost|consulta/i;   // nel tuo atti.json: "pronunce" (sentenze), "dossier" e "dossiers"
-const NON_TESTO = (k, v) => (k === 'logo' || k === 'colore' || k === 'immagine' || k === 'contenuto' ? undefined : v);
-const primo = (...v) => v.find((x) => typeof x === 'string' && x.trim()) || '';
-const soloHttp = (s) => (/^https?:\/\//i.test(String(s || '').trim()) ? String(s).trim() : '');
-const RUMORE = new Set(['copertina', 'creataIl', 'aggiornato', 'firmataDa', 'statoPrecedente', 'etichettaPrima', 'etichettaDopo', 'colore', 'livello', 'modifiche', 'marcaPdf']);
-const testoDi = (o, escludi) => JSON.stringify(o, (k, v) => (escludi && escludi(k) ? undefined : NON_TESTO(k, v)), ' ').replace(/[{}\[\]":,]/g, ' ').replace(/\s+/g, ' ');
+/* tipi di risultato */
+var TIPI = { tutti:"Tutti", pagina:"Pagine", img:"Immagini", documento:"Documenti", dato:"Dati",
+             atto:"Atti", sentenza:"Sentenze", dossier:"Dossier", progetto:"Progetti", wiki:"Wiki", elezione:"Elezioni", altro:"Altro" };
+var ORDINE = ["pagina","wiki","progetto","atto","sentenza","dossier","elezione","documento","img","dato","altro"];
 
-function classifica(it) {                                   // un atto che e' in realta' una sentenza o un dossier
-  const c = [it.categoria, it.tipo, it.tipologia, it.fonte, it.organo].filter((x) => typeof x === 'string').join(' ');
-  if (/dossier/i.test(c)) return 'dossier';
-  if (/sentenz|corte\s*costituzionale/i.test(c)) return 'sentenza';
-  return null;
+/* i file di codice e di stile non compaiono mai (doppia sicurezza: la regola vera e' in api/data.js) */
+var CODICE = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map|json|jsonl|geojson)(\?.*)?(#.*)?$/i;   /* anche i JSON non compaiono mai */
+
+/* preferiti della home: [etichetta, dove, tipo preferito, icona, sfondo, sezione] */
+var PREF = [
+  ["Tutto",    "all",  "",         "🔍",       "linear-gradient(160deg,#9aa7ff,#5a64e0)", "web"],
+  ["Pagine",   "EWS",  "",         "🌐",       "linear-gradient(160deg,#5ac8fa,#007aff)", "web"],
+  ["Immagini", "all",  "",         "🖼️", "linear-gradient(160deg,#ffb36b,#ff5e7a)", "img"],
+  ["Atti",     "DATA", "atto",     "⚖️",       "linear-gradient(160deg,#8e8cff,#5856d6)", "web"],
+  ["Progetti", "DATA", "progetto", "📌",       "linear-gradient(160deg,#ffd75e,#ff9f0a)", "web"],
+  ["Wiki",     "DATA", "wiki",     "📚",       "linear-gradient(160deg,#6be58a,#2fb457)", "web"],
+  ["Elezioni", "DATA", "elezione", "🗳️", "linear-gradient(160deg,#ff8a80,#ff3b30)", "web"]
+];
+
+/* ---------- utilita' ---------- */
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function rx(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function nomeTipo(t){ return TIPI[t] || t; }
+function paroleCercate(s){ return String(s).toLowerCase().split(/\s+/).filter(function(t){ return t.length > 1; }); }
+function dec(s){ try { return decodeURIComponent(s); } catch(e){ return s; } }
+
+/* grassetto sulle parole cercate */
+function hl(text, parole){
+  text = String(text);
+  if (!parole.length) return esc(text);
+  var re = new RegExp("(" + parole.map(rx).join("|") + ")", "gi");
+  return text.split(re).map(function(p, i){ return i % 2 ? "<b>" + esc(p) + "</b>" : esc(p); }).join("");
 }
-const ETICHETTA = { sentenza: 'Sentenza', dossier: 'Dossier' };
-
-// Pagine dedicate: la sentenza si apre da /lex/corte.html?id=<id della sentenza>,
-// il dossier da /lex/dossier.html?id=<id dell'ATTO> (l'id interno del dossier, es. "principale", non basta: e' univoco solo dentro l'atto).
-function urlAllegato(e, tipo, genitore) {
-  if (tipo === 'sentenza' && e && e.id) return SITO + '/lex/corte.html?id=' + encodeURIComponent(e.id);
-  if (tipo === 'dossier') {
-    const idAtto = (genitore && genitore.id) || (e && (e.id_atto || e.atto_id || e.atto));
-    if (idAtto) return SITO + '/lex/dossier.html?id=' + encodeURIComponent(idAtto);
-  }
-  return '';
-}
-
-function schedaAllegato(e, tipo, genitore, urlGenitore, cfg) {
-  if (typeof e === 'string') e = soloHttp(e) ? { url: e } : { titolo: e };
-  const nGen = genitore && (genitore.titolo || genitore.nome || genitore.id) ? String(genitore.titolo || genitore.nome || genitore.id) : '';
-  const num = e.numero && e.anno ? 'n. ' + e.numero + '/' + e.anno : e.numero ? 'n. ' + e.numero : '';
-  let name;
-  if (tipo === 'sentenza') {                               // pronunce: "Sentenza n. 1/2026 — oggetto"
-    const ogg = primo(e.oggetto, e.titolo, e.nome);
-    name = ogg ? via('Sentenza ' + num, ogg).replace(' · ', ' — ') : via('Sentenza', num, nGen);
-  } else {
-    name = primo(e.titolo, e.nome, e.oggetto, e.denominazione) || via('Dossier', num, nGen);
-  }
-  const proprio = soloHttp(e.url || e.link || e.pdf || e.href);
-  const plain = testoPulito(primo(e.testo, e.contenuto));
-  const s = {
-    name,
-    path: tipo === 'sentenza'
-      ? via('Corte Costituzionale', num, e.data || '', e.effetto || '', nGen ? 'in: ' + nGen : '')
-      : via('Dossier', e.ente || '', e.data || '', nGen ? 'in: ' + nGen : ''),
-    snippet: testoPulito(primo(e.massima, e.sommario, e.sintesi, e.presentazione, e.motivazione, e.descrizione, e.dispositivo, e.sottotitolo)),
-    url: proprio || urlAllegato(e, tipo, genitore) || urlGenitore,
-  };
-  const labelPagina = tipo === 'sentenza' ? 'Apri sulla Corte Costituzionale' : tipo === 'dossier' ? 'Apri il dossier' : cfg.label;
-  return { tipo, label: proprio ? 'Apri il documento' : labelPagina, s, plain, dati: testoDi(e, (k) => RUMORE.has(k)), proprio: !!proprio };
-}
-
-function allegatiDi(json, lista, cfg) {
-  const out = [];
-  const urlPagina = SITO + cfg.pagina;
-  // (a) dentro ogni atto
-  for (const it of lista) {
-    for (const [k, v] of Object.entries(it)) {
-      if (!RX_ALLEGATI.test(k) || v == null || v === '') continue;
-      const els = Array.isArray(v) ? v : [v];
-      const tipo = /dossier/i.test(k) ? 'dossier' : 'sentenza';
-      for (const e of els) if (e && (typeof e === 'object' || typeof e === 'string')) out.push(schedaAllegato(e, tipo, it, cfg.scheda(it).url, cfg));
-    }
-  }
-  // (b) liste a livello alto del file
-  if (json && !Array.isArray(json)) {
-    for (const [k, v] of Object.entries(json)) {
-      if (k === cfg.chiave || !Array.isArray(v) || !RX_ALLEGATI.test(k)) continue;
-      const tipo = /dossier/i.test(k) ? 'dossier' : 'sentenza';
-      for (const e of v) {
-        const idg = e && typeof e === 'object' ? e.id_atto || e.atto_id || e.atto : '';
-        const gen = idg ? lista.find((a) => a.id === idg) : null;
-        out.push(schedaAllegato(e, tipo, gen, gen ? cfg.scheda(gen).url : urlPagina, cfg));
-      }
-    }
-  }
-  return out;
-}
-
-// ---- PANNELLO WIKI (come il riquadro di Google): se la ricerca coincide con una pagina della wiki ----
-const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-// quanto la pagina corrisponde a cio' che si cerca: 3 = titolo (o id) identico, 2 = il titolo inizia con le parole cercate,
-// 1 = tutte le parole cercate sono nel titolo, 0 = no. (Le parole parziali non contano: scrivendo "ita" non compare "Italia".)
-function rangoWiki(it, nome, termini) {
-  const n = norm(termini.join(' ')), t = norm(nome);
-  if (!n || !t) return 0;
-  if (t === n || norm(it.id) === n) return 3;
-  if (t.startsWith(n + ' ')) return 2;
-  const parole = t.split(' ');
-  return norm(termini.join(' ')).split(' ').every((w) => parole.includes(w)) ? 1 : 0;
-}
-
-// markup wiki/markdown -> testo semplice
-const senzaMarkup = (x) => String(x || '')
-  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-  .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2').replace(/\[\[([^\]]*)\]\]/g, '$1')
-  .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-  .replace(/\{\{[^}]*\}\}/g, ' ').replace(/<[^>]*>/g, ' ')
-  .replace(/https?:\/\/\S+/g, ' ')
-  .replace(/'{2,}|\*{1,3}|_{2,}|`/g, '').replace(/\s+/g, ' ').trim();
-
-function accorcia(x, max) {
-  if (x.length <= max) return x;
-  const taglio = x.slice(0, max);
-  const punto = Math.max(taglio.lastIndexOf('. '), taglio.lastIndexOf('! '), taglio.lastIndexOf('? '));
-  if (punto > max * 0.5) return taglio.slice(0, punto + 1);
-  return taglio.replace(/\s+\S*$/, '') + '…';
-}
-
-function pannelloWiki(it, s) {
-  const md = typeof it.contenuto === 'string' ? it.contenuto : '';
-  // scheda infobox {{infobox ... }}: righe "chiave = valore" (o "chiave: valore"); la prima immagine trovata fa da miniatura
-  const blocco = (md.match(/\{\{\s*infobox[\s\S]*?\}\}/i) || [''])[0];
-  const campi = [];
-  let img = '';
-  for (const riga of blocco.split('\n').slice(1)) {
-    const m = riga.match(/^\s*\|?\s*([^=|:{}]{1,40}?)\s*[=:]\s*(.+?)\s*\|?\s*$/);
-    if (!m) continue;
-    const k = m[1].trim(), v = m[2].trim();
-    if (/immagine|image|img|foto|stemma|bandiera|logo/i.test(k)) { const u = soloHttp((v.match(/https?:\/\/[^\s)|\]]+/) || [''])[0]); if (u && !img) img = u; continue; }
-    if (/didascalia|larghezza|dimension|posizione|allineament|colore|stile|^id$/i.test(k)) continue;
-    const val = accorcia(senzaMarkup(v), 90);
-    if (val && campi.length < 5) campi.push([k.charAt(0).toUpperCase() + k.slice(1), val]);
-  }
-  const corpo = md.replace(blocco, ' ');
-  if (!img) img = soloHttp(it.immagine || it.copertina || it.logo) || soloHttp((corpo.match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)/) || [])[1]);
-  // estratto: primo paragrafo di testo vero (niente titoli, immagini, elenchi)
-  let estratto = '';
-  for (const b of corpo.split(/\n\s*\n/)) {
-    const t = senzaMarkup(b.split('\n').filter((r) => !/^\s*(#|[-*+]\s|\d+\.\s|\|)/.test(r)).join(' '));
-    if (t.length >= 40) { estratto = accorcia(t, 340); break; }
-  }
-  if (!estratto) estratto = accorcia(senzaMarkup(it.sommario), 340);
-  return {
-    titolo: s.name,
-    categoria: it.categoria || '',
-    tag: (Array.isArray(it.tag) ? it.tag : []).slice(0, 4),
-    estratto, immagine: img, campi,
-    url: s.url, label: 'Leggi sulla Wiki', icon: '',
-  };
-}
-
-const memoria = {};
-
-const nomeFile = (p) => p.split('/').pop().toLowerCase();
-const datasetDi = (p) => DATASET[nomeFile(p)];
-const escluso = (p) => ESCLUSI.includes(nomeFile(p)) || SCRIPT.test(p) || JSONF.test(p) || IGNORATI.test(p);
-
-// indirizzo pubblico sul SITO (non sulla repo): lex/atto.html -> https://sito/lex/atto.html
-// (index.html diventa la cartella: lex/index.html -> https://sito/lex/)
-function urlSito(base, p) {
-  const pulito = p.replace(/(^|\/)index\.html?$/i, '$1');
-  return base + '/' + pulito.split('/').map(encodeURIComponent).join('/');
-}
-
-// nome leggibile: "legge-regionale_2024.html" -> "legge regionale 2024"
-const nomeBello = (p) => {
-  const f = p.split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
-  return f || p.split('/').pop();
-};
-
-function intestazioni(raw) {
-  const h = {
-    Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
-    'User-Agent': 'ews-data-proxy',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-  if (process.env.GITHUB_TOKEN) h.Authorization = 'Bearer ' + process.env.GITHUB_TOKEN;
-  return h;
-}
-
-async function inMemoria(chiave, calcola) {
-  const c = memoria[chiave];
-  if (c && Date.now() - c.t < SCADENZA) return c.v;
-  const v = await calcola();
-  memoria[chiave] = { t: Date.now(), v };
-  return v;
-}
-
-const tipoFile = (p) =>
-  /\.(png|apng|jpe?g|jfif|gif|webp|svg|avif|bmp|ico)$/i.test(p) ? 'img' :
-  /\.html?$/i.test(p) ? 'pagina' :
-  /\.(pdf|docx?|txt|md)$/i.test(p) ? 'documento' :
-  /\.(json|csv|xlsx?|geojson)$/i.test(p) ? 'dato' : 'altro';
-
-function elencoFile(repo) {
-  return inMemoria('albero:' + repo, async () => {
-    const ramo = repo === dataRepo() && process.env.DATA_BRANCH ? process.env.DATA_BRANCH : 'HEAD';
-    const r = await fetch('https://api.github.com/repos/' + repo + '/git/trees/' + encodeURIComponent(ramo) + '?recursive=1', { headers: intestazioni(false) });
-    if (!r.ok) throw new Error(repo + ': GitHub ' + r.status);
-    return (await r.json()).tree.filter((n) => n.type === 'blob').map((n) => n.path);
-  });
-}
-
-const dataRepo = () => process.env.DATA_REPO || 'RETEFORLIVESE/DATA';
-
-async function cercaNeiDataset(repo, termini) {
-  const risultati = [];
-  let migliore = null, nCand = 0;
-  const ref = process.env.DATA_BRANCH ? '?ref=' + encodeURIComponent(process.env.DATA_BRANCH) : '';
-  const file = (await elencoFile(repo)).filter(datasetDi);
-  for (const percorso of file) {
-    const cfg = datasetDi(percorso);
-    const schede = await inMemoria('ds:' + percorso, async () => {
-      const r = await fetch('https://api.github.com/repos/' + repo + '/contents/' + encodeURI(percorso) + ref, { headers: intestazioni(true) });
-      if (!r.ok) throw new Error(percorso + ': GitHub ' + r.status);
-      const json = await r.json();
-      const lista = Array.isArray(json) ? json : json[cfg.chiave] || [];
-      const nested = (k) => (cfg.allegati && RX_ALLEGATI.test(k)) || (cfg.escludi && cfg.escludi.includes(k));   // sentenze/dossier sono risultati a parte; copertina/galleria non sono testo
-      const voci = lista.map((it) => {
-        const s = cfg.scheda(it);
-        const plain = testoPulito(it.contenuto);
-        const dati = cfg.html ? testoDi(it, nested).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ') : testoDi(it, nested);
-        return {
-          tipo: (cfg.allegati && classifica(it)) || cfg.tipo, label: cfg.label, proprio: false,
-          raw: cfg.tipo === 'wiki' ? it : null,
-          s, plain,
-          titolo: String(s.name || '').toLowerCase(),
-          sommario: String(s.snippet || '').toLowerCase(),
-          testo: (s.name + ' ' + s.path + ' ' + dati + ' ' + plain + ' ' + (it.numero || '') + '/' + (it.anno || '')).toLowerCase(),
-        };
-      });
-      if (cfg.allegati) {
-        for (const a of allegatiDi(json, lista, cfg)) {
-          voci.push({
-            tipo: a.tipo, label: a.label, proprio: a.proprio, s: a.s, plain: a.plain,
-            titolo: String(a.s.name || '').toLowerCase(),
-            sommario: String(a.s.snippet || '').toLowerCase(),
-            testo: (a.s.name + ' ' + a.s.path + ' ' + a.dati + ' ' + a.plain).toLowerCase(),
-          });
-        }
-      }
-      return voci;
-    });
-    for (const { tipo, label, proprio, raw, s, plain, titolo, sommario, testo } of schede) {
-      if (!termini.every((t) => testo.includes(t))) continue;
-      if (raw) {                                             // pagina della wiki: candidata al pannello
-        const rg = rangoWiki(raw, s.name, termini);
-        if (rg) {
-          nCand++;
-          if (!migliore || rg > migliore.rg || (rg === migliore.rg && String(s.name).length < String(migliore.s.name).length)) migliore = { rg, raw, s };
-        }
-      }
-      let score = 20;
-      for (const t of termini) score += titolo.includes(t) ? 20 : sommario.includes(t) ? 8 : 0;
-      risultati.push({
-        repo: 'DATA',
-        type: tipo,
-        name: s.name,
-        path: s.path,
-        snippet: s.snippet || estratto(plain, termini),
-        url: s.url,
-        label,
-        icon: '',
-        _url: s.url.startsWith(SITO) ? SITO + cfg.pagina : '', _rp: cfg.pagina.slice(1),   // pagina da cui leggere il logo
-        score,
-      });
-    }
-  }
-  // pannello: titolo identico o che inizia con le parole cercate; se e' solo "contiene le parole", solo quando e' l'unica candidata
-  if (migliore && (migliore.rg >= 2 || nCand === 1)) risultati.panel = pannelloWiki(migliore.raw, migliore.s);
-  return risultati;
-}
-
-async function cercaNellaRepo(nome, repo, termini, q, soloImg) {
-  const trovati = new Map();
-  const file = (await elencoFile(repo)).filter((p) => !datasetDi(p) && !escluso(p) && !(soloImg && tipoFile(p) !== 'img'));   // atti/progetti = schede; bozze, script, JSON e cartelle tecniche = mai
-  // variabili delle pagine del sito EWS (nome, descrizione, tag): lette dal loro <head>
-  const infos = new Map();
-  if (nome === 'EWS' && !soloImg) {
-    const pagine = file.filter((p) => tipoFile(p) === 'pagina').slice(0, 300);
-    await inParallelo(pagine, 8, async (p) => { const i = await infoPagina(urlSito(SITO, p), p); if (i) infos.set(p, i); });
-  }
-  for (const p of file) {
-    const basso = p.toLowerCase();
-    const i = infos.get(p);
-    const extra = i ? (i.nome + ' ' + i.descrizione + ' ' + i.tag.join(' ')).toLowerCase() : '';
-    if (termini.every((t) => basso.includes(t) || extra.includes(t))) {
-      const f = nomeFile(p);
-      const sc = 10 + termini.filter((t) => f.includes(t)).length * 5
-        + (i ? termini.filter((t) => i.nome.toLowerCase().includes(t)).length * 8 + termini.filter((t) => i.tag.some((g) => g.toLowerCase().includes(t))).length * 6 : 0);
-      trovati.set(p, { path: p, score: sc });
-    }
-  }
-  if (nome !== 'IMG' && !soloImg) {                          // ricerca nel contenuto: non serve per le immagini
-    try {
-      const r = await fetch('https://api.github.com/search/code?per_page=30&q=' + encodeURIComponent(q) + '+repo:' + repo, { headers: intestazioni(false) });
-      if (r.ok) {
-        for (const it of (await r.json()).items || []) {
-          if (datasetDi(it.path) || escluso(it.path)) continue;
-          const gia = trovati.get(it.path);
-          if (gia) gia.score += 3; else trovati.set(it.path, { path: it.path, score: 4 });
-        }
-      }
-    } catch (_) { /* la ricerca nel contenuto e' facoltativa */ }
-  }
-  return [...trovati.values()].filter((o) => !(infos.get(o.path) || {}).nascondi).map((o) => {
-    const tipo = tipoFile(o.path);
-    const info = infos.get(o.path);
-    // EWS e IMG: si apre il SITO online. DATA e' privata e non ha un sito: resta il link alla repo.
-    const sulSito = nome === 'EWS' ? urlSito(SITO, o.path) : nome === 'IMG' ? urlSito(SITO_IMG, o.path) : null;
-    return {
-      repo: nome,
-      path: o.path,
-      score: o.score,
-      name: (info && info.nome) || (tipo === 'pagina' || tipo === 'documento' ? nomeBello(o.path) : o.path.split('/').pop()),
-      descrizione: (info && info.descrizione) || o.path,    // riga grigia sotto il titolo: di base il percorso
-      tags: info ? info.tag : [],
-      file: o.path.split('/').pop(),
-      type: tipo,
-      url: sulSito || 'https://github.com/' + repo + '/blob/HEAD/' + o.path,
-      label: sulSito ? (tipo === 'img' ? 'Apri immagine' : 'Apri pagina') : '',
-      raw: tipo === 'img' ? sulSito : null,               // anteprima: dal sito
-      // anteprima di riserva se il sito non serve il file (le immagini del sito e di IMG sono anche su GitHub)
-      alt: tipo === 'img' && sulSito ? 'https://raw.githubusercontent.com/' + repo + '/HEAD/' + o.path.split('/').map(encodeURIComponent).join('/') : '',
-      icon: '',
-      _url: sulSito && tipo === 'pagina' ? sulSito : '', _rp: o.path,   // pagina da cui leggere il logo
-    };
-  });
-}
-
-// ---------------------------------------------------------------- LOGO DELLA PAGINA
-// Si legge l'HTML della pagina che si apre e si prende il <link rel="icon"> (poi apple-touch-icon).
-function iconaDaHtml(html, base) {
-  const tag = String(html).slice(0, 80000).match(/<link\b[^>]*>/gi) || [];
-  let scelta = '', apple = '';
-  for (const t of tag) {
-    const a = {};
-    t.replace(/([a-zA-Z:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g, (_, k, d, s, n) => { a[k.toLowerCase()] = d ?? s ?? n; return ''; });
-    const rel = String(a.rel || '').toLowerCase().split(/\s+/);          // "shortcut icon" -> ['shortcut','icon']
-    const ic = rel.includes('icon'), ap = rel.includes('apple-touch-icon');
-    if (!a.href || (!ic && !ap)) continue;
-    const href = String(a.href).trim().replace(/&amp;/g, '&');
-    let url;
-    if (/^data:image\//i.test(href)) { if (href.length > 4000) continue; url = href; }      // icona incorporata nella pagina
-    else { try { url = new URL(href, base).href; } catch (_) { continue; } if (!/^https?:/i.test(url)) continue; }
-    if (ic && !scelta) scelta = url; else if (ap && !apple) apple = url;
-  }
-  return scelta || apple;
-}
-
-// HTML della pagina: prima dal sito online, poi (se non risponde) dal repo EWS
-async function htmlDi(url, percorsoRepo) {
+/* da un indirizzo: sito, percorso a briciole di pane e radice (per il logo di riserva) */
+function sorgente(u){
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': 'ews-data-proxy', Accept: 'text/html' }, redirect: 'follow', signal: AbortSignal.timeout(3000) });
-    if (r.ok) return { html: await r.text(), base: r.url || url };
-  } catch (_) { /* si prova il repo */ }
-  if (percorsoRepo) {
-    try {
-      const org = dataRepo().split('/')[0];
-      const r = await fetch('https://api.github.com/repos/' + org + '/EWS/contents/' + percorsoRepo.split('/').map(encodeURIComponent).join('/'),
-        { headers: intestazioni(true), signal: AbortSignal.timeout(3000) });
-      if (r.ok) return { html: await r.text(), base: url };
-    } catch (_) { /* nessun logo */ }
+    var x = new URL(u);
+    var segs = x.pathname.split("/").filter(Boolean).map(dec);
+    return { host: x.hostname, path: segs.length ? "› " + segs.join(" › ") : "", origin: x.origin };
+  } catch(e){
+    return { host: String(u).replace(/^https?:\/\//, ""), path: "", origin: "" };
   }
-  return null;
 }
-// ---- variabili della pagina, scritte nel suo <head>:
-//   <meta name="ews-nome" content="UniText">                     nome mostrato nella ricerca
-//   <meta name="ews-descrizione" content="Bozze e testi">        riga grigia sotto il titolo (se manca: il percorso, es. lex/unitext.html)
-//   <meta name="ews-tag" content="uni, testi, bozze">            parole extra per trovare la pagina (separate da virgola o ;)
-//   <meta name="ews-nascondi" content="true">                    la pagina non compare mai nei risultati
-const decodifica = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
-function metaDaHtml(html) {
-  const out = { nome: '', descrizione: '', tag: [], nascondi: false };
-  const tag = String(html).slice(0, 80000).match(/<meta\b[^>]*>/gi) || [];
-  for (const t of tag) {
-    const a = {};
-    t.replace(/([a-zA-Z:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g, (_, k, dq, sq, n) => { a[k.toLowerCase()] = dq ?? sq ?? n; return ''; });
-    const nome = String(a.name || '').toLowerCase();
-    if (a.content == null) continue;
-    const v = decodifica(a.content);
-    if (nome === 'ews-nome') out.nome = v;
-    else if (nome === 'ews-descrizione') out.descrizione = v;
-    else if (nome === 'ews-nascondi') out.nascondi = /^(true|1|si|sì|yes)$/i.test(v);
-    else if (nome === 'ews-tag') out.tag = v.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+function estensione(d){
+  var m = /\.([a-z0-9]+)$/i.exec(d.path || d.name || "");
+  var e = m ? m[1].toLowerCase() : "altro";
+  return (e === "jpeg" || e === "jfif") ? "jpg" : e;
+}
+function senzaEstensione(n){ return String(n).replace(/\.[a-z0-9]+$/i, ""); }
+function nomeRepo(r){ return r === "IMG" ? "Archivio IMG" : "Sito EWS"; }
+
+/* ---------- ricerche recenti (salvate nel browser) ---------- */
+function leggiRecenti(){ try { return JSON.parse(localStorage.getItem("ews_recenti") || "[]"); } catch(e){ return []; } }
+function salvaRecente(t){
+  try {
+    var l = leggiRecenti().filter(function(x){ return x.toLowerCase() !== t.toLowerCase(); });
+    l.unshift(t);
+    localStorage.setItem("ews_recenti", JSON.stringify(l.slice(0, 8)));
+  } catch(e){}
+}
+
+/* ---------- sezioni: Tutti / Immagini ---------- */
+function aggiornaModo(){
+  document.body.setAttribute("data-modo", modo);
+  q.placeholder = modo === "img" ? "Cerca immagini in EWS" : "Cerca in EWS";
+  var bs = tabs.querySelectorAll("button");
+  for (var i = 0; i < bs.length; i++){
+    var on = bs[i].getAttribute("data-modo") === modo;
+    bs[i].classList.toggle("on", on);
+    bs[i].setAttribute("aria-selected", on ? "true" : "false");
   }
-  return out;
 }
-// icona + variabili di una pagina: si legge l'HTML una volta sola (cache 10 minuti)
-const infoPagina = (url, percorsoRepo) => inMemoria('info:' + url, async () => {
-  const h = await htmlDi(url, percorsoRepo);
-  return h ? { icon: iconaDaHtml(h.html, h.base), ...metaDaHtml(h.html) } : null;
+tabs.addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  var m = b.getAttribute("data-modo"); if (!m || m === modo) return;
+  modo = m; pref = ""; typeF = "tutti"; fmt = "tutti";
+  if (modo === "img" && repo === "DATA") repo = "all";
+  if (modo === "web" && repo === "IMG") repo = "all";
+  out.innerHTML = "";   // DATA non ha immagini da mostrare
+  aggiornaModo();
+  if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); }
 });
-const logoDi = async (url, percorsoRepo) => (await infoPagina(url, percorsoRepo))?.icon || '';
 
-// esegue lavori con al massimo n richieste in parallelo
-async function inParallelo(lista, n, fn) {
-  let i = 0;
-  await Promise.all(Array.from({ length: Math.min(n, lista.length) }, async () => {
-    while (i < lista.length) { const x = lista[i++]; try { await fn(x); } catch (_) { /* pagina non leggibile: si usano i valori di base */ } }
-  }));
+/* ---------- home ---------- */
+function renderHome(){
+  $("fav").innerHTML = PREF.map(function(p, i){
+    var on = p[1] === repo && p[2] === pref && p[5] === modo;
+    return '<button type="button" class="tile' + (on ? " on" : "") + '" data-i="' + i + '">' +
+           '<span class="ic" style="background:' + p[4] + '">' + p[3] + '</span><span class="lb">' + esc(p[0]) + '</span></button>';
+  }).join("");
+  var rec = leggiRecenti();
+  $("recwrap").style.display = rec.length ? "block" : "none";
+  $("rec").innerHTML = rec.map(function(t){ return '<button type="button" data-q="' + esc(t) + '">' + esc(t) + "</button>"; }).join("");
+}
+function vaiHome(){
+  seq++; data = []; ultima = ""; clearTimeout(timer); chiudiLb();
+  document.body.className = "home";
+  load.style.display = "none"; bar.textContent = ""; out.innerHTML = ""; pager.style.display = "none";
+  aggiornaUrl("");
+  aggiornaModo(); renderCfg(); renderHome();
 }
 
-// assegna a ogni risultato il logo letto dalla SUA pagina; se non c'e', quello della home del sito
-async function arricchisciIcone(lista) {
-  const bersagli = new Map();                                // pagina -> percorso nel repo (massimo 30 pagine diverse per ricerca)
-  for (const d of lista) if (d._url && !bersagli.has(d._url) && bersagli.size < 30) bersagli.set(d._url, d._rp);
-  const trovate = new Map();
-  const [logoHome] = await Promise.all([
-    logoDi(SITO + '/', 'index.html'),
-    ...[...bersagli].map(async ([u, p]) => { trovate.set(u, await logoDi(u, p)); }),
-  ]);
-  for (const d of lista) {
-    const delSito = d.url.startsWith(SITO) || d.url.startsWith(SITO_IMG);
-    d.icon = d.type === 'img' ? '' : (d._url && trovate.get(d._url)) || (delSito ? logoHome : '') || (delSito ? ICONA : '');
-    if (d.type === 'sentenza') d.icon = ICONA_SENTENZE;          // le sentenze usano sempre il logo della Corte Costituzionale
-    delete d._url; delete d._rp;
+/* ---------- impostazioni (ingranaggio) ---------- */
+function opts(list, cur, attr){
+  return list.map(function(x){
+    return '<button type="button" class="opt' + (cur === x[0] ? " on" : "") + '" data-' + attr + '="' + esc(x[0]) + '">' + x[1] + "</button>";
+  }).join("");
+}
+function renderCfg(){
+  var dove = modo === "img"
+    ? [["all","Tutto"],["EWS","Dal sito (EWS)"],["IMG","Archivio immagini"]]
+    : [["all","Tutto"],["EWS","Pagine del sito"],["DATA","Atti e dati"]];
+  rp.innerHTML = opts(dove, repo, "r");
+
+  if (modo === "img"){
+    rtt.textContent = "Formato";
+    if (data.length){
+      var ce = {};
+      data.forEach(function(d){ var e = estensione(d); ce[e] = (ce[e] || 0) + 1; });
+      var lf = [["tutti", "Tutti <small>(" + data.length + ")</small>"]]
+        .concat(Object.keys(ce).sort(function(a, b){ return ce[b] - ce[a]; })
+        .map(function(e){ return [e, esc(e.toUpperCase()) + " <small>(" + ce[e] + ")</small>"]; }));
+      rt.innerHTML = opts(lf, fmt, "f");
+    } else rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per formato.</p>';
+  } else {
+    rtt.textContent = "Tipo";
+    if (data.length){
+      var cont = {};
+      data.forEach(function(d){ cont[d.type] = (cont[d.type] || 0) + 1; });
+      var tipi = ORDINE.filter(function(t){ return cont[t]; })
+                 .concat(Object.keys(cont).filter(function(t){ return ORDINE.indexOf(t) < 0; }));
+      var lista = [["tutti", "Tutti <small>(" + data.length + ")</small>"]]
+        .concat(tipi.map(function(t){ return [t, esc(nomeTipo(t)) + " <small>(" + cont[t] + ")</small>"]; }));
+      rt.innerHTML = opts(lista, typeF, "t");
+    } else rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per tipo di risultato.</p>';
   }
+  rm.innerHTML = opts([["auto","Automatico"],["light","Chiaro"],["dark","Scuro"]], tema, "m");
 }
-
-const PRIORITA = { pagina: 0, wiki: 1, progetto: 2, elezione: 2, documento: 2, img: 2, atto: 3, sentenza: 3, dossier: 3, dato: 4, altro: 4 };
-
-async function cercaTutto(req, res) {
-  res.setHeader('Cache-Control', 'no-store');
-  try {
-    const chiave = process.env._ACCESS_KEY;
-    if (chiave && req.query.k !== chiave) return res.status(401).json({ error: 'Chiave non valida' });
-
-    const q = String(req.query.q || '').trim();
-    if (q.length < 2) return res.status(400).json({ error: 'Scrivi almeno 2 caratteri' });
-    const termini = q.toLowerCase().split(/\s+/);
-
-    const repoData = dataRepo();
-    const org = repoData.split('/')[0];
-    const tutte = { EWS: org + '/EWS', IMG: org + '/IMG', DATA: repoData };
-    const voluta = String(req.query.repo || 'all').toUpperCase();
-    // ?tipo=img = sezione Immagini: tutte le immagini di EWS e IMG (DATA e' privata e non ha un sito: niente anteprime)
-    const soloImg = String(req.query.tipo || '').toLowerCase() === 'img';
-    const nomi = Object.keys(tutte).filter((n) => (voluta === 'ALL' || n === voluta) && !(soloImg && n === 'DATA'));
-
-    const lavori = nomi.map((n) => cercaNellaRepo(n, tutte[n], termini, q, soloImg));
-    if (!soloImg && nomi.includes('DATA')) lavori.push(cercaNeiDataset(repoData, termini));
-    const esiti = await Promise.allSettled(lavori);
-
-    const results = esiti.flatMap((e) => (e.status === 'fulfilled' ? e.value : []));
-    const errors = esiti.filter((e) => e.status === 'rejected').map((e) => e.reason.message);
-    let panel = null;                                         // riquadro "dalla wiki" (solo nella sezione Tutti)
-    if (!soloImg) {
-      panel = esiti.map((e) => (e.status === 'fulfilled' && e.value && e.value.panel) || null).find(Boolean) || null;
-      if (panel) panel.icon = (await logoDi(SITO + '/lex/wiki.html', 'lex/wiki.html').catch(() => '')) || ICONA;
-    }
-    // i siti (pagine) vengono per primi; atti, sentenze e dossier in fondo; a parita' di gruppo conta il punteggio
-    results.sort((a, b) => (PRIORITA[a.type] ?? 4) - (PRIORITA[b.type] ?? 4) || b.score - a.score || String(a.name).localeCompare(String(b.name)));
-    const fuori = results.slice(0, soloImg ? 400 : 200);
-    if (!soloImg) await arricchisciIcone(fuori);              // logo della pagina (letto dal suo HTML)
-    else fuori.forEach((d) => { delete d._url; delete d._rp; });
-    res.status(200).json({ count: results.length, results: fuori, errors, panel });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+function apriCfg(on){
+  cfg.classList.toggle("open", on);
+  gear.setAttribute("aria-expanded", on ? "true" : "false");
+}
+gear.addEventListener("click", function(e){ e.stopPropagation(); apriCfg(!cfg.classList.contains("open")); });
+cfg.addEventListener("click", function(e){
+  e.stopPropagation();
+  var b = e.target.closest("button"); if (!b) return;
+  var r = b.getAttribute("data-r"), t = b.getAttribute("data-t"), m = b.getAttribute("data-m"), f = b.getAttribute("data-f");
+  if (m !== null){ tema = m; applicaTema(); renderCfg(); return; }
+  if (f !== null){ fmt = f; nImg = PER_IMG; show(); renderCfg(); return; }
+  if (r !== null){
+    repo = r; pref = "";
+    if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); }
   }
+  if (t !== null){
+    typeF = t; pref = t === "tutti" ? "" : t; page = 1;
+    show(); renderCfg();
+  }
+});
+document.addEventListener("click", function(){ apriCfg(false); });
+
+/* ---------- risultati ---------- */
+function show(){
+  res.classList.toggle("imgmode", modo === "img");
+  if (modo === "img") showImg(); else showWeb();
 }
 
-// ---------------------------------------------------------------- LETTURA JSON (invariata)
-module.exports = async (req, res) => {
-  if (req.query && req.query.cerca) return cercaTutto(req, res);
+/* pannello wiki: titolo, piccolo estratto e rimando alla pagina; il menu a tendina lo riduce o lo chiude (fino alla prossima ricerca) */
+var pnStato = "";                       // "" = aperto, "ridotto" = solo titolo, "chiuso" = nascosto
+function pannelloHtml(){
+  var pn = panel;
+  if (!pn || !pn.url || !pn.titolo || pnStato === "chiuso") return "";
+  var lett = esc(String(pn.titolo).charAt(0).toUpperCase());
+  var ico = pn.icon ? '<img class="fav" src="' + esc(pn.icon) + '" alt="" data-l="' + lett + '">' : '<span class="fav">' + lett + "</span>";
+  var meta = [pn.categoria].concat(pn.tag || []).filter(Boolean).map(esc).join(" · ");
+  var rid = pnStato === "ridotto";
+  return '<aside class="pn' + (rid ? " rid" : "") + '" aria-label="Dalla wiki">' +
+    '<div class="pk">' + ico + "<span>Dalla Wiki</span>" +
+      '<div class="pm"><button type="button" class="pmb" aria-haspopup="menu" aria-expanded="false" aria-label="Opzioni del pannello" title="Opzioni">&#9662;</button>' +
+      '<div class="pml" role="menu" hidden><button type="button" role="menuitem" data-pa="rid">' + (rid ? "Espandi" : "Riduci") + "</button>" +
+      '<button type="button" role="menuitem" data-pa="chiudi">Chiudi</button></div></div></div>' +
+    (pn.immagine ? '<img class="pi" loading="lazy" src="' + esc(pn.immagine) + '" alt="">' : "") +
+    '<h2 class="pt"><a href="' + esc(pn.url) + '" target="_blank" rel="noopener">' + esc(pn.titolo) + "</a></h2>" +
+    (meta ? '<p class="pc">' + meta + "</p>" : "") +
+    (pn.estratto ? '<p class="px">' + esc(pn.estratto) + "</p>" : "") +
+    '<a class="pg" href="' + esc(pn.url) + '" target="_blank" rel="noopener">' + esc(pn.label || "Leggi sulla Wiki") + " &rarr;</a>" +
+    "</aside>";
+}
+document.addEventListener("click", function(e){
+  var t = e.target, it = t.closest && t.closest(".pn [data-pa]"), b = t.closest && t.closest(".pn .pmb");
+  var menus = document.querySelectorAll(".pn .pml");
+  if (it){ pnStato = it.getAttribute("data-pa") === "chiudi" ? "chiuso" : (pnStato === "ridotto" ? "" : "ridotto"); show(); return; }
+  var m = b ? b.parentNode.querySelector(".pml") : null, apri = m ? m.hidden : false;
+  Array.prototype.forEach.call(menus, function(x){ x.hidden = true; var bb = x.parentNode.querySelector(".pmb"); if (bb) bb.setAttribute("aria-expanded", "false"); });
+  if (m && apri){ m.hidden = false; b.setAttribute("aria-expanded", "true"); }
+});
 
-  const wanted = String((req.query && req.query.file) || '').toLowerCase();
-  if (!ALLOWED.includes(wanted)) {
-    res.status(400).json({ error: 'file non consentito' });
+/* sezione Tutti: elenco di testo, con il logo del sito accanto a ogni risultato */
+function showWeb(){
+  var list = data.filter(function(d){ return typeF === "tutti" || d.type === typeF; });
+  var parole = paroleCercate(ultima);
+  var filtro = [];
+  if (repo !== "all") filtro.push(repo);
+  if (typeF !== "tutti") filtro.push(nomeTipo(typeF));
+
+  if (!list.length){
+    bar.textContent = "";
+    out.innerHTML = '<div class="empty"><b>Nessun risultato per “' + esc(ultima) + '”.</b>' +
+      "<ul><li>Controlla che le parole siano scritte correttamente.</li>" +
+      "<li>Prova con parole diverse o più generiche.</li>" +
+      "<li>Controlla le impostazioni (ingranaggio): potresti aver filtrato troppo.</li></ul></div>";
+    pager.style.display = "none";
     return;
   }
-  const repo = process.env.DATA_REPO || 'RETEFORLIVESE/DATA';
-  const ref = process.env.DATA_BRANCH ? '?ref=' + encodeURIComponent(process.env.DATA_BRANCH) : '';
-  const headers = {
-    Accept: 'application/vnd.github.raw+json',
-    'User-Agent': 'ews-data-proxy',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = 'Bearer ' + process.env.GITHUB_TOKEN;
 
-  // il nome nel repo puo' essere minuscolo o con la maiuscola iniziale
-  const names = [wanted, wanted.charAt(0).toUpperCase() + wanted.slice(1)];
-  for (const name of names) {
-    const r = await fetch('https://api.github.com/repos/' + repo + '/contents/' + name + ref, { headers });
-    if (r.ok) {
-      res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-      res.status(200).send(await r.text());
-      return;
-    }
+  bar.innerHTML = "<b>Circa " + list.length + (list.length === 1 ? " risultato" : " risultati") + "</b>" +
+                  (filtro.length ? " · filtro: " + esc(filtro.join(", ")) : "");
+
+  var pagine = Math.ceil(list.length / PER);
+  if (page > pagine) page = pagine;
+  var pnl = (page === 1 && (typeF === "tutti" || typeF === "wiki") && (repo === "all" || repo === "DATA")) ? pannelloHtml() : "";
+  out.innerHTML = pnl + list.slice((page - 1) * PER, page * PER).map(function(d, i, arr){
+    var sep = (typeF === "tutti" && i > 0 && d.type !== "pagina" && arr[i - 1].type === "pagina") ? '<div class="sep" role="separator"><span>Altri risultati</span></div>' : "";
+    var sg = sorgente(d.url);
+    var fbk = sg.origin ? sg.origin + "/favicon.ico" : "";
+    var ico = d.icon || fbk;
+    var lett = esc((sg.host || "?").charAt(0).toUpperCase());
+    var fav = ico
+      ? '<img class="fav" loading="lazy" src="' + esc(ico) + '" alt="" data-l="' + lett + '"' + (fbk && fbk !== ico ? ' data-fb="' + esc(fbk) + '"' : "") + ">"
+      : '<span class="fav">' + lett + "</span>";
+    var src = d.raw || d.alt || "";
+    var th = (d.type === "img" && src)
+      ? '<a class="th" href="' + esc(d.url) + '" target="_blank" rel="noopener" tabindex="-1">' +
+        '<img loading="lazy" src="' + esc(src) + '" alt=""' + (d.alt && d.alt !== src ? ' data-fb="' + esc(d.alt) + '"' : "") + "></a>" : "";
+    return sep + '<div class="r">' + th +
+      '<div class="src">' + fav + '<span class="sn"><span class="h">' + esc(sg.host) + ' <i class="tp" data-t="' + esc(d.type) + '">' + esc(nomeTipo(d.type)) + "</i></span>" +
+        (sg.path ? '<span class="pth">' + esc(sg.path) + "</span>" : "") + "</span></div>" +
+      '<h3 class="t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + hl(d.name, parole) + "</a></h3>" +
+      (d.snippet ? '<div class="d">' + hl(String(d.snippet).slice(0, 220), parole) + "</div>" : "") +
+      ((d.descrizione || d.path) ? '<div class="p">' + hl(d.descrizione || d.path, parole) + "</div>" : "") +
+      "</div>";
+  }).join("");
+
+  if (pagine > 1){
+    var h = "";
+    if (page > 1) h += '<a data-p="' + (page - 1) + '">‹ Precedente</a>';
+    for (var i = 1; i <= pagine; i++) h += i === page ? '<span class="cur">' + i + "</span>" : '<a data-p="' + i + '">' + i + "</a>";
+    if (page < pagine) h += '<a data-p="' + (page + 1) + '">Successiva ›</a>';
+    pager.innerHTML = h; pager.style.display = "block";
+  } else pager.style.display = "none";
+}
+pager.addEventListener("click", function(e){
+  var p = e.target.getAttribute && e.target.getAttribute("data-p"); if (!p) return;
+  page = +p; show(); window.scrollTo(0, 0);
+});
+
+/* sezione Immagini: griglia di miniature, un tocco apre l'anteprima */
+function showImg(){
+  var list = data.filter(function(d){ return fmt === "tutti" || estensione(d) === fmt; });
+  imgList = list;
+  var parole = paroleCercate(ultima);
+  var filtro = [];
+  if (repo !== "all") filtro.push(repo === "IMG" ? "Archivio immagini" : "Sito EWS");
+  if (fmt !== "tutti") filtro.push(fmt.toUpperCase());
+  pager.style.display = "none";
+
+  if (!list.length){
+    bar.textContent = "";
+    out.innerHTML = '<div class="empty"><b>Nessuna immagine per “' + esc(ultima) + '”.</b>' +
+      "<ul><li>Le immagini si cercano per nome del file e delle cartelle.</li>" +
+      "<li>Prova con parole diverse o più generiche.</li>" +
+      "<li>Controlla le impostazioni (ingranaggio): potresti aver filtrato troppo.</li></ul></div>";
+    return;
   }
-  res.status(502).json({ error: 'impossibile leggere il file dal repo dati' });
-};
+  bar.innerHTML = "<b>Circa " + list.length + (list.length === 1 ? " immagine" : " immagini") + "</b>" +
+                  (filtro.length ? " · filtro: " + esc(filtro.join(", ")) : "");
+
+  var html = '<div id="grid">' + list.slice(0, nImg).map(function(d, i){
+    var src = d.raw || d.alt || "";
+    return '<button type="button" class="gi" data-k="' + i + '" title="' + esc(d.path) + '">' +
+      '<span class="gf"><img loading="lazy" decoding="async" src="' + esc(src) + '" alt="' + esc(d.name) + '"' +
+        (d.alt && d.alt !== src ? ' data-fb="' + esc(d.alt) + '"' : "") + "></span>" +
+      '<span class="gc">' + hl(senzaEstensione(d.name), parole) + "</span>" +
+      '<span class="gs">' + esc(nomeRepo(d.repo)) + "</span></button>";
+  }).join("") + "</div>";
+  if (nImg < list.length){
+    html += '<div class="morew"><button type="button" id="more">Mostra altre immagini (' + (list.length - nImg) + ")</button></div>";
+  }
+  out.innerHTML = html;
+}
+out.addEventListener("click", function(e){
+  var g = e.target.closest(".gi");
+  if (g){ apriLb(+g.getAttribute("data-k")); return; }
+  if (e.target.closest("#more")){
+    var y = window.pageYOffset; nImg += PER_IMG; showImg(); window.scrollTo(0, y);
+  }
+});
+
+/* ---------- anteprima a schermo intero ---------- */
+function apriLb(i){
+  if (i < 0 || i >= imgList.length) return;
+  var d = imgList[i];
+  if (!lb.classList.contains("open")) lbFocus = document.activeElement;
+  lbI = i;
+  lb.classList.remove("broken");
+  lbi.removeAttribute("data-fb");
+  if (d.alt && d.alt !== d.raw) lbi.setAttribute("data-fb", d.alt);
+  lbi.alt = d.name;
+  lbi.src = d.raw || d.alt || d.url;
+  $("lbt").textContent = d.name;
+  $("lbs").textContent = nomeRepo(d.repo) + " · " + d.path;
+  $("lbc").textContent = (i + 1) + " / " + imgList.length;
+  $("lba").href = d.url;
+  $("lbp").disabled = i === 0;
+  $("lbn").disabled = i === imgList.length - 1;
+  lb.classList.add("open"); lb.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  $("lbx").focus();
+}
+function chiudiLb(){
+  if (!lb.classList.contains("open")) return;
+  lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true");
+  lbi.removeAttribute("src");
+  document.body.style.overflow = "";
+  lbI = -1;
+  if (lbFocus && lbFocus.focus) { try { lbFocus.focus(); } catch(e){} }
+}
+function vaiLb(n){ var i = lbI + n; if (i >= 0 && i < imgList.length) apriLb(i); }
+$("lbx").addEventListener("click", chiudiLb);
+$("lbp").addEventListener("click", function(){ vaiLb(-1); });
+$("lbn").addEventListener("click", function(){ vaiLb(1); });
+lb.addEventListener("click", function(e){ if (e.target === lb || e.target.classList.contains("stage")) chiudiLb(); });
+var tx = 0, ty = 0;                                                 // scorrimento col dito: avanti / indietro
+lb.addEventListener("touchstart", function(e){ var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+lb.addEventListener("touchend", function(e){
+  var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) vaiLb(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+/* ---------- immagini che non si caricano: prima la riserva, poi un segnaposto ---------- */
+document.addEventListener("error", function(e){
+  var t = e.target;
+  if (!t || t.tagName !== "IMG") return;
+  var fb = t.getAttribute("data-fb");
+  if (fb){ t.removeAttribute("data-fb"); t.src = fb; return; }
+  if (t.classList.contains("fav")){
+    var s = document.createElement("span");
+    s.className = "fav"; s.textContent = t.getAttribute("data-l") || "•";
+    t.parentNode.replaceChild(s, t);
+  } else if (t.id === "lbi"){ lb.classList.add("broken"); }
+  else if (t.closest(".gi")){ t.closest(".gi").classList.add("rotta"); }
+  else if (t.closest(".th")){ t.closest(".th").style.display = "none"; }
+  else if (t.classList.contains("pi")){ t.style.display = "none"; }
+}, true);
+
+/* ---------- indirizzo della pagina: ?q=...&tab=img si puo' condividere e ricaricare ---------- */
+function aggiornaUrl(term){
+  try {
+    var u = new URL(location.href);
+    if (term) u.searchParams.set("q", term); else u.searchParams.delete("q");
+    if (term && modo === "img") u.searchParams.set("tab", "img"); else u.searchParams.delete("tab");
+    history.replaceState(null, "", u);
+  } catch(e){}
+}
+
+/* ---------- ricerca ---------- */
+var cache = {}, ctrl = null;
+var SKEL = new Array(5).join('<div class="sk"><b></b><span></span><span></span></div>');
+function applica(j, term){
+  load.style.display = "none"; res.classList.remove("busy");
+  if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
+  panel = (modo === "web" && j.panel) ? j.panel : null;
+  pnStato = "";                                        // nuova ricerca: il pannello torna aperto
+  data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
+  data = data.filter(function(d){ return modo === "img" ? d.type === "img" : d.type !== "img"; });   // "Tutti" non mostra mai immagini
+  var PRI = { pagina:0, wiki:1, progetto:2, elezione:2, documento:2, img:2, atto:3, sentenza:3, dossier:3 };   /* siti per primi, atti in fondo (ordine stabile: dentro il gruppo resta il punteggio) */
+  data = data.map(function(d, i){ return [d, i]; }).sort(function(a, b){ return ((PRI[a[0].type] != null ? PRI[a[0].type] : 4) - (PRI[b[0].type] != null ? PRI[b[0].type] : 4)) || a[1] - b[1]; }).map(function(x){ return x[0]; });
+  page = 1; nImg = PER_IMG; fmt = "tutti";
+  typeF = (modo === "web" && pref && data.some(function(d){ return d.type === pref; })) ? pref : "tutti";
+  if (data.length) salvaRecente(term);
+  renderCfg(); show();
+  if (j.errors && j.errors.length) bar.innerHTML += " \u00b7 alcune fonti non hanno risposto";
+}
+function search(){
+  var term = q.value.trim().replace(/\s+/g, " ");
+  hint.classList.remove("on");
+  if (!term){ vaiHome(); return; }
+  if (term.length < 2){ hint.classList.add("on"); return; }
+
+  ultima = term;
+  var mio = ++seq;
+  if (ctrl) { try { ctrl.abort(); } catch(e){} ctrl = null; }   // la richiesta precedente non serve piu'
+  chiudiLb();
+  document.body.className = "";
+  aggiornaModo();
+  aggiornaUrl(term);
+  var ck = modo + "|" + repo + "|" + term.toLowerCase();
+  if (cache[ck]){ applica(cache[ck], term); return; }          // gia' cercato: risposta immediata
+
+  load.style.display = "block"; bar.textContent = ""; pager.style.display = "none";
+  if (out.firstChild && !out.querySelector(".sk")) res.classList.add("busy"); else out.innerHTML = SKEL;
+  ctrl = window.AbortController ? new AbortController() : null;
+
+  fetch(API + "&q=" + encodeURIComponent(term) + "&repo=" + encodeURIComponent(repo) +
+        (modo === "img" ? "&tipo=img" : "") + "&k=" + encodeURIComponent(KEY), ctrl ? { signal: ctrl.signal } : {})
+    .then(function(r){
+      return r.json().catch(function(){ throw new Error("Risposta non valida dal server (" + r.status + ")"); });
+    })
+    .then(function(j){
+      if (mio !== seq) return;                         // risposta vecchia: ignorata
+      if (!j.error && !(j.errors && j.errors.length)){
+        if (Object.keys(cache).length > 40) cache = {};
+        cache[ck] = j;
+      }
+      applica(j, term);
+    })
+    .catch(function(err){
+      if (mio !== seq) return;
+      load.style.display = "none"; res.classList.remove("busy");
+      out.innerHTML = '<div class="empty err">Errore di rete: ' + esc(err.message || "riprova tra poco") + ".</div>";
+    });
+}
+
+/* ---------- barra di ricerca ---------- */
+function aggiornaBarra(){ sb.classList.toggle("has", q.value.length > 0); }
+q.addEventListener("input", function(){
+  aggiornaBarra(); hint.classList.remove("on");
+  clearTimeout(timer);
+  timer = setTimeout(search, 280);                     // cerca mentre scrivi
+});
+$("f").addEventListener("submit", function(e){ e.preventDefault(); clearTimeout(timer); search(); });
+clr.addEventListener("click", function(){ q.value = ""; aggiornaBarra(); clearTimeout(timer); vaiHome(); q.focus(); });
+$("logo").addEventListener("click", function(e){ e.preventDefault(); q.value = ""; aggiornaBarra(); vaiHome(); q.focus(); });
+document.addEventListener("keydown", function(e){
+  if (lb.classList.contains("open")){
+    if (e.key === "Escape") chiudiLb();
+    else if (e.key === "ArrowLeft") vaiLb(-1);
+    else if (e.key === "ArrowRight") vaiLb(1);
+    return;
+  }
+  if (e.key === "Escape") apriCfg(false);
+  else if (e.key === "/" && document.activeElement !== q && !/input|textarea/i.test(document.activeElement.tagName)){ e.preventDefault(); q.focus(); q.select(); }
+});
+
+/* ---------- home: preferiti e recenti ---------- */
+$("safari").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  if (b.hasAttribute("data-i")){
+    var p = PREF[+b.getAttribute("data-i")];
+    repo = p[1]; pref = p[2]; modo = p[5]; typeF = "tutti"; fmt = "tutti";
+    aggiornaModo();
+    if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); q.focus(); }
+  } else if (b.hasAttribute("data-q")){
+    q.value = b.getAttribute("data-q"); aggiornaBarra(); search();
+  }
+});
+
+/* ---------- avvio ---------- */
+var P0 = new URLSearchParams(location.search);
+if (P0.get("tab") === "img") modo = "img";
+aggiornaModo(); applicaTema(); renderCfg(); renderHome();
+var q0 = (P0.get("q") || "").trim();
+if (q0.length > 1){ q.value = q0; aggiornaBarra(); search(); }
+})();
+</script>
+</body>
+</html>

@@ -63,6 +63,7 @@
             <div><label for="fImg">Immagine in testa (indirizzo web)</label><input id="fImg" placeholder="https://..."></div>
             <div><label for="fId">Identificativo URL (id)</label><input id="fId" placeholder="generato dal titolo se vuoto"></div>
           </div>
+          <label for="fCop">Immagine di copertina (indirizzo web): è quella mostrata nel pannello della ricerca</label><input id="fCop" placeholder="https://..." autocomplete="off">
           <label for="fTesto">Testo</label>
           <div class="chips" id="tools" style="padding-top:0">
             <button type="button" class="btn" data-w="## |Titolo sezione">H2</button><button type="button" class="btn" data-w="### |Sottotitolo">H3</button>
@@ -215,7 +216,7 @@
     $('eTitolo').textContent = p ? 'Modifica: ' + p.titolo : 'Nuova pagina';
     $('fTitolo').value = p ? p.titolo : (titoloNuovo || ''); $('fCat').value = p ? p.categoria : '';
     $('fTag').value = p ? (p.tag || []).join(', ') : ''; $('fSomm').value = p ? p.sommario : '';
-    $('fImg').value = p ? p.immagine : ''; $('fId').value = p ? p.id : ''; const ec = Wiki.catEstrai(p ? p.contenuto : ''); $('fTesto').value = ec.testo; $('fCats').value = ec.cats.join(', '); segnaSug();
+    $('fImg').value = p ? p.immagine : ''; $('fCop').value = (p && p.copertina) || ''; $('fId').value = p ? p.id : ''; const ec = Wiki.catEstrai(p ? p.contenuto : ''); $('fTesto').value = ec.testo; $('fCats').value = ec.cats.join(', '); segnaSug();
     $('elimina').hidden = !p; anteprima(); vista(true);
     (p ? $('fTesto') : $('fTitolo')).focus();
   }
@@ -752,7 +753,7 @@
     e.preventDefault();
     if (!$('fTitolo').value.trim()) { msg('Inserisci almeno il titolo.'); return; }
     const pagina = { titolo: $('fTitolo').value, categoria: $('fCat').value, tag: $('fTag').value.split(','), sommario: $('fSomm').value,
-      immagine: $('fImg').value, id: $('fId').value, contenuto: Wiki.catAccoda($('fTesto').value, listaCats()) };
+      immagine: $('fImg').value, copertina: $('fCop').value, id: $('fId').value, contenuto: Wiki.catAccoda($('fTesto').value, listaCats()) };
     const b = $('salva'); b.disabled = true; b.textContent = 'Salvataggio…'; msg('');
     try {
       const d = await Wiki.salvaPagina(pagina, idMod);

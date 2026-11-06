@@ -87,6 +87,7 @@ export default async function handler(req, res) {
                 tag: (Array.isArray(p.tag) ? p.tag : []).map(t => txt(t, 40)).filter(Boolean).slice(0, 20),
                 sommario: txt(p.sommario, 400),
                 immagine: /^https?:\/\//i.test(txt(p.immagine, 500)) ? txt(p.immagine, 500) : '',
+                copertina: /^https?:\/\//i.test(txt(p.copertina, 500)) ? txt(p.copertina, 500) : '',
                 contenuto: txt(p.contenuto, 100000),
                 autore: vecchia ? vecchia.autore : sessione.username,
                 creata: vecchia ? vecchia.creata : ora,

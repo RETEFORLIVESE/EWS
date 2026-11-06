@@ -143,20 +143,26 @@ body[data-modo=img] #main{max-width:1200px}
 #foot{padding:6px 16px 24px;text-align:center;font-size:12px;color:rgba(255,255,255,.8)}
 
 /* pannello wiki (come il riquadro di Google) */
-.pn{margin:6px 6px 12px;padding:16px 18px 16px;border-radius:20px;background:var(--rowh);box-shadow:inset 0 0 0 1px var(--pline),inset 4px 0 0 #1fa34a;overflow:hidden}
+.pn{position:relative;display:flow-root;margin:6px 6px 12px;padding:16px 18px 16px;border-radius:20px;background:var(--rowh);box-shadow:inset 0 0 0 1px var(--pline),inset 4px 0 0 #1fa34a}
 .pn .pk{display:flex;align-items:center;gap:9px;margin:0 0 8px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
 .pn .pk .fav{width:22px;height:22px;border-radius:7px;padding:3px;font-size:11px;line-height:16px}
+.pn .pm{position:relative;margin-left:auto}
+.pn .pmb{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);font:15px/30px var(--font);cursor:pointer}
+.pn .pmb:hover,.pn .pmb[aria-expanded=true]{background:var(--opth);color:var(--ptxt)}
+.pn .pml{position:absolute;right:0;top:34px;z-index:5;min-width:150px;padding:6px;border-radius:14px;background:var(--cfgbg);color:var(--cfgtxt);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 14px 36px -10px rgba(10,10,70,.5),0 0 0 1px var(--pline)}
+.pn .pml[hidden]{display:none}
+.pn .pml button{display:block;width:100%;padding:9px 12px;border:0;border-radius:9px;background:none;color:inherit;font:500 14px var(--font);text-align:left;cursor:pointer}
+.pn .pml button:hover{background:var(--opt)}
 .pn .pt{margin:0 0 3px;font-size:24px;font-weight:650;line-height:1.2;letter-spacing:-.02em;color:var(--ptxt);word-break:break-word}
 .pn .pt a{color:inherit;text-decoration:none}
 .pn .pt a:hover{text-decoration:underline;text-underline-offset:3px}
 .pn .pc{margin:0 0 10px;font-size:13px;color:var(--muted)}
 .pn .pi{float:right;width:132px;max-height:150px;margin:0 0 8px 16px;padding:5px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--thumbline);object-fit:contain;display:block}
 .pn .px{margin:0 0 12px;font-size:14.5px;line-height:1.55;color:var(--desc)}
-.pn dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 16px;margin:0 0 14px;font-size:13.5px;clear:both}
-.pn dt{color:var(--muted);font-weight:600}
-.pn dd{margin:0;color:var(--ptxt);overflow-wrap:break-word}
-.pn .pg{display:inline-block;padding:9px 20px;border-radius:999px;background:var(--grad);color:#fff;font-weight:600;font-size:14px;text-decoration:none;box-shadow:0 8px 20px -6px rgba(90,80,230,.7)}
-.pn .pg:hover{filter:brightness(1.1)}
+.pn .pg{display:inline-block;padding:8px 18px;border-radius:999px;background:transparent;color:var(--link);font-weight:600;font-size:14px;text-decoration:none;box-shadow:inset 0 0 0 1.5px var(--link);transition:background .15s}
+.pn .pg:hover{background:var(--pagerh)}
+.pn.rid .pi,.pn.rid .pc,.pn.rid .px,.pn.rid .pg{display:none}
+.pn.rid .pk{margin-bottom:4px}.pn.rid .pt{margin:0}
 @media (max-width:700px){.pn{margin:4px 2px 10px;padding:14px}.pn .pt{font-size:21px}.pn .pi{width:96px}}
 
 /* immagini */
@@ -507,25 +513,35 @@ function show(){
   if (modo === "img") showImg(); else showWeb();
 }
 
-/* pannello wiki: piccolo estratto + dati principali, con rimando alla pagina della wiki */
+/* pannello wiki: titolo, piccolo estratto e rimando alla pagina; il menu a tendina lo riduce o lo chiude (fino alla prossima ricerca) */
+var pnStato = "";                       // "" = aperto, "ridotto" = solo titolo, "chiuso" = nascosto
 function pannelloHtml(){
   var pn = panel;
-  if (!pn || !pn.url || !pn.titolo) return "";
+  if (!pn || !pn.url || !pn.titolo || pnStato === "chiuso") return "";
   var lett = esc(String(pn.titolo).charAt(0).toUpperCase());
   var ico = pn.icon ? '<img class="fav" src="' + esc(pn.icon) + '" alt="" data-l="' + lett + '">' : '<span class="fav">' + lett + "</span>";
   var meta = [pn.categoria].concat(pn.tag || []).filter(Boolean).map(esc).join(" · ");
-  var dl = (pn.campi && pn.campi.length)
-    ? "<dl>" + pn.campi.map(function(c){ return "<dt>" + esc(c[0]) + "</dt><dd>" + esc(c[1]) + "</dd>"; }).join("") + "</dl>" : "";
-  return '<aside class="pn" aria-label="Dalla wiki">' +
-    '<div class="pk">' + ico + "<span>Dalla Wiki</span></div>" +
+  var rid = pnStato === "ridotto";
+  return '<aside class="pn' + (rid ? " rid" : "") + '" aria-label="Dalla wiki">' +
+    '<div class="pk">' + ico + "<span>Dalla Wiki</span>" +
+      '<div class="pm"><button type="button" class="pmb" aria-haspopup="menu" aria-expanded="false" aria-label="Opzioni del pannello" title="Opzioni">&#9662;</button>' +
+      '<div class="pml" role="menu" hidden><button type="button" role="menuitem" data-pa="rid">' + (rid ? "Espandi" : "Riduci") + "</button>" +
+      '<button type="button" role="menuitem" data-pa="chiudi">Chiudi</button></div></div></div>' +
     (pn.immagine ? '<img class="pi" loading="lazy" src="' + esc(pn.immagine) + '" alt="">' : "") +
     '<h2 class="pt"><a href="' + esc(pn.url) + '" target="_blank" rel="noopener">' + esc(pn.titolo) + "</a></h2>" +
     (meta ? '<p class="pc">' + meta + "</p>" : "") +
     (pn.estratto ? '<p class="px">' + esc(pn.estratto) + "</p>" : "") +
-    dl +
     '<a class="pg" href="' + esc(pn.url) + '" target="_blank" rel="noopener">' + esc(pn.label || "Leggi sulla Wiki") + " &rarr;</a>" +
     "</aside>";
 }
+document.addEventListener("click", function(e){
+  var t = e.target, it = t.closest && t.closest(".pn [data-pa]"), b = t.closest && t.closest(".pn .pmb");
+  var menus = document.querySelectorAll(".pn .pml");
+  if (it){ pnStato = it.getAttribute("data-pa") === "chiudi" ? "chiuso" : (pnStato === "ridotto" ? "" : "ridotto"); show(); return; }
+  var m = b ? b.parentNode.querySelector(".pml") : null, apri = m ? m.hidden : false;
+  Array.prototype.forEach.call(menus, function(x){ x.hidden = true; var bb = x.parentNode.querySelector(".pmb"); if (bb) bb.setAttribute("aria-expanded", "false"); });
+  if (m && apri){ m.hidden = false; b.setAttribute("aria-expanded", "true"); }
+});
 
 /* sezione Tutti: elenco di testo, con il logo del sito accanto a ogni risultato */
 function showWeb(){
@@ -702,6 +718,7 @@ function applica(j, term){
   load.style.display = "none"; res.classList.remove("busy");
   if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
   panel = (modo === "web" && j.panel) ? j.panel : null;
+  pnStato = "";                                        // nuova ricerca: il pannello torna aperto
   data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
   data = data.filter(function(d){ return modo === "img" ? d.type === "img" : d.type !== "img"; });   // "Tutti" non mostra mai immagini
   var PRI = { pagina:0, wiki:1, progetto:2, elezione:2, documento:2, img:2, atto:3, sentenza:3, dossier:3 };   /* siti per primi, atti in fondo (ordine stabile: dentro il gruppo resta il punteggio) */
