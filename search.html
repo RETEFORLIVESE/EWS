@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EWS - Ricerca</title>
-<link rel="apple-touch-icon" href="EstjiSearch.png">
-<link rel="icon" type="image/png" href="EstjiSearch.png">
-<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <meta name="color-scheme" content="light dark">
 <script>try{var _t=localStorage.getItem("ews_tema");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
 <style>
@@ -70,14 +67,21 @@ button{font-family:inherit}
 /* ---------- barra superiore ---------- */
 #top{
   position:sticky;top:0;z-index:5;
-  display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"logo form gear";
-  align-items:center;gap:18px;padding:12px clamp(14px,3vw,28px);
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"logo form gear" ". tabs .";
+  align-items:center;gap:8px 18px;padding:12px clamp(14px,3vw,28px) 0;
   background:var(--topbg);
   -webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);
   border-bottom:1px solid rgba(255,255,255,.22);
 }
 #logo{grid-area:logo;color:#fff;text-decoration:none;font:700 26px/1 var(--font);letter-spacing:-.6px;text-shadow:0 1px 10px rgba(30,30,100,.3)}
 #f{grid-area:form;width:100%;max-width:640px;margin:0}
+
+/* schede: Tutti / Immagini */
+#tabs{grid-area:tabs;display:flex;gap:4px;margin-top:2px}
+#tabs button{border:0;background:none;color:rgba(255,255,255,.85);font:600 14px var(--font);padding:8px 14px 9px;cursor:pointer;
+  border-bottom:3px solid transparent;border-radius:8px 8px 0 0;transition:background .15s}
+#tabs button:hover{background:rgba(255,255,255,.14);color:#fff}
+#tabs button.on{color:#fff;border-bottom-color:#fff}
 
 /* barra di ricerca */
 .sb{position:relative}
@@ -125,6 +129,7 @@ button{font-family:inherit}
 
 /* ---------- risultati ---------- */
 #main{max-width:900px;margin:0 auto;padding:14px clamp(14px,3vw,28px) 30px}
+body[data-modo=img] #main{max-width:1200px}
 #bar{margin:2px 4px 12px;font-size:13px;color:#fff;text-shadow:0 1px 6px rgba(30,30,100,.35);min-height:18px}
 #bar b{font-weight:600}
 #load{display:none;margin:0 4px 12px;font-size:14px;color:#fff}
@@ -139,14 +144,19 @@ button{font-family:inherit}
 .r .t a{color:var(--link);text-decoration:none}
 .r .t a:hover{text-decoration:underline}
 .r .t a:visited{color:var(--visited)}
-.r .u{margin:2px 0;color:var(--url);font-size:13px;word-break:break-all}
-.r .u i{font-style:normal;color:var(--muted)}
+.r .src{display:flex;align-items:center;gap:10px;margin:0 0 5px;min-width:0}
+.r .fav{flex:none;width:28px;height:28px;border-radius:50%;background:#fff;border:1px solid var(--thumbline);padding:3px;object-fit:contain;display:block;
+  text-align:center;font:700 13px/20px var(--font);color:#555}
+.r .sn{min-width:0;line-height:1.3}
+.r .sn .h{display:block;font-size:14px;color:var(--ptxt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r .sn .h i{font-style:normal;color:var(--muted)}
+.r .sn .pth{display:block;font-size:12px;color:var(--url);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r .d{color:var(--desc);font-size:14px;max-width:640px}
 .r .d b{color:var(--strong)}
 .r .p{margin-top:2px;color:var(--muted);font-size:13px}
 .r .th{float:left;width:92px;height:68px;margin:3px 14px 0 0;border:1px solid var(--thumbline);border-radius:8px;background:var(--thumb);
   display:flex;align-items:center;justify-content:center;overflow:hidden}
-.r .th img{max-width:100%;max-height:100%;display:block}
+.r .th img{width:100%;height:100%;object-fit:contain;padding:4px;display:block}
 .empty{padding:16px 0 10px;font-size:15px;line-height:1.6;color:var(--ptxt)}
 .empty ul{margin:8px 0 0 20px;padding:0;font-size:14px;color:var(--ul)}
 .empty.err{color:var(--err)}
@@ -155,6 +165,46 @@ button{font-family:inherit}
 #pager a:hover{background:var(--pagerh)}
 #pager .cur{background:var(--blue);color:#fff;font-weight:600;cursor:default}
 #foot{padding:6px 16px 24px;text-align:center;font-size:12px;color:rgba(255,255,255,.85)}
+
+/* ---------- sezione Immagini ---------- */
+#res.imgmode{padding:14px 18px 16px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px 12px}
+.gi{display:block;width:100%;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gi.rotta{display:none}
+.gi .gf{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f3f3f6;border:1px solid var(--thumbline);
+  transition:transform .15s,box-shadow .15s}
+.gi:hover .gf{transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,20,80,.28)}
+.gi:focus-visible .gf{outline:3px solid var(--blue);outline-offset:2px}
+.gi .gf img{width:100%;height:100%;object-fit:contain;padding:8px;display:block}
+.gi .gc{display:block;margin-top:6px;font-size:13px;color:var(--ptxt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gi .gs{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.morew{text-align:center;padding:18px 0 4px}
+.morew button{font:600 14px var(--font);color:var(--blue);background:var(--opt);border:0;border-radius:999px;padding:10px 22px;cursor:pointer}
+.morew button:hover{background:var(--opth)}
+
+/* anteprima a schermo intero */
+#lb{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;color:#fff;
+  background:rgba(8,10,24,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#lb.open{display:flex}
+#lb .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:60px 76px 6px}
+#lbi{max-width:100%;max-height:100%;min-width:200px;min-height:200px;object-fit:contain;background:#f3f3f6;border-radius:12px;box-shadow:0 12px 44px rgba(0,0,0,.55)}
+#lb.broken #lbi{opacity:.15}
+#lbmsg{display:none;position:absolute;left:0;right:0;top:46%;text-align:center;font-size:14px;padding:0 20px}
+#lb.broken #lbmsg{display:block}
+#lb .cap{flex:none;padding:10px 20px calc(16px + env(safe-area-inset-bottom));text-align:center}
+#lbt{font:600 16px var(--font);word-break:break-word}
+#lbs{margin-top:2px;font-size:12px;opacity:.75;word-break:break-all}
+#lbc{margin-top:2px;font-size:12px;opacity:.6}
+#lba{display:inline-block;margin-top:10px;padding:10px 24px;border-radius:999px;background:var(--blue);color:#fff;font-weight:600;text-decoration:none}
+#lba:hover{filter:brightness(1.1)}
+#lb .nav{position:absolute;top:50%;margin-top:-22px;width:44px;height:44px;border:0;border-radius:50%;cursor:pointer;padding:0;
+  font:28px/42px var(--font);color:#fff;background:rgba(255,255,255,.2);box-shadow:var(--ring)}
+#lb .nav:hover:not(:disabled){background:rgba(255,255,255,.34)}
+#lb .nav:disabled{opacity:.25;cursor:default}
+#lbp{left:16px}#lbn{right:16px}
+#lbx{position:absolute;top:12px;right:14px;width:44px;height:44px;border:0;border-radius:50%;cursor:pointer;padding:0;
+  font:30px/42px var(--font);color:#fff;background:rgba(255,255,255,.2);box-shadow:var(--ring);z-index:2}
+#lbx:hover{background:rgba(255,255,255,.34)}
 
 /* ---------- pagina iniziale ---------- */
 #safari{display:none}
@@ -166,7 +216,7 @@ body.home #logo{display:none}
 body.home #f{max-width:560px;margin:0 auto}
 body.home #q{height:48px;font-size:17px;box-shadow:0 8px 30px rgba(20,20,80,.22),var(--ring)}
 body.home #hint{max-width:560px;margin:8px auto 0}
-body.home #main,body.home #foot{display:none}
+body.home #main,body.home #foot,body.home #tabs{display:none}
 body.home #safari{display:block;max-width:680px;margin:46px auto 0;padding:0 20px 90px}
 body.home #gear{position:fixed;right:18px;bottom:18px;width:42px;height:42px;z-index:6}
 body.home #cfg{top:auto;bottom:70px;right:18px}
@@ -188,11 +238,22 @@ body.home #cfg{top:auto;bottom:70px;right:18px}
 
 /* ---------- telefono: tutto in colonna ---------- */
 @media (max-width:700px){
-  #top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"logo gear" "form form";gap:10px 12px;padding:10px 14px 12px}
+  #top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"logo gear" "form form" "tabs tabs";gap:10px 12px;padding:10px 14px 0}
+  #tabs{margin:0 -6px}
+  #tabs button{padding:8px 16px 9px}
   #logo{font-size:23px}
   #f{max-width:none}
   #res{padding:6px 16px 10px;border-radius:16px}
-  .r .th{float:none;width:100%;height:150px;margin:0 0 8px}
+  .r .th{float:right;width:84px;height:84px;margin:2px 0 8px 12px}
+  .r .sn .h{white-space:normal;overflow-wrap:break-word}
+  .r .sn .pth{white-space:normal;word-break:break-all}
+  #res.imgmode{padding:12px 12px 14px}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:14px 8px}
+  .gi .gf{border-radius:10px}
+  .gi .gc{font-size:12px}
+  #lb .stage{padding:64px 10px 4px}
+  #lb .nav{display:none}
+  #lba{display:block;margin:12px auto 0;max-width:340px}
   #cfg{left:10px;right:10px;width:auto;max-width:none;top:56px}
   body.home #top{display:block;padding:max(10vh,40px) 16px 0}
   body.home #safari{margin-top:34px;padding:0 16px 90px}
@@ -219,13 +280,17 @@ body.home #cfg{top:auto;bottom:70px;right:18px}
   <button id="gear" type="button" aria-label="Impostazioni di ricerca" aria-expanded="false" aria-controls="cfg" title="Impostazioni di ricerca">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
   </button>
+  <nav id="tabs" role="tablist" aria-label="Sezioni di ricerca">
+    <button type="button" role="tab" data-modo="web" aria-selected="true">Tutti</button>
+    <button type="button" role="tab" data-modo="img" aria-selected="false">Immagini</button>
+  </nav>
 </header>
 
 <div id="cfg" role="dialog" aria-label="Impostazioni di ricerca">
   <h2>Impostazioni di ricerca</h2>
   <h3>Dove</h3>
   <div class="opts" id="rp"></div>
-  <h3>Tipo</h3>
+  <h3 id="rtt">Tipo</h3>
   <div class="opts" id="rt"></div>
   <h3>Aspetto</h3>
   <div class="opts" id="rm"></div>
@@ -247,21 +312,36 @@ body.home #cfg{top:auto;bottom:70px;right:18px}
 </main>
 <footer id="foot">&copy; 2026 EWS</footer>
 
+<div id="lb" role="dialog" aria-modal="true" aria-label="Anteprima immagine" aria-hidden="true">
+  <button type="button" id="lbx" aria-label="Chiudi">&times;</button>
+  <button type="button" class="nav" id="lbp" aria-label="Immagine precedente">&lsaquo;</button>
+  <button type="button" class="nav" id="lbn" aria-label="Immagine successiva">&rsaquo;</button>
+  <div class="stage"><img id="lbi" alt=""><div id="lbmsg">Impossibile caricare l'immagine. Prova con &ldquo;Apri immagine&rdquo;.</div></div>
+  <div class="cap">
+    <div id="lbt"></div><div id="lbs"></div><div id="lbc"></div>
+    <a id="lba" href="#" target="_blank" rel="noopener">Apri immagine</a>
+  </div>
+</div>
+
 <script>
 (function(){
 "use strict";
 
 var API = "/api/data?cerca=1";          // api/data.js
-var PER = 10;                           // risultati per pagina
+var PER = 10;                           // risultati per pagina (Tutti)
+var PER_IMG = 48;                       // immagini mostrate per volta (Immagini)
 var KEY = new URLSearchParams(location.search).get("k") || "";
 
 /* stato */
-var repo = "all", pref = "", data = [], typeF = "tutti", page = 1, ultima = "", timer = null, seq = 0;
+var modo = "web";                       // "web" = Tutti, "img" = Immagini
+var repo = "all", pref = "", data = [], typeF = "tutti", fmt = "tutti", page = 1, nImg = PER_IMG, imgList = [],
+    ultima = "", timer = null, seq = 0, lbI = -1, lbFocus = null;
 
 /* elementi */
 function $(id){ return document.getElementById(id); }
-var q = $("q"), sb = $("sb"), clr = $("clr"), hint = $("hint"), bar = $("bar"), load = $("load"),
-    out = $("out"), pager = $("pager"), cfg = $("cfg"), gear = $("gear"), rp = $("rp"), rt = $("rt"), rm = $("rm");
+var q = $("q"), sb = $("sb"), clr = $("clr"), hint = $("hint"), bar = $("bar"), load = $("load"), res = $("res"),
+    out = $("out"), pager = $("pager"), cfg = $("cfg"), gear = $("gear"), rp = $("rp"), rt = $("rt"), rtt = $("rtt"), rm = $("rm"),
+    tabs = $("tabs"), lb = $("lb"), lbi = $("lbi");
 
 /* ---------- aspetto: automatico / chiaro / scuro ---------- */
 var tema = "auto";
@@ -280,15 +360,15 @@ var ORDINE = ["pagina","wiki","atto","progetto","elezione","documento","img","da
 /* i file di codice e di stile non compaiono mai (doppia sicurezza: la regola vera e' in api/data.js) */
 var CODICE = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map)(\?.*)?(#.*)?$/i;
 
-/* preferiti della home: [etichetta, dove, tipo preferito, icona, sfondo] */
+/* preferiti della home: [etichetta, dove, tipo preferito, icona, sfondo, sezione] */
 var PREF = [
-  ["Tutto",    "all",  "",         "🔍",       "linear-gradient(160deg,#9aa7ff,#5a64e0)"],
-  ["Pagine",   "EWS",  "",         "🌐",       "linear-gradient(160deg,#5ac8fa,#007aff)"],
-  ["Immagini", "IMG",  "",         "🖼️", "linear-gradient(160deg,#ffb36b,#ff5e7a)"],
-  ["Atti",     "DATA", "atto",     "⚖️",       "linear-gradient(160deg,#8e8cff,#5856d6)"],
-  ["Progetti", "DATA", "progetto", "📌",       "linear-gradient(160deg,#ffd75e,#ff9f0a)"],
-  ["Wiki",     "DATA", "wiki",     "📚",       "linear-gradient(160deg,#6be58a,#2fb457)"],
-  ["Elezioni", "DATA", "elezione", "🗳️", "linear-gradient(160deg,#ff8a80,#ff3b30)"]
+  ["Tutto",    "all",  "",         "🔍",       "linear-gradient(160deg,#9aa7ff,#5a64e0)", "web"],
+  ["Pagine",   "EWS",  "",         "🌐",       "linear-gradient(160deg,#5ac8fa,#007aff)", "web"],
+  ["Immagini", "all",  "",         "🖼️", "linear-gradient(160deg,#ffb36b,#ff5e7a)", "img"],
+  ["Atti",     "DATA", "atto",     "⚖️",       "linear-gradient(160deg,#8e8cff,#5856d6)", "web"],
+  ["Progetti", "DATA", "progetto", "📌",       "linear-gradient(160deg,#ffd75e,#ff9f0a)", "web"],
+  ["Wiki",     "DATA", "wiki",     "📚",       "linear-gradient(160deg,#6be58a,#2fb457)", "web"],
+  ["Elezioni", "DATA", "elezione", "🗳️", "linear-gradient(160deg,#ff8a80,#ff3b30)", "web"]
 ];
 
 /* ---------- utilita' ---------- */
@@ -296,6 +376,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&
 function rx(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 function nomeTipo(t){ return TIPI[t] || t; }
 function paroleCercate(s){ return String(s).toLowerCase().split(/\s+/).filter(function(t){ return t.length > 1; }); }
+function dec(s){ try { return decodeURIComponent(s); } catch(e){ return s; } }
 
 /* grassetto sulle parole cercate */
 function hl(text, parole){
@@ -304,12 +385,23 @@ function hl(text, parole){
   var re = new RegExp("(" + parole.map(rx).join("|") + ")", "gi");
   return text.split(re).map(function(p, i){ return i % 2 ? "<b>" + esc(p) + "</b>" : esc(p); }).join("");
 }
-/* indirizzo da mostrare: senza https:// e decodificato */
-function vediUrl(u){
-  var s = String(u).replace(/^https?:\/\//, "");
-  try { s = decodeURIComponent(s); } catch(e){}
-  return s;
+/* da un indirizzo: sito, percorso a briciole di pane e radice (per il logo di riserva) */
+function sorgente(u){
+  try {
+    var x = new URL(u);
+    var segs = x.pathname.split("/").filter(Boolean).map(dec);
+    return { host: x.hostname, path: segs.length ? "› " + segs.join(" › ") : "", origin: x.origin };
+  } catch(e){
+    return { host: String(u).replace(/^https?:\/\//, ""), path: "", origin: "" };
+  }
 }
+function estensione(d){
+  var m = /\.([a-z0-9]+)$/i.exec(d.path || d.name || "");
+  var e = m ? m[1].toLowerCase() : "altro";
+  return (e === "jpeg" || e === "jfif") ? "jpg" : e;
+}
+function senzaEstensione(n){ return String(n).replace(/\.[a-z0-9]+$/i, ""); }
+function nomeRepo(r){ return r === "IMG" ? "Archivio IMG" : "Sito EWS"; }
 
 /* ---------- ricerche recenti (salvate nel browser) ---------- */
 function leggiRecenti(){ try { return JSON.parse(localStorage.getItem("ews_recenti") || "[]"); } catch(e){ return []; } }
@@ -321,10 +413,30 @@ function salvaRecente(t){
   } catch(e){}
 }
 
+/* ---------- sezioni: Tutti / Immagini ---------- */
+function aggiornaModo(){
+  document.body.setAttribute("data-modo", modo);
+  q.placeholder = modo === "img" ? "Cerca immagini in EWS" : "Cerca in EWS";
+  var bs = tabs.querySelectorAll("button");
+  for (var i = 0; i < bs.length; i++){
+    var on = bs[i].getAttribute("data-modo") === modo;
+    bs[i].classList.toggle("on", on);
+    bs[i].setAttribute("aria-selected", on ? "true" : "false");
+  }
+}
+tabs.addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  var m = b.getAttribute("data-modo"); if (!m || m === modo) return;
+  modo = m; pref = ""; typeF = "tutti"; fmt = "tutti";
+  if (modo === "img" && repo === "DATA") repo = "all";   // DATA non ha immagini da mostrare
+  aggiornaModo();
+  if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); }
+});
+
 /* ---------- home ---------- */
 function renderHome(){
   $("fav").innerHTML = PREF.map(function(p, i){
-    var on = p[1] === repo && p[2] === pref;
+    var on = p[1] === repo && p[2] === pref && p[5] === modo;
     return '<button type="button" class="tile' + (on ? " on" : "") + '" data-i="' + i + '">' +
            '<span class="ic" style="background:' + p[4] + '">' + p[3] + '</span><span class="lb">' + esc(p[0]) + '</span></button>';
   }).join("");
@@ -333,11 +445,11 @@ function renderHome(){
   $("rec").innerHTML = rec.map(function(t){ return '<button type="button" data-q="' + esc(t) + '">' + esc(t) + "</button>"; }).join("");
 }
 function vaiHome(){
-  seq++; data = []; ultima = ""; clearTimeout(timer);
+  seq++; data = []; ultima = ""; clearTimeout(timer); chiudiLb();
   document.body.className = "home";
   load.style.display = "none"; bar.textContent = ""; out.innerHTML = ""; pager.style.display = "none";
   aggiornaUrl("");
-  renderCfg(); renderHome();
+  aggiornaModo(); renderCfg(); renderHome();
 }
 
 /* ---------- impostazioni (ingranaggio) ---------- */
@@ -347,17 +459,32 @@ function opts(list, cur, attr){
   }).join("");
 }
 function renderCfg(){
-  rp.innerHTML = opts([["all","Tutto"],["EWS","Pagine del sito"],["IMG","Immagini"],["DATA","Atti e dati"]], repo, "r");
-  if (data.length){
-    var cont = {};
-    data.forEach(function(d){ cont[d.type] = (cont[d.type] || 0) + 1; });
-    var tipi = ORDINE.filter(function(t){ return cont[t]; })
-               .concat(Object.keys(cont).filter(function(t){ return ORDINE.indexOf(t) < 0; }));
-    var lista = [["tutti", "Tutti <small>(" + data.length + ")</small>"]]
-      .concat(tipi.map(function(t){ return [t, esc(nomeTipo(t)) + " <small>(" + cont[t] + ")</small>"]; }));
-    rt.innerHTML = opts(lista, typeF, "t");
+  var dove = modo === "img"
+    ? [["all","Tutto"],["EWS","Dal sito (EWS)"],["IMG","Archivio immagini"]]
+    : [["all","Tutto"],["EWS","Pagine del sito"],["IMG","Archivio immagini"],["DATA","Atti e dati"]];
+  rp.innerHTML = opts(dove, repo, "r");
+
+  if (modo === "img"){
+    rtt.textContent = "Formato";
+    if (data.length){
+      var ce = {};
+      data.forEach(function(d){ var e = estensione(d); ce[e] = (ce[e] || 0) + 1; });
+      var lf = [["tutti", "Tutti <small>(" + data.length + ")</small>"]]
+        .concat(Object.keys(ce).sort(function(a, b){ return ce[b] - ce[a]; })
+        .map(function(e){ return [e, esc(e.toUpperCase()) + " <small>(" + ce[e] + ")</small>"]; }));
+      rt.innerHTML = opts(lf, fmt, "f");
+    } else rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per formato.</p>';
   } else {
-    rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per tipo di risultato.</p>';
+    rtt.textContent = "Tipo";
+    if (data.length){
+      var cont = {};
+      data.forEach(function(d){ cont[d.type] = (cont[d.type] || 0) + 1; });
+      var tipi = ORDINE.filter(function(t){ return cont[t]; })
+                 .concat(Object.keys(cont).filter(function(t){ return ORDINE.indexOf(t) < 0; }));
+      var lista = [["tutti", "Tutti <small>(" + data.length + ")</small>"]]
+        .concat(tipi.map(function(t){ return [t, esc(nomeTipo(t)) + " <small>(" + cont[t] + ")</small>"]; }));
+      rt.innerHTML = opts(lista, typeF, "t");
+    } else rt.innerHTML = '<p class="hint">Fai una ricerca per filtrare per tipo di risultato.</p>';
   }
   rm.innerHTML = opts([["auto","Automatico"],["light","Chiaro"],["dark","Scuro"]], tema, "m");
 }
@@ -369,8 +496,9 @@ gear.addEventListener("click", function(e){ e.stopPropagation(); apriCfg(!cfg.cl
 cfg.addEventListener("click", function(e){
   e.stopPropagation();
   var b = e.target.closest("button"); if (!b) return;
-  var r = b.getAttribute("data-r"), t = b.getAttribute("data-t"), m = b.getAttribute("data-m");
+  var r = b.getAttribute("data-r"), t = b.getAttribute("data-t"), m = b.getAttribute("data-m"), f = b.getAttribute("data-f");
   if (m !== null){ tema = m; applicaTema(); renderCfg(); return; }
+  if (f !== null){ fmt = f; nImg = PER_IMG; show(); renderCfg(); return; }
   if (r !== null){
     repo = r; pref = "";
     if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); }
@@ -384,6 +512,12 @@ document.addEventListener("click", function(){ apriCfg(false); });
 
 /* ---------- risultati ---------- */
 function show(){
+  res.classList.toggle("imgmode", modo === "img");
+  if (modo === "img") showImg(); else showWeb();
+}
+
+/* sezione Tutti: elenco di testo, con il logo del sito accanto a ogni risultato */
+function showWeb(){
   var list = data.filter(function(d){ return typeF === "tutti" || d.type === typeF; });
   var parole = paroleCercate(ultima);
   var filtro = [];
@@ -406,12 +540,21 @@ function show(){
   var pagine = Math.ceil(list.length / PER);
   if (page > pagine) page = pagine;
   out.innerHTML = list.slice((page - 1) * PER, page * PER).map(function(d){
-    var th = (d.type === "img" && d.raw)
+    var sg = sorgente(d.url);
+    var fbk = sg.origin ? sg.origin + "/favicon.ico" : "";
+    var ico = d.icon || fbk;
+    var lett = esc((sg.host || "?").charAt(0).toUpperCase());
+    var fav = ico
+      ? '<img class="fav" loading="lazy" src="' + esc(ico) + '" alt="" data-l="' + lett + '"' + (fbk && fbk !== ico ? ' data-fb="' + esc(fbk) + '"' : "") + ">"
+      : '<span class="fav">' + lett + "</span>";
+    var src = d.raw || d.alt || "";
+    var th = (d.type === "img" && src)
       ? '<a class="th" href="' + esc(d.url) + '" target="_blank" rel="noopener" tabindex="-1">' +
-        '<img loading="lazy" src="' + esc(d.raw) + '" alt="" onerror="this.parentNode.style.display=\'none\'"></a>' : "";
+        '<img loading="lazy" src="' + esc(src) + '" alt=""' + (d.alt && d.alt !== src ? ' data-fb="' + esc(d.alt) + '"' : "") + "></a>" : "";
     return '<div class="r">' + th +
+      '<div class="src">' + fav + '<span class="sn"><span class="h">' + esc(sg.host) + " <i>· " + esc(nomeTipo(d.type)) + "</i></span>" +
+        (sg.path ? '<span class="pth">' + esc(sg.path) + "</span>" : "") + "</span></div>" +
       '<h3 class="t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + hl(d.name, parole) + "</a></h3>" +
-      '<div class="u">' + esc(vediUrl(d.url)) + " <i>· " + esc(nomeTipo(d.type)) + "</i></div>" +
       (d.snippet ? '<div class="d">' + hl(String(d.snippet).slice(0, 220), parole) + "</div>" : "") +
       (d.path ? '<div class="p">' + hl(d.path, parole) + "</div>" : "") +
       "</div>";
@@ -430,11 +573,110 @@ pager.addEventListener("click", function(e){
   page = +p; show(); window.scrollTo(0, 0);
 });
 
-/* ---------- indirizzo della pagina: ?q=... si puo' condividere e ricaricare ---------- */
+/* sezione Immagini: griglia di miniature, un tocco apre l'anteprima */
+function showImg(){
+  var list = data.filter(function(d){ return fmt === "tutti" || estensione(d) === fmt; });
+  imgList = list;
+  var parole = paroleCercate(ultima);
+  var filtro = [];
+  if (repo !== "all") filtro.push(repo === "IMG" ? "Archivio immagini" : "Sito EWS");
+  if (fmt !== "tutti") filtro.push(fmt.toUpperCase());
+  pager.style.display = "none";
+
+  if (!list.length){
+    bar.textContent = "";
+    out.innerHTML = '<div class="empty"><b>Nessuna immagine per “' + esc(ultima) + '”.</b>' +
+      "<ul><li>Le immagini si cercano per nome del file e delle cartelle.</li>" +
+      "<li>Prova con parole diverse o più generiche.</li>" +
+      "<li>Controlla le impostazioni (ingranaggio): potresti aver filtrato troppo.</li></ul></div>";
+    return;
+  }
+  bar.innerHTML = "<b>Circa " + list.length + (list.length === 1 ? " immagine" : " immagini") + "</b>" +
+                  (filtro.length ? " · filtro: " + esc(filtro.join(", ")) : "");
+
+  var html = '<div id="grid">' + list.slice(0, nImg).map(function(d, i){
+    var src = d.raw || d.alt || "";
+    return '<button type="button" class="gi" data-k="' + i + '" title="' + esc(d.path) + '">' +
+      '<span class="gf"><img loading="lazy" decoding="async" src="' + esc(src) + '" alt="' + esc(d.name) + '"' +
+        (d.alt && d.alt !== src ? ' data-fb="' + esc(d.alt) + '"' : "") + "></span>" +
+      '<span class="gc">' + hl(senzaEstensione(d.name), parole) + "</span>" +
+      '<span class="gs">' + esc(nomeRepo(d.repo)) + "</span></button>";
+  }).join("") + "</div>";
+  if (nImg < list.length){
+    html += '<div class="morew"><button type="button" id="more">Mostra altre immagini (' + (list.length - nImg) + ")</button></div>";
+  }
+  out.innerHTML = html;
+}
+out.addEventListener("click", function(e){
+  var g = e.target.closest(".gi");
+  if (g){ apriLb(+g.getAttribute("data-k")); return; }
+  if (e.target.closest("#more")){
+    var y = window.pageYOffset; nImg += PER_IMG; showImg(); window.scrollTo(0, y);
+  }
+});
+
+/* ---------- anteprima a schermo intero ---------- */
+function apriLb(i){
+  if (i < 0 || i >= imgList.length) return;
+  var d = imgList[i];
+  if (!lb.classList.contains("open")) lbFocus = document.activeElement;
+  lbI = i;
+  lb.classList.remove("broken");
+  lbi.removeAttribute("data-fb");
+  if (d.alt && d.alt !== d.raw) lbi.setAttribute("data-fb", d.alt);
+  lbi.alt = d.name;
+  lbi.src = d.raw || d.alt || d.url;
+  $("lbt").textContent = d.name;
+  $("lbs").textContent = nomeRepo(d.repo) + " · " + d.path;
+  $("lbc").textContent = (i + 1) + " / " + imgList.length;
+  $("lba").href = d.url;
+  $("lbp").disabled = i === 0;
+  $("lbn").disabled = i === imgList.length - 1;
+  lb.classList.add("open"); lb.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  $("lbx").focus();
+}
+function chiudiLb(){
+  if (!lb.classList.contains("open")) return;
+  lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true");
+  lbi.removeAttribute("src");
+  document.body.style.overflow = "";
+  lbI = -1;
+  if (lbFocus && lbFocus.focus) { try { lbFocus.focus(); } catch(e){} }
+}
+function vaiLb(n){ var i = lbI + n; if (i >= 0 && i < imgList.length) apriLb(i); }
+$("lbx").addEventListener("click", chiudiLb);
+$("lbp").addEventListener("click", function(){ vaiLb(-1); });
+$("lbn").addEventListener("click", function(){ vaiLb(1); });
+lb.addEventListener("click", function(e){ if (e.target === lb || e.target.classList.contains("stage")) chiudiLb(); });
+var tx = 0, ty = 0;                                                 // scorrimento col dito: avanti / indietro
+lb.addEventListener("touchstart", function(e){ var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+lb.addEventListener("touchend", function(e){
+  var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) vaiLb(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+/* ---------- immagini che non si caricano: prima la riserva, poi un segnaposto ---------- */
+document.addEventListener("error", function(e){
+  var t = e.target;
+  if (!t || t.tagName !== "IMG") return;
+  var fb = t.getAttribute("data-fb");
+  if (fb){ t.removeAttribute("data-fb"); t.src = fb; return; }
+  if (t.classList.contains("fav")){
+    var s = document.createElement("span");
+    s.className = "fav"; s.textContent = t.getAttribute("data-l") || "•";
+    t.parentNode.replaceChild(s, t);
+  } else if (t.id === "lbi"){ lb.classList.add("broken"); }
+  else if (t.closest(".gi")){ t.closest(".gi").classList.add("rotta"); }
+  else if (t.closest(".th")){ t.closest(".th").style.display = "none"; }
+}, true);
+
+/* ---------- indirizzo della pagina: ?q=...&tab=img si puo' condividere e ricaricare ---------- */
 function aggiornaUrl(term){
   try {
     var u = new URL(location.href);
     if (term) u.searchParams.set("q", term); else u.searchParams.delete("q");
+    if (term && modo === "img") u.searchParams.set("tab", "img"); else u.searchParams.delete("tab");
     history.replaceState(null, "", u);
   } catch(e){}
 }
@@ -448,11 +690,14 @@ function search(){
 
   ultima = term;
   var mio = ++seq;
+  chiudiLb();
   document.body.className = "";
+  aggiornaModo();
   aggiornaUrl(term);
   load.style.display = "block"; bar.textContent = ""; out.innerHTML = ""; pager.style.display = "none";
 
-  fetch(API + "&q=" + encodeURIComponent(term) + "&repo=" + encodeURIComponent(repo) + "&k=" + encodeURIComponent(KEY))
+  fetch(API + "&q=" + encodeURIComponent(term) + "&repo=" + encodeURIComponent(repo) +
+        (modo === "img" ? "&tipo=img" : "") + "&k=" + encodeURIComponent(KEY))
     .then(function(r){
       return r.json().catch(function(){ throw new Error("Risposta non valida dal server (" + r.status + ")"); });
     })
@@ -461,8 +706,9 @@ function search(){
       load.style.display = "none";
       if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
       data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
-      page = 1;
-      typeF = (pref && data.some(function(d){ return d.type === pref; })) ? pref : "tutti";
+      if (modo === "img") data = data.filter(function(d){ return d.type === "img"; });
+      page = 1; nImg = PER_IMG; fmt = "tutti";
+      typeF = (modo === "web" && pref && data.some(function(d){ return d.type === pref; })) ? pref : "tutti";
       if (data.length) salvaRecente(term);
       renderCfg(); show();
       if (j.errors && j.errors.length) bar.innerHTML += " · alcune fonti non hanno risposto";
@@ -485,6 +731,12 @@ $("f").addEventListener("submit", function(e){ e.preventDefault(); clearTimeout(
 clr.addEventListener("click", function(){ q.value = ""; aggiornaBarra(); clearTimeout(timer); vaiHome(); q.focus(); });
 $("logo").addEventListener("click", function(e){ e.preventDefault(); q.value = ""; aggiornaBarra(); vaiHome(); q.focus(); });
 document.addEventListener("keydown", function(e){
+  if (lb.classList.contains("open")){
+    if (e.key === "Escape") chiudiLb();
+    else if (e.key === "ArrowLeft") vaiLb(-1);
+    else if (e.key === "ArrowRight") vaiLb(1);
+    return;
+  }
   if (e.key === "Escape") apriCfg(false);
   else if (e.key === "/" && document.activeElement !== q && !/input|textarea/i.test(document.activeElement.tagName)){ e.preventDefault(); q.focus(); q.select(); }
 });
@@ -494,7 +746,8 @@ $("safari").addEventListener("click", function(e){
   var b = e.target.closest("button"); if (!b) return;
   if (b.hasAttribute("data-i")){
     var p = PREF[+b.getAttribute("data-i")];
-    repo = p[1]; pref = p[2];
+    repo = p[1]; pref = p[2]; modo = p[5]; typeF = "tutti"; fmt = "tutti";
+    aggiornaModo();
     if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); q.focus(); }
   } else if (b.hasAttribute("data-q")){
     q.value = b.getAttribute("data-q"); aggiornaBarra(); search();
@@ -502,8 +755,10 @@ $("safari").addEventListener("click", function(e){
 });
 
 /* ---------- avvio ---------- */
-applicaTema(); renderCfg(); renderHome();
-var q0 = (new URLSearchParams(location.search).get("q") || "").trim();
+var P0 = new URLSearchParams(location.search);
+if (P0.get("tab") === "img") modo = "img";
+aggiornaModo(); applicaTema(); renderCfg(); renderHome();
+var q0 = (P0.get("q") || "").trim();
 if (q0.length > 1){ q.value = q0; aggiornaBarra(); search(); }
 })();
 </script>
