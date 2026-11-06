@@ -17,13 +17,14 @@ const ICONA = process.env.SITO_LOGO || '';                   // ultima riserva p
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
+const JSONF = /\.(json|jsonl|geojson)$/i;                    // file JSON: mai nei risultati (i dati di DATA si cercano come schede)
 const SCRIPT = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map)$/i;   // codice e stili (.js, .css...): mai cercati, mai letti, mai nei risultati
 // Dati di DATA che si cercano come "schede": ognuna descrive dove sta la lista nel JSON,
 // come si presenta il risultato e a quale pagina del SITO rimanda.
 const via = (...v) => v.filter(Boolean).join(' · ');
 const DATASET = {
   'atti.json': {
-    chiave: 'atti', tipo: 'atto', label: 'Apri su NormAktiv', pagina: '/lex/atto.html',
+    chiave: 'atti', tipo: 'atto', allegati: true, label: 'Apri su NormAktiv', pagina: '/lex/atto.html',
     scheda: (it) => ({
       name: it.titolo || it.nome || it.id,
       path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
@@ -81,11 +82,73 @@ function estratto(plain, termini) {
   const da = Math.max(0, i - 60);
   return (da > 0 ? '… ' : '') + plain.slice(da, da + 180) + (da + 180 < plain.length ? ' …' : '');
 }
+
+// ---- sentenze della Corte Costituzionale e dossier, scritti dentro atti.json ----
+// Si riconoscono in 3 modi: (a) liste dentro ogni atto con una chiave tipo "sentenze", "dossier", "corte_costituzionale";
+// (b) liste a livello alto del file (accanto a "atti"); (c) atti la cui categoria/tipo dice "sentenza" o "dossier".
+const RX_ALLEGATI = /sentenz|dossier|cortecost|corte_cost|corte-cost|consulta/i;
+const NON_TESTO = (k, v) => (k === 'logo' || k === 'colore' || k === 'immagine' || k === 'contenuto' ? undefined : v);
+const primo = (...v) => v.find((x) => typeof x === 'string' && x.trim()) || '';
+const soloHttp = (s) => (/^https?:\/\//i.test(String(s || '').trim()) ? String(s).trim() : '');
+const testoDi = (o, escludi) => JSON.stringify(o, (k, v) => (escludi && escludi(k) ? undefined : NON_TESTO(k, v)), ' ').replace(/[{}\[\]":,]/g, ' ').replace(/\s+/g, ' ');
+
+function classifica(it) {                                   // un atto che e' in realta' una sentenza o un dossier
+  const c = [it.categoria, it.tipo, it.tipologia, it.fonte, it.organo].filter((x) => typeof x === 'string').join(' ');
+  if (/dossier/i.test(c)) return 'dossier';
+  if (/sentenz|corte\s*costituzionale/i.test(c)) return 'sentenza';
+  return null;
+}
+const ETICHETTA = { sentenza: 'Sentenza', dossier: 'Dossier' };
+
+function schedaAllegato(e, tipo, genitore, urlGenitore, cfg) {
+  if (typeof e === 'string') e = soloHttp(e) ? { url: e } : { titolo: e };
+  const nGen = genitore && (genitore.titolo || genitore.nome || genitore.id) ? String(genitore.titolo || genitore.nome || genitore.id) : '';
+  const num = e.numero && e.anno ? 'n. ' + e.numero + '/' + e.anno : e.numero ? 'n. ' + e.numero : '';
+  const name = primo(e.titolo, e.nome, e.oggetto, e.denominazione) ||
+    via(ETICHETTA[tipo], num, !num && nGen ? nGen : '');
+  const proprio = soloHttp(e.url || e.link || e.pdf || e.href);
+  const plain = testoPulito(primo(e.testo, e.contenuto));
+  const s = {
+    name,
+    path: via(tipo === 'sentenza' ? 'Corte Costituzionale' : 'Dossier', num, e.data || '', nGen ? 'in: ' + nGen : ''),
+    snippet: primo(e.massima, e.sommario, e.sintesi, e.descrizione, e.dispositivo) || '',
+    url: proprio || urlGenitore,
+  };
+  return { tipo, label: proprio ? 'Apri il documento' : cfg.label, s, plain, dati: testoDi(e), proprio: !!proprio };
+}
+
+function allegatiDi(json, lista, cfg) {
+  const out = [];
+  const urlPagina = SITO + cfg.pagina;
+  // (a) dentro ogni atto
+  for (const it of lista) {
+    for (const [k, v] of Object.entries(it)) {
+      if (!RX_ALLEGATI.test(k) || v == null || v === '') continue;
+      const els = Array.isArray(v) ? v : [v];
+      const tipo = /dossier/i.test(k) ? 'dossier' : 'sentenza';
+      for (const e of els) if (e && (typeof e === 'object' || typeof e === 'string')) out.push(schedaAllegato(e, tipo, it, cfg.scheda(it).url, cfg));
+    }
+  }
+  // (b) liste a livello alto del file
+  if (json && !Array.isArray(json)) {
+    for (const [k, v] of Object.entries(json)) {
+      if (k === cfg.chiave || !Array.isArray(v) || !RX_ALLEGATI.test(k)) continue;
+      const tipo = /dossier/i.test(k) ? 'dossier' : 'sentenza';
+      for (const e of v) {
+        const idg = e && typeof e === 'object' ? e.id_atto || e.atto_id || e.atto : '';
+        const gen = idg ? lista.find((a) => a.id === idg) : null;
+        out.push(schedaAllegato(e, tipo, gen, gen ? cfg.scheda(gen).url : urlPagina, cfg));
+      }
+    }
+  }
+  return out;
+}
+
 const memoria = {};
 
 const nomeFile = (p) => p.split('/').pop().toLowerCase();
 const datasetDi = (p) => DATASET[nomeFile(p)];
-const escluso = (p) => ESCLUSI.includes(nomeFile(p)) || SCRIPT.test(p) || IGNORATI.test(p);
+const escluso = (p) => ESCLUSI.includes(nomeFile(p)) || SCRIPT.test(p) || JSONF.test(p) || IGNORATI.test(p);
 
 // indirizzo pubblico sul SITO (non sulla repo): lex/atto.html -> https://sito/lex/atto.html
 // (index.html diventa la cartella: lex/index.html -> https://sito/lex/)
@@ -146,34 +209,45 @@ async function cercaNeiDataset(repo, termini) {
       if (!r.ok) throw new Error(percorso + ': GitHub ' + r.status);
       const json = await r.json();
       const lista = Array.isArray(json) ? json : json[cfg.chiave] || [];
-      return lista.map((it) => {
+      const nested = (k) => cfg.allegati && RX_ALLEGATI.test(k);      // le liste di sentenze/dossier sono risultati a parte
+      const voci = lista.map((it) => {
         const s = cfg.scheda(it);
-        // si cerca nel contenuto leggibile, non negli indirizzi delle immagini o nei colori
         const plain = testoPulito(it.contenuto);
-        const dati = JSON.stringify(it, (k, v) => (k === 'logo' || k === 'colore' || k === 'immagine' || k === 'contenuto' ? undefined : v), ' ')
-          .replace(/[{}\[\]":,]/g, ' ').replace(/\s+/g, ' ');
+        const dati = testoDi(it, nested);
         return {
+          tipo: (cfg.allegati && classifica(it)) || cfg.tipo, label: cfg.label, proprio: false,
           s, plain,
           titolo: String(s.name || '').toLowerCase(),
           sommario: String(s.snippet || '').toLowerCase(),
           testo: (s.name + ' ' + s.path + ' ' + dati + ' ' + plain + ' ' + (it.numero || '') + '/' + (it.anno || '')).toLowerCase(),
         };
       });
+      if (cfg.allegati) {
+        for (const a of allegatiDi(json, lista, cfg)) {
+          voci.push({
+            tipo: a.tipo, label: a.label, proprio: a.proprio, s: a.s, plain: a.plain,
+            titolo: String(a.s.name || '').toLowerCase(),
+            sommario: String(a.s.snippet || '').toLowerCase(),
+            testo: (a.s.name + ' ' + a.s.path + ' ' + a.dati + ' ' + a.plain).toLowerCase(),
+          });
+        }
+      }
+      return voci;
     });
-    for (const { s, plain, titolo, sommario, testo } of schede) {
+    for (const { tipo, label, proprio, s, plain, titolo, sommario, testo } of schede) {
       if (!termini.every((t) => testo.includes(t))) continue;
       let score = 20;
       for (const t of termini) score += titolo.includes(t) ? 20 : sommario.includes(t) ? 8 : 0;
       risultati.push({
         repo: 'DATA',
-        type: cfg.tipo,
+        type: tipo,
         name: s.name,
         path: s.path,
         snippet: s.snippet || estratto(plain, termini),
         url: s.url,
-        label: cfg.label,
+        label,
         icon: '',
-        _url: SITO + cfg.pagina, _rp: cfg.pagina.slice(1),   // pagina da cui leggere il logo
+        _url: s.url.startsWith(SITO) ? SITO + cfg.pagina : '', _rp: cfg.pagina.slice(1),   // pagina da cui leggere il logo
         score,
       });
     }
@@ -183,13 +257,22 @@ async function cercaNeiDataset(repo, termini) {
 
 async function cercaNellaRepo(nome, repo, termini, q, soloImg) {
   const trovati = new Map();
-  for (const p of await elencoFile(repo)) {
-    if (datasetDi(p) || escluso(p)) continue;                // atti/progetti = schede; bozze, script e cartelle tecniche = mai
-    if (soloImg && tipoFile(p) !== 'img') continue;          // sezione Immagini: solo immagini
+  const file = (await elencoFile(repo)).filter((p) => !datasetDi(p) && !escluso(p) && !(soloImg && tipoFile(p) !== 'img'));   // atti/progetti = schede; bozze, script, JSON e cartelle tecniche = mai
+  // variabili delle pagine del sito EWS (nome, descrizione, tag): lette dal loro <head>
+  const infos = new Map();
+  if (nome === 'EWS' && !soloImg) {
+    const pagine = file.filter((p) => tipoFile(p) === 'pagina').slice(0, 300);
+    await inParallelo(pagine, 8, async (p) => { const i = await infoPagina(urlSito(SITO, p), p); if (i) infos.set(p, i); });
+  }
+  for (const p of file) {
     const basso = p.toLowerCase();
-    if (termini.every((t) => basso.includes(t))) {
+    const i = infos.get(p);
+    const extra = i ? (i.nome + ' ' + i.descrizione + ' ' + i.tag.join(' ')).toLowerCase() : '';
+    if (termini.every((t) => basso.includes(t) || extra.includes(t))) {
       const f = nomeFile(p);
-      trovati.set(p, { path: p, score: 10 + termini.filter((t) => f.includes(t)).length * 5 });
+      const sc = 10 + termini.filter((t) => f.includes(t)).length * 5
+        + (i ? termini.filter((t) => i.nome.toLowerCase().includes(t)).length * 8 + termini.filter((t) => i.tag.some((g) => g.toLowerCase().includes(t))).length * 6 : 0);
+      trovati.set(p, { path: p, score: sc });
     }
   }
   if (nome !== 'IMG' && !soloImg) {                          // ricerca nel contenuto: non serve per le immagini
@@ -206,13 +289,16 @@ async function cercaNellaRepo(nome, repo, termini, q, soloImg) {
   }
   return [...trovati.values()].map((o) => {
     const tipo = tipoFile(o.path);
+    const info = infos.get(o.path);
     // EWS e IMG: si apre il SITO online. DATA e' privata e non ha un sito: resta il link alla repo.
     const sulSito = nome === 'EWS' ? urlSito(SITO, o.path) : nome === 'IMG' ? urlSito(SITO_IMG, o.path) : null;
     return {
       repo: nome,
       path: o.path,
       score: o.score,
-      name: tipo === 'pagina' || tipo === 'documento' ? nomeBello(o.path) : o.path.split('/').pop(),
+      name: (info && info.nome) || (tipo === 'pagina' || tipo === 'documento' ? nomeBello(o.path) : o.path.split('/').pop()),
+      descrizione: (info && info.descrizione) || o.path,    // riga grigia sotto il titolo: di base il percorso
+      tags: info ? info.tag : [],
       file: o.path.split('/').pop(),
       type: tipo,
       url: sulSito || 'https://github.com/' + repo + '/blob/HEAD/' + o.path,
@@ -262,10 +348,40 @@ async function htmlDi(url, percorsoRepo) {
   }
   return null;
 }
-const logoDi = (url, percorsoRepo) => inMemoria('logo:' + url, async () => {
+// ---- variabili della pagina, scritte nel suo <head>:
+//   <meta name="ews-nome" content="UniText">                     nome mostrato nella ricerca
+//   <meta name="ews-descrizione" content="Bozze e testi">        riga grigia sotto il titolo (se manca: il percorso, es. lex/unitext.html)
+//   <meta name="ews-tag" content="uni, testi, bozze">            parole extra per trovare la pagina (separate da virgola o ;)
+const decodifica = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
+function metaDaHtml(html) {
+  const out = { nome: '', descrizione: '', tag: [] };
+  const tag = String(html).slice(0, 80000).match(/<meta\b[^>]*>/gi) || [];
+  for (const t of tag) {
+    const a = {};
+    t.replace(/([a-zA-Z:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g, (_, k, dq, sq, n) => { a[k.toLowerCase()] = dq ?? sq ?? n; return ''; });
+    const nome = String(a.name || '').toLowerCase();
+    if (a.content == null) continue;
+    const v = decodifica(a.content);
+    if (nome === 'ews-nome') out.nome = v;
+    else if (nome === 'ews-descrizione') out.descrizione = v;
+    else if (nome === 'ews-tag') out.tag = v.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+  }
+  return out;
+}
+// icona + variabili di una pagina: si legge l'HTML una volta sola (cache 10 minuti)
+const infoPagina = (url, percorsoRepo) => inMemoria('info:' + url, async () => {
   const h = await htmlDi(url, percorsoRepo);
-  return h ? iconaDaHtml(h.html, h.base) : '';
+  return h ? { icon: iconaDaHtml(h.html, h.base), ...metaDaHtml(h.html) } : null;
 });
+const logoDi = async (url, percorsoRepo) => (await infoPagina(url, percorsoRepo))?.icon || '';
+
+// esegue lavori con al massimo n richieste in parallelo
+async function inParallelo(lista, n, fn) {
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, lista.length) }, async () => {
+    while (i < lista.length) { const x = lista[i++]; try { await fn(x); } catch (_) { /* pagina non leggibile: si usano i valori di base */ } }
+  }));
+}
 
 // assegna a ogni risultato il logo letto dalla SUA pagina; se non c'e', quello della home del sito
 async function arricchisciIcone(lista) {
@@ -282,6 +398,8 @@ async function arricchisciIcone(lista) {
     delete d._url; delete d._rp;
   }
 }
+
+const PRIORITA = { pagina: 0, wiki: 1, progetto: 2, elezione: 2, documento: 2, img: 2, atto: 3, sentenza: 3, dossier: 3, dato: 4, altro: 4 };
 
 async function cercaTutto(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -307,7 +425,8 @@ async function cercaTutto(req, res) {
 
     const results = esiti.flatMap((e) => (e.status === 'fulfilled' ? e.value : []));
     const errors = esiti.filter((e) => e.status === 'rejected').map((e) => e.reason.message);
-    results.sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
+    // i siti (pagine) vengono per primi; atti, sentenze e dossier in fondo; a parita' di gruppo conta il punteggio
+    results.sort((a, b) => (PRIORITA[a.type] ?? 4) - (PRIORITA[b.type] ?? 4) || b.score - a.score || String(a.name).localeCompare(String(b.name)));
     const fuori = results.slice(0, soloImg ? 400 : 200);
     if (!soloImg) await arricchisciIcone(fuori);              // logo della pagina (letto dal suo HTML)
     else fuori.forEach((d) => { delete d._url; delete d._rp; });

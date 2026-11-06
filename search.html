@@ -123,7 +123,7 @@ body[data-modo=img] #main{max-width:1200px}
 .r .sn .pth{display:block;font-size:12px;color:var(--url);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tp{--c:#8e8e99;display:inline-block;margin-left:6px;padding:1px 9px;border-radius:999px;font:600 11px/17px var(--font);font-style:normal;vertical-align:1px;color:var(--c);background:rgba(120,120,150,.14)}
 @supports (color:color-mix(in srgb,red,blue)){.tp{color:color-mix(in srgb,var(--c) 70%,var(--chipmix));background:color-mix(in srgb,var(--c) 15%,transparent)}}
-.tp[data-t=pagina]{--c:#0a84ff}.tp[data-t=wiki]{--c:#1fa34a}.tp[data-t=atto]{--c:#6a5ae0}.tp[data-t=progetto]{--c:#e08a00}
+.tp[data-t=pagina]{--c:#0a84ff}.tp[data-t=wiki]{--c:#1fa34a}.tp[data-t=atto]{--c:#6a5ae0}.tp[data-t=progetto]{--c:#e08a00}.tp[data-t=sentenza]{--c:#c2336b}.tp[data-t=dossier]{--c:#0e8f8f}
 .tp[data-t=elezione]{--c:#e5392f}.tp[data-t=documento]{--c:#0f9d94}.tp[data-t=dato]{--c:#0891b2}.tp[data-t=img]{--c:#d6407d}
 .r .d{color:var(--desc);font-size:14px;max-width:640px}
 .r .d b{color:var(--strong);font-weight:600;background:linear-gradient(transparent 60%,var(--mark) 60%)}
@@ -322,11 +322,11 @@ function applicaTema(){
 
 /* tipi di risultato */
 var TIPI = { tutti:"Tutti", pagina:"Pagine", img:"Immagini", documento:"Documenti", dato:"Dati",
-             atto:"Atti", progetto:"Progetti", wiki:"Wiki", elezione:"Elezioni", altro:"Altro" };
-var ORDINE = ["pagina","wiki","atto","progetto","elezione","documento","img","dato","altro"];
+             atto:"Atti", sentenza:"Sentenze", dossier:"Dossier", progetto:"Progetti", wiki:"Wiki", elezione:"Elezioni", altro:"Altro" };
+var ORDINE = ["pagina","wiki","progetto","atto","sentenza","dossier","elezione","documento","img","dato","altro"];
 
 /* i file di codice e di stile non compaiono mai (doppia sicurezza: la regola vera e' in api/data.js) */
-var CODICE = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map)(\?.*)?(#.*)?$/i;
+var CODICE = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map|json|jsonl|geojson)(\?.*)?(#.*)?$/i;   /* anche i JSON non compaiono mai */
 
 /* preferiti della home: [etichetta, dove, tipo preferito, icona, sfondo, sezione] */
 var PREF = [
@@ -526,7 +526,7 @@ function showWeb(){
         (sg.path ? '<span class="pth">' + esc(sg.path) + "</span>" : "") + "</span></div>" +
       '<h3 class="t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + hl(d.name, parole) + "</a></h3>" +
       (d.snippet ? '<div class="d">' + hl(String(d.snippet).slice(0, 220), parole) + "</div>" : "") +
-      (d.path ? '<div class="p">' + hl(d.path, parole) + "</div>" : "") +
+      ((d.descrizione || d.path) ? '<div class="p">' + hl(d.descrizione || d.path, parole) + "</div>" : "") +
       "</div>";
   }).join("");
 
@@ -659,6 +659,8 @@ function applica(j, term){
   if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
   data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
   data = data.filter(function(d){ return modo === "img" ? d.type === "img" : d.type !== "img"; });   // "Tutti" non mostra mai immagini
+  var PRI = { pagina:0, wiki:1, progetto:2, elezione:2, documento:2, img:2, atto:3, sentenza:3, dossier:3 };   /* siti per primi, atti in fondo (ordine stabile: dentro il gruppo resta il punteggio) */
+  data = data.map(function(d, i){ return [d, i]; }).sort(function(a, b){ return ((PRI[a[0].type] != null ? PRI[a[0].type] : 4) - (PRI[b[0].type] != null ? PRI[b[0].type] : 4)) || a[1] - b[1]; }).map(function(x){ return x[0]; });
   page = 1; nImg = PER_IMG; fmt = "tutti";
   typeF = (modo === "web" && pref && data.some(function(d){ return d.type === pref; })) ? pref : "tutti";
   if (data.length) salvaRecente(term);
