@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EstjiLinn — Stato Sociale</title>
+<meta name="ews-nome" content="EstjiLinn">  
+<meta name="ews-descrizione" content="Stato Sociale">
+<meta name="ews-tag" content="Taleen, Estji, EstjiLinn">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/COAT/EstjiLinn.png">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/COAT/EstjiLinn.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--blue:#063d9e;--blue2:#042a70;--bg:#f4f7fc;--card:#fff;--ink:#101a30;--mute:#5b6783;--line:#dbe3f2;--tint:#e8effc;--acc:#063d9e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1429;--card:#111f3f;--ink:#e8eefb;--mute:#9aa8c8;--line:#223560;--tint:#16294f;--acc:#7ea6f2}}
+:root[data-theme="dark"]{--bg:#0a1429;--card:#111f3f;--ink:#e8eefb;--mute:#9aa8c8;--line:#223560;--tint:#16294f;--acc:#7ea6f2}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,sans-serif}
+.d{font-family:Oswald,"Arial Narrow",sans-serif;text-transform:uppercase;letter-spacing:.08em}
+/* HEADER (invariato) */
+header{background:linear-gradient(110deg,var(--blue) 55%,var(--blue2));color:#fff;position:relative;overflow:hidden}
+header::before{content:"";position:absolute;right:-6%;top:-45%;width:440px;height:440px;border-radius:50%;background:repeating-radial-gradient(circle,rgba(255,255,255,.12) 0 4px,transparent 4px 20px)}
+.brand{position:relative;max-width:1040px;margin:0 auto;padding:34px 18px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.brand svg,.brand img{width:130px;height:130px;flex:none;object-fit:contain;filter:drop-shadow(4px 4px 0 rgba(0,0,0,.3))}
+h1{margin:0;font-size:clamp(40px,10vw,88px);line-height:.95;font-weight:700;text-shadow:4px 4px 0 var(--blue2)}
+.sub{letter-spacing:.2em;font-size:13px;color:#bcd2f7;margin-top:10px}
+/* NAV */
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.nav{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:4px;padding:8px 12px;overflow-x:auto}
+.nav a{color:var(--ink);text-decoration:none;font-weight:500;font-size:14px;padding:7px 14px;border-radius:99px;white-space:nowrap}
+.nav a:hover,.nav a.on{background:var(--acc);color:var(--bg)}
+.nav #lg{margin-left:auto}.nav #th{margin-left:4px}
+button,.btn{font:inherit;cursor:pointer}
+.ico{background:var(--tint);border:1px solid var(--line);color:var(--ink);border-radius:99px;width:38px;height:34px}
+main{max-width:1040px;margin:0 auto;padding:0 16px}
+section{padding:44px 0 6px}
+h2{font-size:30px;margin:0 0 6px;color:var(--acc)}
+.lead{color:var(--mute);margin:0 0 20px;max-width:42em}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:30px}
+@media(min-width:760px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.stat b{display:block;font:700 36px Oswald,sans-serif;color:var(--acc)}
+.stat span{font-size:13px;color:var(--mute)}
+/* controls */
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+input[type=search],input[type=number]{flex:1;min-width:200px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.chip{padding:8px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);font-size:14px}
+.chip.on{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+/* accordion */
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;gap:12px;align-items:center;font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary .n{background:var(--tint);color:var(--acc);border-radius:8px;padding:2px 10px;font:700 13px Oswald,sans-serif;letter-spacing:.06em;text-transform:uppercase;flex:none}
+summary::after{content:"+";margin-left:auto;font-size:22px;color:var(--acc)}
+details[open] summary::after{content:"–"}
+details p{margin:0;padding:0 16px 16px}
+.tag{font-size:12px;color:var(--mute);font-weight:400;margin-left:6px}
+/* distretti */
+.dg{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:700px){.dg{grid-template-columns:1fr 1fr}}
+@media(min-width:980px){.dg{grid-template-columns:repeat(3,1fr)}}
+.dc{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:12px;padding:14px 16px}
+.dc h3{margin:0 0 2px;font-size:18px}
+.dc small{color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips span{background:var(--tint);border-radius:8px;padding:2px 10px;font-size:13px}
+mark{background:#ffe27a;color:#000;border-radius:3px}
+.empty{color:var(--mute);padding:20px 0}
+/* gerarchia */
+.hier{display:grid;gap:10px;grid-template-columns:1fr}
+@media(min-width:760px){.hier{grid-template-columns:repeat(4,1fr)}}
+.hier div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;position:relative}
+.hier b{display:block;color:var(--acc)}
+.hier span{font-size:13px;color:var(--mute)}
+.tools{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:10px}
+.out{padding:12px 14px;border-radius:10px;background:var(--tint);min-height:48px}
+footer{margin-top:50px;background:var(--blue2);color:#cfdcf7;text-align:center;padding:28px 16px 20px;font-size:14px}
+footer b{color:#fff}
+.stripe{display:flex;height:10px;margin:22px -16px -20px}.stripe i{flex:1}.stripe i:nth-child(1){background:#063d9e}.stripe i:nth-child(2){background:#000}.stripe i:nth-child(3){background:#fff}
+
+.row{display:grid;gap:10px;grid-template-columns:1fr}
+@media(min-width:700px){.row.c2{grid-template-columns:1fr 1fr}.row.c3{grid-template-columns:repeat(3,1fr)}.row.c4{grid-template-columns:repeat(4,1fr)}}
+select,input[type=text],input[type=date],textarea{padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;width:100%}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.box h3{margin:0 0 10px;font-size:18px}
+.list>div{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.list>div:first-child{border-top:0}
+.x{background:none;border:0;color:var(--mute);font-size:18px}
+.pill{font-size:12px;padding:2px 10px;border-radius:99px;background:var(--tint);color:var(--acc);font-weight:600}
+.pill.ok{background:#d8f3df;color:#14663a}
+.frame{width:100%;height:78vh;min-height:480px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.note{font-size:13px;color:var(--mute);margin-top:8px}
+.bar2{display:flex;gap:8px}.bar2 button{white-space:nowrap}
+.vb button{padding:6px 12px}
+label{font-size:13px;color:var(--mute);display:block;margin-bottom:3px}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand">
+  <img id="logoimg" alt="Stemma dell’EstjiLinn" hidden>
+  <svg id="logosvg" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="#fff" stroke="#000" stroke-width="4"/><circle cx="60" cy="60" r="44" fill="#063d9e"/><path d="M60 24v70M32 38h56M32 38l-10 26h20zM88 38l-10 26h20z" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/><circle cx="60" cy="24" r="5" fill="#e0b83a"/><path d="M26 64q16 12 32 0M62 64q16 12 32 0" stroke="#fff" stroke-width="4" fill="none"/></svg>
+  <div>
+   <h1 class="d">EstjiLinn</h1>
+   <div class="sub d">Stato Sociale · Unione Sociale degli Stati dell’Estji</div>
+  </div>
+ </div>
+</header>
+<nav><div class="nav">
+ <a href="#home">Stato</a><a href="#distretti">Distretti</a><a href="#trasporti">Trasporti</a><a href="#cittadino">Cittadino</a><a href="#economia">Economia</a><a href="#sessioni">Sessioni</a>
+ <button class="ico" id="lg" title="Cambia logo" aria-label="Cambia logo">✎</button><input type="file" id="lgf" accept="image/*" hidden>
+ <button class="ico" id="th" title="Tema chiaro/scuro" aria-label="Cambia tema">◐</button>
+</div></nav>
+<main>
+ <section id="home">
+  <h2 class="d">Benvenuti in EstjiLinn</h2>
+  <p class="lead">Uno Stato Sociale che sperimenta governance innovativa, economia partecipativa e welfare universale. Capitale: Città Metropolitana di Taleen.</p>
+  <div class="hier">
+   <div><b class="d">1 · Assemblee di Sezione</b><span>Sessioni pubbliche mensili</span></div>
+   <div><b class="d">2 · Congresso Distrettuale</b><span>Livello distretto</span></div>
+   <div><b class="d">3 · Congresso Metropolitano</b><span>Città Metropolitana di Taleen</span></div>
+   <div><b class="d">4 · Congresso Statale</b><span>101 delegati, organo massimo</span></div>
+  </div>
+  <div class="stats">
+   <div class="stat"><b data-c="13">0</b><span>Articoli</span></div>
+   <div class="stat"><b data-c="101">0</b><span>Delegati</span></div>
+   <div class="stat"><b data-c="16">0</b><span>Età di voto</span></div>
+   <div class="stat"><b data-c="11">0</b><span>Distretti</span></div>
+  </div>
+ </section>
+
+ <section id="distretti">
+  <h2 class="d">Distretti e Assemblee</h2>
+  <p class="lead">Art. 8 · 11 distretti, di cui 8 nella Città Metropolitana di Taleen.</p>
+  <div class="bar"><input type="search" id="qd" placeholder="Cerca distretto o sezione…">
+   <button class="chip on" data-g="x">Tutti</button><button class="chip" data-g="in">Taleen</button><button class="chip" data-g="out">Esterni</button></div>
+  <div class="dg" id="dist"></div>
+ </section>
+
+
+ <section id="trasporti">
+  <h2 class="d">Rete di trasporto</h2>
+  <p class="lead">Art. 10 · rete pubblica gratuita gestita dalla Commissione per le Risorse e i Trasporti. La mappa qui sotto è la pagina <b>IDU.html</b>, collegata in tempo reale: ogni modifica a IDU si vede anche qui.</p>
+  <iframe class="frame" id="idu" src="/IDU.html" title="Mappa dei trasporti IDU" loading="lazy"></iframe>
+  <p class="note">Se la mappa non appare, tieni <b>IDU.html</b> (e <b>IDU.png</b>) nella stessa cartella di questo file. <a href="IDU.html" target="_blank" rel="noopener" style="color:var(--acc)">Apri a schermo intero ↗</a></p>
+ </section>
+
+ <section id="cittadino">
+  <h2 class="d">Area cittadino</h2>
+  <p class="lead">Registrati, assegnati a un distretto e a una sezione, poi proponi e vota nelle Assemblee. Si vota dai 16 anni (art. 6).</p>
+  <div class="box" id="reg">
+   <h3>Registrazione</h3>
+   <div class="row c4">
+    <div><label>Nome</label><input type="text" id="rn" placeholder="Nome cittadino"></div>
+    <div><label>Età</label><input type="number" id="re" min="0" max="120"></div>
+    <div><label>Distretto</label><select id="rd"></select></div>
+    <div><label>Sezione</label><select id="rs"></select></div>
+   </div>
+   <div class="bar2" style="margin-top:12px"><button class="chip on" id="rsave">Registrati</button><button class="chip" id="rout">Esci</button></div>
+   <div id="rmsg" class="note"></div>
+  </div>
+  <div class="box" id="props">
+   <h3>Proposte e voti</h3>
+   <div class="row c2"><input type="text" id="pt" placeholder="Titolo della proposta"><input type="text" id="pd" placeholder="Descrizione breve"></div>
+   <div class="bar2" style="margin-top:10px"><button class="chip on" id="padd">Presenta proposta</button></div>
+   <div class="list" id="plist" style="margin-top:8px"></div>
+   <p class="note">I dati restano salvati nel tuo browser: ogni dispositivo ha le proprie proposte e i propri voti finché non c’è un server condiviso.</p>
+  </div>
+ </section>
+
+ <section id="economia">
+  <h2 class="d">Economia</h2>
+  <p class="lead">Art. 11-13 · l’Estji è convertibile in ore di lavoro o risorse. Modifica i valori della Borsa Risorse di Taleen (BRT).</p>
+  <div class="row c2">
+   <div class="box">
+    <h3>Convertitore Estji</h3>
+    <div class="row c3">
+     <div><label>Quantità</label><input type="number" id="cq" value="1" min="0" step="any"></div>
+     <div><label>Direzione</label><select id="cdir"><option value="a">Estji → …</option><option value="b">… → Estji</option></select></div>
+     <div><label>Unità</label><select id="cu"></select></div>
+    </div>
+    <div class="out" id="cres" style="margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--tint)"></div>
+   </div>
+   <div class="box">
+    <h3>Borsa Risorse di Taleen</h3>
+    <div class="list" id="brt"></div>
+    <div class="row c3" style="margin-top:10px"><input type="text" id="bn" placeholder="Risorsa"><input type="number" id="bp" placeholder="Prezzo in Estji" min="0" step="any"><button class="chip on" id="badd">Aggiungi</button></div>
+    <p class="note">AUA: i prezzi sono indicativi, per prevenire la speculazione.</p>
+   </div>
+  </div>
+  <div class="box">
+   <h3>Orti comunitari (DAC)</h3>
+   <p class="note" style="margin:0 0 10px">Art. 9 · un terreno pubblico inutilizzato da oltre 3 mesi diventa orto comunitario.</p>
+   <div class="row c4"><input type="text" id="ol" placeholder="Terreno / luogo"><select id="od"></select><div><input type="date" id="ox" title="Inutilizzato dal"></div><button class="chip on" id="oadd">Segnala</button></div>
+   <div class="list" id="olist" style="margin-top:8px"></div>
+  </div>
+ </section>
+
+ <section id="sessioni">
+  <h2 class="d">Sessioni delle Assemblee</h2>
+  <p class="lead">Art. 6 · le sessioni sono pubbliche e mensili. Aggiungi data e ordine del giorno.</p>
+  <div class="box">
+   <div class="row c4"><select id="sd"></select><input type="date" id="sx"><input type="text" id="so" placeholder="Ordine del giorno"><button class="chip on" id="sadd">Aggiungi sessione</button></div>
+   <div class="list" id="slist" style="margin-top:8px"></div>
+  </div>
+ </section>
+</main>
+<footer><b>EstjiLinn</b> · Stato Sociale dell’Unione Sociale degli Stati dell’Estji<br>Costituzione 1/2025 · Capitale: Taleen
+<div class="stripe"><i></i><i></i><i></i></div></footer>
+<script>
+var A=[[1,1,"Sistema","Lo Stato Sociale di EstjiLinn è membro della fazione “Unione Sociale degli Stati dell’Estji”. Adotta un sistema amministrativo basato sulle Assemblee e sui Congressi, in conformità con la Legge Unitaria."],
+[2,1,"Capitale","La capitale è la Città Metropolitana di Taleen, che ospita tutte le sedi centrali delle istituzioni statali."],
+[3,1,"Lingua","Lo Stato riconosce tutte le lingue della Fazione."],
+[4,1,"Impegni","Lo Stato si impegna a sperimentare modelli innovativi di governance, economia partecipativa e welfare universale."],
+[5,2,"Assemblee","Il potere legislativo è esercitato attraverso una gerarchia di assemblee: Assemblee di Sezione, Congresso Distrettuale, Congresso Metropolitano."],
+[6,2,"Elettorato","Ogni Assemblea è eletta a suffragio universale diretto e opera in sessioni pubbliche mensili. Il diritto di voto si acquisisce al compimento del 16° anno di età."],
+[7,2,"Congresso Statale","Il Congresso Statale è l’organo legislativo massimo, composto da 101 delegati delle Assemblee di Sezione."],
+[8,2,"Distretti e Assemblee","Elenco dei distretti esterni e interni alla Città Metropolitana di Taleen, con le rispettive sezioni (vedi sezione Distretti)."],
+[9,3,"Territori pubblici","I terreni pubblici inutilizzati da oltre 3 mesi sono destinati a orti comunitari gestiti dal Distretto Agricolo Capitolino (DAC)."],
+[10,3,"Rete di trasporto","La rete di trasporto per Taleen è proprietà pubblica, gestita dalla Commissione per le Risorse e i Trasporti. Il servizio è gratuito per tutti i giocatori."],
+[11,3,"Borsa Risorse di Taleen","Viene istituita la Borsa Risorse di Taleen (BRT) per regolare il commercio di risorse strategiche."],
+[12,3,"Valuta","Il sistema monetario si basa sull’Estji, convertibile in ore di lavoro o risorse."],
+[13,3,"Agenzia Unica Approvvigionamenti","È istituita l’Agenzia Unica Approvvigionamenti (AUA) per gestire le risorse comuni e prevenire la speculazione."]];
+var D=[["Hichibate","Bakeneko,Renault,Bateria,Ginza,Notos,Thora","out"],["Konko","Mikita,Royale","out"],["Arcipelago di Alinesjia","","out"],["Ehime","Sars,Tampere,Estji,Tervetulloa","in"],["Aömöry","Fiumana,Klosse,Fluvia,Ankita,Ost,Ecles","in"],["Katagaa","Irinastok","in"],["Fukura","1 Ile,2 Ile,3 Ile,4 Ile,5 Ile","in"],["Niigataa","Tegel,TegelGard,Minotte","in"],["Kengoko","Finance,NewShinguku,Gallier","in"],["Idame","Soyuz,Littoria,Lampugniano,Aprilia","in"],["Yate","Rial,Tadam","in"]];
+var $=function(s){return document.querySelector(s)},tt=0,gg="x",open=false;
+function hl(s,q){if(!q)return s;var i=s.toLowerCase().indexOf(q);return i<0?s:s.slice(0,i)+"<mark>"+s.slice(i,i+q.length)+"</mark>"+s.slice(i+q.length)}
+function ra(){var q=$("#qa").value.trim().toLowerCase(),h="";
+ A.forEach(function(a){if(tt&&a[1]!=tt)return;if(q&&(a[2]+" "+a[3]).toLowerCase().indexOf(q)<0)return;
+  h+='<details'+((open||q)?' open':'')+'><summary><span class="n">Art. '+a[0]+'</span>'+hl(a[2],q)+'<span class="tag">Titolo '+["","I","II","III"][a[1]]+'</span></summary><p>'+hl(a[3],q)+'</p></details>'});
+ $("#arts").innerHTML=h||'<div class="empty">Nessun articolo trovato.</div>'}
+function rd(){var q=$("#qd").value.trim().toLowerCase(),h="";
+ D.forEach(function(d){if(gg!="x"&&d[2]!=gg)return;var sec=d[1].split(",").filter(Boolean);
+  if(q&&(d[0]+" "+d[1]).toLowerCase().indexOf(q)<0)return;
+  h+='<div class="dc"><h3>'+hl(d[0],q)+'</h3><small>'+(d[2]=="in"?"Città Metropolitana di Taleen":"Esterno a Taleen")+' · '+(sec.length?sec.length+' sezioni':'distretto insulare')+'</small><div class="chips">'+sec.map(function(s){return'<span>'+hl(s,q)+'</span>'}).join("")+'</div></div>'});
+ $("#dist").innerHTML=h||'<div class="empty">Nessun distretto trovato.</div>'}
+$("#qd").oninput=rd;
+document.querySelectorAll("[data-g]").forEach(function(b){b.onclick=function(){gg=b.dataset.g;document.querySelectorAll("[data-g]").forEach(function(x){x.classList.toggle("on",x==b)});rd()}});
+$("#th").onclick=function(){var r=document.documentElement,d=r.dataset.theme?r.dataset.theme=="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=d?"light":"dark"};
+document.querySelectorAll("[data-c]").forEach(function(e){var n=+e.dataset.c,i=0,s=Math.max(1,Math.ceil(n/30));var t=setInterval(function(){i=Math.min(n,i+s);e.textContent=i;if(i>=n)clearInterval(t)},30)});
+var L=document.querySelectorAll(".nav a");addEventListener("scroll",function(){var y=scrollY+120,c=null;L.forEach(function(a){var s=document.querySelector(a.hash);if(s&&s.offsetTop<=y)c=a});L.forEach(function(a){a.classList.toggle("on",a==c)})});
+rd();
+
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+function ld(k,d){try{var v=localStorage.getItem("el_"+k);return v?JSON.parse(v):d}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem("el_"+k,JSON.stringify(v))}catch(e){}}
+var cit=ld("cit",null),props=ld("props",[]),brt=ld("brt",[["Grano",2],["Legname",3],["Ferro",5]]),orti=ld("orti",[]),sess=ld("sess",[]),oreRate=1;
+var dn=D.map(function(d){return d[0]});
+function opts(a){return a.map(function(x){return'<option>'+esc(x)+'</option>'}).join("")}
+$("#rd").innerHTML=opts(dn);$("#od").innerHTML=opts(dn);$("#sd").innerHTML=opts(dn);
+function rsec(){var d=D.filter(function(x){return x[0]==$("#rd").value})[0];var s=d&&d[1]?d[1].split(","):[d?d[0]:""];$("#rs").innerHTML=opts(s)}
+$("#rd").onchange=rsec;rsec();
+function rr(){if(cit){$("#rn").value=cit.n;$("#re").value=cit.e;$("#rd").value=cit.d;rsec();$("#rs").value=cit.s;
+ $("#rmsg").innerHTML='Registrato come <b>'+esc(cit.n)+'</b> · '+esc(cit.d)+' / '+esc(cit.s)+' · '+(cit.e>=16?'<span class="pill ok">può votare</span>':'<span class="pill">non può ancora votare</span>')}
+ else $("#rmsg").textContent="Non sei registrato."}
+$("#rsave").onclick=function(){var n=$("#rn").value.trim(),e=parseInt($("#re").value,10);if(!n||isNaN(e)||e<0){$("#rmsg").textContent="Inserisci nome ed età validi.";return}
+ cit={n:n,e:e,d:$("#rd").value,s:$("#rs").value};sv("cit",cit);rr();rp()};
+$("#rout").onclick=function(){cit=null;sv("cit",null);$("#rn").value="";$("#re").value="";rr();rp()};
+function rp(){var can=cit&&cit.e>=16;
+ $("#plist").innerHTML=props.length?props.map(function(p,i){var my=cit&&p.v[cit.n];var t=p.s+p.n+p.a;
+  return'<div><div style="flex:1;min-width:200px"><b>'+esc(p.t)+'</b><div class="note" style="margin:0">'+esc(p.d||"")+' · di '+esc(p.by)+'</div></div><div class="vb bar2">'+
+  [["s","Sì"],["n","No"],["a","Astenuto"]].map(function(o){return'<button class="chip'+(my==o[0]?' on':'')+'" data-v="'+i+'|'+o[0]+'"'+(can?'':' disabled style="opacity:.5"')+'>'+o[1]+' '+p[o[0]=="s"?"s":o[0]=="n"?"n":"a"]+'</button>'}).join("")+'</div></div>'}).join(""):'<div class="note">Nessuna proposta.</div>';
+ document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){var q=b.dataset.v.split("|"),p=props[q[0]],o=p.v[cit.n];if(o)p[o]--;if(o==q[1]){delete p.v[cit.n]}else{p.v[cit.n]=q[1];p[q[1]]++}sv("props",props);rp()}})}
+$("#padd").onclick=function(){if(!cit){$("#rmsg").textContent="Registrati prima di presentare una proposta.";location.hash="#cittadino";return}
+ var t=$("#pt").value.trim();if(!t)return;props.unshift({t:t,d:$("#pd").value.trim(),by:cit.n,s:0,n:0,a:0,v:{}});sv("props",props);$("#pt").value=$("#pd").value="";rp()};
+function cu(){$("#cu").innerHTML='<option value="ore">Ore di lavoro</option>'+brt.map(function(b,i){return'<option value="'+i+'">'+esc(b[0])+'</option>'}).join("")}
+function cc(){var q=parseFloat($("#cq").value)||0,u=$("#cu").value,pr=u=="ore"?oreRate:brt[u]&&brt[u][1],nm=u=="ore"?"ore di lavoro":(brt[u]?brt[u][0]:"");
+ if(!pr){$("#cres").textContent="Imposta un prezzo valido.";return}
+ $("#cres").innerHTML=$("#cdir").value=="a"?q+' Estji = <b>'+(q/pr).toFixed(2)+'</b> '+esc(nm):q+' '+esc(nm)+' = <b>'+(q*pr).toFixed(2)+'</b> Estji'}
+["#cq","#cdir","#cu"].forEach(function(s){$(s).oninput=cc});
+function rb(){$("#brt").innerHTML='<div><span>1 ora di lavoro</span><span><input type="number" id="ore" value="'+oreRate+'" min="0" step="any" style="width:90px"> Estji</span></div>'+
+ brt.map(function(b,i){return'<div><span>'+esc(b[0])+'</span><span>'+b[1]+' Estji <button class="x" data-b="'+i+'" title="Rimuovi">×</button></span></div>'}).join("");
+ $("#ore").oninput=function(){oreRate=parseFloat(this.value)||0;cc()};
+ document.querySelectorAll("[data-b]").forEach(function(b){b.onclick=function(){brt.splice(b.dataset.b,1);sv("brt",brt);rb();cu();cc()}});cu();cc()}
+$("#badd").onclick=function(){var n=$("#bn").value.trim(),p=parseFloat($("#bp").value);if(!n||!(p>0))return;brt.push([n,p]);sv("brt",brt);$("#bn").value=$("#bp").value="";rb()};
+function ro(){var now=Date.now();$("#olist").innerHTML=orti.length?orti.map(function(o,i){var g=Math.floor((now-new Date(o.x))/864e5),ok=g>90;
+ return'<div><span><b>'+esc(o.l)+'</b> · '+esc(o.d)+' · inutilizzato da '+g+' giorni</span><span>'+(ok?'<span class="pill ok">Orto DAC</span>':'<span class="pill">Mancano '+(91-g)+' gg</span>')+' <button class="x" data-o="'+i+'">×</button></span></div>'}).join(""):'<div class="note">Nessun terreno segnalato.</div>';
+ document.querySelectorAll("[data-o]").forEach(function(b){b.onclick=function(){orti.splice(b.dataset.o,1);sv("orti",orti);ro()}})}
+$("#oadd").onclick=function(){var l=$("#ol").value.trim(),x=$("#ox").value;if(!l||!x)return;orti.push({l:l,d:$("#od").value,x:x});sv("orti",orti);$("#ol").value="";ro()};
+function rs_(){var t=new Date().toISOString().slice(0,10);sess.sort(function(a,b){return a.x<b.x?-1:1});
+ $("#slist").innerHTML=sess.length?sess.map(function(s,i){return'<div><span><b>'+esc(s.d)+'</b> · '+new Date(s.x).toLocaleDateString("it-IT")+' · '+esc(s.o||"ordine del giorno da definire")+'</span><span>'+(s.x>=t?'<span class="pill ok">Prossima</span>':'<span class="pill">Conclusa</span>')+' <button class="x" data-s="'+i+'">×</button></span></div>'}).join(""):'<div class="note">Nessuna sessione in calendario.</div>';
+ document.querySelectorAll("[data-s]").forEach(function(b){b.onclick=function(){sess.splice(b.dataset.s,1);sv("sess",sess);rs_()}})}
+$("#sadd").onclick=function(){var x=$("#sx").value;if(!x)return;sess.push({d:$("#sd").value,x:x,o:$("#so").value.trim()});sv("sess",sess);$("#so").value="";rs_()};
+rr();rp();rb();ro();rs_();
+
+/* ===== LOGO =====
+ Tre modi per cambiarlo:
+ 1) Metti un file "logo.png" nella stessa cartella del sito (o cambia LOGO_FILE qui sotto, anche con un URL).
+ 2) Clicca il pulsante ✎ nel menu e scegli un'immagine dal tuo computer (resta salvata nel browser).
+ 3) Tieni premuto Maiusc mentre clicchi ✎ per tornare al logo di default. */
+var LOGO_FILE="https://raw.githubusercontent.com/RETEFORLIVESE/IMG/HEAD/COAT/EstjiLinn.png";
+(function(){var im=$("#logoimg"),sg=$("#logosvg");
+ function show(u){im.onload=function(){im.hidden=false;sg.style.display="none";var f=document.querySelector("link[rel=icon]")||document.head.appendChild(Object.assign(document.createElement("link"),{rel:"icon"}));f.href=u};
+  im.onerror=function(){im.hidden=true;sg.style.display=""};im.src=u}
+ var saved=ld("logo",null);show(saved||LOGO_FILE);
+ $("#lg").onclick=function(e){if(e.shiftKey){sv("logo",null);show(LOGO_FILE);return}$("#lgf").click()};
+ $("#lgf").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){sv("logo",r.result);show(r.result)};r.readAsDataURL(f)}})();
+</script>
+</body>
+</html>
