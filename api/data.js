@@ -13,6 +13,7 @@ const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   //
 // ---------------------------------------------------------------- RICERCA
 const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
 const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
+const ICONA = process.env.SITO_LOGO || SITO + '/favicon.ico';   // logo mostrato accanto ai risultati del sito (se manca, la pagina mostra una lettera)
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
@@ -46,6 +47,8 @@ const DATASET = {
       path: via(it.categoria, ...(Array.isArray(it.tag) ? it.tag : [])),
       snippet: it.sommario || '',
       url: SITO + '/lex/wiki.html#' + encodeURIComponent(it.id),
+      // logo della pagina: il campo "immagine" oppure la prima immagine dell'infobox (bandiera/stemma)
+      icon: /^https?:\/\//i.test(it.immagine || '') ? pulisciUrl(it.immagine) : primaImmagine(it.contenuto),
     }),
   },
   'elezioni.json': {                                         // consultazioni -> /CEPU.html?tipo=..&data=..&comune=..
@@ -61,6 +64,13 @@ const DATASET = {
     },
   },
 };
+
+// prima immagine (https) di un testo markdown: ![](https://...)
+const pulisciUrl = (u) => String(u || '').replace(/([^:])\/{2,}/g, '$1/');   // "main//x.png" -> "main/x.png"
+function primaImmagine(testo) {
+  const m = String(testo || '').match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/i);
+  return m ? pulisciUrl(m[1]) : '';
+}
 
 // testo "da leggere" di una scheda: niente link, immagini o marcatori wiki (per cercare e per mostrare l'estratto)
 const testoPulito = (s) => String(s || '')
@@ -117,7 +127,7 @@ async function inMemoria(chiave, calcola) {
 }
 
 const tipoFile = (p) =>
-  /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(p) ? 'img' :
+  /\.(png|apng|jpe?g|jfif|gif|webp|svg|avif|bmp|ico)$/i.test(p) ? 'img' :
   /\.html?$/i.test(p) ? 'pagina' :
   /\.(pdf|docx?|txt|md)$/i.test(p) ? 'documento' :
   /\.(json|csv|xlsx?|geojson)$/i.test(p) ? 'dato' : 'altro';
@@ -170,6 +180,7 @@ async function cercaNeiDataset(repo, termini) {
         snippet: s.snippet || estratto(plain, termini),
         url: s.url,
         label: cfg.label,
+        icon: s.icon || ICONA,
         score,
       });
     }
@@ -177,17 +188,18 @@ async function cercaNeiDataset(repo, termini) {
   return risultati;
 }
 
-async function cercaNellaRepo(nome, repo, termini, q) {
+async function cercaNellaRepo(nome, repo, termini, q, soloImg) {
   const trovati = new Map();
   for (const p of await elencoFile(repo)) {
     if (datasetDi(p) || escluso(p)) continue;                // atti/progetti = schede; bozze, script e cartelle tecniche = mai
+    if (soloImg && tipoFile(p) !== 'img') continue;          // sezione Immagini: solo immagini
     const basso = p.toLowerCase();
     if (termini.every((t) => basso.includes(t))) {
       const f = nomeFile(p);
       trovati.set(p, { path: p, score: 10 + termini.filter((t) => f.includes(t)).length * 5 });
     }
   }
-  if (nome !== 'IMG') {
+  if (nome !== 'IMG' && !soloImg) {                          // ricerca nel contenuto: non serve per le immagini
     try {
       const r = await fetch('https://api.github.com/search/code?per_page=30&q=' + encodeURIComponent(q) + '+repo:' + repo, { headers: intestazioni(false) });
       if (r.ok) {
@@ -212,7 +224,10 @@ async function cercaNellaRepo(nome, repo, termini, q) {
       type: tipo,
       url: sulSito || 'https://github.com/' + repo + '/blob/HEAD/' + o.path,
       label: sulSito ? (tipo === 'img' ? 'Apri immagine' : 'Apri pagina') : '',
-      raw: tipo === 'img' ? sulSito : null,               // anteprima: dal sito, mai da raw.githubusercontent
+      raw: tipo === 'img' ? sulSito : null,               // anteprima: dal sito
+      // anteprima di riserva se il sito non serve il file (le immagini del sito e di IMG sono anche su GitHub)
+      alt: tipo === 'img' && sulSito ? 'https://raw.githubusercontent.com/' + repo + '/HEAD/' + o.path.split('/').map(encodeURIComponent).join('/') : '',
+      icon: sulSito && tipo !== 'img' ? ICONA : '',        // logo del sito accanto al risultato
     };
   });
 }
@@ -231,16 +246,18 @@ async function cercaTutto(req, res) {
     const org = repoData.split('/')[0];
     const tutte = { EWS: org + '/EWS', IMG: org + '/IMG', DATA: repoData };
     const voluta = String(req.query.repo || 'all').toUpperCase();
-    const nomi = Object.keys(tutte).filter((n) => voluta === 'ALL' || n === voluta);
+    // ?tipo=img = sezione Immagini: tutte le immagini di EWS e IMG (DATA e' privata e non ha un sito: niente anteprime)
+    const soloImg = String(req.query.tipo || '').toLowerCase() === 'img';
+    const nomi = Object.keys(tutte).filter((n) => (voluta === 'ALL' || n === voluta) && !(soloImg && n === 'DATA'));
 
-    const lavori = nomi.map((n) => cercaNellaRepo(n, tutte[n], termini, q));
-    if (nomi.includes('DATA')) lavori.push(cercaNeiDataset(repoData, termini));
+    const lavori = nomi.map((n) => cercaNellaRepo(n, tutte[n], termini, q, soloImg));
+    if (!soloImg && nomi.includes('DATA')) lavori.push(cercaNeiDataset(repoData, termini));
     const esiti = await Promise.allSettled(lavori);
 
     const results = esiti.flatMap((e) => (e.status === 'fulfilled' ? e.value : []));
     const errors = esiti.filter((e) => e.status === 'rejected').map((e) => e.reason.message);
-    results.sort((a, b) => b.score - a.score);
-    res.status(200).json({ count: results.length, results: results.slice(0, 200), errors });
+    results.sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
+    res.status(200).json({ count: results.length, results: results.slice(0, soloImg ? 400 : 200), errors });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
