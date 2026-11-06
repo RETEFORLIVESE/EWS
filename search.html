@@ -101,6 +101,11 @@ body[data-modo=img] #main{max-width:1200px}
 #res{color:var(--ptxt);padding:8px 12px 10px;border-radius:24px;background:var(--panel);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
  box-shadow:0 24px 60px -16px rgba(10,10,70,.55),0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.6)}
 #res:has(#out:empty){display:none}
+#res.busy #out{opacity:.5;transition:opacity .15s}
+.sk{padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.sk b,.sk span{display:block;height:12px;width:92%;border-radius:6px;background:linear-gradient(90deg,var(--pline) 25%,var(--rowh) 50%,var(--pline) 75%);background-size:200% 100%;animation:shim 1.2s linear infinite}
+.sk b{width:50%;height:15px}.sk span+span{width:68%}
+@keyframes shim{to{background-position:-200% 0}}
 .r{margin:0;padding:14px 16px 15px;overflow:hidden;border-radius:16px;transition:background .15s}
 .r:hover{background:var(--rowh)}
 .r .t{margin:0;font-size:18.5px;font-weight:500;line-height:1.28;letter-spacing:-.012em;word-break:break-word}
@@ -388,7 +393,9 @@ tabs.addEventListener("click", function(e){
   var b = e.target.closest("button"); if (!b) return;
   var m = b.getAttribute("data-modo"); if (!m || m === modo) return;
   modo = m; pref = ""; typeF = "tutti"; fmt = "tutti";
-  if (modo === "img" && repo === "DATA") repo = "all";   // DATA non ha immagini da mostrare
+  if (modo === "img" && repo === "DATA") repo = "all";
+  if (modo === "web" && repo === "IMG") repo = "all";
+  out.innerHTML = "";   // DATA non ha immagini da mostrare
   aggiornaModo();
   if (q.value.trim().length > 1) search(); else { renderCfg(); renderHome(); }
 });
@@ -421,7 +428,7 @@ function opts(list, cur, attr){
 function renderCfg(){
   var dove = modo === "img"
     ? [["all","Tutto"],["EWS","Dal sito (EWS)"],["IMG","Archivio immagini"]]
-    : [["all","Tutto"],["EWS","Pagine del sito"],["IMG","Archivio immagini"],["DATA","Atti e dati"]];
+    : [["all","Tutto"],["EWS","Pagine del sito"],["DATA","Atti e dati"]];
   rp.innerHTML = opts(dove, repo, "r");
 
   if (modo === "img"){
@@ -642,6 +649,19 @@ function aggiornaUrl(term){
 }
 
 /* ---------- ricerca ---------- */
+var cache = {}, ctrl = null;
+var SKEL = new Array(5).join('<div class="sk"><b></b><span></span><span></span></div>');
+function applica(j, term){
+  load.style.display = "none"; res.classList.remove("busy");
+  if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
+  data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
+  data = data.filter(function(d){ return modo === "img" ? d.type === "img" : d.type !== "img"; });   // "Tutti" non mostra mai immagini
+  page = 1; nImg = PER_IMG; fmt = "tutti";
+  typeF = (modo === "web" && pref && data.some(function(d){ return d.type === pref; })) ? pref : "tutti";
+  if (data.length) salvaRecente(term);
+  renderCfg(); show();
+  if (j.errors && j.errors.length) bar.innerHTML += " \u00b7 alcune fonti non hanno risposto";
+}
 function search(){
   var term = q.value.trim().replace(/\s+/g, " ");
   hint.classList.remove("on");
@@ -650,32 +670,34 @@ function search(){
 
   ultima = term;
   var mio = ++seq;
+  if (ctrl) { try { ctrl.abort(); } catch(e){} ctrl = null; }   // la richiesta precedente non serve piu'
   chiudiLb();
   document.body.className = "";
   aggiornaModo();
   aggiornaUrl(term);
-  load.style.display = "block"; bar.textContent = ""; out.innerHTML = ""; pager.style.display = "none";
+  var ck = modo + "|" + repo + "|" + term.toLowerCase();
+  if (cache[ck]){ applica(cache[ck], term); return; }          // gia' cercato: risposta immediata
+
+  load.style.display = "block"; bar.textContent = ""; pager.style.display = "none";
+  if (out.firstChild && !out.querySelector(".sk")) res.classList.add("busy"); else out.innerHTML = SKEL;
+  ctrl = window.AbortController ? new AbortController() : null;
 
   fetch(API + "&q=" + encodeURIComponent(term) + "&repo=" + encodeURIComponent(repo) +
-        (modo === "img" ? "&tipo=img" : "") + "&k=" + encodeURIComponent(KEY))
+        (modo === "img" ? "&tipo=img" : "") + "&k=" + encodeURIComponent(KEY), ctrl ? { signal: ctrl.signal } : {})
     .then(function(r){
       return r.json().catch(function(){ throw new Error("Risposta non valida dal server (" + r.status + ")"); });
     })
     .then(function(j){
       if (mio !== seq) return;                         // risposta vecchia: ignorata
-      load.style.display = "none";
-      if (j.error){ out.innerHTML = '<div class="empty err">' + esc(j.error) + "</div>"; renderCfg(); return; }
-      data = (j.results || []).filter(function(d){ return !CODICE.test(d.path || "") && !CODICE.test(d.name || ""); });
-      if (modo === "img") data = data.filter(function(d){ return d.type === "img"; });
-      page = 1; nImg = PER_IMG; fmt = "tutti";
-      typeF = (modo === "web" && pref && data.some(function(d){ return d.type === pref; })) ? pref : "tutti";
-      if (data.length) salvaRecente(term);
-      renderCfg(); show();
-      if (j.errors && j.errors.length) bar.innerHTML += " · alcune fonti non hanno risposto";
+      if (!j.error && !(j.errors && j.errors.length)){
+        if (Object.keys(cache).length > 40) cache = {};
+        cache[ck] = j;
+      }
+      applica(j, term);
     })
     .catch(function(err){
       if (mio !== seq) return;
-      load.style.display = "none";
+      load.style.display = "none"; res.classList.remove("busy");
       out.innerHTML = '<div class="empty err">Errore di rete: ' + esc(err.message || "riprova tra poco") + ".</div>";
     });
 }
@@ -685,7 +707,7 @@ function aggiornaBarra(){ sb.classList.toggle("has", q.value.length > 0); }
 q.addEventListener("input", function(){
   aggiornaBarra(); hint.classList.remove("on");
   clearTimeout(timer);
-  timer = setTimeout(search, 500);                     // cerca mentre scrivi
+  timer = setTimeout(search, 280);                     // cerca mentre scrivi
 });
 $("f").addEventListener("submit", function(e){ e.preventDefault(); clearTimeout(timer); search(); });
 clr.addEventListener("click", function(){ q.value = ""; aggiornaBarra(); clearTimeout(timer); vaiHome(); q.focus(); });
