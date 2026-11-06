@@ -64,12 +64,12 @@
   }
 
   // Risolve i codici salvati in atto.luoghi nei rispettivi nomi leggibili,
-  // leggendo organi.json dal repo pubblico RETEFORLIVESE/DATA (stessa fonte
+  // leggendo organi.json dal repo dati (privato) tramite /api/data (stessa fonte
   // usata in redazione.js per compilare l'elenco). Se un codice non viene
   // trovato nella mappa, si mostra il codice stesso.
   async function caricaMappaLuoghi() {
     try {
-      const res = await fetch("https://raw.githubusercontent.com/RETEFORLIVESE/DATA/main/organi.json", { cache: "no-store" });
+      const res = await fetch("/api/data?file=organi.json", { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const dati = await res.json();
       const luoghi = (dati && dati.luoghi) || {};
