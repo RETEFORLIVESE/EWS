@@ -14,6 +14,7 @@ const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   //
 const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
 const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
 const ICONA = process.env.SITO_LOGO || '';                   // ultima riserva per il logo (facoltativa); il logo vero si legge dall'HTML della pagina
+const ICONA_SENTENZE = SITO + '/lex/CorteCostituzionale.png';   // favicon delle sentenze
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
@@ -86,10 +87,11 @@ function estratto(plain, termini) {
 // ---- sentenze della Corte Costituzionale e dossier, scritti dentro atti.json ----
 // Si riconoscono in 3 modi: (a) liste dentro ogni atto con una chiave tipo "sentenze", "dossier", "corte_costituzionale";
 // (b) liste a livello alto del file (accanto a "atti"); (c) atti la cui categoria/tipo dice "sentenza" o "dossier".
-const RX_ALLEGATI = /sentenz|dossier|cortecost|corte_cost|corte-cost|consulta/i;
+const RX_ALLEGATI = /pronunc|sentenz|dossier|cortecost|corte_cost|corte-cost|consulta/i;   // nel tuo atti.json: "pronunce" (sentenze), "dossier" e "dossiers"
 const NON_TESTO = (k, v) => (k === 'logo' || k === 'colore' || k === 'immagine' || k === 'contenuto' ? undefined : v);
 const primo = (...v) => v.find((x) => typeof x === 'string' && x.trim()) || '';
 const soloHttp = (s) => (/^https?:\/\//i.test(String(s || '').trim()) ? String(s).trim() : '');
+const RUMORE = new Set(['copertina', 'creataIl', 'aggiornato', 'firmataDa', 'statoPrecedente', 'etichettaPrima', 'etichettaDopo', 'colore', 'livello', 'modifiche', 'marcaPdf']);
 const testoDi = (o, escludi) => JSON.stringify(o, (k, v) => (escludi && escludi(k) ? undefined : NON_TESTO(k, v)), ' ').replace(/[{}\[\]":,]/g, ' ').replace(/\s+/g, ' ');
 
 function classifica(it) {                                   // un atto che e' in realta' una sentenza o un dossier
@@ -104,17 +106,24 @@ function schedaAllegato(e, tipo, genitore, urlGenitore, cfg) {
   if (typeof e === 'string') e = soloHttp(e) ? { url: e } : { titolo: e };
   const nGen = genitore && (genitore.titolo || genitore.nome || genitore.id) ? String(genitore.titolo || genitore.nome || genitore.id) : '';
   const num = e.numero && e.anno ? 'n. ' + e.numero + '/' + e.anno : e.numero ? 'n. ' + e.numero : '';
-  const name = primo(e.titolo, e.nome, e.oggetto, e.denominazione) ||
-    via(ETICHETTA[tipo], num, !num && nGen ? nGen : '');
+  let name;
+  if (tipo === 'sentenza') {                               // pronunce: "Sentenza n. 1/2026 — oggetto"
+    const ogg = primo(e.oggetto, e.titolo, e.nome);
+    name = ogg ? via('Sentenza ' + num, ogg).replace(' · ', ' — ') : via('Sentenza', num, nGen);
+  } else {
+    name = primo(e.titolo, e.nome, e.oggetto, e.denominazione) || via('Dossier', num, nGen);
+  }
   const proprio = soloHttp(e.url || e.link || e.pdf || e.href);
   const plain = testoPulito(primo(e.testo, e.contenuto));
   const s = {
     name,
-    path: via(tipo === 'sentenza' ? 'Corte Costituzionale' : 'Dossier', num, e.data || '', nGen ? 'in: ' + nGen : ''),
-    snippet: primo(e.massima, e.sommario, e.sintesi, e.descrizione, e.dispositivo) || '',
+    path: tipo === 'sentenza'
+      ? via('Corte Costituzionale', num, e.data || '', e.effetto || '', nGen ? 'in: ' + nGen : '')
+      : via('Dossier', e.ente || '', e.data || '', nGen ? 'in: ' + nGen : ''),
+    snippet: testoPulito(primo(e.massima, e.sommario, e.sintesi, e.presentazione, e.motivazione, e.descrizione, e.dispositivo, e.sottotitolo)),
     url: proprio || urlGenitore,
   };
-  return { tipo, label: proprio ? 'Apri il documento' : cfg.label, s, plain, dati: testoDi(e), proprio: !!proprio };
+  return { tipo, label: proprio ? 'Apri il documento' : cfg.label, s, plain, dati: testoDi(e, (k) => RUMORE.has(k)), proprio: !!proprio };
 }
 
 function allegatiDi(json, lista, cfg) {
@@ -395,6 +404,7 @@ async function arricchisciIcone(lista) {
   for (const d of lista) {
     const delSito = d.url.startsWith(SITO) || d.url.startsWith(SITO_IMG);
     d.icon = d.type === 'img' ? '' : (d._url && trovate.get(d._url)) || (delSito ? logoHome : '') || (delSito ? ICONA : '');
+    if (d.type === 'sentenza') d.icon = ICONA_SENTENZE;          // le sentenze usano sempre il logo della Corte Costituzionale
     delete d._url; delete d._rp;
   }
 }
