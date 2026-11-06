@@ -52,7 +52,7 @@
   .cc-dati{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem 1.5rem;margin:0;padding-top:.8rem;border-top:1px solid #8885}
   .cc-dati dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;opacity:.65;margin:0 0 .15rem}
   .cc-dati dd{margin:0;font-size:.92rem}
-  .cc-pareri{align-items:start}
+  .cc-colonne.cc-pareri{grid-template-columns:1fr;align-items:start;gap:1rem}
   .cc-pareri .cc-lbl{font-size:.8rem;font-weight:600;margin:0 0 .5rem}
   .cc-vuoto,.cc-err{padding:2rem 0;text-align:center}
   .cc-err{color:#c0392b}
