@@ -15,6 +15,7 @@ const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAkt
 const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
 const ICONA = process.env.SITO_LOGO || '';                   // ultima riserva per il logo (facoltativa); il logo vero si legge dall'HTML della pagina
 const ICONA_SENTENZE = SITO + '/lex/CorteCostituzionale.png';   // favicon delle sentenze
+const ICONA_CTSU = process.env.CTSU_LOGO || '';              // (facoltativa) indirizzo del logo del CTSU: se impostata, ha la precedenza su quello letto dalla pagina
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
@@ -44,12 +45,14 @@ const DATASET = {
   },
   'ctsu.json': {                                             // progetti del CTSU -> /lex/ctsu.html?id=<id>
     chiave: 'progetti', tipo: 'progetto', label: 'Apri sul CTSU', pagina: '/lex/ctsu.html',
+    pagine: ['/lex/ctsu.html', '/lex/CTSU.html', '/ctsu.html', '/CTSU.html'],   // pagine da cui leggere il logo (si prova la prima che ne ha uno)
+    icona: ICONA_CTSU,
     escludi: ['copertina', 'galleria'], html: true,          // niente indirizzi di immagini nel testo cercato; i tag HTML delle sezioni vengono tolti
     scheda: (it) => ({
       name: it.titolo || it.nome || it.id,
       path: via('CTSU', it.categoria, it.stato, it.organo_responsabile),
       snippet: it.sommario || it.descrizione || '',
-      url: SITO + '/lex/ctsu.html?id=' + encodeURIComponent(it.id),
+      url: SITO + '/lex/ctsu.html?id=' + encodeURIComponent(it.id) + '#' + encodeURIComponent(it.id),   // id sia come parametro sia come #: la pagina legge quello che usa (da confermare con ctsu.html)
     }),
   },
   'wiki.json': {                                             // pagine della wiki -> /lex/wiki.html#id
@@ -225,14 +228,16 @@ function pannelloWiki(it, s) {
   let estratto = '';
   for (const b of corpo.split(/\n\s*\n/)) {
     const t = senzaMarkup(b.split('\n').map((r) => r.trim().replace(AL, '')).filter((r) => !/^(#|>|---|[-*+]\s|\d+\.\s|\||!|\{\{|\}\})/.test(r)).join(' '));
-    if (t.length >= 40) { estratto = accorcia(t, 340); break; }
+    if (t.length >= 40) { estratto = accorcia(t, 480); break; }
   }
-  if (!estratto) estratto = accorcia(senzaMarkup(it.sommario), 340);
+  // descrizione = il sommario scritto in redazione; estratto = l'inizio vero del testo dell'articolo (sotto la descrizione)
+  let descrizione = accorcia(senzaMarkup(it.sommario), 220);
+  if (descrizione && estratto && (norm(estratto).startsWith(norm(descrizione)) || norm(descrizione).startsWith(norm(estratto)))) descrizione = '';   // niente doppioni
   return {
     titolo: s.name,
     categoria: it.categoria || '',
     tag: (Array.isArray(it.tag) ? it.tag : []).slice(0, 4),
-    estratto, immagine: img,
+    descrizione, estratto, immagine: img,
     url: s.url, label: 'Leggi sulla Wiki', icon: '',
   };
 }
@@ -350,6 +355,7 @@ async function cercaNeiDataset(repo, termini) {
         label,
         icon: '',
         _url: s.url.startsWith(SITO) ? SITO + cfg.pagina : '', _rp: cfg.pagina.slice(1),   // pagina da cui leggere il logo
+        _alt: cfg.pagine || null, _ico: cfg.icona || '',
         score,
       });
     }
@@ -500,11 +506,24 @@ async function arricchisciIcone(lista) {
     logoDi(SITO + '/', 'index.html'),
     ...[...bersagli].map(async ([u, p]) => { trovate.set(u, await logoDi(u, p)); }),
   ]);
+  // risultati con piu' pagine possibili (es. CTSU): si prova una dopo l'altra, la prima con un logo vince
+  const alternative = new Map();
+  for (const d of lista) {
+    if (!d._alt || d._ico || d.type === 'img') continue;
+    const k = d._alt.join('|');
+    if (!alternative.has(k)) {
+      alternative.set(k, (async () => {
+        for (const p of d._alt) { const ic = await logoDi(SITO + p, p.slice(1)).catch(() => ''); if (ic) return ic; }
+        return '';
+      })());
+    }
+    d._altIcona = await alternative.get(k);
+  }
   for (const d of lista) {
     const delSito = d.url.startsWith(SITO) || d.url.startsWith(SITO_IMG);
-    d.icon = d.type === 'img' ? '' : (d._url && trovate.get(d._url)) || (delSito ? logoHome : '') || (delSito ? ICONA : '');
+    d.icon = d.type === 'img' ? '' : d._ico || d._altIcona || (d._url && trovate.get(d._url)) || (delSito ? logoHome : '') || (delSito ? ICONA : '');
     if (d.type === 'sentenza') d.icon = ICONA_SENTENZE;          // le sentenze usano sempre il logo della Corte Costituzionale
-    delete d._url; delete d._rp;
+    delete d._url; delete d._rp; delete d._alt; delete d._ico; delete d._altIcona;
   }
 }
 
