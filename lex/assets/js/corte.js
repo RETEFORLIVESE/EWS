@@ -1,261 +1,169 @@
-// api/corte.js — endpoint della Corte Costituzionale (file unico: store + diff + handler).
-//   GET  /api/corte                -> elenco pubblico delle pronunce (derivato dagli atti)
-//   GET  /api/corte?atti=1         -> (con token) elenco sintetico degli atti per la redazione
-//   GET  /api/corte?atto=<id>      -> (con token) atto completo da modificare
-//   POST {azione:"login", username, password}
-//   POST {azione:"login-estji", id_token}   -> accesso con Estji ID (portale "corte", permesso "corte.edit")
-//   POST {azione:"pubblica", ...}  -> (con token) applica la pronuncia all'atto
-//
-// Variabili d'ambiente (nel progetto "ews" ci sono già): AUTH_SECRET, GITHUB_TOKEN, GITHUB_DATA_REPO, GITHUB_DATA_BRANCH.
-// Facoltativa: CORTE_USERS = "utente1:password1:Nome,utente2:password2:Altro" per il login con password
-// (senza, si entra solo con Estji ID). CORTE_SECRET, se presente, sostituisce AUTH_SECRET per firmare le sessioni.
-//
-// NOTA: questo file sostituisce api/_corte-store.js e api/_corte-diff.js, che si possono eliminare.
-// Se cambi la logica di diffArticoli, aggiorna anche assets/js/corte-diff.js (copia lato browser).
+// assets/js/corte.js — pagina pubblica "Pronunce" della Corte Costituzionale (browser).
+// Dipende da: corte-diff.js (CorteDiff), corte-api.js (CorteAPI), corte-layout.js (renderTestataCorte/Footer).
+// NON è l'endpoint server: quello sta in api/corte.js.
+(function () {
+  "use strict";
 
-import crypto from "crypto";
-import { leggiFileJson, scriviFileJson } from "./_github.js";
-import { verificaIdToken, haScope } from "./_estji-verifica.js";   // già presente nelle api dei portali
+  const esc = CorteDiff.esc;
+  const root = document.getElementById("corte-root");
 
-const TIPI = ["modifica", "annullamento", "abrogazione"];
-const PERICOLOSO = /<\s*(script|iframe|object|embed|style)|\son\w+\s*=|javascript:/i;
+  const TIPI = {
+    modifica: "Modifica",
+    annullamento: "Annullamento",
+    abrogazione: "Abrogazione"
+  };
+  const stato = { tutte: [], tipo: "", q: "" };
 
-/* =====================================================================
-   STORE — accesso agli atti: IDENTICO a NormAktiv (api/atti.js).
-   Gli atti sono in atti.json nella repo DATA (privata).
-   ===================================================================== */
-const FILE = "atti.json";
+  /* ---------- stili minimi (si aggiungono a corte.css, non lo sostituiscono) ---------- */
+  const css = `
+  .cc-filtri{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.5rem 0}
+  .cc-filtri input,.cc-filtri select{padding:.55rem .7rem;font:inherit;border:1px solid #8884;border-radius:4px;background:transparent;color:inherit}
+  .cc-filtri input{flex:1 1 240px}
+  .cc-conteggio{opacity:.7;margin:0 0 1rem;font-size:.9rem}
+  .cc-lista{display:grid;gap:1rem;margin-bottom:2rem}
+  .cc-card{border:1px solid #8884;border-left:4px solid #888;border-radius:4px;padding:1rem 1.2rem}
+  .cc-card.t-modifica{border-left-color:#d9a400}
+  .cc-card.t-annullamento{border-left-color:#c0392b}
+  .cc-card.t-abrogazione{border-left-color:#7f8c8d}
+  .cc-testa{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline;justify-content:space-between}
+  .cc-sent{font-weight:700;font-size:1.05rem;margin:0}
+  .cc-badge{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;padding:.15rem .5rem;border-radius:3px;border:1px solid currentColor}
+  .cc-meta{opacity:.75;font-size:.88rem;margin:.3rem 0}
+  .cc-ogg{margin:.6rem 0;font-weight:600}
+  .cc-card h4{margin:1rem 0 .3rem;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;opacity:.8}
+  .cc-testo{white-space:pre-wrap;margin:0}
+  .cc-card details{margin-top:.8rem}
+  .cc-card summary{cursor:pointer;font-weight:600}
+  .cc-mod{border:1px solid #8883;border-radius:4px;padding:.7rem .9rem;margin:.6rem 0}
+  .cc-mod strong{display:block;margin-bottom:.3rem}
+  .cc-az{font-size:.75rem;text-transform:uppercase;opacity:.7;margin-left:.4rem}
+  .cc-diff{white-space:pre-wrap;margin:.3rem 0;font-family:inherit}
+  .cc-diff del{background:#e74c3c33;text-decoration:line-through}
+  .cc-diff ins{background:#27ae6033;text-decoration:none}
+  .cc-vuoto,.cc-err{padding:2rem 0;text-align:center;opacity:.8}
+  .cc-err{color:#c0392b;opacity:1}
+  `;
+  const st = document.createElement("style");
+  st.textContent = css;
+  document.head.appendChild(st);
 
-// atti.json può essere un array oppure { atti: [...] } (stessa tolleranza di atti.js)
-function estraiAtti(registro) {
-  if (Array.isArray(registro)) return registro;
-  if (registro && Array.isArray(registro.atti)) return registro.atti;
-  return [];
-}
-
-async function leggiAtti() {
-  const registro = await leggiFileJson(FILE, { atti: [] });
-  return { atti: estraiAtti(registro) };
-}
-
-// Come salva-atti di NormAktiv, scrive sempre { atti: [...] }.
-async function scriviAtti(_letto, atti, messaggio) {
-  await scriviFileJson(FILE, { atti }, messaggio || "Corte Costituzionale: pubblicazione pronuncia");
-}
-
-/* =====================================================================
-   DIFF — confronto tra due versioni degli articoli
-   ===================================================================== */
-const eTitolo = a => !!a && a.tipo === "titolo";
-
-function commiDi(art) {
-  if (art && Array.isArray(art.commi) && art.commi.length) {
-    return art.commi.map(c => ({
-      testo: (c.testo || "").trim(),
-      sottocommi: (c.sottocommi || []).map(s => (s || "").trim()).filter(Boolean)
-    }));
+  /* ---------- utilità ---------- */
+  function dataLeggibile(p) {
+    if (p.data) return p.data;
+    if (p.creataIl) {
+      const d = new Date(p.creataIl);
+      if (!isNaN(d)) return d.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    }
+    return "";
   }
-  return [{ testo: ((art && art.testo) || "").trim(), sottocommi: [] }];
-}
-const chiaveArt = a => String(a.numero == null ? "" : a.numero).trim();
-const firmaArt = a => JSON.stringify({ r: (a.rubrica || "").trim(), c: commiDi(a) });
-const istantanea = a => ({ numero: chiaveArt(a), rubrica: (a.rubrica || "").trim(), commi: commiDi(a) });
 
-function diffArticoli(prima, dopo) {
-  prima = prima || []; dopo = dopo || [];
-  const out = [];
-  const mapPrima = new Map(), mapDopo = new Map();
-  prima.filter(a => !eTitolo(a)).forEach(a => { if (!mapPrima.has(chiaveArt(a))) mapPrima.set(chiaveArt(a), a); });
-  dopo.filter(a => !eTitolo(a)).forEach(a => { if (!mapDopo.has(chiaveArt(a))) mapDopo.set(chiaveArt(a), a); });
-  mapPrima.forEach((a, k) => {
-    const b = mapDopo.get(k);
-    if (!b) out.push({ azione: "soppresso", riferimento: "Art. " + k, numero: k, prima: istantanea(a), dopo: null });
-    else if (firmaArt(a) !== firmaArt(b)) out.push({ azione: "modificato", riferimento: "Art. " + k, numero: k, prima: istantanea(a), dopo: istantanea(b) });
-  });
-  mapDopo.forEach((b, k) => {
-    if (!mapPrima.has(k)) out.push({ azione: "aggiunto", riferimento: "Art. " + k, numero: k, prima: null, dopo: istantanea(b) });
-  });
-  const tPrima = prima.filter(eTitolo).map(t => (t.testo || "").trim());
-  const tDopo = dopo.filter(eTitolo).map(t => (t.testo || "").trim());
-  tPrima.filter(t => !tDopo.includes(t)).forEach(t => out.push({ azione: "titolo-soppresso", riferimento: t, testoTitolo: t }));
-  tDopo.filter(t => !tPrima.includes(t)).forEach(t => out.push({ azione: "titolo-aggiunto", riferimento: t, testoTitolo: t }));
-  return out;
-}
-
-/* =====================================================================
-   AUTENTICAZIONE
-   ===================================================================== */
-const b64 = b => Buffer.from(b).toString("base64url");
-// Chiave di firma derivata da AUTH_SECRET con una etichetta propria: le sessioni della Corte
-// non valgono per gli altri sistemi e viceversa.
-const haSegreto = () => !!(process.env.CORTE_SECRET || process.env.AUTH_SECRET);
-const hmac = s => crypto.createHmac("sha256",
-  crypto.createHmac("sha256", process.env.CORTE_SECRET || process.env.AUTH_SECRET || "").update("corte-sessione").digest())
-  .update(s).digest("base64url");
-
-function uguali(a, b) {
-  const x = Buffer.from(String(a)), y = Buffer.from(String(b));
-  return x.length === y.length && crypto.timingSafeEqual(x, y);
-}
-function utenti() {
-  return (process.env.CORTE_USERS || "").split(",").map(s => s.trim()).filter(Boolean).map(s => {
-    const [u, p, ...n] = s.split(":");
-    return { u, p, nome: n.join(":") || u };
-  });
-}
-function creaToken(u) {
-  const corpo = b64(JSON.stringify({ u: u.u, nome: u.nome, exp: Date.now() + 8 * 3600 * 1000 }));
-  return corpo + "." + hmac(corpo);
-}
-function leggiToken(req) {
-  const h = req.headers.authorization || "";
-  const t = h.startsWith("Bearer ") ? h.slice(7) : "";
-  const [corpo, firma] = t.split(".");
-  if (!corpo || !firma || !haSegreto() || !uguali(hmac(corpo), firma)) return null;
-  try {
-    const p = JSON.parse(Buffer.from(corpo, "base64url").toString("utf8"));
-    return p.exp > Date.now() ? p : null;
-  } catch (e) { return null; }
-}
-
-/* =====================================================================
-   UTILITÀ
-   ===================================================================== */
-const testo = (v, max) => (v == null ? "" : String(v)).trim().slice(0, max);
-function errore(res, code, message) { res.status(code).json({ success: false, message }); }
-
-function pulisciArticoli(arr) {
-  if (!Array.isArray(arr) || !arr.length) throw new Error("Elenco articoli mancante.");
-  if (arr.length > 500) throw new Error("Troppi articoli.");
-  const out = arr.map(a => {
-    if (a && a.tipo === "titolo") return { tipo: "titolo", testo: testo(a.testo, 300) };
-    const commi = (Array.isArray(a.commi) ? a.commi : []).map(c => ({
-      testo: testo(c.testo, 20000),
-      sottocommi: (Array.isArray(c.sottocommi) ? c.sottocommi : []).map(s => testo(s, 10000)).filter(Boolean)
-    }));
-    if (!commi.length) commi.push({ testo: "", sottocommi: [] });
-    return { numero: testo(a.numero, 20) || "1", rubrica: testo(a.rubrica, 300), commi };
-  });
-  if (PERICOLOSO.test(JSON.stringify(out))) throw new Error("Il testo contiene codice non consentito.");
-  return out;
-}
-
-function pronunceDi(atti) {
-  const out = [];
-  atti.forEach(a => (a.pronunce || []).forEach(p => out.push({
-    ...p,
-    atto: { id: a.id, titolo: a.titolo, categoria: a.categoria, numero: a.numero, anno: a.anno, stato: a.stato }
-  })));
-  return out.sort((x, y) => (y.creataIl || "").localeCompare(x.creataIl || ""));
-}
-
-/* =====================================================================
-   HANDLER
-   ===================================================================== */
-export default async function handler(req, res) {
-  res.setHeader("Cache-Control", "no-store");
-  try {
-    if (req.method === "GET") {
-      const q = req.query || {};
-      const { atti } = await leggiAtti();
-
-      if (q.atti || q.atto) {
-        if (!leggiToken(req)) return errore(res, 401, "Sessione scaduta: effettua di nuovo l'accesso.");
-        if (q.atto) {
-          const a = atti.find(x => x.id === q.atto);
-          return a ? res.status(200).json({ success: true, atto: a }) : errore(res, 404, "Atto non trovato.");
-        }
-        return res.status(200).json({
-          success: true,
-          atti: atti.map(a => ({
-            id: a.id, titolo: a.titolo, categoria: a.categoria, numero: a.numero, anno: a.anno,
-            stato: a.stato, nArticoli: (a.articoli || []).filter(x => x.tipo !== "titolo").length
-          }))
-        });
-      }
-      return res.status(200).json({ success: true, pronunce: pronunceDi(atti) });
-    }
-
-    if (req.method !== "POST") return errore(res, 405, "Metodo non consentito.");
-    const b = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
-
-    if (b.azione === "login") {
-      if (!haSegreto()) return errore(res, 500, "AUTH_SECRET non configurato.");
-      const u = utenti().find(x => uguali(x.u, testo(b.username, 80)) && uguali(x.p, testo(b.password, 200)));
-      if (!u) return errore(res, 401, "Credenziali errate");
-      return res.status(200).json({ success: true, token: creaToken(u), username: u.nome });
-    }
-
-    if (b.azione === "login-estji") {
-      if (!haSegreto()) return errore(res, 500, "AUTH_SECRET non configurato.");
-      let c;
-      try { c = await verificaIdToken(b.id_token, "corte"); }
-      catch (e) { return errore(res, 502, "Estji ID non raggiungibile: riprova tra poco."); }
-      if (!c) return errore(res, 401, "Accesso Estji ID non valido o scaduto.");
-      if (!haScope(c, "corte.edit")) {
-        const haRuolo = Array.isArray(c.roles) && c.roles.includes("giudice_corte");
-        return errore(res, 403, haRuolo && !c.vote_eligible
-          ? 'Hai il ruolo di giudice, ma il tuo Estji ID è ancora "In verifica": serve la verifica dello staff.'
-          : "Per la redazione della Corte serve il ruolo di Giudice Costituzionale.");
-      }
-      const nome = String(c.nick || c.sub || "Estji ID").slice(0, 80);
-      return res.status(200).json({ success: true, token: creaToken({ u: "estji:" + (c.sub || nome), nome }), username: nome });
-    }
-
-    if (b.azione === "pubblica") {
-      const sess = leggiToken(req);
-      if (!sess) return errore(res, 401, "Sessione scaduta: effettua di nuovo l'accesso.");
-
-      const tipo = testo(b.tipo, 20);
-      if (!TIPI.includes(tipo)) return errore(res, 400, "Tipo di pronuncia non valido.");
-      const meta = {
-        numero: testo(b.numero, 12), anno: testo(b.anno, 4), data: testo(b.data, 60),
-        oggetto: testo(b.oggetto, 300), motivazione: testo(b.motivazione, 20000),
-        dispositivo: testo(b.dispositivo, 5000), effetto: testo(b.effetto, 300),
-        collegio: testo(b.collegio, 500)
-      };
-      for (const k of ["numero", "anno", "data", "oggetto", "motivazione", "dispositivo"])
-        if (!meta[k]) return errore(res, 400, "Campo obbligatorio mancante: " + k + ".");
-      if (PERICOLOSO.test(JSON.stringify(meta))) return errore(res, 400, "Il testo contiene codice non consentito.");
-
-      const letto = await leggiAtti();           // riletto subito prima di scrivere
-      const atti = letto.atti;
-      const i = atti.findIndex(a => a.id === b.attoId);
-      if (i < 0) return errore(res, 404, "Atto non trovato.");
-      const atto = { ...atti[i] };
-
-      if (atto.stato === "annullato") return errore(res, 409, "L'atto è già stato annullato: non può essere ulteriormente modificato.");
-      if (tipo !== "annullamento" && atto.stato === "abrogato")
-        return errore(res, 409, "L'atto è già abrogato: si può solo annullare.");
-
-      const id = `s-${meta.anno}-${meta.numero}-${atto.id}`.slice(0, 120);
-      if ((atto.pronunce || []).some(p => p.id === id))
-        return errore(res, 409, "Esiste già una pronuncia con questo numero per questo atto.");
-
-      const pronuncia = {
-        id, tipo, ...meta,
-        creataIl: new Date().toISOString(), firmataDa: sess.nome,
-        statoPrecedente: atto.stato || "vigente", modifiche: []
-      };
-
-      if (tipo === "modifica") {
-        let nuovi;
-        try { nuovi = pulisciArticoli(b.articoli); } catch (e) { return errore(res, 400, e.message); }
-        pronuncia.modifiche = diffArticoli(atto.articoli || [], nuovi);
-        if (!pronuncia.modifiche.length) return errore(res, 400, "Nessuna modifica rilevata rispetto al testo vigente.");
-        atto.articoli = nuovi;
-      } else {
-        atto.stato = tipo === "annullamento" ? "annullato" : "abrogato";
-      }
-
-      atto.pronunce = [...(atto.pronunce || []), pronuncia];
-      atti[i] = atto;
-      await scriviAtti(letto, atti, `Corte Costituzionale: sentenza ${meta.numero}/${meta.anno} (${tipo}) su ${atto.id} — ${sess.nome}`);
-      return res.status(200).json({ success: true, pronuncia: { ...pronuncia, atto: { id: atto.id, titolo: atto.titolo } } });
-    }
-
-    return errore(res, 400, "Azione non riconosciuta.");
-  } catch (e) {
-    return errore(res, 500, e.message || "Errore del server");
+  function righeBlocco(snap, rubricaAltro) {
+    if (!snap) return "";
+    const righe = CorteDiff.righeArticolo(snap);
+    return (snap.rubrica ? "(" + snap.rubrica + ")\n" : "") + righe.join("\n");
   }
-}
+
+  /* ---------- rendering di una modifica ---------- */
+  function renderModifica(m) {
+    if (m.azione === "titolo-aggiunto" || m.azione === "titolo-soppresso") {
+      const ins = m.azione === "titolo-aggiunto";
+      return `<div class="cc-mod"><strong>Titolo<span class="cc-az">${ins ? "aggiunto" : "soppresso"}</span></strong>
+        <p class="cc-diff">${ins ? "<ins>" : "<del>"}${esc(m.testoTitolo)}${ins ? "</ins>" : "</del>"}</p></div>`;
+    }
+    const etichetta = { modificato: "modificato", aggiunto: "aggiunto", soppresso: "soppresso" }[m.azione] || m.azione;
+    let corpo = "";
+    if (m.azione === "modificato") {
+      const d = CorteDiff.htmlDiff(righeBlocco(m.prima), righeBlocco(m.dopo));
+      corpo = `<h4>Testo previgente</h4><p class="cc-diff">${d.prima}</p>
+               <h4>Nuovo testo</h4><p class="cc-diff">${d.dopo}</p>`;
+    } else if (m.azione === "aggiunto") {
+      corpo = `<h4>Nuovo testo</h4><p class="cc-diff"><ins>${esc(righeBlocco(m.dopo))}</ins></p>`;
+    } else {
+      corpo = `<h4>Testo soppresso</h4><p class="cc-diff"><del>${esc(righeBlocco(m.prima))}</del></p>`;
+    }
+    return `<div class="cc-mod"><strong>${esc(m.riferimento)}<span class="cc-az">${esc(etichetta)}</span></strong>${corpo}</div>`;
+  }
+
+  /* ---------- rendering di una pronuncia ---------- */
+  function renderPronuncia(p) {
+    const tipo = TIPI[p.tipo] ? p.tipo : "modifica";
+    const a = p.atto || {};
+    const mods = Array.isArray(p.modifiche) ? p.modifiche : [];
+    const atto = [a.titolo, a.numero && a.anno ? `n. ${a.numero}/${a.anno}` : ""].filter(Boolean).join(" — ");
+
+    return `
+    <article class="cc-card t-${tipo}" id="${esc(p.id)}">
+      <div class="cc-testa">
+        <h3 class="cc-sent">Sentenza n. ${esc(p.numero)}/${esc(p.anno)}</h3>
+        <span class="cc-badge">${esc(TIPI[tipo])}</span>
+      </div>
+      <p class="cc-meta">${esc(dataLeggibile(p))}${p.collegio ? " · Collegio: " + esc(p.collegio) : ""}</p>
+      <p class="cc-meta">Atto: ${esc(atto || a.id || "—")}${a.stato ? " (" + esc(a.stato) + ")" : ""}</p>
+      <p class="cc-ogg">${esc(p.oggetto)}</p>
+      <h4>Dispositivo</h4><p class="cc-testo">${esc(p.dispositivo)}</p>
+      ${p.effetto ? `<h4>Effetto</h4><p class="cc-testo">${esc(p.effetto)}</p>` : ""}
+      <details><summary>Motivazione</summary><p class="cc-testo">${esc(p.motivazione)}</p></details>
+      ${mods.length ? `<details><summary>Modifiche al testo (${mods.length})</summary>${mods.map(renderModifica).join("")}</details>` : ""}
+      ${p.firmataDa ? `<p class="cc-meta">Firmata da ${esc(p.firmataDa)}</p>` : ""}
+    </article>`;
+  }
+
+  /* ---------- filtri ---------- */
+  function filtrate() {
+    const q = stato.q.trim().toLowerCase();
+    return stato.tutte.filter(p => {
+      if (stato.tipo && p.tipo !== stato.tipo) return false;
+      if (!q) return true;
+      const a = p.atto || {};
+      return [p.numero, p.anno, p.oggetto, p.dispositivo, p.motivazione, p.collegio, a.titolo, a.id]
+        .some(v => String(v == null ? "" : v).toLowerCase().includes(q));
+    });
+  }
+
+  function aggiornaLista() {
+    const f = filtrate();
+    document.getElementById("cc-conteggio").textContent =
+      f.length === 1 ? "1 pronuncia" : f.length + " pronunce";
+    document.getElementById("cc-lista").innerHTML = f.length
+      ? f.map(renderPronuncia).join("")
+      : `<p class="cc-vuoto">Nessuna pronuncia trovata.</p>`;
+  }
+
+  function costruisciPagina() {
+    root.innerHTML = `
+      <h2>Pronunce della Corte</h2>
+      <div class="cc-filtri">
+        <input id="cc-q" type="search" placeholder="Cerca per numero, atto, oggetto…" aria-label="Cerca">
+        <select id="cc-tipo" aria-label="Tipo di pronuncia">
+          <option value="">Tutti i tipi</option>
+          ${Object.keys(TIPI).map(k => `<option value="${k}">${TIPI[k]}</option>`).join("")}
+        </select>
+      </div>
+      <p class="cc-conteggio" id="cc-conteggio"></p>
+      <div class="cc-lista" id="cc-lista"></div>`;
+    document.getElementById("cc-q").addEventListener("input", e => { stato.q = e.target.value; aggiornaLista(); });
+    document.getElementById("cc-tipo").addEventListener("change", e => { stato.tipo = e.target.value; aggiornaLista(); });
+    aggiornaLista();
+
+    // link diretto: corte.html#s-2026-1-atto
+    if (location.hash) {
+      const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (el) el.scrollIntoView();
+    }
+  }
+
+  /* ---------- avvio ---------- */
+  async function avvia() {
+    renderTestataCorte("home");
+    renderFooterCorte();
+    root.innerHTML = `<p class="cc-vuoto">Caricamento delle pronunce…</p>`;
+    try {
+      stato.tutte = await CorteAPI.pronunce();
+      costruisciPagina();
+    } catch (e) {
+      root.innerHTML = `<p class="cc-err">Impossibile caricare le pronunce: ${esc(e.message)}</p>`;
+    }
+  }
+
+  avvia();
+})();
