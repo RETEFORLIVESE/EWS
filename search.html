@@ -111,6 +111,9 @@ body[data-modo=img] #main{max-width:1200px}
 @keyframes shim{to{background-position:-200% 0}}
 .r{margin:0;padding:14px 16px 15px;overflow:hidden;border-radius:16px;transition:background .15s}
 .r:hover{background:var(--rowh)}
+.sep{display:flex;align-items:center;gap:12px;margin:10px 16px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--pline)}
+
 .r .t{margin:0;font-size:18.5px;font-weight:500;line-height:1.28;letter-spacing:-.012em;word-break:break-word}
 .r .t a{color:var(--link);text-decoration:none}
 .r .t a:hover{text-decoration:underline;text-underline-offset:3px}
@@ -509,7 +512,8 @@ function showWeb(){
 
   var pagine = Math.ceil(list.length / PER);
   if (page > pagine) page = pagine;
-  out.innerHTML = list.slice((page - 1) * PER, page * PER).map(function(d){
+  out.innerHTML = list.slice((page - 1) * PER, page * PER).map(function(d, i, arr){
+    var sep = (typeF === "tutti" && i > 0 && d.type !== "pagina" && arr[i - 1].type === "pagina") ? '<div class="sep" role="separator"><span>Altri risultati</span></div>' : "";
     var sg = sorgente(d.url);
     var fbk = sg.origin ? sg.origin + "/favicon.ico" : "";
     var ico = d.icon || fbk;
@@ -521,7 +525,7 @@ function showWeb(){
     var th = (d.type === "img" && src)
       ? '<a class="th" href="' + esc(d.url) + '" target="_blank" rel="noopener" tabindex="-1">' +
         '<img loading="lazy" src="' + esc(src) + '" alt=""' + (d.alt && d.alt !== src ? ' data-fb="' + esc(d.alt) + '"' : "") + "></a>" : "";
-    return '<div class="r">' + th +
+    return sep + '<div class="r">' + th +
       '<div class="src">' + fav + '<span class="sn"><span class="h">' + esc(sg.host) + ' <i class="tp" data-t="' + esc(d.type) + '">' + esc(nomeTipo(d.type)) + "</i></span>" +
         (sg.path ? '<span class="pth">' + esc(sg.path) + "</span>" : "") + "</span></div>" +
       '<h3 class="t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + hl(d.name, parole) + "</a></h3>" +
