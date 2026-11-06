@@ -52,7 +52,7 @@ const DATASET = {
       name: it.titolo || it.nome || it.id,
       path: via('CTSU', it.categoria, it.stato, it.organo_responsabile),
       snippet: it.sommario || it.descrizione || '',
-      url: SITO + '/lex/ctsu.html?id=' + encodeURIComponent(it.id) + '#' + encodeURIComponent(it.id),   // id sia come parametro sia come #: la pagina legge quello che usa (da confermare con ctsu.html)
+      url: SITO + '/lex/progetto.html?id=' + encodeURIComponent(it.id) + '#' + encodeURIComponent(it.id),   // id sia come parametro sia come #: la pagina legge quello che usa (da confermare con ctsu.html)
     }),
   },
   'wiki.json': {                                             // pagine della wiki -> /lex/wiki.html#id
