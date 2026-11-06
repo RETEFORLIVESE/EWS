@@ -13,9 +13,9 @@ const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   //
 // ---------------------------------------------------------------- RICERCA
 const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
 const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
-const ICONA = process.env.SITO_LOGO || 'https://raw.githubusercontent.com/RETEFORLIVESE/EWS/refs/heads/main/lex/CTSU.png';                   // ultima riserva per il logo (facoltativa); il logo vero si legge dall'HTML della pagina
+const ICONA = process.env.SITO_LOGO || '';                   // ultima riserva per il logo (facoltativa); il logo vero si legge dall'HTML della pagina
 const ICONA_SENTENZE = SITO + '/lex/CorteCostituzionale.png';   // favicon delle sentenze
-const ICONA_CTSU = process.env.CTSU_LOGO || '';              // (facoltativa) indirizzo del logo del CTSU: se impostata, ha la precedenza su quello letto dalla pagina
+const ICONA_CTSU = process.env.CTSU_LOGO || 'https://raw.githubusercontent.com/RETEFORLIVESE/EWS/refs/heads/main/lex/CTSU.png';              // (facoltativa) indirizzo del logo del CTSU: se impostata, ha la precedenza su quello letto dalla pagina
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
