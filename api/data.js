@@ -213,13 +213,13 @@ function pannelloWiki(it, s) {
   // scheda infobox (sintassi di wiki-core.js): {{infobox Titolo  ... }}
   //   "Etichetta: valore" = riga dati · "![](https://...)" = immagine · "## Sezione" = intestazione · testo semplice = didascalia
   const blocco = (md.match(/\{\{\s*infobox[\s\S]*?\}\}/i) || [''])[0];
-  let img = soloHttp(it.copertina);                        // "Immagine di copertina" della pagina: ha la precedenza
+  let img = soloHttp(it.immagine) || soloHttp(it.copertina);   // "Immagine in testa" per prima, poi "Immagine di copertina"
   for (const grezza of blocco.split('\n').slice(1)) {      // dell'infobox serve solo l'eventuale immagine (la tabella non si mostra)
     const im = grezza.trim().replace(AL, '').match(/^!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/);
     if (im && !img) img = buona(im[1]);
   }
   const corpo = md.replace(blocco, ' ');
-  if (!img) img = soloHttp(it.immagine || it.logo);
+  if (!img) img = soloHttp(it.logo);
   if (!img) { const re = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)/g; let mm; while (!img && (mm = re.exec(corpo))) img = buona(mm[1]); }
   // estratto: primo paragrafo di testo vero (niente titoli, immagini, elenchi, citazioni, tabelle)
   let estratto = '';

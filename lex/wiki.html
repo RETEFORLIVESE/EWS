@@ -161,7 +161,7 @@
     $('pTitolo').textContent = p.titolo;
     $('pMeta').innerHTML = (p.categoria ? `<span class="tag">${E(p.categoria)}</span>` : '') + (p.tag || []).map(t => `<a href="#" data-t="${E(t)}">#${E(t)}</a>`).join(' ') +
       `<span>Ultima modifica: ${E(Wiki.data(p.modificata))}${p.modificataDa ? ' · ' + E(p.modificataDa) : ''}</span>`;
-    $('pTesto').innerHTML = (p.immagine ? `<img src="${E(p.immagine)}" alt="">` : '') + Wiki.render(p.contenuto, pagine);
+    $('pTesto').innerHTML = Wiki.render(p.contenuto, pagine);   // p.immagine ("Immagine in testa") non si mostra qui: serve solo alla ricerca
     const eCat = /^\s*categoria\s*:/i.test(p.titolo), el = eCat ? Wiki.catElenco(pagine) : null;   // pagina di categoria: sotto il testo l'elenco automatico
     $('pCat').innerHTML = (eCat ? Wiki.catVista(el.find(x => x.id === p.id) || { nome: p.titolo.replace(/^\s*categoria\s*:\s*/i, ''), membri: [] }, el) : '') + Wiki.catBox(Wiki.catDi(p), pagine);
     const rif = eCat ? [] : pagine.filter(x => x.id !== p.id && idx(x).lc.includes('[[' + p.titolo.toLowerCase()) && new RegExp('\\[\\[' + p.titolo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\||\\]\\])', 'i').test(x.contenuto || ''));
