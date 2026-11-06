@@ -13,7 +13,7 @@ const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   //
 // ---------------------------------------------------------------- RICERCA
 const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
 const SITO_IMG = (process.env.SITO_IMG || SITO).replace(/\/+$/, '');   // dove vivono online le immagini (repo IMG)
-const ICONA = process.env.SITO_LOGO || SITO + '/favicon.ico';   // logo mostrato accanto ai risultati del sito (se manca, la pagina mostra una lettera)
+const ICONA = process.env.SITO_LOGO || '';                   // ultima riserva per il logo (facoltativa); il logo vero si legge dall'HTML della pagina
 const SCADENZA = 10 * 60 * 1000;                             // cache in memoria: 10 minuti
 const ESCLUSI = ['unitext.json'];                            // bozze: mai nei risultati
 const IGNORATI = /(^|\/)(node_modules|\.git|\.github|api)\//i;   // cartelle tecniche: mai nei risultati
@@ -23,7 +23,7 @@ const SCRIPT = /\.(m?js|cjs|jsx|tsx?|css|scss|sass|less|map)$/i;   // codice e s
 const via = (...v) => v.filter(Boolean).join(' · ');
 const DATASET = {
   'atti.json': {
-    chiave: 'atti', tipo: 'atto', label: 'Apri su NormAktiv',
+    chiave: 'atti', tipo: 'atto', label: 'Apri su NormAktiv', pagina: '/lex/atto.html',
     scheda: (it) => ({
       name: it.titolo || it.nome || it.id,
       path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
@@ -32,7 +32,7 @@ const DATASET = {
     }),
   },
   'progetti.json': {
-    chiave: 'progetti', tipo: 'progetto', label: 'Apri su NormAktiv',
+    chiave: 'progetti', tipo: 'progetto', label: 'Apri su NormAktiv', pagina: '/lex/progetto.html',
     scheda: (it) => ({
       name: it.titolo || it.nome || it.id,
       path: via(it.categoria, it.numero && it.anno ? 'n. ' + it.numero + '/' + it.anno : '', it.stato),
@@ -41,18 +41,16 @@ const DATASET = {
     }),
   },
   'wiki.json': {                                             // pagine della wiki -> /lex/wiki.html#id
-    chiave: 'pagine', tipo: 'wiki', label: 'Apri sulla Wiki',
+    chiave: 'pagine', tipo: 'wiki', label: 'Apri sulla Wiki', pagina: '/lex/wiki.html',
     scheda: (it) => ({
       name: it.titolo || it.id,
       path: via(it.categoria, ...(Array.isArray(it.tag) ? it.tag : [])),
       snippet: it.sommario || '',
       url: SITO + '/lex/wiki.html#' + encodeURIComponent(it.id),
-      // logo della pagina: il campo "immagine" oppure la prima immagine dell'infobox (bandiera/stemma)
-      icon: /^https?:\/\//i.test(it.immagine || '') ? pulisciUrl(it.immagine) : primaImmagine(it.contenuto),
     }),
   },
   'elezioni.json': {                                         // consultazioni -> /CEPU.html?tipo=..&data=..&comune=..
-    chiave: 'elezioni', tipo: 'elezione', label: 'Apri i risultati',
+    chiave: 'elezioni', tipo: 'elezione', label: 'Apri i risultati', pagina: '/CEPU.html',
     scheda: (it) => {
       const partiti = (it.risultati_partiti || []).map((p) => p.nome).filter(Boolean);
       return {
@@ -66,12 +64,6 @@ const DATASET = {
 };
 
 // prima immagine (https) di un testo markdown: ![](https://...)
-const pulisciUrl = (u) => String(u || '').replace(/([^:])\/{2,}/g, '$1/');   // "main//x.png" -> "main/x.png"
-function primaImmagine(testo) {
-  const m = String(testo || '').match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/i);
-  return m ? pulisciUrl(m[1]) : '';
-}
-
 // testo "da leggere" di una scheda: niente link, immagini o marcatori wiki (per cercare e per mostrare l'estratto)
 const testoPulito = (s) => String(s || '')
   .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')                     // immagini markdown
@@ -180,7 +172,8 @@ async function cercaNeiDataset(repo, termini) {
         snippet: s.snippet || estratto(plain, termini),
         url: s.url,
         label: cfg.label,
-        icon: s.icon || ICONA,
+        icon: '',
+        _url: SITO + cfg.pagina, _rp: cfg.pagina.slice(1),   // pagina da cui leggere il logo
         score,
       });
     }
@@ -227,9 +220,67 @@ async function cercaNellaRepo(nome, repo, termini, q, soloImg) {
       raw: tipo === 'img' ? sulSito : null,               // anteprima: dal sito
       // anteprima di riserva se il sito non serve il file (le immagini del sito e di IMG sono anche su GitHub)
       alt: tipo === 'img' && sulSito ? 'https://raw.githubusercontent.com/' + repo + '/HEAD/' + o.path.split('/').map(encodeURIComponent).join('/') : '',
-      icon: sulSito && tipo !== 'img' ? ICONA : '',        // logo del sito accanto al risultato
+      icon: '',
+      _url: sulSito && tipo === 'pagina' ? sulSito : '', _rp: o.path,   // pagina da cui leggere il logo
     };
   });
+}
+
+// ---------------------------------------------------------------- LOGO DELLA PAGINA
+// Si legge l'HTML della pagina che si apre e si prende il <link rel="icon"> (poi apple-touch-icon).
+function iconaDaHtml(html, base) {
+  const tag = String(html).slice(0, 80000).match(/<link\b[^>]*>/gi) || [];
+  let scelta = '', apple = '';
+  for (const t of tag) {
+    const a = {};
+    t.replace(/([a-zA-Z:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g, (_, k, d, s, n) => { a[k.toLowerCase()] = d ?? s ?? n; return ''; });
+    const rel = String(a.rel || '').toLowerCase().split(/\s+/);          // "shortcut icon" -> ['shortcut','icon']
+    const ic = rel.includes('icon'), ap = rel.includes('apple-touch-icon');
+    if (!a.href || (!ic && !ap)) continue;
+    const href = String(a.href).trim().replace(/&amp;/g, '&');
+    let url;
+    if (/^data:image\//i.test(href)) { if (href.length > 4000) continue; url = href; }      // icona incorporata nella pagina
+    else { try { url = new URL(href, base).href; } catch (_) { continue; } if (!/^https?:/i.test(url)) continue; }
+    if (ic && !scelta) scelta = url; else if (ap && !apple) apple = url;
+  }
+  return scelta || apple;
+}
+
+// HTML della pagina: prima dal sito online, poi (se non risponde) dal repo EWS
+async function htmlDi(url, percorsoRepo) {
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': 'ews-data-proxy', Accept: 'text/html' }, redirect: 'follow', signal: AbortSignal.timeout(3000) });
+    if (r.ok) return { html: await r.text(), base: r.url || url };
+  } catch (_) { /* si prova il repo */ }
+  if (percorsoRepo) {
+    try {
+      const org = dataRepo().split('/')[0];
+      const r = await fetch('https://api.github.com/repos/' + org + '/EWS/contents/' + percorsoRepo.split('/').map(encodeURIComponent).join('/'),
+        { headers: intestazioni(true), signal: AbortSignal.timeout(3000) });
+      if (r.ok) return { html: await r.text(), base: url };
+    } catch (_) { /* nessun logo */ }
+  }
+  return null;
+}
+const logoDi = (url, percorsoRepo) => inMemoria('logo:' + url, async () => {
+  const h = await htmlDi(url, percorsoRepo);
+  return h ? iconaDaHtml(h.html, h.base) : '';
+});
+
+// assegna a ogni risultato il logo letto dalla SUA pagina; se non c'e', quello della home del sito
+async function arricchisciIcone(lista) {
+  const bersagli = new Map();                                // pagina -> percorso nel repo (massimo 30 pagine diverse per ricerca)
+  for (const d of lista) if (d._url && !bersagli.has(d._url) && bersagli.size < 30) bersagli.set(d._url, d._rp);
+  const trovate = new Map();
+  const [logoHome] = await Promise.all([
+    logoDi(SITO + '/', 'index.html'),
+    ...[...bersagli].map(async ([u, p]) => { trovate.set(u, await logoDi(u, p)); }),
+  ]);
+  for (const d of lista) {
+    const delSito = d.url.startsWith(SITO) || d.url.startsWith(SITO_IMG);
+    d.icon = d.type === 'img' ? '' : (d._url && trovate.get(d._url)) || (delSito ? logoHome : '') || (delSito ? ICONA : '');
+    delete d._url; delete d._rp;
+  }
 }
 
 async function cercaTutto(req, res) {
@@ -257,7 +308,10 @@ async function cercaTutto(req, res) {
     const results = esiti.flatMap((e) => (e.status === 'fulfilled' ? e.value : []));
     const errors = esiti.filter((e) => e.status === 'rejected').map((e) => e.reason.message);
     results.sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
-    res.status(200).json({ count: results.length, results: results.slice(0, soloImg ? 400 : 200), errors });
+    const fuori = results.slice(0, soloImg ? 400 : 200);
+    if (!soloImg) await arricchisciIcone(fuori);              // logo della pagina (letto dal suo HTML)
+    else fuori.forEach((d) => { delete d._url; delete d._rp; });
+    res.status(200).json({ count: results.length, results: fuori, errors });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
