@@ -1,5 +1,6 @@
-// Vercel Serverless Function: legge un JSON dal repo privato RETEFORLIVESE/DATA
-// e lo restituisce al browser, senza mai esporre il token.
+// Vercel Serverless Function: legge QUALSIASI JSON dal repo privato RETEFORLIVESE/DATA
+// (atti, organi, ctsu, piani economici, dossier, wiki...) e lo restituisce al browser, senza mai esporre il token.
+// Uso: /api/data?file=atti.json  |  ?file=a.json,b.json  |  ?elenco=1  |  ?cerca=1&q=...  (vedi in fondo e "QUALI JSON SI POSSONO LEGGERE")
 // In piu': con ?cerca=1 fa da motore di ricerca su EWS, IMG e DATA (vedi cercaTutto).
 //
 // Variabili d'ambiente (Vercel > Project > Settings > Environment Variables):
@@ -8,7 +9,27 @@
 //   DATA_BRANCH   (facoltativa)   default: il ramo predefinito del repo
 //   _ACCESS_KEY   (facoltativa)   se impostata, la ricerca richiede ?k=<chiave>
 //   SITO_IMG      (facoltativa)   indirizzo online delle immagini (default: lo stesso di NormAktiv)
-const ALLOWED = ['atti.json', 'ctsu.json', 'elezioni.json', 'organi.json'];   // unitext.json NON va qui: contiene le bozze, UniText si legge solo da /api/unitext
+// ---- QUALI JSON SI POSSONO LEGGERE ----
+// Ogni .json della repo DATA e' leggibile (anche nelle sottocartelle), tranne:
+//   - unitext.json (bozze) e i nomi elencati in DATA_BLOCK (variabile d'ambiente, separati da virgola)
+//   - file o cartelle che iniziano con "." o "_"; cartelle chiamate privato/privati/bozze/draft/backup/secret
+//   - nomi che sembrano credenziali (password, token, secret, session, utenti, users, account...)
+// Per la modalita' restrittiva imposta DATA_SOLO="atti.json,organi.json,piani/" (file esatti o cartelle che finiscono con "/"):
+// allora si legge SOLO cio' che e' elencato.
+const BLOCCATI = ['unitext.json'].concat((process.env.DATA_BLOCK || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
+const SOLO = (process.env.DATA_SOLO || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+const CARTELLE_PRIVATE = /^(privat[oie]|bozze|drafts?|backups?|segret[oi]|secrets?|node_modules)$/i;
+const NOMI_SENSIBILI = /(password|passwd|secret|token|credenzial|session|utenti|users|account)/i;
+function nomeConsentito(x) {
+  if (!x || x.length > 120 || !/\.json$/i.test(x) || x.includes('..') || x.includes('\\')) return false;
+  const seg = x.split('/');
+  if (seg.some((p) => !p || /^[._]/.test(p) || !/^[\w\-. ]+$/.test(p))) return false;
+  const basso = x.toLowerCase();
+  if (BLOCCATI.includes(basso) || BLOCCATI.includes(seg[seg.length - 1].toLowerCase())) return false;
+  if (seg.slice(0, -1).some((p) => CARTELLE_PRIVATE.test(p)) || NOMI_SENSIBILI.test(x)) return false;
+  if (SOLO.length && !SOLO.some((r) => (r.endsWith('/') ? basso.startsWith(r) : basso === r))) return false;
+  return true;
+}
 
 // ---------------------------------------------------------------- RICERCA
 const SITO = 'https://ews-rose.vercel.app';                 // dove vive NormAktiv (repo EWS)
@@ -572,34 +593,64 @@ async function cercaTutto(req, res) {
   }
 }
 
-// ---------------------------------------------------------------- LETTURA JSON (invariata)
-module.exports = async (req, res) => {
-  if (req.query && req.query.cerca) return cercaTutto(req, res);
-
-  const wanted = String((req.query && req.query.file) || '').toLowerCase();
-  if (!ALLOWED.includes(wanted)) {
-    res.status(400).json({ error: 'file non consentito' });
-    return;
-  }
-  const repo = process.env.DATA_REPO || 'RETEFORLIVESE/DATA';
+// ---------------------------------------------------------------- LETTURA JSON (qualsiasi file della repo)
+//   /api/data?file=atti.json                 -> il file cosi' com'e'
+//   /api/data?file=atti.json,organi.json     -> { "atti.json": {...}, "organi.json": {...} } (fino a 8 file in una sola richiesta)
+//   /api/data?file=piani/2026.json           -> anche dentro le sottocartelle
+//   /api/data?elenco=1                       -> { files: [ ...tutti i JSON leggibili... ] }
+//   /api/data?cerca=1&q=...                  -> ricerca (invariata)
+async function leggiJson(wanted) {
+  const repo = dataRepo();
   const ref = process.env.DATA_BRANCH ? '?ref=' + encodeURIComponent(process.env.DATA_BRANCH) : '';
-  const headers = {
-    Accept: 'application/vnd.github.raw+json',
-    'User-Agent': 'ews-data-proxy',
-    'X-GitHub-Api-Version': '2022-11-28',
+  const seg = wanted.split('/'), ultimo = seg.pop();
+  const prova = async (name) => {
+    const r = await fetch('https://api.github.com/repos/' + repo + '/contents/' + name.split('/').map(encodeURIComponent).join('/') + ref, { headers: intestazioni(true) });
+    return r.ok ? await r.text() : null;
   };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = 'Bearer ' + process.env.GITHUB_TOKEN;
+  // come prima: nome minuscolo, poi con l'iniziale maiuscola (nessuna chiamata in piu' per i file gia' in uso)
+  for (const name of [wanted, seg.concat(ultimo.charAt(0).toUpperCase() + ultimo.slice(1)).join('/')]) {
+    const t = await prova(name);
+    if (t != null) return t;
+  }
+  // novita': nomi con maiuscole in altre posizioni o dentro sottocartelle (si cerca il nome vero nell'albero del repo)
+  try {
+    const reale = (await elencoFile(repo)).find((p) => p.toLowerCase() === wanted);
+    if (reale && reale !== wanted) return await prova(reale);
+  } catch (_) { /* nessun altro tentativo */ }
+  return null;
+}
 
-  // il nome nel repo puo' essere minuscolo o con la maiuscola iniziale
-  const names = [wanted, wanted.charAt(0).toUpperCase() + wanted.slice(1)];
-  for (const name of names) {
-    const r = await fetch('https://api.github.com/repos/' + repo + '/contents/' + name + ref, { headers });
-    if (r.ok) {
-      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+module.exports = async (req, res) => {
+  const q = (req && req.query) || {};
+  if (q.cerca) return cercaTutto(req, res);
+  try {
+    if (q.elenco) {
+      const tutti = await elencoFile(dataRepo());
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-      res.status(200).send(await r.text());
+      res.status(200).json({ files: tutti.filter(nomeConsentito).sort() });
       return;
     }
+    const richiesti = String(q.file || '').split(',').map((x) => x.trim().replace(/^\/+/, '').toLowerCase()).filter(Boolean);
+    if (!richiesti.length || richiesti.length > 8 || !richiesti.every(nomeConsentito)) {
+      res.status(400).json({ error: 'file non consentito' });
+      return;
+    }
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    if (richiesti.length === 1) {
+      const testo = await leggiJson(richiesti[0]);
+      if (testo == null) { res.status(502).json({ error: 'impossibile leggere il file dal repo dati' }); return; }
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(200).send(testo);
+      return;
+    }
+    const out = {}, mancanti = [];
+    await Promise.all(richiesti.map(async (n) => {
+      try { const t = await leggiJson(n); if (t == null) mancanti.push(n); else out[n] = JSON.parse(t); } catch (_) { mancanti.push(n); }
+    }));
+    if (mancanti.length) out._mancanti = mancanti;
+    res.status(200).json(out);
+  } catch (e) {
+    console.error('data:', e);
+    res.status(502).json({ error: 'impossibile leggere il repo dati' });
   }
-  res.status(502).json({ error: 'impossibile leggere il file dal repo dati' });
 };
