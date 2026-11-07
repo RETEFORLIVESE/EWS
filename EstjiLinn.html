@@ -208,9 +208,18 @@ function right(){return `<div class="box"><h4>filo diretto con i cittadini</h4><
 function home(){
   const ev=newsAtti(5).map(a=>`<div class="ev"><div class="d">${esc(a.dataEmanazione)}</div><h3><a href="${href(a)}">${esc(a.titolo)}</a></h3><div>${esc(a.sommario||'')} ${esc(a.categoria)} n. ${esc(a.numero)}/${esc(a.anno)}, ${esc(luogo(a.luogo))}. <a href="${href(a)}"><b>vai al testo ›</b></a></div></div>`).join('');
   return `<h1>Stato Sociale di EstjiLinn</h1>${INTRO}<h2>in evidenza</h2>${ev||'<p>Nessun atto disponibile al momento.</p>'}<h2>aree tematiche</h2><div class="grid">${Object.entries(SEZ).map(([k,[t,s]])=>`<div class="gc"><h3><a href="#sez-${k}">${t.toLowerCase()}</a></h3><p>${s.map(x=>x[1]).join(', ')}</p></div>`).join('')}</div>`}
-function sez(k){const[t,subs]=SEZ[k];return `<h1>${t.toLowerCase()}</h1><div class="grid">${subs.map(([s,l,d])=>`<div class="gc"><h3><a href="#sub-${k}-${s}">${l}</a></h3><p>${d}</p></div>`).join('')}</div>`+(k==='elezioni'?`<h2>ultime elezioni</h2>${ultimeElez(6)}<p><a href="#sub-elezioni-CEPUS">Archivio completo (CEPUS) ›</a></p>`:'')}
+// ---- CONTENUTI PERSONALIZZATI ----
+// Chiave 'sezione-sottosezione' => sostituisce la pagina standard di quella sottosezione (HTML o funzione che restituisce HTML).
+// Chiave 'sezione' => aggiunge un blocco in fondo alla pagina della sezione.  Esempio:
+//   'formazione-lavoro': `<h1>Lavoro</h1><p>Testo...</p><div class="card">Un riquadro</div>`,
+//   'economia': `<h2>Novità</h2><p>Blocco extra in fondo alla pagina Economia Imprese.</p>`,
+// Classi pronte: card, ban (fascia rossa), grid/gc (riquadri), lst (elenco link), warn, tag, meta, tit.
+const CONTENUTI={};
+const cont=k=>{const c=CONTENUTI[k];return c?(typeof c==='function'?c():c):''};
+function sez(k){const[t,subs]=SEZ[k];return `<h1>${t.toLowerCase()}</h1><div class="grid">${subs.map(([s,l,d])=>`<div class="gc"><h3><a href="#sub-${k}-${s}">${l}</a></h3><p>${d}</p></div>`).join('')}</div>`+cont(k)+(k==='elezioni'?`<h2>ultime elezioni</h2>${ultimeElez(6)}<p><a href="#sub-elezioni-CEPUS">Archivio completo (CEPUS) ›</a></p>`:'')}
 function sub(k,s){
   const e=SEZ[k][1].find(x=>x[0]===s);if(!e)return '<h1>Pagina non trovata</h1>';
+  if(CONTENUTI[k+'-'+s])return cont(k+'-'+s);
   if(k==='elezioni'&&s==='CEPUS')return `<h1>${e[1]}</h1><p>${e[2]}</p><p><a class="btn" href="https://ews-rose.vercel.app/CEPU.html" target="_blank" rel="noopener">Vai all’archivio completo ›</a></p>${archivio()}`;
   const w=e[1].split(' ')[0].toLowerCase(),rel=ATTI.filter(a=>testoAtto(a).includes(w)).slice(0,6);
   return `<h1>${e[1][0].toUpperCase()+e[1].slice(1)}</h1><p>${e[2]}</p><div class="ban">Misure e servizi</div>
