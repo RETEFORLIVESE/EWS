@@ -51,6 +51,7 @@ button{background:var(--bar);color:#fff;cursor:pointer;border:0}
 .tit{background:var(--bar);color:#fff;padding:4px 10px;margin:20px 0 6px;font-weight:700}
 .art{margin:14px 0}.art h3{margin:0 0 4px;font:700 15px Georgia,serif}.art h3 span{color:var(--red)}
 .art p{margin:4px 0}.art ol{margin:2px 0 4px;padding-left:28px;list-style:lower-alpha}
+.tree .card{margin:6px 0}
 .tree ul{list-style:none;padding-left:18px;margin:2px 0}.tree summary{cursor:pointer;padding:2px 0}
  .sb{display:flex;height:10px;margin:6px 0;background:var(--line)}.sb i{display:block;height:100%}
 .pts{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px}.pt{display:inline-flex;gap:5px;align-items:center}.pt u{width:10px;height:10px;display:inline-block}
@@ -181,8 +182,8 @@ function figliDi(n){return n.figli||[]}
 function idsSotto(id){const S=new Set([id]);const add=n=>figliDi(n).forEach(c=>{S.add(c.id_organo);add(c)});const n=nodoOrgano(id,ORG.alberoOrgani);if(n)add(n);
   ELEZ.forEach(e=>{const x=ezId(e);if(id==='Unione'||x.startsWith(id+'-'))S.add(x)});return S}
 // Se organi.json non e' caricato, l'albero si ricostruisce dai codici id_organo delle elezioni (A-B-C => A > A-B > A-B-C).
-function alberoDaCodici(){
-  const M={},nome={};ELEZ.forEach(e=>{const id=ezId(e);if(id&&!nome[id])nome[id]=nomeLuogo(e)});
+function alberoDaCodici(L){
+  L=L||ELEZ;const M={},nome={};L.forEach(e=>{const id=ezId(e);if(id&&!nome[id])nome[id]=nomeLuogo(e)});
   const get=id=>M[id]||(M[id]={id_organo:id,nome_display:LUO[id]||nome[id]||id,figli:[]});
   Object.keys(nome).forEach(id=>{const p=id.split('-');for(let i=1;i<=p.length;i++)get(p.slice(0,i).join('-'))});
   Object.keys(M).forEach(id=>{if(id==='Unione')return;const i=id.lastIndexOf('-');get(i<0?'Unione':id.slice(0,i)).figli.push(M[id])});
@@ -192,6 +193,16 @@ function nodoDistretto(n){
   const info=E.length?` <span class="meta">· ${E.length} ${E.length>1?'elezioni':'elezione'} · ultima: ${esc(E[0].tipo)} ${esc(E[0].data)}</span>`:'';
   const t=`<a href="#luogo-${esc(id)}"><b>${esc(n.nome_display||LUO[id]||id)}</b></a> <span class="meta">${esc(n.categoria||'')}</span>${info}`;
   return `<li>${F.length?`<details open><summary>${t}</summary><ul>${F.map(nodoDistretto).join('')}</ul></details>`:t}</li>`}
+function nodoElez(n){
+  const id=n.id_organo,E=ELEZ.filter(e=>ezId(e)===id).sort((a,b)=>dt(b.data)-dt(a.data)),F=figliDi(n);
+  const t=`<a href="#luogo-${esc(id)}"><b>${esc(n.nome_display||LUO[id]||id)}</b></a> <span class="meta">${esc(n.categoria||'')}${E.length?' · '+E.length+(E.length>1?' elezioni':' elezione'):''}</span>${n.link_sito?` <a href="${esc(n.link_sito)}" rel="noopener">sito</a>`:''}`;
+  if(!E.length&&!F.length)return `<li>${t}</li>`;
+  return `<li><details open><summary>${t}</summary>${E.map(e=>ezCard(e,true)).join('')}${F.length?`<ul>${F.map(nodoElez).join('')}</ul>`:''}</details></li>`}
+// Albero come "Organi e luoghi" (parte dallo Stato), con le elezioni di ogni luogo e i grafici.
+function alberoElezioni(){
+  const st=nodoOrgano(STATO,ORG.alberoOrgani);let R;
+  if(st)R=[st];else{const r=alberoDaCodici(elezStato())[0];R=r.figli.length?r.figli:[r]}
+  return `<div class="tree"><ul>${R.map(nodoElez).join('')}</ul></div>`}
 function alberoDistretti(){
   let R=ORG.alberoOrgani||[];const un=nodoOrgano('Unione',R);if(un)R=[un];else if(!R.length)R=alberoDaCodici();
   return `<div class="tree"><ul>${R.map(nodoDistretto).join('')}</ul></div>`}
@@ -236,7 +247,7 @@ function sez(k){const[t,subs]=SEZ[k];return `<h1>${t.toLowerCase()}</h1><div cla
 function sub(k,s){
   const e=SEZ[k][1].find(x=>x[0]===s);if(!e)return '<h1>Pagina non trovata</h1>';
   if(CONTENUTI[k+'-'+s])return cont(k+'-'+s);
-  if(k==='elezioni'&&s==='Distrettuali'){const E=elezStato().filter(x=>livello(x)==='sezione');return `<h1>${e[1]}</h1><p>${e[2]}</p>${E.map(x=>ezCard(x)).join('')||'<p class="meta">Nessuna elezione distrettuale registrata.</p>'}<p><a href="#pag-distretti">Albero dei distretti ›</a> · <a href="#sub-elezioni-CEPUS">Archivio CEPUS ›</a></p>`}
+  if(k==='elezioni'&&s==='Distrettuali')return `<h1>${e[1]}</h1><p>${e[2]}</p>${alberoElezioni()}<p><a href="#sub-elezioni-CEPUS">Archivio CEPUS ›</a></p>`;
   if(k==='elezioni'&&s==='CEPUS')return `<h1>${e[1]}</h1><p>${e[2]}</p><p><a class="btn" href="https://ews-rose.vercel.app/CEPU.html" target="_blank" rel="noopener">Vai all’archivio completo ›</a></p>${archivio()}`;
   const w=e[1].split(' ')[0].toLowerCase(),rel=ATTI.filter(a=>testoAtto(a).includes(w)).slice(0,6);
   return `<h1>${e[1][0].toUpperCase()+e[1].slice(1)}</h1><p>${e[2]}</p><div class="ban">Misure e servizi</div>
