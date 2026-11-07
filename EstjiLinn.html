@@ -214,12 +214,29 @@ function home(){
 //   'formazione-lavoro': `<h1>Lavoro</h1><p>Testo...</p><div class="card">Un riquadro</div>`,
 //   'economia': `<h2>Novità</h2><p>Blocco extra in fondo alla pagina Economia Imprese.</p>`,
 // Classi pronte: card, ban (fascia rossa), grid/gc (riquadri), lst (elenco link), warn, tag, meta, tit.
-const CONTENUTI={};
+const CONTENUTI={
+// ESEMPIO 1 - sostituisce la pagina "Formazione Lavoro > lavoro". Modificalo o cancella tutta la voce.
+'formazione-lavoro': `<h1>Lavoro</h1>
+<p>Qui puoi scrivere un testo introduttivo, con <b>grassetto</b>, <i>corsivo</i> e <a href="#leggi">link interni</a>.</p>
+<div class="ban">Bandi aperti</div>
+<div class="card"><div class="meta"><span class="tag">bando</span><span class="tag">scade 30/11/2026</span></div>
+<h3>Esempio: incentivi all'assunzione</h3><p>Descrizione del bando, requisiti e come fare domanda.</p></div>
+<div class="grid">
+<div class="gc"><h3>Sportello lavoro</h3><p>Orari, indirizzo e contatti.</p></div>
+<div class="gc"><h3>Moduli</h3><p><a href="documenti/modulo.pdf">Scarica il modulo (PDF)</a></p></div>
+</div>
+<div class="warn">Esempio di avviso importante.</div>`,
+// ESEMPIO 2 - blocco aggiunto in fondo alla pagina della sezione "Economia Imprese" (chiave = solo la sezione).
+'economia': `<h2>novità</h2><div class="card"><b>Esempio:</b> nuovo incentivo per le imprese artigiane. <a href="#sub-economia-artigianato">vai ›</a></div>`,
+// ESEMPIO 3 - contenuto dinamico (funzione): per attivarlo togli le // all'inizio delle righe.
+// 'economia-industria': () => `<h1>Industria</h1>` + ATTI.slice(0,3).map(card).join(''),
+};
 const cont=k=>{const c=CONTENUTI[k];return c?(typeof c==='function'?c():c):''};
-function sez(k){const[t,subs]=SEZ[k];return `<h1>${t.toLowerCase()}</h1><div class="grid">${subs.map(([s,l,d])=>`<div class="gc"><h3><a href="#sub-${k}-${s}">${l}</a></h3><p>${d}</p></div>`).join('')}</div>`+cont(k)+(k==='elezioni'?`<h2>ultime elezioni</h2>${ultimeElez(6)}<p><a href="#sub-elezioni-CEPUS">Archivio completo (CEPUS) ›</a></p>`:'')}
+function sez(k){const[t,subs]=SEZ[k];return `<h1>${t.toLowerCase()}</h1><div class="grid">${subs.map(([s,l,d])=>`<div class="gc"><h3><a href="#sub-${k}-${s}">${l}</a></h3><p>${d}</p></div>`).join('')}</div>`+cont(k)}
 function sub(k,s){
   const e=SEZ[k][1].find(x=>x[0]===s);if(!e)return '<h1>Pagina non trovata</h1>';
   if(CONTENUTI[k+'-'+s])return cont(k+'-'+s);
+  if(k==='elezioni'&&s==='Distrettuali'){const E=elezStato().filter(x=>livello(x)==='sezione');return `<h1>${e[1]}</h1><p>${e[2]}</p>${E.map(x=>ezCard(x)).join('')||'<p class="meta">Nessuna elezione distrettuale registrata.</p>'}<p><a href="#pag-distretti">Albero dei distretti ›</a> · <a href="#sub-elezioni-CEPUS">Archivio CEPUS ›</a></p>`}
   if(k==='elezioni'&&s==='CEPUS')return `<h1>${e[1]}</h1><p>${e[2]}</p><p><a class="btn" href="https://ews-rose.vercel.app/CEPU.html" target="_blank" rel="noopener">Vai all’archivio completo ›</a></p>${archivio()}`;
   const w=e[1].split(' ')[0].toLowerCase(),rel=ATTI.filter(a=>testoAtto(a).includes(w)).slice(0,6);
   return `<h1>${e[1][0].toUpperCase()+e[1].slice(1)}</h1><p>${e[2]}</p><div class="ban">Misure e servizi</div>
