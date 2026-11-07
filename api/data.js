@@ -623,6 +623,11 @@ async function leggiJson(wanted) {
 module.exports = async (req, res) => {
   const q = (req && req.query) || {};
   if (q.cerca) return cercaTutto(req, res);
+  // CORS (sola lettura): permette al Site Builder e ai siti pubblicati su altri domini di leggere i JSON dei piani.
+  // Per limitarlo imposta CORS_ORIGIN su Vercel (es. https://mio-sito.vercel.app); di base e' aperto.
+  res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   try {
     if (q.elenco) {
       const tutti = await elencoFile(dataRepo());
