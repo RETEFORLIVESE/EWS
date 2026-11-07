@@ -162,25 +162,43 @@ function elezStato(){const D=discendenti();return ELEZ.filter(e=>{const id=ezId(
 function livello(e){const id=ezId(e);if(id==='Unione')return 'unione';if(id===STATO)return 'stato';if(e.tipo_codice==='M'||id===STATO+'-TLN')return 'metro';return 'sezione'}
 function nomeLuogo(e){const id=ezId(e);return LUO[id]||(id==='Unione'?'Unione Sociale degli Stati dell’Estji':(e.comune||id))}
 function linkLuogo(e){const id=ezId(e),n=esc(nomeLuogo(e));return id?`<a href="#luogo-${esc(id)}">${n}</a>`:n}
-function ezCard(e){
+function ezCard(e,grafici){
   const P=e.risultati_partiti||[],tot=P.reduce((s,p)=>s+(+p.seggi||0),0),ref=e.tipo_codice==='R';
   const col=(p,i)=>esc(p.colore||PAL[i%PAL.length]);
-  const bar=tot?`<div class="sb">${P.map((p,i)=>p.seggi?`<i style="width:${p.seggi/tot*100}%;background:${col(p,i)}" title="${esc(p.nome)}: ${p.seggi}"></i>`:'').join('')}</div><div class="pts">${P.filter(p=>p.seggi).map((p,i)=>`<span class="pt"><u style="background:${col(p,i)}"></u>${esc(p.nome)} <b>${p.seggi}</b></span>`).join('')}</div>`:'';
+  const bar=tot&&grafici?`<div class="sb">${P.map((p,i)=>p.seggi?`<i style="width:${p.seggi/tot*100}%;background:${col(p,i)}" title="${esc(p.nome)}: ${p.seggi}"></i>`:'').join('')}</div><div class="pts">${P.filter(p=>p.seggi).map((p,i)=>`<span class="pt"><u style="background:${col(p,i)}"></u>${esc(p.nome)} <b>${p.seggi}</b></span>`).join('')}</div>`:'';
   const voti=!tot&&P.some(p=>p.voti)?`<div class="pts">${P.map(p=>`<span class="pt"><b>${esc(p.nome)}</b> ${esc(p.voti)}${p.percentuale?' ('+esc(p.percentuale)+')':''}</span>`).join('')}</div>`:'';
   const dett=[e.elettori!=null?'elettori '+e.elettori:'',e.votanti!=null?'votanti '+e.votanti:'',e.sezioni_scrutinate!=null?'sezioni '+e.sezioni_scrutinate+'/'+e.sezioni_totali:''].filter(Boolean).join(' · ');
   return `<div class="card"><div class="meta"><span class="tag">${esc(e.tipo)}</span>${esc(e.data)} · ${linkLuogo(e)}${e.affluenza?' · affluenza '+esc(e.affluenza):''}</div>
 <h3>${esc(e.tipo)} – ${esc(e.comune||nomeLuogo(e))}</h3>${ref&&e.area?`<p><i>${esc(e.area)}</i></p>`:''}${e.candidato_vincente?`<div><b>${ref?'Esito':'Eletto'}:</b> ${esc(e.candidato_vincente)}</div>`:''}${bar}${voti}${dett?`<div class="meta">${dett}</div>`:''}</div>`}
-function ultimeElez(n){const r=elezStato().slice(0,n);return r.length?r.map(ezCard).join(''):'<p class="meta">Nessuna elezione disponibile.</p>'}
+function ultimeElez(n){const r=elezStato().slice(0,n);return r.length?r.map(e=>ezCard(e)).join(''):'<p class="meta">Nessuna elezione disponibile.</p>'}
 function archivio(){
   const E=elezStato();if(!E.length)return '<p class="meta">Dati non caricati.</p>';
   const g=k=>E.filter(e=>livello(e)===k);
   return `<div class="ban">Archivio statale per livello</div><div class="lvl">${LIVELLI.filter(([k])=>g(k).length).map(([k,t])=>`<a href="#" data-go="lv-${k}">${t} (${g(k).length})</a>`).join('')}</div>`+
-  LIVELLI.filter(([k])=>g(k).length).map(([k,t,d])=>`<h2 id="lv-${k}">${t}</h2><p class="meta">${d}</p>${g(k).map(ezCard).join('')}`).join('')}
+  LIVELLI.filter(([k])=>g(k).length).map(([k,t,d])=>`<h2 id="lv-${k}">${t}</h2><p class="meta">${d}</p>${g(k).map(e=>ezCard(e,true)).join('')}`).join('')}
 function nodoOrgano(id,L){for(const n of L||[]){if(n.id_organo===id)return n;const r=nodoOrgano(id,n.figli);if(r)return r}return null}
+function figliDi(n){return n.figli||[]}
+function idsSotto(id){const S=new Set([id]);const add=n=>figliDi(n).forEach(c=>{S.add(c.id_organo);add(c)});const n=nodoOrgano(id,ORG.alberoOrgani);if(n)add(n);
+  ELEZ.forEach(e=>{const x=ezId(e);if(id==='Unione'||x.startsWith(id+'-'))S.add(x)});return S}
+// Se organi.json non e' caricato, l'albero si ricostruisce dai codici id_organo delle elezioni (A-B-C => A > A-B > A-B-C).
+function alberoDaCodici(){
+  const M={},nome={};ELEZ.forEach(e=>{const id=ezId(e);if(id&&!nome[id])nome[id]=nomeLuogo(e)});
+  const get=id=>M[id]||(M[id]={id_organo:id,nome_display:LUO[id]||nome[id]||id,figli:[]});
+  Object.keys(nome).forEach(id=>{const p=id.split('-');for(let i=1;i<=p.length;i++)get(p.slice(0,i).join('-'))});
+  Object.keys(M).forEach(id=>{if(id==='Unione')return;const i=id.lastIndexOf('-');get(i<0?'Unione':id.slice(0,i)).figli.push(M[id])});
+  return [get('Unione')]}
+function nodoDistretto(n){
+  const id=n.id_organo,E=ELEZ.filter(e=>ezId(e)===id).sort((a,b)=>dt(b.data)-dt(a.data)),F=figliDi(n);
+  const info=E.length?` <span class="meta">· ${E.length} ${E.length>1?'elezioni':'elezione'} · ultima: ${esc(E[0].tipo)} ${esc(E[0].data)}</span>`:'';
+  const t=`<a href="#luogo-${esc(id)}"><b>${esc(n.nome_display||LUO[id]||id)}</b></a> <span class="meta">${esc(n.categoria||'')}</span>${info}`;
+  return `<li>${F.length?`<details open><summary>${t}</summary><ul>${F.map(nodoDistretto).join('')}</ul></details>`:t}</li>`}
+function alberoDistretti(){
+  let R=ORG.alberoOrgani||[];const un=nodoOrgano('Unione',R);if(un)R=[un];else if(!R.length)R=alberoDaCodici();
+  return `<div class="tree"><ul>${R.map(nodoDistretto).join('')}</ul></div>`}
 function luogoPag(id){
-  const n=nodoOrgano(id,ORG.alberoOrgani),nome=LUO[id]||(n&&n.nome_display)||(id==='Unione'?'Unione Sociale degli Stati dell’Estji':id),E=ELEZ.filter(e=>ezId(e)===id).sort((a,b)=>dt(b.data)-dt(a.data));
+  const n=nodoOrgano(id,ORG.alberoOrgani),nome=LUO[id]||(n&&n.nome_display)||(id==='Unione'?'Unione Sociale degli Stati dell’Estji':id),S=idsSotto(id),E=ELEZ.filter(e=>S.has(ezId(e))).sort((a,b)=>dt(b.data)-dt(a.data));
   return `<h1>${esc(nome)}</h1><div class="meta">${n?esc(n.categoria||'')+' · ':''}codice organo: ${esc(id)}${n&&n.link_sito?` · <a href="${esc(n.link_sito)}" rel="noopener">sito</a>`:''}</div>
-<h2>elezioni</h2>${E.map(ezCard).join('')||'<p class="meta">Nessuna elezione registrata per questo luogo.</p>'}<p><a href="#organi">Albero degli organi ›</a> · <a href="#sub-elezioni-CEPUS">Archivio CEPUS ›</a></p>`}
+<h2>elezioni</h2><p class="meta">Comprese quelle dei luoghi collegati sotto di esso.</p>${E.map(e=>ezCard(e)).join('')||'<p class="meta">Nessuna elezione registrata per questo luogo.</p>'}<p><a href="#organi">Albero degli organi ›</a> · <a href="#sub-elezioni-CEPUS">Archivio CEPUS ›</a></p>`}
 function right(){return `<div class="box"><h4>filo diretto con i cittadini</h4><a href="#pag-reclami">richieste reclami segnalazioni proposte</a><a href="#pag-reclami">avvisami</a><a href="#pag-urp">ufficio relazioni con il pubblico</a></div>
 <div class="box"><h4>ultimi atti</h4>${newsAtti(4).map(a=>`<a href="${href(a)}">${esc(a.titolo)}</a>`).join('')||'<div>Nessun atto disponibile.</div>'}</div>
 <div class="box"><a href="#leggi">notizie dalla giunta</a><a href="#leggi">notizie dal congresso</a><a href="#organi">organi e luoghi</a></div>
@@ -204,7 +222,7 @@ const INTRO=`<div class="card">Lo Stato Sociale di EstjiLinn è membro dell’Un
 const DISTRETTI=`<h1>Distretti e assemblee</h1><p>Distretti dello Stato (Costituzione dell’EstjiLinn, art. 8).</p><h2>non membri della Città Metropolitana di Taleen</h2><ul><li><b>Hichibate</b>: Bakeneko, Renault, Bateria, Ginza, Notos, Thora</li><li><b>Konko</b>: Mikita, Royale</li><li><b>Arcipelago di Alinesjia</b></li></ul><h2>membri della Città Metropolitana di Taleen</h2><ul><li><b>Ehime</b>: Sars, Tampere, Estji, Tervetulloa</li><li><b>Aömöry</b>: Fiumana, Klosse, Fluvia, Ankita, Ost, Ecles</li><li><b>Katagaa</b>: Irinastok</li><li><b>Fukura</b>: 1 Ile, 2 Ile, 3 Ile, 4 Ile, 5 Ile</li><li><b>Niigataa</b>: Tegel, TegelGard, Minotte</li><li><b>Kengoko</b>: Finance, NewShinguku, Gallier</li><li><b>Idame</b>: Soyuz, Littoria, Lampugniano, Aprilia</li><li><b>Yate</b>: Rial, Tadam</li></ul><p><a href="#organi">Albero degli organi ›</a></p>`;
 function extra(a){if(window.FALLBACK&&FALLBACK.demo)return '';const k=Object.keys(PDFS).find(p=>String(a.id).startsWith(p));
   return (a.immagine?`<img src="${esc(String(a.immagine).replace(/^\//,''))}" alt="" style="max-width:200px;max-height:200px;display:block;margin:10px auto" onerror="this.remove()">`:'')+(k?`<p><a href="${PDFS[k]}" download>⬇ Scarica il PDF</a></p>`:'')}
-function pag(s){const l=PAG[s]||s;if(s==='distretti')return DISTRETTI;return `<h1>${esc(l)}</h1><p>Questa sezione è in preparazione.</p><p><a href="#leggi">Vai alle leggi e agli atti ›</a></p>`}
+function pag(s){const l=PAG[s]||s;if(s==='distretti')return `<h1>Distretti e assemblee</h1><h2>albero dei distretti dell’Unione</h2><p class="meta">Clicca un luogo per vedere le sue elezioni: ogni nuova elezione con lo stesso <code>id_organo</code> si collega da sola.</p>${alberoDistretti()}`+DISTRETTI.replace('<h1>Distretti e assemblee</h1>','<h2>elenco dei distretti dello Stato</h2>');return `<h1>${esc(l)}</h1><p>Questa sezione è in preparazione.</p><p><a href="#leggi">Vai alle leggi e agli atti ›</a></p>`}
 function route(){
   const h=location.hash.slice(1)||'home',[t,a,b]=h.split('-');
   let sk=t==='sez'||t==='sub'?a:'',main,L=globalMenu(),R='',cr='<a href="#home">home</a>';
