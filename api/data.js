@@ -595,6 +595,7 @@ async function cercaTutto(req, res) {
 
 // ---------------------------------------------------------------- LETTURA JSON (qualsiasi file della repo)
 //   /api/data?file=atti.json                 -> il file cosi' com'e'
+//   /api/data?file=atti.json&campi=id,titolo  -> solo quei campi di ogni voce (risposta piu' leggera)
 //   /api/data?file=atti.json,organi.json     -> { "atti.json": {...}, "organi.json": {...} } (fino a 8 file in una sola richiesta)
 //   /api/data?file=piani/2026.json           -> anche dentro le sottocartelle
 //   /api/data?elenco=1                       -> { files: [ ...tutti i JSON leggibili... ] }
@@ -618,6 +619,19 @@ async function leggiJson(wanted) {
     if (reale && reale !== wanted) return await prova(reale);
   } catch (_) { /* nessun altro tentativo */ }
   return null;
+}
+
+// Risposta leggera: con ?campi=id,titolo,stato restituisce solo quei campi di ogni voce delle liste del file
+// (es. /api/data?file=atti.json&campi=id,titolo,stato). Il file sulla repo resta intero e non va tenuto in doppio.
+function soloCampi(testo, campi) {
+  const lista = String(campi || '').split(',').map((x) => x.trim()).filter((x) => /^[\w-]+$/.test(x)).slice(0, 30);
+  if (!lista.length) return testo;
+  try {
+    const scegli = (o) => (o && typeof o === 'object' && !Array.isArray(o) ? Object.fromEntries(lista.filter((c) => c in o).map((c) => [c, o[c]])) : o);
+    const j = JSON.parse(testo);
+    const out = Array.isArray(j) ? j.map(scegli) : Object.fromEntries(Object.entries(j).map(([k, v]) => [k, Array.isArray(v) ? v.map(scegli) : v]));
+    return JSON.stringify(out);
+  } catch (_) { return testo; }      // se qualcosa non torna, si restituisce il file intero come prima
 }
 
 module.exports = async (req, res) => {
@@ -645,7 +659,7 @@ module.exports = async (req, res) => {
       const testo = await leggiJson(richiesti[0]);
       if (testo == null) { res.status(502).json({ error: 'impossibile leggere il file dal repo dati' }); return; }
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.status(200).send(testo);
+      res.status(200).send(soloCampi(testo, q.campi));
       return;
     }
     const out = {}, mancanti = [];
