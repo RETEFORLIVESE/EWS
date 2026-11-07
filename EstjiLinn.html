@@ -151,7 +151,7 @@ function globalMenu(){return ISTI.map(lk).join('')+'<h4>ente</h4>'+ENTE.map(lk).
 function sezMenu(k,sub){const[t,subs]=SEZ[k];return `<h4 class="s" style="margin-top:0">${t.toLowerCase()}</h4>`+subs.map(([s,l])=>`<a href="#sub-${k}-${s}" class="${s===sub?'on':''}">${l}</a>`).join('')}
 function newsAtti(n){return ATTI.filter(a=>a.luogo===STATO).sort((x,y)=>y.anno-x.anno||y.numero-x.numero).slice(0,n)}
 const PAL=['#7d7a48','#8c1a0a','#1b3a8c','#2e7d4f','#a0731a','#5b3a8c','#555','#b0306a'];
-const LIVELLI=[['unione','Livello Unione','Consultazioni dell’Unione Sociale degli Stati dell’Estji: Congresso Unitario, referendum e voti costituzionali.'],['stato','Livello Stato','Consultazioni dello Stato di EstjiLinn.'],['metro','Livello Città Metropolitana','Congressi delle Città Metropolitane.'],['sezione','Livello Distretti e Sezioni','Assemblee di Sezione, distretti e consultazioni locali.']];
+const LIVELLI=[['stato','Livello Stato','Consultazioni dello Stato di EstjiLinn.'],['metro','Livello Città Metropolitana','Congressi delle Città Metropolitane.'],['sezione','Livello Distretti e Sezioni','Assemblee di Sezione, distretti e consultazioni locali.']];
 const dt=s=>{const m=String(s||'').match(/(\d+)\/(\d+)\/(\d+)/);return m?new Date(+m[3],m[2]-1,+m[1]).getTime():0};
 const ezId=e=>e.id_organo||(e.consultazione_unitaria?'Unione':'');
 function discendenti(){const s=new Set([STATO]);const add=n=>(n.figli||[]).forEach(c=>{s.add(c.id_organo);add(c)});const cerca=n=>{if(n.id_organo===STATO)add(n);else(n.figli||[]).forEach(cerca)};(ORG.alberoOrgani||[]).forEach(cerca);return s}
