@@ -75,12 +75,166 @@ const PAL=['#7d7a48','#8c1a0a','#1b3a8c','#2e7d4f','#a0731a','#5b3a8c','#555','#
 let EZ=[{tipo:'Congresso Statale',tipo_codice:'C',data:'17/09/2026',comune:'Estjilinn',affluenza:'72,9%',risultati_partiti:[{nome:'PCS',seggi:25},{nome:'PCE',seggi:65},{nome:'FAJP',seggi:15},{nome:'VolksPartei',seggi:20}],id_organo:'ELIN'},
 {tipo:'Referendum',tipo_codice:'R',data:'18/08/2026',comune:'Trade Center',area:'Approvate l\'esproprio del complesso "Athenon Trade Center"?',affluenza:'100,0%',candidato_vincente:'Approvato',risultati_partiti:[],id_organo:'ENOR-PTL-ATC'},
 {tipo:'Assemblea di Sezione',tipo_codice:'G',data:'06/06/2026',comune:'Taleen',affluenza:'64,2%',candidato_vincente:'Khloe Straub',risultati_partiti:[{nome:'Straub Für Koln!',seggi:32},{nome:'Progressives',seggi:20},{nome:'Les Indipendaces',seggi:8}],id_organo:'EBHAN-KLN'}];
-let nome='esempio';const K=e=>e.tipo_codice+'|'+e.data+'|'+e.comune;
+let ORG=[];let nome='esempio';const K=e=>e.tipo_codice+'|'+e.data+'|'+e.comune;
 function ez(e,g){const P=e.risultati_partiti||[],t=P.reduce((s,p)=>s+(+p.seggi||0),0),ref=e.tipo_codice==='R',c=(p,i)=>p.colore||PAL[i%PAL.length],pc=v=>(v/t*100).toFixed(1).replace('.',',')+'%';
  /* ordine = quello scritto nel database (nessun ordinamento per seggi); l'indice originale i fissa il colore sia nella barra sia in legenda */
  const V=P.map((p,i)=>({p,i})).filter(x=>+x.p.seggi>0);
  const bar=t&&g?`<div style="display:flex;height:10px;margin:6px 0 4px;background:#ddd">${V.map(({p,i})=>`<i style="display:block;height:100%;width:${p.seggi/t*100}%;background:${c(p,i)}"></i>`).join('')}</div><div style="display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;margin:0">${V.map(({p,i})=>`<span style="display:inline-flex;gap:5px;align-items:center"><u style="width:10px;height:10px;display:inline-block;background:${c(p,i)}"></u>${E(p.nome)} <b>${p.seggi}</b> <span style="color:#777">(${pc(+p.seggi)})</span></span>`).join('')}</div><div style="font-size:11px;color:#777;margin:4px 0 0">${t} seggi totali</div>`:'';
  return `<div class="card"><div class="meta" style="margin:0 0 4px;line-height:1.3"><span class="tag">${E(e.tipo)}</span>${E(e.data)} · ${E(e.comune)}${e.affluenza?' · affluenza '+E(e.affluenza):''}</div><h3 style="margin:0 0 4px;line-height:1.25">${E(e.tipo)} – ${E(e.comune)}</h3>${ref&&e.area?`<p style="margin:0 0 4px"><i>${E(e.area)}</i></p>`:''}${e.candidato_vincente?`<div style="margin:0 0 4px"><b>${ref?'Esito':'Eletto'}:</b> ${E(e.candidato_vincente)}</div>`:''}${bar}</div>`}
+/* ===== GRAFICI: un solo motore per tutti i tipi (usato dal builder, dal sito esportato e da EstjiLinn) ===== */
+function gfx(o,L){
+ L=L||[];const g=o.g,Q=E,num=v=>+String(v==null?'':v).replace(/[^0-9.,-]/g,'').replace(',','.')||0,fm=v=>String(Math.round(v*10)/10).replace('.',','),
+ ink='var(--ink,#222)',mut='var(--mut,#777)',ln='var(--line,#ccc)',sph=!!o.sf,PI2=Math.PI*2,
+ SPH='<defs><radialGradient id="gfsph" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".35" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient></defs>',
+ dot=(x,y,r,c,t)=>`<g><title>${Q(t)}</title><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${Q(c)}"${sph?'':' stroke="rgba(0,0,0,.3)"'}/>${sph?`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="url(#gfsph)"/>`:''}</g>`,
+ svg=(w,h,b,mw)=>`<svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${mw||560}px;height:auto;display:block;margin:0 auto" font-family="inherit">${sph?SPH:''}${b}</svg>`,
+ tx=(x,y,s,sz,w,c,a)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${a||'middle'}" font-size="${sz}"${w?' font-weight="700"':''} style="fill:${c||ink}">${Q(s)}</text>`,
+ txw=(x,y,s,sz)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${sz}" font-weight="700" style="fill:#fff;stroke:rgba(0,0,0,.55);stroke-width:3px;paint-order:stroke">${Q(s)}</text>`,
+ rings=(n,rs)=>{const s=rs.reduce((a,b)=>a+b,0),c=rs.map(r=>Math.floor(n*r/s));let m=n-c.reduce((a,b)=>a+b,0),i=rs.length-1;while(m>0){c[i]++;m--;i=(i-1+rs.length)%rs.length}return c},
+ wrap=(head,body,leg)=>`<div class="card" style="text-align:center">${head}${body}${leg}</div>`,
+ pd=s=>{const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?Date.UTC(+m[3],+m[2]-1,+m[1]):0},
+ dd=s=>{const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?m[1]+'/'+m[2]+'/'+m[3].slice(2):''},
+ colr=(p,i)=>p.colore||PAL[i%PAL.length],
+ sb=(x,id,sub)=>!id||x.id_organo===id||(sub&&String(x.id_organo||'').indexOf(id+'-')===0),
+ cut=(t,w,z)=>{t=String(t);const m=Math.floor(w/(z*.58));return t.length>m?t.slice(0,Math.max(1,m-1))+'…':t},
+ sq=(it,x,y,w,h)=>{const out=[],tot=it.reduce((a,b)=>a+b.v,0);if(!tot||w<=0||h<=0)return out;const sc=w*h/tot;let rest=it.slice();
+  while(rest.length){const sh=Math.min(w,h),wr=(rw,a)=>{const mx=Math.max(...rw.map(r=>r.v*sc)),mn=Math.min(...rw.map(r=>r.v*sc));return Math.max(sh*sh*mx/(a*a),a*a/(sh*sh*mn))};let row=[],a=0,worst=Infinity;
+   while(rest.length){const c=rest[0],na=a+c.v*sc,nw=wr([...row,c],na);if(row.length&&nw>worst)break;row.push(c);a=na;worst=nw;rest.shift()}
+   const th=a/sh;let pos=0;
+   if(w>=h){row.forEach(r=>{const hh=r.v*sc/th;out.push({...r,x,y:y+pos,w:th,h:hh});pos+=hh});x+=th;w-=th}
+   else{row.forEach(r=>{const ww=r.v*sc/th;out.push({...r,x:x+pos,y,w:ww,h:th});pos+=ww});y+=th;h-=th}}
+  return out},
+ legend=(A,t,round)=>o.lg===false?'':`<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px 14px;font-size:12px;margin:8px 0 0">${A.map(p=>`<span style="display:inline-flex;gap:5px;align-items:center"><u style="width:10px;height:10px;display:inline-block;border-radius:${round?'50%':'0'};background:${Q(p.c)}"></u>${Q(p.n)}${p.v!=null?` <b>${fm(p.v)}</b>`:''}${t&&p.v!=null?` <span style="color:${mut}">(${fm(p.v/t*100)}%)</span>`:''}</span>`).join('')}</div>`;
+
+ /* ---------- confronto tra consultazioni affiancate ---------- */
+ if(g==='cmp'){
+  let A=[o.k,o.k2,o.k3,o.k4].filter(Boolean).map(k=>L.find(x=>K(x)===k)).filter(Boolean);
+  if(A.length)A.sort((a,b)=>pd(a.data)-pd(b.data));
+  else A=L.filter(x=>sb(x,o.id,o.sub)&&(!o.tc||x.tipo_codice===o.tc)&&pd(x.data)&&(x.risultati_partiti||[]).some(p=>num(p.seggi)>0)).sort((a,b)=>pd(b.data)-pd(a.data)).slice(0,Math.max(1,+o.n||3)).reverse();
+  if(!A.length)return '';
+  const cm={},U=[];A.forEach(e=>(e.risultati_partiti||[]).forEach(p=>{if(!cm[p.nome]){cm[p.nome]=p.colore||PAL[U.length%PAL.length];U.push({n:p.nome})}else if(p.colore)cm[p.nome]=p.colore}));U.forEach(u=>u.c=cm[u.n]);
+  const md=o.md||'imp',ti=o.ti!=null&&String(o.ti).trim()!==''?o.ti:'Confronto tra consultazioni'+(o.id?' · '+o.id:''),head=`<h3 style="margin:0 0 6px;line-height:1.25">${Q(ti)}</h3>`;
+  if(md!=='imp'){
+   const cells=A.map(e=>{const txt=(e.risultati_partiti||[]).filter(p=>num(p.seggi)>0).map(p=>p.nome+'|'+num(p.seggi)+'|'+cm[p.nome]).join('\n');return `<div style="flex:1 1 ${md==='emi'?300:240}px;min-width:${md==='emi'?280:220}px">${gfx({...o,g:md,md:'seg',k:'',txt,ti:e.data+' · '+e.comune,lg:false,mj:false},[])}</div>`}).join('');
+   return wrap(head,`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">${cells}</div>`,legend(U,0,sph&&(md==='emi'||md==='cer'||md==='wfl')));
+  }
+  const W=640,rh=40,lw=170,H=A.length*rh+10,bw=W-lw-12;let b='';
+  A.forEach((e,i)=>{const y=5+i*rh,tt=(e.risultati_partiti||[]).reduce((a,p)=>a+num(p.seggi),0);let x=lw;
+   b+=tx(lw-8,y+rh/2-3,e.data,12,1,ink,'end')+tx(lw-8,y+rh/2+11,String(e.comune||'').slice(0,26),10,0,mut,'end');
+   (e.risultati_partiti||[]).forEach(p=>{const v=num(p.seggi);if(v<=0||!tt)return;const w=bw*v/tt;b+=`<g><title>${Q(p.nome+' · '+fm(v)+' ('+fm(v/tt*100)+'%)')}</title><rect x="${x.toFixed(1)}" y="${y+4}" width="${w.toFixed(1)}" height="${rh-12}" fill="${Q(cm[p.nome])}" style="stroke:var(--pg,#fff);stroke-width:1.5"/></g>`;if(w>24)b+=txw(x+w/2,y+rh/2+4,fm(v),11);x+=w})});
+  b+=`<line x1="${lw+bw/2}" x2="${lw+bw/2}" y1="0" y2="${H}" style="stroke:${ink};stroke-dasharray:3 3;opacity:.5"/>`;
+  return wrap(head,svg(W,H,b,720),legend(U,0,0));
+ }
+ /* ---------- andamento nel tempo (usa tutte le consultazioni di un luogo) ---------- */
+ if(g==='sto'){
+  const A=L.filter(x=>(!o.id||x.id_organo===o.id)&&(!o.tc||x.tipo_codice===o.tc)&&pd(x.data)).sort((a,b)=>pd(a.data)-pd(b.data));
+  if(!A.length)return '';
+  const m=o.m||'seggi',S=[];
+  if(m==='aff')S.push({n:'Affluenza',c:PAL[0],p:A.filter(e=>e.affluenza).map(e=>({t:pd(e.data),v:num(e.affluenza),d:e.data}))});
+  else A.forEach(e=>{const T=(e.risultati_partiti||[]).reduce((s,p)=>s+num(p.seggi),0);(e.risultati_partiti||[]).forEach((p,i)=>{let s=S.find(x=>x.n===p.nome);if(!s){s={n:p.nome,c:colr(p,S.length),p:[]};S.push(s)}if(p.colore)s.c=p.colore;if(num(p.seggi)>0||m==='seggi')s.p.push({t:pd(e.data),v:m==='pct'?(T?num(p.seggi)/T*100:0):num(p.seggi),d:e.data})})});
+  const all=S.flatMap(s=>s.p);if(!all.length)return '';
+  const W=640,H=320,l=48,r=36,tp=16,b=52,t0=pd(A[0].data),t1=pd(A[A.length-1].data),mv=Math.max(...all.map(p=>p.v),0),
+  ym=m==='seggi'?(()=>{if(!mv)return 1;const p=Math.pow(10,Math.floor(Math.log10(mv))),n=mv/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p})():100,
+  X=t=>t1===t0?l+(W-l-r)/2:l+(W-l-r)*(t-t0)/(t1-t0),Y=v=>tp+(H-tp-b)*(1-v/ym);
+  let body='';
+  for(let i=0;i<=4;i++){const v=ym*i/4,y=Y(v);body+=`<line x1="${l}" x2="${W-r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" style="stroke:${ln}"/>`+tx(l-6,y+4,fm(v)+(m==='seggi'?'':'%'),11,0,mut,'end')}
+  let lx=-99;[...new Set(all.map(p=>p.t))].sort((a,c)=>a-c).forEach(t=>{const x=X(t);body+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${tp}" y2="${H-b}" style="stroke:${ln};stroke-dasharray:2 4"/>`;if(x-lx>56){const d=all.find(p=>p.t===t).d;body+=tx(x,H-b+16,dd(d),11,0,mut);lx=x}});
+  S.forEach(s=>{const P=s.p.map(p=>X(p.t).toFixed(1)+','+Y(p.v).toFixed(1));if(P.length>1)body+=`<polyline points="${P.join(' ')}" fill="none" stroke-width="2.5" stroke-linejoin="round" style="stroke:${Q(s.c)}"/>`;s.p.forEach(p=>body+=dot(X(p.t),Y(p.v),5,s.c,s.n+' · '+p.d+' · '+fm(p.v)+(m==='seggi'?' seggi':'%')))});
+  const ti=o.ti!=null&&String(o.ti).trim()!==''?o.ti:(m==='aff'?'Affluenza':m==='pct'?'Percentuale di seggi':'Seggi')+' nel tempo'+(o.id?' · '+o.id:'');
+  return wrap(`<h3 style="margin:0 0 6px;line-height:1.25">${Q(ti)}</h3>`,svg(W,H,body,720),legend(S.map(s=>({n:s.n,c:s.c})),0,1));
+ }
+ /* ---------- dati dei partiti: da una consultazione oppure scritti a mano ---------- */
+ let P=[],auto='',sub='';
+ if(o.k){const e=L.find(x=>K(x)===o.k);if(!e)return '';P=(e.risultati_partiti||[]).map((p,i)=>({n:p.nome,v:num(p.seggi),c:colr(p,i),co:p.coalizione||p.blocco||p.coalition||''}));auto=e.tipo+' – '+e.comune;sub=e.data+(e.affluenza?' · affluenza '+e.affluenza:'')}
+ else P=String(o.txt||'').split('\n').map(s=>s.trim()).filter(Boolean).map((r,i)=>{const a=r.split('|');return{n:(a[0]||'').trim(),v:num(a[1]),c:(a[2]||'').trim()||PAL[i%PAL.length],co:(a[3]||'').trim()}});
+ P=P.filter(p=>p.v>0);if(!P.length)return '';
+ const t=P.reduce((s,p)=>s+p.v,0),S=P.map(p=>({...p,v:Math.round(p.v)})).filter(p=>p.v>0),n=S.reduce((s,p)=>s+p.v,0),
+ own=(()=>{const a=[];S.forEach((p,i)=>{for(let j=0;j<p.v;j++)a.push(i)});return a})(),
+ ti=o.ti!=null&&String(o.ti).trim()!==''?o.ti:auto,
+ head=(ti?`<h3 style="margin:0 0 2px;line-height:1.25">${Q(ti)}</h3>`:'')+(sub?`<div class="meta" style="margin:0 0 6px">${Q(sub)}</div>`:''),
+ tip=i=>S[own[i]].n+' · '+S[own[i]].v+' seggi';
+
+ /* ---------- mappa a blocchi di coalizione (treemap) ---------- */
+ if(g==='coa'){
+  const mp={};String(o.co||'').split('\n').forEach(r=>{const a=r.split('|');if(a.length<2||!a[0].trim())return;a[1].split(',').forEach(x=>{if(x.trim())mp[x.trim().toLowerCase()]={n:a[0].trim(),c:(a[2]||'').trim()}})});
+  const G=[];P.forEach(p=>{const m=mp[p.n.toLowerCase()],nm=m?m.n:(p.co||''),key=nm||p.n;let q=G.find(x=>x.k===key);if(!q){q={k:key,n:key,c:(m&&m.c)||p.c,ps:[],v:0,co:!!nm};G.push(q)}q.ps.push(p);q.v+=p.v;if(m&&m.c)q.c=m.c});
+  G.sort((a,b)=>b.v-a.v);G.forEach(q=>q.ps.sort((a,b)=>b.v-a.v));
+  const W=640,H=380;let b='';
+  sq(G,0,0,W,H).forEach(r=>{const hd=r.co&&r.h>50&&r.w>80?20:0,pd2=r.co?3:0;
+   if(r.co)b+=`<g><title>${Q(r.n+' · '+fm(r.v)+' seggi')}</title><rect x="${r.x.toFixed(1)}" y="${r.y.toFixed(1)}" width="${r.w.toFixed(1)}" height="${r.h.toFixed(1)}" fill="${Q(r.c)}" fill-opacity=".2" stroke-width="2" style="stroke:${Q(r.c)}"/></g>`;
+   if(hd)b+=tx(r.x+6,r.y+14,cut(r.n+' · '+fm(r.v)+' ('+fm(r.v/t*100)+'%)'+(r.v>t/2?' ★':''),r.w-10,12),12,1,ink,'start');
+   sq(r.ps,r.x+pd2,r.y+pd2+hd,r.w-2*pd2,r.h-2*pd2-hd).forEach(q=>{b+=`<g><title>${Q(q.n+' · '+fm(q.v)+' seggi'+(r.co?' · '+r.n:''))}</title><rect x="${q.x.toFixed(1)}" y="${q.y.toFixed(1)}" width="${q.w.toFixed(1)}" height="${q.h.toFixed(1)}" fill="${Q(q.c)}" style="stroke:var(--pg,#fff);stroke-width:1.5"/></g>`;
+    if(q.w>44&&q.h>32)b+=txw(q.x+q.w/2,q.y+q.h/2-2,cut(q.n,q.w-6,12),12)+txw(q.x+q.w/2,q.y+q.h/2+13,fm(q.v),12);else if(q.w>26&&q.h>16)b+=txw(q.x+q.w/2,q.y+q.h/2+4,fm(q.v),11)})});
+  return wrap(head,svg(W,H,b,720),legend(G.map(q=>({n:q.n,c:q.c,v:q.v})),t,0));
+ }
+ /* ---------- emiciclo ---------- */
+ if(g==='emi'&&n){
+  const R=Math.max(1,Math.round(Math.sqrt(n/3.2))),cx=300,cy=300,Ro=265,Ri=Ro*.4,rad=[];for(let i=0;i<R;i++)rad.push(R>1?Ri+(Ro-Ri)*i/(R-1):(Ri+Ro)/2);
+  const cs=rings(n,rad),pts=[];cs.forEach((c,i)=>{for(let j=0;j<c;j++)pts.push({a:c===1?Math.PI/2:Math.PI-Math.PI*j/(c-1),r:rad[i]})});
+  pts.sort((u,v)=>v.a-u.a||u.r-v.r);
+  const rg=R>1?(Ro-Ri)/(R-1):Ro*.3,ag=Math.min(...cs.map((c,i)=>c>1?rad[i]*Math.PI/(c-1):1e9)),dr=Math.min(26,.44*Math.min(rg,ag)),H=Math.max(Math.ceil(cy+dr+8),cy+38);
+  let b=pts.map((p,i)=>dot(cx+p.r*Math.cos(p.a),cy-p.r*Math.sin(p.a),dr,S[own[i]].c,tip(i))).join('');
+  b+=tx(cx,cy-16,n,38,1)+tx(cx,cy+6,'seggi',13,0,mut)+(o.mj===false?'':tx(cx,cy+26,'maggioranza '+(Math.floor(n/2)+1),12,0,mut));
+  return wrap(head,svg(600,H,b),legend(S,n,sph));
+ }
+ /* ---------- consiglio su cerchio: una sfera per seggio, oppure una per partito ---------- */
+ if(g==='cer'){
+  if(o.md==='par'){
+   const m=P.length,W=640,H=440,cx=320,cy=220,Rr=m===1?0:120,rm=m===1?90:Math.min(58,Rr*Math.sin(Math.PI/m)*.92),vm=Math.max(...P.map(p=>p.v));let b=m>1?`<circle cx="${cx}" cy="${cy}" r="${Rr}" fill="none" style="stroke:${ln};stroke-dasharray:3 5"/>`:'';
+   P.forEach((p,i)=>{const a=-Math.PI/2+PI2*i/m,r=Math.max(rm*.3,rm*Math.sqrt(p.v/vm)),x=cx+Rr*Math.cos(a),y=cy+Rr*Math.sin(a),lr=Rr+r+14,ca=Math.cos(a);
+    b+=dot(x,y,r,p.c,p.n+' · '+fm(p.v)+' seggi')+txw(x,y+5,fm(p.v),Math.max(11,Math.min(20,r*.8)));
+    if(m>1)b+=tx(cx+lr*ca,cy+lr*Math.sin(a)+4,p.n,12,0,ink,Math.abs(ca)<.3?'middle':ca>0?'start':'end')});
+   return wrap(head,svg(W,H,b,620),legend(P,t,1));
+  }
+  const RS=n<=24?[150]:n<=40?[150,95]:n<=90?[150,105,60]:[150,122,94,66,38],k=RS.length,rs=RS,cs=rings(n,rs),pts=[];
+  rs.forEach((r,i)=>{for(let j=0;j<cs[i];j++)pts.push({a:-Math.PI/2+PI2*j/cs[i],r:n===1?0:r})});
+  pts.sort((u,v)=>u.a-v.a||v.r-u.r);
+  const rg=Math.min(...rs.slice(1).map((r,i)=>rs[i]-r),1e9),ag=Math.min(...cs.map((c,i)=>c>1?2*rs[i]*Math.sin(Math.PI/c):1e9)),dr=Math.min(30,.44*Math.min(rg,ag));
+  let b=rs.map(r=>`<circle cx="200" cy="200" r="${r}" fill="none" style="stroke:${ln};stroke-dasharray:3 5"/>`).join('')+pts.map((p,i)=>dot(200+p.r*Math.cos(p.a),200+p.r*Math.sin(p.a),dr,S[own[i]].c,tip(i))).join('');
+  if(k===1&&n>1)b+=tx(200,205,n,34,1)+tx(200,226,'seggi',12,0,mut);
+  return wrap(head,svg(400,400,b,420),legend(S,n,1));
+ }
+ /* ---------- torta e ciambella ---------- */
+ if(g==='tor'||g==='cia'){
+  const cx=150,cy=150,Ro=130,Ri=g==='cia'?72:0,A=(f)=>-Math.PI/2+PI2*f,pt=(r,a)=>(cx+r*Math.cos(a)).toFixed(2)+' '+(cy+r*Math.sin(a)).toFixed(2);let b='',c=0;
+  if(P.length===1)b=g==='cia'?`<circle cx="${cx}" cy="${cy}" r="${(Ro+Ri)/2}" fill="none" stroke-width="${Ro-Ri}" style="stroke:${Q(P[0].c)}"/>`:`<circle cx="${cx}" cy="${cy}" r="${Ro}" fill="${Q(P[0].c)}"/>`;
+  else P.forEach(p=>{const f0=c/t,f1=(c+p.v)/t,a0=A(f0),a1=A(f1),lg=f1-f0>.5?1:0;c+=p.v;
+   const d=`M${pt(Ro,a0)}A${Ro} ${Ro} 0 ${lg} 1 ${pt(Ro,a1)}`+(Ri?`L${pt(Ri,a1)}A${Ri} ${Ri} 0 ${lg} 0 ${pt(Ri,a0)}Z`:`L${cx} ${cy}Z`);
+   b+=`<g><title>${Q(p.n+' · '+fm(p.v)+' ('+fm(p.v/t*100)+'%)')}</title><path d="${d}" fill="${Q(p.c)}" style="stroke:var(--pg,#fff);stroke-width:2"/></g>`;
+   if(f1-f0>=.06){const am=(a0+a1)/2,rm=(Ro+Ri)/2+(Ri?0:Ro*.12);b+=txw(cx+rm*Math.cos(am),cy+rm*Math.sin(am)+4,fm((f1-f0)*100)+'%',12)}});
+  if(Ri)b+=tx(cx,cy+2,fm(t),30,1)+tx(cx,cy+22,'seggi',12,0,mut);
+  return wrap(head,svg(300,300,b,340),legend(P,t,0));
+ }
+ /* ---------- barre per partito ---------- */
+ if(g==='bar'){
+  const mx=Math.max(...P.map(p=>p.v));
+  return wrap(head,`<div style="text-align:left;margin-top:6px">${P.map(p=>`<div style="display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px"><span style="width:130px;text-align:right;flex:none">${Q(p.n)}</span><div style="flex:1;background:rgba(128,128,128,.18);height:16px"><i style="display:block;height:100%;width:${p.v/mx*100}%;background:${Q(p.c)}"></i></div><b style="width:96px;flex:none;font-weight:400"><b>${fm(p.v)}</b> <span style="color:${mut}">(${fm(p.v/t*100)}%)</span></b></div>`).join('')}</div>`,'');
+ }
+ /* ---------- waffle: un quadretto (o sfera) per seggio ---------- */
+ if(g==='wfl'&&n){
+  const cols=n<=30?Math.min(n,10):Math.ceil(Math.sqrt(n*1.8)),rw=Math.ceil(n/cols),cz=Math.min(30,560/cols),W=cols*cz,H=rw*cz;
+  const b=own.map((o2,i)=>{const x=(i%cols)*cz,y=Math.floor(i/cols)*cz;return sph?dot(x+cz/2,y+cz/2,cz*.43,S[o2].c,tip(i)):`<g><title>${Q(tip(i))}</title><rect x="${(x+1.5).toFixed(1)}" y="${(y+1.5).toFixed(1)}" width="${(cz-3).toFixed(1)}" height="${(cz-3).toFixed(1)}" rx="2" fill="${Q(S[o2].c)}"/></g>`}).join('');
+  return wrap(head,svg(W,H,b,Math.max(200,Math.min(560,W))),legend(S,n,sph));
+ }
+ return '';
+}
+
+/* ===== ALBERO DI LUOGHI da organi.json (alberoOrgani → figli): tutto cio che sta sotto gli id scelti ===== */
+function alb(o,A){
+ const Q=E,nm=x=>x.nome||x.name||x.denominazione||x.titolo||x.nome_organo||x.label||'',ids=String(o.ids||'').split(/[,;\s]+/).filter(Boolean),ex=String(o.ex||'').split(/[,;\s]+/).filter(Boolean),dm=+o.dm||0;
+ if(!Array.isArray(A)||!A.length)return '';
+ const find=(L,id)=>{for(const x of L||[]){if(x.id_organo===id)return x;const r=find(x.figli,id);if(r)return r}return null},
+ cnt=x=>(x.figli||[]).reduce((s,f)=>s+1+cnt(f),0);
+ let R=ids.length?ids.map(i=>find(A,i)).filter(Boolean):A;
+ if(!R.length)return '';
+ if(o.ri===false)R=R.flatMap(x=>x.figli||[]);
+ const lab=x=>{const n=nm(x)||x.id_organo,t=Q(n)+(o.sid&&nm(x)?` <span style="color:var(--mut,#777);font-size:11px">${Q(x.id_organo)}</span>`:'')+(o.sn&&cnt(x)?` <span style="color:var(--mut,#777);font-size:11px">(${cnt(x)})</span>`:'');return o.lk?`<a href="${Q(String(o.lk).split('{id}').join(encodeURIComponent(x.id_organo)))}">${t}</a>`:t},
+ node=(x,d)=>{if(ex.indexOf(x.id_organo)>=0)return '';const k=(dm&&d>=dm)?'':(x.figli||[]).map(f=>node(f,d+1)).join('');
+  return k?`<li><details${o.cl&&d>0?'':' open'}><summary style="cursor:pointer">${lab(x)}</summary><ul style="margin:2px 0 2px;padding-left:18px;list-style:none">${k}</ul></details></li>`:`<li style="padding:1px 0 1px 14px">${lab(x)}</li>`},
+ h=R.map(x=>node(x,o.ri===false?1:0)).join('');
+ return h?`<div class="card" style="text-align:left">${o.ti?`<h3 style="margin:0 0 6px">${Q(o.ti)}</h3>`:''}<ul style="margin:0;padding:0;list-style:none">${h}</ul></div>`:'';
+}
+
 const opz=f=>()=>[['','— scegli —'],...EZ.filter(f).sort((a,b)=>a.data<b.data?1:-1).map(e=>[K(e),`${e.data} · ${e.tipo} · ${e.comune}`])];
 let PI={CTSU:[],CCP:[],NORMATIVA:[]};
 const root=()=>{try{return new URL($('#eb').value.trim()).origin+'/'}catch(e){return 'https://ews-rose.vercel.app/'}};
@@ -91,14 +245,16 @@ const PU={};let puT=0;
 const puGet=u=>{u=String(u||'').trim();if(!u)return null;const c=PU[u];if(c)return c;if(!/^(https?:\/\/\S+\.\S+|[\w.\/-]+\.json)$/i.test(u))return null;clearTimeout(puT);puT=setTimeout(async()=>{if(PU[u])return;PU[u]={st:'load'};try{const url=/^https?:/i.test(u)?u:root()+'api/data?file='+encodeURIComponent(u.toLowerCase());const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);PU[u]={st:'ok',L:normPi(await r.json(),root())}}catch(x){PU[u]={st:'err',m:x.message}}render()},700);return null};
 const piStub=id=>({oid:'',id:String(id),ti:String(id).replace(/-/g,' '),stato:'',org:'',sommario:'',img:'',url:''}),VISO=[['estji','Pagina propria dell’atto nel sito (#atto-…, come EstjiLinn)'],['viewer','Pannello sopra la pagina'],['ews','Pagina EWS esterna (lex/…)']],piHref=(s,id,v)=>v==='estji'?'#atto-'+id:s==='CTSU'?root()+'lex/progetto.html?id='+encodeURIComponent(id):s==='NORMATIVA'?root()+'lex/atto.html?id='+encodeURIComponent(id):'';
 const piFile=b=>b.src==='CTSU'?'ctsu.json':b.src==='NORMATIVA'?(b.file||($('#nf')?$('#nf').value.trim():'')||'atti.json'):(b.file||($('#pf')?$('#pf').value.trim():'')||'ctsu.json');
-const dynWrap=(k,b,inner)=>b.dyn===false?inner:`<div class="dynpi" data-k="${k}" data-src="${E(b.src)}" data-f="${E(piFile(b))}" data-id="${E(b.pid||'')}" data-oid="${E(b.organi_id||'')}" data-url="${E(b.fileurl||'')}" data-stato="${E(b.stato||'')}" data-vis="${E(b.vis||'')}" data-max="${+b.max||0}" data-ia="${E(b.ia||'')}" data-ix="${+b.ix||0}" data-iy="${+b.iy||0}" data-iw="${+b.iw||0}" data-href="${E(k==='piano'&&b.src!=='CTSU'?(b.href||''):'')}">${inner}</div>`;
+const dynWrap=(k,b,inner)=>b.dyn===false?inner:`<div class="dynpi" data-k="${k}" data-src="${E(b.src)}" data-f="${E(piFile(b))}" data-id="${E(b.pid||'')}" data-oid="${E(b.organi_id||'')}" data-url="${E(b.fileurl||'')}" data-stato="${E(b.stato||'')}" data-vis="${E(b.vis||'')}" data-max="${+b.max||0}" data-ia="${E(b.ia||'')}" data-si="${b.si===false?0:1}" data-ix="${+b.ix||0}" data-iy="${+b.iy||0}" data-iw="${+b.iw||0}" data-href="${E(k==='piano'&&b.src!=='CTSU'?(b.href||''):'')}">${inner}</div>`;
 function HYD(API){PVW(API||'/');document.querySelectorAll('.pvl').forEach(el=>PVW.leggi(el,API||'/'));const A=API||'/',C=HYD.c||(HYD.c={}),get=(f,s)=>C[A+f+(s||'')]||(C[A+f+(s||'')]=fetch(A+'api/data?file='+encodeURIComponent(String(f).toLowerCase())+(s==='NORMATIVA'?'&campi=id,categoria,numero,anno,titolo,stato,sommario,immagine,organi_id,id_organo,organo_id,organo,organo_responsabile,organi,luogo,ente':'')).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>normPi(d,A))),hf=(s,p,v)=>v==='estji'?'#atto-'+p.id:s==='CTSU'?A+'lex/progetto.html?id='+encodeURIComponent(p.id):s==='NORMATIVA'?A+'lex/atto.html?id='+encodeURIComponent(p.id):(p.url||'');
  const CR=HYD.r||(HYD.r={}),raw=f=>CR[A+f]||(CR[A+f]=fetch(A+'api/data?file='+encodeURIComponent(String(f).toLowerCase())).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>Array.isArray(d)?d:(d&&d.elezioni)||[]));
  document.querySelectorAll('.dynpi').forEach(el=>{if(el.dataset.ok)return;el.dataset.ok=1;const d=el.dataset;
- if(d.k==='elez'||d.k==='luogo'){raw(d.f).then(L=>{const g=d.g==='1';let h='';if(d.k==='elez'){const e=L.find(x=>K(x)===d.key);h=e?ez(e,g):''}else h=L.filter(x=>x.id_organo===d.id).map(x=>ez(x,g)).join('');if(h){el.innerHTML=h;el.classList.add('live')}else el.classList.add('offline')}).catch(()=>el.classList.add('offline'));return}
+ if(d.k==='albero'){(HYD.o||(HYD.o=fetch(A+'api/data?file=organi.json').then(r=>{if(!r.ok)throw 0;return r.json()}))).then(j=>{let h='';try{h=alb(JSON.parse(d.cfg),(j&&j.alberoOrgani)||[])}catch(x){}if(h){el.innerHTML=h;el.classList.add('live')}else el.classList.add('offline')}).catch(()=>el.classList.add('offline'));return}
+  if(d.k==='graf'){raw(d.f).then(L=>{let h='';try{h=gfx(JSON.parse(d.cfg),L)}catch(x){}if(h){el.innerHTML=h;el.classList.add('live')}else el.classList.add('offline')}).catch(()=>el.classList.add('offline'));return}
+  if(d.k==='elez'||d.k==='luogo'){raw(d.f).then(L=>{const g=d.g==='1';let h='';if(d.k==='elez'){const e=L.find(x=>K(x)===d.key);h=e?ez(e,g):''}else h=L.filter(x=>x.id_organo===d.id||(d.sub==='1'&&String(x.id_organo||'').indexOf(d.id+'-')===0)).map(x=>ez(x,g)).join('');if(h){el.innerHTML=h;el.classList.add('live')}else el.classList.add('offline')}).catch(()=>el.classList.add('offline'));return}
  const mo=(p,o)=>{o=String(o||'').trim().toLowerCase();return !o||[p.oid,p.org].some(v=>String(v||'').toLowerCase().split(/[|,;]/).some(t=>t.trim()===o))};
  if(d.k==='piano'&&!d.id&&!d.oid&&!d.url){return}
- (d.url?fetch(/^https?:/i.test(d.url)?d.url:A+'api/data?file='+encodeURIComponent(d.url.toLowerCase())).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>normPi(j,A)):get(d.f,d.src)).then(L=>{const ev=d.vis==='estji'?'estji':'',cx={src:d.src,pf:d.f,pu:d.url,ia:d.ia,ix:d.ix,iy:d.iy,iw:d.iw};if(d.k==='piano'){const M=L.filter(x=>(!d.id||x.id===d.id)&&mo(x,d.oid));if(M.length)el.innerHTML=M.map(p=>piCard({...p,...cx,vis:d.href?'ews':d.vis,href:d.href||p.url||hf(d.src,p,ev)})).join('');else{el.classList.add('offline');return}}else{let M=L.filter(p=>(!d.id||p.id===d.id)&&mo(p,d.oid)&&(!d.stato||p.stato.toLowerCase()===d.stato.toLowerCase()));if(+d.max)M=M.slice(0,+d.max);if(M.length)el.innerHTML=M.map(p=>piCard({...p,...cx,vis:d.vis,href:hf(d.src,p,ev)})).join('')}el.classList.add('live')}).catch(()=>el.classList.add('offline'))})}
+ (d.url?fetch(/^https?:/i.test(d.url)?d.url:A+'api/data?file='+encodeURIComponent(d.url.toLowerCase())).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>normPi(j,A)):get(d.f,d.src)).then(L=>{const ev=d.vis==='estji'?'estji':'',cx={src:d.src,pf:d.f,pu:d.url,ia:d.ia,ix:d.ix,iy:d.iy,iw:d.iw,si:d.si!=='0'};if(d.k==='piano'){const M=L.filter(x=>(!d.id||x.id===d.id)&&mo(x,d.oid));if(M.length)el.innerHTML=M.map(p=>piCard({...p,...cx,vis:d.href?'ews':d.vis,href:d.href||p.url||hf(d.src,p,ev)})).join('');else{el.classList.add('offline');return}}else{let M=L.filter(p=>(!d.id||p.id===d.id)&&mo(p,d.oid)&&(!d.stato||p.stato.toLowerCase()===d.stato.toLowerCase()));if(+d.max)M=M.slice(0,+d.max);if(M.length)el.innerHTML=M.map(p=>piCard({...p,...cx,vis:d.vis,href:hf(d.src,p,ev)})).join('')}el.classList.add('live')}).catch(()=>el.classList.add('offline'))})}
 function PVW(A){
  if(A)PVW.A=A;if(PVW.on)return;PVW.on=1;
  const st=document.createElement('style');
@@ -193,14 +349,14 @@ function PVW(A){
 const piCard=b=>{const lb=b.src==='NORMATIVA'?'Apri la norma':'Apri il piano',pv=b.vis==='viewer'&&b.id&&b.src,mt=[b.stato,b.org].filter(Boolean).join(' · '),tg=b.src==='NORMATIVA'?'':`<span class="tag">${E(b.src)}</span>`,
  ia=b.ia||'',ix=+b.ix||0,iy=+b.iy||0,iw=+b.iw||0,
  ist='display:block;margin:0 0 6px;'+(iw?`width:${iw}px;max-width:100%;height:auto;`:'max-width:100%;max-height:220px;')+(ia==='c'?'margin-left:auto;margin-right:auto;':ia==='r'?'margin-left:auto;':ia==='fl'?'float:left;margin:0 12px 6px 0;':ia==='fr'?'float:right;margin:0 0 6px 12px;':'')+(ix||iy?`position:relative;left:${ix}px;top:${iy}px;`:''),
- im=b.img?`<img src="${E(b.img)}" alt="" style="${ist}">`:'';
+ im=b.img&&b.si!==false?`<img src="${E(b.img)}" alt="" style="${ist}">`:'';
  return `<div class="card">${im}${tg||mt?`<div class="meta" style="margin:0 0 4px;line-height:1.3">${tg}${E(mt)}</div>`:''}<h3 style="margin:0 0 4px;line-height:1.25">${E(b.ti)}</h3>${b.sommario?`<p style="margin:0 0 6px">${E(b.sommario).replace(/\n/g,'<br>')}</p>`:''}${pv?`<p style="margin:0"><a class="btn" href="#" data-pv="${E(b.id)}" data-src="${E(b.src)}" data-pf="${E(b.pf||'')}" data-pu="${E(b.pu||'')}" data-ph="${E(b.href||'')}">${lb} ›</a></p>`:b.href?`<p style="margin:0"><a class="btn" href="${E(b.href)}"${/^#/.test(b.href)?` data-pe="1" data-src="${E(b.src)}" data-pf="${E(b.pf||'')}" data-pu="${E(b.pu||'')}"`:' target="_blank" rel="noopener"'}>${lb} ›</a></p>`:''}${ia==='fl'||ia==='fr'?'<div style="clear:both"></div>':''}</div>`};
 const DYNL='Dinamico: nel sito pubblicato si aggiorna da solo (legge api/data dall\'indirizzo EWS impostato in Avanzate; se non è raggiungibile resta il dato salvato)',DYNT=['piano','piani','elez','luogo'],dynBl=()=>Object.values(S.pag).flat().filter(b=>DYNT.includes(b.t)),dynAll=()=>{const L=dynBl();return !!L.length&&L.every(b=>b.dyn)};
-const dynEz=(b,k,inner)=>b.dyn?`<div class="dynpi" data-k="${k}" data-f="elezioni.json" data-key="${E(b.k||'')}" data-id="${E(b.id||'')}" data-g="${b.g?1:0}">${inner}</div>`:inner;
+const dynEz=(b,k,inner)=>b.dyn?`<div class="dynpi" data-k="${k}" data-f="elezioni.json" data-key="${E(b.k||'')}" data-id="${E(b.id||'')}" data-sub="${b.sub?1:0}" data-g="${b.g?1:0}">${inner}</div>`:inner;
 const apiBase=()=>{const a=((S.th&&S.th.api)||root()).trim();return a.replace(/\/*$/,'/')};
 const piBoot=()=>'<img hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" onload="window.HYDPI&&HYDPI(\''+E(apiBase())+'\')">';
 const dynX=(t,b)=>{const h=T[t].h(b);return JSON.stringify(b.dyn===false&&b.vis!=='viewer'?h:h.replace(/<\/div>$/,piBoot()+'</div>'))};
-const dynHead=()=>'/* 1) INCOLLA UNA VOLTA in EstjiLinn (rende dinamici i piani CTSU/CCP) */\nwindow.HYDPI=(function(){const E='+E+';const normPi='+normPi+';const piCard='+piCard+';const PAL='+JSON.stringify(PAL)+';const K='+K+';'+ez+';'+HYD+';'+PVW+';return HYD})();\n\n/* 2) CONTENUTI */\n';
+const dynHead=()=>'/* 1) INCOLLA UNA VOLTA in EstjiLinn (rende dinamici i piani CTSU/CCP) */\nwindow.HYDPI=(function(){const E='+E+';const normPi='+normPi+';const piCard='+piCard+';const PAL='+JSON.stringify(PAL)+';const K='+K+';'+ez+';'+gfx+';'+alb+';'+HYD+';'+PVW+';return HYD})();\n\n/* 2) CONTENUTI */\n';
 const T={
 titolo:{n:'Titolo',d:{txt:'Nuovo titolo',lv:'h1'},f:[['txt','Testo'],['lv','Livello','sel',['h1','h2','h3']]],h:b=>`<${b.lv}>${E(b.txt)}</${b.lv}>`},
 testo:{n:'Testo',d:{txt:'Scrivi qui…'},f:[['txt','Testo','area']],h:b=>`<p>${E(b.txt).replace(/\n/g,'<br>')}</p>`},
@@ -216,23 +372,23 @@ grafico:{n:'Grafico a barre',d:{ti:'Titolo grafico',txt:'Sì | 60\nNo | 40',c:'#
 tab:{n:'Tabella',d:{txt:'Nome | Valore\nA | 1\nB | 2'},f:[['txt','Righe con celle separate da | (la prima è l\'intestazione)','area']],h:b=>`<table style="border-collapse:collapse;width:100%">${b.txt.split('\n').filter(Boolean).map((r,i)=>`<tr>${r.split('|').map(c=>`<${i?'td':'th'} style="border:1px solid var(--line);padding:4px 8px;text-align:left">${E(c.trim())}</${i?'td':'th'}>`).join('')}</tr>`).join('')}</table>`},
 elez:{n:'Consultazione (dati JSON)',dyn:1,d:{k:'',g:true,dyn:true},f:[['k','Consultazione','sel',opz(()=>1)],['g','Con grafico seggi','chk'],['dyn',DYNL,'chk']],h:b=>{if(!b.k)return '<p class="meta">(scegli una consultazione)</p>';const e=EZ.find(x=>K(x)===b.k);return dynEz(b,'elez',e?ez(e,b.g):'<p class="meta">(consultazione non trovata nei dati salvati)</p>')},
  x:b=>`(e=>e?ezCard(e,${!!b.g}):'')(ELEZ.find(e=>e.tipo_codice+'|'+e.data+'|'+e.comune===${JSON.stringify(b.k)}))`},
-luogo:{n:'Elezioni di un luogo',dyn:1,d:{id:'ELIN-TLN',g:true,dyn:true},f:[['id','Codice organo (id_organo)'],['g','Con grafici','chk'],['dyn',DYNL,'chk']],h:b=>dynEz(b,'luogo',EZ.filter(x=>x.id_organo===b.id).map(x=>ez(x,b.g)).join('')||`<p class="meta">(nessuna elezione per «${E(b.id)}»)</p>`),
- x:b=>`ELEZ.filter(e=>ezId(e)===${JSON.stringify(b.id)}).map(e=>ezCard(e,${!!b.g})).join('')`},
+luogo:{n:'Elezioni di un luogo',dyn:1,d:{id:'ELIN-TLN',sub:false,g:true,dyn:true},f:[['id','Codice organo (id_organo)'],['sub','Includi anche i luoghi sottostanti (tutto ciò che sta sotto nell\'albero)','chk'],['g','Con grafici','chk'],['dyn',DYNL,'chk']],h:b=>dynEz(b,'luogo',EZ.filter(x=>x.id_organo===b.id||(b.sub&&String(x.id_organo||'').indexOf(b.id+'-')===0)).map(x=>ez(x,b.g)).join('')||`<p class="meta">(nessuna elezione per «${E(b.id)}»)</p>`),
+ x:b=>`ELEZ.filter(e=>ezId(e)===${JSON.stringify(b.id)}||(${!!b.sub}&&String(ezId(e)).indexOf(${JSON.stringify(b.id+'-')})===0)).map(e=>ezCard(e,${!!b.g})).join('')`},
 leggi:{n:'Leggi e Atti',d:{ti:'Leggi e atti',src:'NORMATIVA',organi_id:'',file:'',fileurl:'',cat:'',ric:true,dyn:true},
  f:[['ti','Titolo sopra l\'elenco (vuoto = nessuno)'],['src','Fonte','sel',['NORMATIVA','CTSU','CCP']],['file','File dati (vuoto = quello della barra in alto)'],['fileurl','Oppure link a un file (URL del JSON)'],['cat','Solo una categoria (es. Statuto; vuoto = tutte)'],['organi_id','organi_id (mostra solo gli atti di quell\'organo; vuoto = tutti)'],['ric','Mostra ricerca e filtri','chk']],
  h:b=>`<div class="pvl" data-src="${E(b.src)}" data-f="${E(piFile(b))}" data-u="${E(b.fileurl||'')}" data-cat="${E(b.cat||'')}" data-oid="${E(b.organi_id||'')}" data-ric="${b.ric?1:0}" data-ti="${E(b.ti||'')}"><p class="meta">▸ elenco leggi e atti (${E(piFile(b))}): si carica dal sito; ogni atto si apre in una sua pagina #atto-…</p></div>`,
  x:b=>dynX('leggi',b)},
-piano:{n:'Piano CTSU / CCP / Normativa',d:{src:'CTSU',organi_id:'',fileurl:'',pid:'',vis:'estji',ti:'Titolo del piano',stato:'',org:'',sommario:'',img:'',ia:'',ix:0,iy:0,iw:0,href:'',dyn:true,file:''},
- f:[['src','Fonte','sel',['CTSU','CCP','NORMATIVA']],['organi_id','organi_id (legge i piani di quell\'organo dall\'elenco caricato; vuoto = scheda manuale)'],['fileurl','Link a un singolo file (URL del JSON o nome file in DATA; ha la precedenza)'],['pid','ID dell\'atto / piano specifico (scegli dall\'elenco o scrivi l\'id; vuoto = tutti)'],['vis','Cosa apre il bottone «Apri…»','sel',()=>VISO],['ti','Titolo (scheda manuale)'],['stato','Stato'],['org','Organo responsabile'],['sommario','Descrizione','area'],['img','Immagine di copertina','img'],['ia','Posizione immagine','sel',[['','Sopra, a sinistra'],['c','Sopra, centrata'],['r','Sopra, a destra'],['fl','Affiancata a sinistra (testo a lato)'],['fr','Affiancata a destra (testo a lato)']]],['ix','Sposta immagine: orizzontale in px (negativo = sinistra)','num'],['iy','Sposta immagine: verticale in px (negativo = su)','num'],['iw','Larghezza immagine in px (0 = automatica)','num'],['href','Link al piano'],['dyn',DYNL,'chk'],['file','File dati CCP o Normativa (vuoto = quello della barra in alto)']],
- h:b=>{const u=String(b.fileurl||'').trim(),oid=String(b.organi_id||'').trim();let L=null,m='';
+piano:{n:'Piano CTSU / CCP / Normativa',d:{si:true,src:'CTSU',organi_id:'',fileurl:'',pid:'',vis:'estji',ti:'Titolo del piano',stato:'',org:'',sommario:'',img:'',ia:'',ix:0,iy:0,iw:0,href:'',dyn:true,file:''},
+ f:[['src','Fonte','sel',['CTSU','CCP','NORMATIVA']],['organi_id','organi_id (legge i piani di quell\'organo dall\'elenco caricato; vuoto = scheda manuale)'],['fileurl','Link a un singolo file (URL del JSON o nome file in DATA; ha la precedenza)'],['pid','ID dell\'atto / piano specifico (scegli dall\'elenco o scrivi l\'id; vuoto = tutti)'],['vis','Cosa apre il bottone «Apri…»','sel',()=>VISO],['ti','Titolo (scheda manuale)'],['stato','Stato'],['org','Organo responsabile'],['sommario','Descrizione','area'],['img','Immagine di copertina','img'],['si','Mostra l\'immagine dell\'atto','chk'],['ia','Posizione immagine','sel',[['','Sopra, a sinistra'],['c','Sopra, centrata'],['r','Sopra, a destra'],['fl','Affiancata a sinistra (testo a lato)'],['fr','Affiancata a destra (testo a lato)']]],['ix','Sposta immagine: orizzontale in px (negativo = sinistra)','num'],['iy','Sposta immagine: verticale in px (negativo = su)','num'],['iw','Larghezza immagine in px (0 = automatica)','num'],['href','Link al piano'],['dyn',DYNL,'chk'],['file','File dati CCP o Normativa (vuoto = quello della barra in alto)']],
+ h:b=>{if(b.si===undefined)b.si=true;const u=String(b.fileurl||'').trim(),oid=String(b.organi_id||'').trim();let L=null,m='';
   if(u){const c=puGet(u);if(!c)m=PU[u]?'':'(link non valido o in attesa…)';else if(c.st==='load')m='(carico il file…)';else if(c.st==='err')m='(file non letto: '+E(c.m)+')';else L=c.L.filter(p=>mOrg(p,oid))}
   else if(oid||b.pid){L=(PI[b.src]||[]).filter(p=>(!b.pid||p.id===b.pid)&&mOrg(p,oid));if(b.pid&&!L.length)L=[piStub(b.pid)]}
   if(L===null&&!m&&!u&&!oid)return dynWrap('piano',b,piCard(b));
-  const inner=L&&L.length?L.map(p=>piCard({...p,ia:b.ia,ix:b.ix,iy:b.iy,iw:b.iw,src:b.src,vis:b.href?'ews':b.vis,pf:piFile(b),pu:b.fileurl,href:b.href||p.url||piHref(b.src,p.id,b.vis==='estji'?'estji':'')})).join(''):`<p class="meta">${m||'(nessun piano '+E(b.src)+(oid?' per organi_id «'+E(oid)+'»':'')+' trovato: usa i bottoni «Piani» in alto)'}</p>`;
+  const inner=L&&L.length?L.map(p=>piCard({...p,ia:b.ia,ix:b.ix,iy:b.iy,iw:b.iw,si:b.si,src:b.src,vis:b.href?'ews':b.vis,pf:piFile(b),pu:b.fileurl,href:b.href||p.url||piHref(b.src,p.id,b.vis==='estji'?'estji':'')})).join(''):`<p class="meta">${m||'(nessun piano '+E(b.src)+(oid?' per organi_id «'+E(oid)+'»':'')+' trovato: usa i bottoni «Piani» in alto)'}</p>`;
   return dynWrap('piano',b,inner)},
  x:b=>dynX('piano',b)},
-piani:{n:'Elenco piani / normativa',d:{src:'CTSU',organi_id:'',pid:'',vis:'estji',stato:'',max:0,ia:'',ix:0,iy:0,iw:0,dyn:true,file:''},f:[['src','Fonte','sel',['CTSU','CCP','NORMATIVA']],['organi_id','organi_id (legge gli atti/piani di quell\'organo dall\'elenco caricato; vuoto = tutti)'],['pid','Un solo atto / piano: ID (scegli dall\'elenco o scrivi l\'id; vuoto = tutto l\'elenco)'],['vis','Cosa apre il bottone «Apri…»','sel',()=>VISO],['stato','Solo stato (vuoto = tutti)'],['max','Quanti (0 = tutti)','num'],['ia','Posizione immagine','sel',[['','Sopra, a sinistra'],['c','Sopra, centrata'],['r','Sopra, a destra'],['fl','Affiancata a sinistra (testo a lato)'],['fr','Affiancata a destra (testo a lato)']]],['ix','Sposta immagine: orizzontale in px (negativo = sinistra)','num'],['iy','Sposta immagine: verticale in px (negativo = su)','num'],['iw','Larghezza immagine in px (0 = automatica)','num'],['dyn',DYNL,'chk'],['file','File dati CCP o Normativa (vuoto = quello della barra in alto)']],
- h:b=>{let L=(PI[b.src]||[]).filter(p=>(!b.pid||p.id===b.pid)&&mOrg(p,b.organi_id)&&(!b.stato||p.stato.toLowerCase()===b.stato.toLowerCase()));if(b.pid&&!L.length)L=[piStub(b.pid)];return dynWrap('piani',b,L.length?L.map(p=>piCard({...p,ia:b.ia,ix:b.ix,iy:b.iy,iw:b.iw,src:b.src,vis:b.vis,pf:piFile(b),pu:'',href:piHref(b.src,p.id,b.vis==='estji'?'estji':'')})).join(''):'<p class="meta">(nessun piano '+E(b.src)+' caricato: usa i bottoni «Piani» in alto)</p>')},
+piani:{n:'Elenco piani / normativa',d:{si:true,src:'CTSU',organi_id:'',pid:'',vis:'estji',stato:'',max:0,ia:'',ix:0,iy:0,iw:0,dyn:true,file:''},f:[['src','Fonte','sel',['CTSU','CCP','NORMATIVA']],['organi_id','organi_id (legge gli atti/piani di quell\'organo dall\'elenco caricato; vuoto = tutti)'],['pid','Un solo atto / piano: ID (scegli dall\'elenco o scrivi l\'id; vuoto = tutto l\'elenco)'],['vis','Cosa apre il bottone «Apri…»','sel',()=>VISO],['stato','Solo stato (vuoto = tutti)'],['max','Quanti (0 = tutti)','num'],['si','Mostra l\'immagine dell\'atto','chk'],['ia','Posizione immagine','sel',[['','Sopra, a sinistra'],['c','Sopra, centrata'],['r','Sopra, a destra'],['fl','Affiancata a sinistra (testo a lato)'],['fr','Affiancata a destra (testo a lato)']]],['ix','Sposta immagine: orizzontale in px (negativo = sinistra)','num'],['iy','Sposta immagine: verticale in px (negativo = su)','num'],['iw','Larghezza immagine in px (0 = automatica)','num'],['dyn',DYNL,'chk'],['file','File dati CCP o Normativa (vuoto = quello della barra in alto)']],
+ h:b=>{if(b.si===undefined)b.si=true;let L=(PI[b.src]||[]).filter(p=>(!b.pid||p.id===b.pid)&&mOrg(p,b.organi_id)&&(!b.stato||p.stato.toLowerCase()===b.stato.toLowerCase()));if(b.pid&&!L.length)L=[piStub(b.pid)];return dynWrap('piani',b,L.length?L.map(p=>piCard({...p,ia:b.ia,ix:b.ix,iy:b.iy,iw:b.iw,si:b.si,src:b.src,vis:b.vis,pf:piFile(b),pu:'',href:piHref(b.src,p.id,b.vis==='estji'?'estji':'')})).join(''):'<p class="meta">(nessun piano '+E(b.src)+' caricato: usa i bottoni «Piani» in alto)</p>')},
  x:b=>dynX('piani',b)},
 ews:{n:'Sito EWS importato',hid:1,d:{nm:'sito',h:800,html:''},f:[['nm','Nome file'],['h','Altezza (px)','num'],['html','Codice HTML completo (si scarica così com\'è)','area']],
  fx:b=>b.ed?[['nm','Nome pagina'],['body','HTML del contenuto (si modifica anche cliccando i pezzi nella pagina)','area'],['css','CSS importato','area']]:T.ews.f,
@@ -244,6 +400,29 @@ sez:{n:'Sezione con elenco link',d:{ti:'SEZIONE',st:'g',txt:'Prima voce | #home\
  f:[['ti','Titolo'],['st','Stile intestazione','sel',()=>[['g','Barra sfumata'],['p','Barra piena'],['l','Solo sottolineatura'],['n','Nessuna']]],['txt','Voci: Etichetta | indirizzo (indirizzo facoltativo)','area'],['bul','Simbolo elenco','sel',()=>[['a','Freccia ▶'],['d','Pallino'],['n','Nessuno']]],['img','Immagine a sinistra','img'],['iw','Larghezza immagine (px)','num'],['h','Altezza con scorrimento (px, 0 = nessuno)','num'],['box','Con bordo','chk']],
  h:b=>{const L=(b.txt||'').split('\n').filter(Boolean).map(r=>{const[a,...c]=r.split('|'),u=c.join('|').trim();return `<li>${u?`<a href="${E(u)}">${E(a.trim())}</a>`:E(a.trim())}</li>`}).join('');return `<div class="sez${b.box?' bx':''}${b.bul==='d'?' dot':b.bul==='n'?' nob':''}">${b.ti&&b.st!=='n'?`<div class="sh2 s-${E(b.st||'g')}">${E(b.ti)}</div>`:''}<div class="sc2"${+b.h?` style="max-height:${+b.h}px"`:''}>${b.img?`<img class="im" src="${E(b.img)}" alt="" style="width:${+b.iw||90}px">`:''}<ul>${L}</ul></div></div>`}}
 };
+/* ===== CARTELLA «Grafici»: componenti collegabili ai dati elettorali (elezioni.json) o a dati scritti a mano ===== */
+const GRD='Partito A | 40 | #8c1a0a\nPartito B | 30 | #1b3a8c\nPartito C | 20 | #2e7d4f\nPartito D | 10 | #a0731a',
+GRB=[['ti','Titolo (vuoto = automatico dalla consultazione)'],['k','Consultazione collegata (vuoto = usa i dati scritti qui sotto)','sel',opz(()=>1)],['txt','Dati a mano, usati se non scegli una consultazione. Una riga per partito: Nome | seggi | colore (facoltativo, es. #c00) | coalizione (facoltativo)','area']],
+GRC=['lg','Legenda','chk'],GRS=['sf','Effetto sfera (3D)','chk'],GRM=['mj','Mostra la maggioranza','chk'],GRY=['dyn',DYNL,'chk'],
+GRK=(g,n,x,ex)=>{T['gr_'+g]={n,dyn:1,d:{g,ti:'',k:'',k2:'',k3:'',k4:'',co:'',n:3,sub:false,txt:GRD,lg:true,sf:true,mj:true,md:'seg',id:'',tc:'',m:'seggi',dyn:true,...(ex||{})},f:x,
+ h:b=>{const cfg={g,ti:b.ti,k:b.k,k2:b.k2,k3:b.k3,k4:b.k4,txt:b.txt,lg:!!b.lg,sf:!!b.sf,mj:!!b.mj,md:b.md,id:b.id,tc:b.tc,m:b.m,n:+b.n||0,sub:!!b.sub,co:b.co},inner=gfx(cfg,EZ)||'<p class="meta">(grafico vuoto: scegli una consultazione oppure scrivi i dati)</p>';
+  return b.dyn&&(b.k||g==='sto'||g==='cmp')?`<div class="dynpi" data-k="graf" data-f="elezioni.json" data-cfg="${E(JSON.stringify(cfg))}">${inner}</div>`:inner},
+ x:b=>dynX('gr_'+g,b)}};
+GRK('emi','Emiciclo (parlamento)',[...GRB,GRS,GRM,GRC,GRY]);
+GRK('cer','Consiglio su cerchio (sfere)',[...GRB,['md','Una sfera per…','sel',[['seg','ogni seggio (sfere uguali sul cerchio)'],['par','ogni partito (grandezza = seggi)']]],GRS,GRC,GRY]);
+GRK('tor','Torta',[...GRB,GRC,GRY]);
+GRK('cia','Ciambella',[...GRB,GRC,GRY]);
+GRK('bar','Barre per partito',[...GRB,GRY]);
+GRK('wfl','Waffle (un quadretto per seggio)',[...GRB,GRS,GRC,GRY]);
+GRK('sto','Andamento nel tempo',[['ti','Titolo (vuoto = automatico)'],['id','Codice organo / luogo (id_organo; vuoto = tutti i luoghi)'],['tc','Solo un tipo di consultazione (tipo_codice, es. C, R, G; vuoto = tutti)'],['m','Cosa mostrare','sel',[['seggi','Seggi per partito'],['pct','% dei seggi per partito'],['aff','Affluenza']]],GRC,GRY],{id:'ELIN',txt:''});
+GRK('cmp','Confronto tra consultazioni',[['ti','Titolo (vuoto = automatico)'],['id','Luogo (id_organo; vuoto = tutti)'],['sub','Includi anche i luoghi sottostanti nell\'albero','chk'],['tc','Solo un tipo di consultazione (tipo_codice; vuoto = tutti)'],['n','Quante, le più recenti (se non scegli le consultazioni qui sotto)','num'],['k','Oppure scegli le consultazioni: 1ª','sel',opz(()=>1)],['k2','2ª','sel',opz(()=>1)],['k3','3ª','sel',opz(()=>1)],['k4','4ª','sel',opz(()=>1)],['md','Come affiancarle','sel',[['imp','Barre impilate (una per consultazione)'],['emi','Emicicli affiancati'],['cia','Ciambelle affiancate'],['tor','Torte affiancate'],['cer','Cerchi di sfere affiancati'],['wfl','Waffle affiancati']]],GRS,GRC,GRY],{id:'ELIN',txt:'',md:'imp'});
+GRK('coa','Mappa a blocchi di coalizione',[...GRB,['co','Coalizioni (facoltativo). Una riga: Nome coalizione | partito1, partito2 | colore. Se nei dati c\'è già il campo «coalizione» non serve','area'],GRC,GRY],{txt:'Rossi | 30 | #8c1a0a | Fronte A\nBlu | 20 | #1b3a8c | Fronte A\nVerdi | 25 | #2e7d4f | Fronte B\nGialli | 15 | #a0731a | Fronte B\nGrigi | 10 | #666'});
+T.albero={n:'Albero di luoghi (organi.json)',dyn:1,d:{ti:'',organi_id:'LMGU',ex:'',dm:0,ri:true,sid:false,sn:false,cl:false,lk:'',dyn:true},
+ f:[['ti','Titolo (vuoto = nessuno)'],['organi_id','Luoghi di partenza: id_organo, anche più d\'uno separati da virgola (vuoto = tutto l\'albero). Carica tutto ciò che sta sotto'],['ex','Escludi questi id (separati da virgola)'],['dm','Quanti livelli sotto il luogo (0 = tutti)','num'],['ri','Mostra anche il luogo di partenza','chk'],['sid','Mostra il codice accanto al nome','chk'],['sn','Mostra quanti luoghi contiene','chk'],['cl','Rami chiusi (clic per aprire)','chk'],['lk','Link di ogni luogo (es. #luogo-{id}; vuoto = nessun link)'],['dyn',DYNL,'chk']],
+ h:b=>{const cfg={ti:b.ti,ids:b.organi_id,ex:b.ex,dm:+b.dm||0,ri:!!b.ri,sid:!!b.sid,sn:!!b.sn,cl:!!b.cl,lk:b.lk},inner=alb(cfg,ORG)||'<p class="meta">(albero non caricato dai dati EWS, oppure id «'+E(b.organi_id||'')+'» non trovato)</p>';
+  return b.dyn?`<div class="dynpi" data-k="albero" data-f="organi.json" data-cfg="${E(JSON.stringify(cfg))}">${inner}</div>`:inner},
+ x:b=>dynX('albero',b)};
+DYNT.push('gr_emi','gr_cer','gr_tor','gr_cia','gr_bar','gr_wfl','gr_sto','gr_cmp','gr_coa','albero');
 const DTH={bg:'#eef0e2',pg:'#ffffff',ink:'#222222',bar:'#7d7a48',red:'#8c1a0a',link:'#1a3fb0',box:'#f6f7ee',line:'#d5d6bd',ff:'Verdana,Geneva,sans-serif',fh:'Georgia,serif',fs:14,w:1000,colL:200,colR:200,colL2:200,colR2:200,pad:16,gap:14,bar2:'#b9b78a',hdr:true,api:'',img:'',logo:'',titImg:'',titH:60,nome:'Il mio sito',foot:'© Il mio sito',menu:true,sep:false,shc:''};
 let S={cur:'home',pag:{home:[{t:'titolo',txt:'Benvenuto',lv:'h1'},{t:'testo',txt:'Clicca un blocco per modificarlo, oppure clicca fuori dai blocchi per cambiare colori, font e immagini di tutto il sito.'},{t:'grafico',ti:'Esito del voto',txt:'Sì | 60\nNo | 40',c:'#7d7a48'}],'chi-siamo':[{t:'titolo',txt:'Chi siamo',lv:'h1'}]}},sel=-1;
 try{const x=localStorage.getItem('site-builder');if(x)S=JSON.parse(x)}catch(e){}S.th=Object.assign({},DTH,S.th);
@@ -268,11 +447,11 @@ const X=b=>{const t=T[b.t],s=stl(b);let r=t.x?t.x(b):JSON.stringify(t.h(b));if(s
 function siteHTML(only){dropAtti(S.pag);const t=S.th,P={};Object.keys(S.pag).filter(k=>!only||only.includes(k)).forEach(k=>P[k]=colsHTML(k,b=>b.t==='ews'&&b.ed?ewsEd(b,'out'):wr(b,T[b.t].h(b))));
 const lgx=(()=>{let f=null;for(const[k,L]of Object.entries(S.pag))for(const b of allB(L))if(b.t==='leggi'&&!f)f={src:b.src,f:piFile(b),u:b.fileurl||'',back:k};if(!f)for(const L of Object.values(S.pag))for(const b of allB(L))if((b.t==='piani'||b.t==='piano')&&b.vis==='estji'&&!f)f={src:b.src,f:piFile(b),u:b.fileurl||'',back:''};return f||{src:'NORMATIVA',f:'atti.json',u:'',back:''}})();
  const css=document.querySelector('style').textContent.split('/*BC*/')[1].split('@media(max-width:800px)')[0],esc=j=>JSON.stringify(j).replace(/</g,'\\u003c');
- return `<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(t.nome)}</title><style>:root{${tv()}}*{box-sizing:border-box}body{margin:0;background:var(--bg)${t.img?` url('${t.img}') center/cover fixed`:''};color:var(--ink);font:${t.fs}px/1.5 var(--ff)}#w{max-width:${t.w}px;margin:0 auto;background:var(--pg);min-height:100vh}a{color:var(--link)}${css}@media(max-width:700px){.grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr!important}.cols>.sc{order:1}.cols>.sl{order:2}.cols>.sl2{order:3}.cols>.sr{order:4}.cols>.sr2{order:5}}</style></head><body><div id="w">${head(only)}<main class="sm" id="m"></main>${t.foot?`<div class="sf">${E(t.foot)}</div>`:''}</div><script type="application/json" id="builder-data">${esc({...S,ez:EZ,pi:PI})}<\/script><script>const E=${E};const normPi=${normPi};const piCard=${piCard};const PAL=${JSON.stringify(PAL)};const K=${K};${ez};${HYD};${PVW};const P=${esc(P)};const LG=${esc(lgx)};let LP='';const HM=()=>Object.keys(P).find(x=>x!=='atto')||'home';function r(){const k=decodeURIComponent(location.hash.slice(1)),m=document.getElementById('m'),A=${esc(apiBase())};if(/^atto-/.test(k)){PVW(A);const lg={...LG,back:LG.back||LP,home:HM()};if(P.atto!=null){PVW.tpl(m,k.slice(5),lg,P.atto);HYD(A)}else PVW.page(m,k.slice(5),lg);scrollTo(0,0);return}const ok=P[k]!=null&&k!=='atto';LP=ok?k:(Object.keys(P).find(x=>x!=='atto')||Object.keys(P)[0]);m.innerHTML=P[LP];scrollTo(0,0);HYD(A)}addEventListener('hashchange',r);r()<\/script></body></html>`}
+ return `<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(t.nome)}</title><style>:root{${tv()}}*{box-sizing:border-box}body{margin:0;background:var(--bg)${t.img?` url('${t.img}') center/cover fixed`:''};color:var(--ink);font:${t.fs}px/1.5 var(--ff)}#w{max-width:${t.w}px;margin:0 auto;background:var(--pg);min-height:100vh}a{color:var(--link)}${css}@media(max-width:700px){.grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr!important}.cols>.sc{order:1}.cols>.sl{order:2}.cols>.sl2{order:3}.cols>.sr{order:4}.cols>.sr2{order:5}}</style></head><body><div id="w">${head(only)}<main class="sm" id="m"></main>${t.foot?`<div class="sf">${E(t.foot)}</div>`:''}</div><script type="application/json" id="builder-data">${esc({...S,ez:EZ,pi:PI,org:ORG})}<\/script><script>const E=${E};const normPi=${normPi};const piCard=${piCard};const PAL=${JSON.stringify(PAL)};const K=${K};${ez};${gfx};${alb};${HYD};${PVW};const P=${esc(P)};const LG=${esc(lgx)};let LP='';const HM=()=>Object.keys(P).find(x=>x!=='atto')||'home';function r(){const k=decodeURIComponent(location.hash.slice(1)),m=document.getElementById('m'),A=${esc(apiBase())};if(/^atto-/.test(k)){PVW(A);const lg={...LG,back:LG.back||LP,home:HM()};if(P.atto!=null){PVW.tpl(m,k.slice(5),lg,P.atto);HYD(A)}else PVW.page(m,k.slice(5),lg);scrollTo(0,0);return}const ok=P[k]!=null&&k!=='atto';LP=ok?k:(Object.keys(P).find(x=>x!=='atto')||Object.keys(P)[0]);m.innerHTML=P[LP];scrollTo(0,0);HYD(A)}addEventListener('hashchange',r);r()<\/script></body></html>`}
 function imp(t){let j=null;const m=t.match(/<script type="application\/json" id="builder-data">([\s\S]*?)<\/script>/);try{j=JSON.parse(m?m[1]:t)}catch(e){}
  if(!j&&/<(html|body)/i.test(t)){const st=(t.match(/<style[\s\S]*?<\/style>/gi)||[]).join(''),b=t.match(/<body[^>]*>([\s\S]*)<\/body>/i);j={pag:{importata:[{t:'ews',nm:'importata',h:800,html:t}]}}}
- if(!j||!j.pag)return 0;S=Object.assign({},j,{th:Object.assign({},DTH,j.th)});if(!S.pag[S.cur])S.cur=Object.keys(S.pag)[0];if(j.ez){EZ=j.ez;nome='progetto'}delete S.ez;if(j.pi)PI=Object.assign({CTSU:[],CCP:[],NORMATIVA:[]},j.pi);delete S.pi;sel=-1;pages();render();panel();return 1}
-function out(){const m=$('#mode').value;$('#ta').value=m==='sito'?siteHTML():m==='dyn'?dynHead()+Object.entries(S.pag).map(([k,L])=>`'${k}': () => [\n${L.map(b=>'  '+X(b)).join(',\n')}\n].join(''),`).join('\n'):m==='html'?cur().map(b=>T[b.t].h(b)).join('\n'):JSON.stringify({...S,ez:EZ,pi:PI},null,1)}
+ if(!j||!j.pag)return 0;S=Object.assign({},j,{th:Object.assign({},DTH,j.th)});if(!S.pag[S.cur])S.cur=Object.keys(S.pag)[0];if(j.ez){EZ=j.ez;nome='progetto'}delete S.ez;if(j.org)ORG=j.org;delete S.org;if(j.pi)PI=Object.assign({CTSU:[],CCP:[],NORMATIVA:[]},j.pi);delete S.pi;sel=-1;pages();render();panel();return 1}
+function out(){const m=$('#mode').value;$('#ta').value=m==='sito'?siteHTML():m==='dyn'?dynHead()+Object.entries(S.pag).map(([k,L])=>`'${k}': () => [\n${L.map(b=>'  '+X(b)).join(',\n')}\n].join(''),`).join('\n'):m==='html'?cur().map(b=>T[b.t].h(b)).join('\n'):JSON.stringify({...S,ez:EZ,pi:PI,org:ORG},null,1)}
 const dropAtti=o=>{if(Array.isArray(o)){for(let i=o.length-1;i>=0;i--){if(o[i]&&o[i].t==='atti')o.splice(i,1);else dropAtti(o[i])}}else if(o&&typeof o==='object')Object.values(o).forEach(dropAtti)};
 function render(){dropAtti(S.pag);const t=S.th;$('#cv').style.cssText=tv()+`;font-family:${t.ff};font-size:${t.fs}px;color:${t.ink}`+(t.img?`;background-image:url('${t.img}');background-size:cover`:'');
  $('#cv').innerHTML=head()+'<div class="sm">'+(colsHTML(S.cur,(b,i)=>`<div class="blk${i===sel?' on':''}" ${b.t==='ews'&&b.ed?'':' draggable="true"'} data-i="${i}">${wr(b,T[b.t].h(b))}</div>`,true)||'<p class="meta">Pagina vuota: trascina qui un componente o cliccalo a sinistra.</p>')+'</div>'+(t.foot?'<div class="sf">'+E(t.foot)+'</div>':'');out();save();zbar();markSel();try{HYD(root())}catch(e){}}
@@ -288,7 +467,7 @@ function panel0(){const B0=cur()[sel],eo=embObj(B0),b=eo||B0,p=$('#pn');if(!b){p
  if(ty==='area')return `<label>${l}<textarea data-k="${k}" rows="6">${E(v)}</textarea></label>`;
  if(ty==='chk')return `<label><input type="checkbox" data-k="${k}"${v?' checked':''}> ${l}</label>`;
  if(ty==='sel')return `<label>${l}<select data-k="${k}">${(typeof o==='function'?o(b):o.map(x=>[x,x])).map(([a,c])=>`<option value="${E(a)}"${a===v?' selected':''}>${E(c)}</option>`).join('')}</select></label>`;
- return `<label>${l}<input data-k="${k}" type="${ty==='num'?'number':'text'}" value="${E(v)}"${k==='href'?' list="dl"':k==='organi_id'?' list="ol"':k==='pid'?' list="pil"':''}>${ty==='img'?'<input type="file" accept="image/*" data-up="'+k+'">':''}</label>${ty==='img'?'<button data-tree="'+k+'">🌳 Albero immagini</button>':''}`}).join('')}
+ return `<label>${l}<input data-k="${k}" type="${ty==='num'?'number':'text'}" value="${E(v)}"${k==='href'?' list="dl"':(k==='organi_id'||k==='ex'||k==='id')?' list="ol"':k==='pid'?' list="pil"':''}>${ty==='img'?'<input type="file" accept="image/*" data-up="'+k+'">':''}</label>${ty==='img'?'<button data-tree="'+k+'">🌳 Albero immagini</button>':''}`}).join('')}
 function add(t,at,z){const L=cur(),i=at==null?(sel>=0?sel+1:L.length):at,z0=z||(at==null&&sel>=0&&L[sel]?L[sel].z:'');L.splice(i,0,{t,...JSON.parse(JSON.stringify(T[t].d)),...(z0&&z0!=='c'?{z:z0}:{})});sel=i;render();panel()}
 function pages(){$('#pg').innerHTML=Object.keys(S.pag).map(k=>`<option${k===S.cur?' selected':''}>${E(k)}</option>`).join('');$('#st').textContent=`elezioni: ${EZ.length} (${nome}) · piani CTSU: ${PI.CTSU.length} · CCP: ${PI.CCP.length} · normativa: ${(PI.NORMATIVA||[]).length}`}
 
@@ -296,7 +475,7 @@ const ATS={crumb:['Briciole (sei in: home \u203a \u2026)','<p class="meta">sei i
 Object.entries(ATS).forEach(([k,[n,pv]])=>{T['at_'+k]={n:'Atto: '+n,d:k==='titolo'?{lv:'h1'}:k==='img'?{w:200}:{},f:k==='titolo'?[['lv','Livello','sel',['h1','h2','h3']]]:k==='img'?[['w','Larghezza massima (px)','num']]:[],h:b=>`<div data-atto="${k}"${b.lv?` data-lv="${E(b.lv)}"`:''}${b.w?` data-w="${+b.w}"`:''}>${pv}</div>`}});
 $('#atB').onclick=()=>{if(S.pag.atto&&!confirm('La pagina \u00abatto\u00bb esiste gi\u00e0. Rifarla da zero con il modello base?'))return;const cd={bg:'#fff',col:'#222',pd:'6px 16px'};S.pag.atto=['crumb','titolo','meta','img','pdf','avviso','sommario','indice','testo','pronunce'].map(k=>({t:'at_'+k,...JSON.parse(JSON.stringify(T['at_'+k].d)),...cd}));S.cur='atto';sel=-1;pages();render();panel();msg('Pagina \u00abatto\u00bb creata: ogni atto si aprir\u00e0 con questo modello. Riordina, togli o aggiungi blocchi \u00abAtto: \u2026\u00bb come vuoi.')};
 
-$('#tb').innerHTML='<button class="xc" data-x="l" title="Chiudi la palette">✕</button><h4>Colonne della pagina</h4><div id="zb"></div><h4 style="margin-top:12px">Componenti</h4>'+(()=>{const bt=([k,t])=>`<button draggable="true" data-t="${k}">${t.dyn?'⚡ ':''}${t.n}</button>`,L=Object.entries(T).filter(([k,t])=>!t.hid),A=L.filter(([k])=>/^at_/.test(k));return L.filter(([k])=>!/^at_/.test(k)).map(bt).join('')+(A.length?`<details style="margin:6px 0"><summary style="cursor:pointer;font-weight:700">📄 Pagina atti (${A.length})</summary>${A.map(([k,t])=>bt([k,{...t,n:t.n.replace(/^Atto: /,'')}])).join('')}</details>`:'')})()+'<p class="meta">⚡ = dinamico: si aggiorna con i dati del sito.</p>';
+$('#tb').innerHTML='<button class="xc" data-x="l" title="Chiudi la palette">✕</button><h4>Colonne della pagina</h4><div id="zb"></div><h4 style="margin-top:12px">Componenti</h4>'+(()=>{const bt=([k,t])=>`<button draggable="true" data-t="${k}">${t.dyn?'⚡ ':''}${t.n}</button>`,L=Object.entries(T).filter(([k,t])=>!t.hid),A=L.filter(([k])=>/^at_/.test(k)),G=L.filter(([k])=>/^gr_/.test(k));return L.filter(([k])=>!/^(at|gr)_/.test(k)).map(bt).join('')+(G.length?`<details open style="margin:6px 0"><summary style="cursor:pointer;font-weight:700">📊 Grafici (${G.length})</summary>${G.map(bt).join('')}<p class="meta">Collegati alle consultazioni: scegli la consultazione nel pannello a destra.</p></details>`:'')+(A.length?`<details style="margin:6px 0"><summary style="cursor:pointer;font-weight:700">📄 Pagina atti (${A.length})</summary>${A.map(([k,t])=>bt([k,{...t,n:t.n.replace(/^Atto: /,'')}])).join('')}</details>`:'')})()+'<p class="meta">⚡ = dinamico: si aggiorna con i dati del sito.</p>';
 $('#tb').onclick=e=>{const x=e.target.dataset.x;if(x){togUi(x);return}const t=e.target.closest('[data-t]');if(t)add(t.dataset.t)};
 $('#tb').ondragstart=e=>{const t=e.target.closest('[data-t]');if(t){e.dataTransfer.setData('text/plain','t:'+t.dataset.t);setTimeout(()=>document.body.classList.add('dragging'),0)}};
 addEventListener('dragend',()=>document.body.classList.remove('dragging'));addEventListener('drop',()=>document.body.classList.remove('dragging'),true);
@@ -342,7 +521,7 @@ const msg=t=>{$('#msg').textContent=t};
 function dl(name,txt,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:mime||'text/html'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 $('#dl').onclick=()=>{dl(slug(S.th.nome)+'.html',siteHTML());msg('Sito scaricato ✓')};
 $('#dlp').onclick=()=>{const L=cur(),b=L.length===1&&L[0].t==='ews'&&L[0].html?L[0]:null;if(b)dl(slug(b.nm||S.cur)+'.html',b.html);else dl(slug(S.th.nome)+'-'+S.cur+'.html',siteHTML([S.cur]));msg('Pagina scaricata ✓')};
-$('#dlj').onclick=()=>{dl(slug(S.th.nome)+'.json',JSON.stringify({...S,ez:EZ,pi:PI},null,1),'application/json');msg('Progetto scaricato ✓')};
+$('#dlj').onclick=()=>{dl(slug(S.th.nome)+'.json',JSON.stringify({...S,ez:EZ,pi:PI,org:ORG},null,1),'application/json');msg('Progetto scaricato ✓')};
 $('#nw').onclick=()=>{if(!confirm('Creare un nuovo sito vuoto?\nPrima viene scaricato l\'HTML del sito attuale.'))return;dl(slug(S.th.nome)+'.html',siteHTML());S={cur:'home',pag:{home:[]},th:Object.assign({},DTH)};sel=-1;try{localStorage.removeItem('site-builder')}catch(e){}pages();render();panel();msg('Nuovo sito vuoto ✓ (il precedente è stato scaricato)')};
 /* ---- import siti EWS ---- */
 const fixBase=(h,b)=>b&&!/<base\s/i.test(h)?(/<head[^>]*>/i.test(h)?h.replace(/<head[^>]*>/i,m=>m+'<base href="'+b+'">'):'<base href="'+b+'">'+h):h;
@@ -495,7 +674,7 @@ $('#ms').onclick=()=>{const n=(prompt('Nome del modello da salvare (usa la pagin
 $('#xd').onclick=()=>{const T0=LS('sb-themes',{}),M0=LS('sb-models',{}),all=Object.keys(T0).map(k=>'tema: '+k).concat(Object.keys(M0).map(k=>'modello: '+k));if(!all.length){msg('Non hai ancora salvato nulla');return}const n=(prompt('Quale elimino? Scrivi il nome esatto.\n'+all.join('\n'))||'').trim().replace(/^(tema|modello): /,'');if(T0[n]){delete T0[n];LSset('sb-themes',T0)}else if(M0[n]){delete M0[n];LSset('sb-models',M0)}else{msg('Nome non trovato');return}fillTm();msg('Eliminato ✓')};
 $('#tx').onclick=()=>{dl('temi-modelli.json',JSON.stringify({temi:LS('sb-themes',{}),modelli:LS('sb-models',{})},null,1),'application/json');msg('Temi e modelli esportati ✓')};
 $('#ti').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());LSset('sb-themes',{...LS('sb-themes',{}),...(j.temi||{})});LSset('sb-models',{...LS('sb-models',{}),...(j.modelli||{})});fillTm();msg('Temi e modelli importati ✓')}catch(x){msg('JSON non valido')}e.target.value=''};
-async function loadOrgani(){try{const r=await fetch(root()+'api/data?file=organi.json');if(!r.ok)throw 0;const j=await r.json(),o=[],w=n=>(n||[]).forEach(x=>{o.push(x.id_organo);w(x.figli)});w(j.alberoOrgani);if(o.length)$('#ol').innerHTML=o.map(x=>`<option value="${E(x)}">`).join('')}catch(e){}}
+async function loadOrgani(){try{const r=await fetch(root()+'api/data?file=organi.json');if(!r.ok)throw 0;const j=await r.json(),o=[],w=n=>(n||[]).forEach(x=>{o.push(x.id_organo);w(x.figli)});w(j.alberoOrgani);ORG=j.alberoOrgani||[];setTimeout(()=>{try{render()}catch(e){}},0);if(o.length)$('#ol').innerHTML=o.map(x=>`<option value="${E(x)}">`).join('')}catch(e){}}
 async function loadElenco(){loadOrgani();try{const r=await fetch(root()+'api/data?elenco=1');if(!r.ok)throw 0;const f=(await r.json()).files||[];$('#pfl').innerHTML=f.map(x=>`<option value="${E(x)}">`).join('');const c=f.find(x=>/(^|\/)(ccp|cp)\.json$/i.test(x))||f.find(x=>/ccp|piani/i.test(x));if(c&&$('#pf').dataset.u!=='1')$('#pf').value=c;msg('File leggibili in DATA: '+f.length)}catch(e){}}
 $('#pf').oninput=()=>{$('#pf').dataset.u='1'};$('#pls').onclick=loadElenco;
 pages();render();panel();
@@ -516,7 +695,7 @@ $('#ka').onclick=()=>$('#ca').classList.add('on');
 $('#cabx').onclick=caClose;
 $('#ca').onclick=e=>{if(e.target.id==='ca')caClose()};
 $('#cab').onclick=()=>{
- if($('#cabk').checked)dl(slug(S.th.nome)+'-backup.json',JSON.stringify({...S,ez:EZ,pi:PI},null,1),'application/json');
+ if($('#cabk').checked)dl(slug(S.th.nome)+'-backup.json',JSON.stringify({...S,ez:EZ,pi:PI,org:ORG},null,1),'application/json');
  S={cur:'home',pag:{home:[]},th:Object.assign({},DTH)};sel=-1;selEl=null;
  try{localStorage.removeItem('site-builder')}catch(e){}
  if($('#cats').checked){try{localStorage.removeItem('sb-themes');localStorage.removeItem('sb-models')}catch(e){}fillTm()}
