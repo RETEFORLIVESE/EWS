@@ -393,8 +393,8 @@ function PVW(A){
  PVW.dif=dif;PVW.bxo=bxo;
  PVW.exp=(L,tipo)=>{if(tipo!=='pronunce'&&tipo!=='dossier')return L;const o=[];
   L.forEach(a=>{const og={};Object.keys(a).forEach(k=>{if(/organ|ente/i.test(k))og[k]=a[k]});
-   if(tipo==='pronunce')(a.pronunce||[]).forEach(p=>o.push({...og,__k:'sentenza',id:p.id,categoria:p.tipo||'pronuncia',stato:'',luogo:a.titolo||idOf(a),titolo:(p.numero&&p.anno?'Sentenza n. '+p.numero+'/'+p.anno+' \u2013 ':'')+(p.oggetto||''),numero:p.numero,anno:p.anno,dataEmanazione:p.data,promulgatoDa:p.firmataDa,sommario:p.effetto||'',articoli:[{rubrica:[p.motivazione,p.dispositivo].join(' ')}]}));
-   else{const DL=a.dossiers||(a.dossier?[a.dossier]:[]);DL.forEach(d=>o.push({...og,__k:'dossier',id:idOf(a)+(DL.length>1&&d.id?'~'+d.id:''),categoria:'Dossier',stato:'',luogo:a.titolo||idOf(a),titolo:d.titolo||a.titolo,dataEmanazione:d.data,promulgatoDa:d.ente||'',sommario:d.sottotitolo||'',articoli:[{rubrica:d.presentazione||''}]}))}});
+   if(tipo==='pronunce')(a.pronunce||[]).forEach(p=>o.push({...og,__k:'sentenza',id:p.id,categoria:p.tipo||'pronuncia',stato:'',luogo:a.titolo||idOf(a),luogoId:a.luogo||'',titolo:(p.numero&&p.anno?'Sentenza n. '+p.numero+'/'+p.anno+' \u2013 ':'')+(p.oggetto||''),numero:p.numero,anno:p.anno,dataEmanazione:p.data,promulgatoDa:p.firmataDa,sommario:p.effetto||'',articoli:[{rubrica:[p.motivazione,p.dispositivo].join(' ')}]}));
+   else{const DL=a.dossiers||(a.dossier?[a.dossier]:[]);DL.forEach(d=>o.push({...og,__k:'dossier',id:idOf(a)+(DL.length>1&&d.id?'~'+d.id:''),categoria:'Dossier',stato:'',luogo:a.titolo||idOf(a),luogoId:a.luogo||'',titolo:d.titolo||a.titolo,dataEmanazione:d.data,promulgatoDa:d.ente||'',sommario:d.sottotitolo||'',articoli:[{rubrica:d.presentazione||''}]}))}});
   return o};
  PVW.tplS=async(m,id,lg,TP)=>{
   const A=AA(),o={id,src:lg.src||'NORMATIVA',f:lg.f||'',u:lg.u||''},F=mk(m,TP,'sent'),set=F.set,each=F.each;
