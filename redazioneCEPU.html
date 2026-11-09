@@ -248,6 +248,15 @@
     .riga-partito .colore-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.3rem; }
     .riga-partito .colore-toggle input[type="color"] { width: 34px; height: 26px; border: 1px solid var(--ist-line); border-radius: 3px; padding: 1px; }
 
+    .blocco-coalizioni { margin: 1rem 0 0.8rem; padding: 0.8rem; border: 1px dashed var(--ist-line); border-radius: 4px; }
+    .blocco-coalizioni h3 { margin-top: 0; }
+    .blocco-coalizioni .nota { font-size: 0.8rem; color: #7c8a96; margin: 0 0 0.6rem; }
+    .riga-coalizione { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .riga-coalizione input[type="text"] { flex: 1 1 180px; min-width: 0; padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+    .riga-coalizione input[type="color"] { width: 34px; height: 26px; border: 1px solid var(--ist-line); border-radius: 3px; padding: 1px; }
+    .riga-coalizione label { font-size: 0.8rem; font-weight: 400; text-transform: none; display: flex; align-items: center; gap: 0.3rem; margin: 0; }
+    .riga-coalizione .rimuovi-coalizione { background: none; border: 0; color: #a33; font-size: 1.2rem; cursor: pointer; line-height: 1; }
+    .riga-partito .campo-mini select { width: 100%; padding: 0.4rem 0.5rem; font-size: 0.85rem; min-width: 0; }
     .riepilogo-percentuali {
         font-size: 0.85rem;
         font-weight: 700;
@@ -638,6 +647,13 @@
             <div id="contenitore-righe"></div>
             <div id="riepilogo-percentuali" class="riepilogo-percentuali"></div>
 
+            <div id="blocco-coalizioni" class="blocco-coalizioni" style="display:none;">
+                <h3>Coalizioni (opzionale)</h3>
+                <p class="nota">Raggruppa le liste in coalizioni: poi scegli la coalizione di ogni lista nella sua scheda. Le coalizioni vengono lette dai grafici (es. mappa a blocchi di coalizione).</p>
+                <div id="contenitore-coalizioni"></div>
+                <button type="button" class="btn-secondario" id="btn-aggiungi-coalizione">+ Aggiungi coalizione</button>
+            </div>
+
             <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
                 <button type="button" class="btn-secondario" id="btn-aggiungi-riga">+ Aggiungi lista/partito</button>
                 <button type="button" class="btn-secondario" id="btn-si-no" style="display:none;">+ Aggiungi Sì / No</button>
@@ -931,6 +947,8 @@
     let righeDraft = [];        // righe (liste/partiti) del record in costruzione
     let indiceInModifica = null; // se stiamo modificando un record esistente della lista
     let contatoreIdRiga = 0;
+    let coalizioniDraft = [];   // coalizioni del record in costruzione: { id, nome, usaColore, colore }
+    let contatoreIdCoalizione = 0;
 
     // ============================================================
     // Utility di formato
@@ -966,7 +984,7 @@
     // ============================================================
     function nuovaRigaVuota(nomePreimpostato) {
         contatoreIdRiga++;
-        return { id: contatoreIdRiga, nome: nomePreimpostato || '', voti: '', percentuale: '', seggi: 0, usaColore: false, colore: '#1B5FA8', logo: '' };
+        return { id: contatoreIdRiga, nome: nomePreimpostato || '', voti: '', percentuale: '', seggi: 0, usaColore: false, colore: '#1B5FA8', logo: '', coalizioneId: '' };
     }
 
     function aggiungiRiga(nomePreimpostato) {
@@ -990,6 +1008,62 @@
         righeDraft.splice(nuovoIndice, 0, riga);
         renderRighe();
     }
+
+    // ============================================================
+    // Coalizioni: elenco del record + assegnazione di ogni lista
+    // ============================================================
+    function aggiornaBloccoCoalizioni() {
+        const cfg = TIPI[tipoSelezionato()];
+        document.getElementById('blocco-coalizioni').style.display = cfg && cfg.mostraSeggi ? 'block' : 'none';
+    }
+
+    function renderCoalizioni() {
+        document.getElementById('contenitore-coalizioni').innerHTML = coalizioniDraft.map(c => `
+            <div class="riga-coalizione" data-id="${c.id}">
+                <input type="text" data-cc="nome" data-id="${c.id}" value="${escapeHtml(c.nome)}" placeholder="Nome coalizione (es. Fronte Progressista)">
+                <label><input type="checkbox" data-cc="usaColore" data-id="${c.id}" ${c.usaColore ? 'checked' : ''}> Colore</label>
+                <input type="color" data-cc="colore" data-id="${c.id}" value="${c.colore}" ${c.usaColore ? '' : 'disabled'}>
+                <button type="button" class="rimuovi-coalizione" data-cc-azione="rimuovi" data-id="${c.id}" title="Rimuovi coalizione">&times;</button>
+            </div>`).join('');
+    }
+
+    function idCoalizionePerNome(nome) {
+        const n = String(nome || '').trim().toLowerCase();
+        if (!n) return '';
+        const c = coalizioniDraft.find(x => x.nome.trim().toLowerCase() === n);
+        return c ? c.id : '';
+    }
+
+    document.getElementById('btn-aggiungi-coalizione').addEventListener('click', () => {
+        contatoreIdCoalizione++;
+        coalizioniDraft.push({ id: contatoreIdCoalizione, nome: '', usaColore: false, colore: '#6B7280' });
+        renderCoalizioni();
+        renderRighe();
+    });
+
+    document.getElementById('contenitore-coalizioni').addEventListener('input', function(e) {
+        const campo = e.target.dataset.cc;
+        if (!campo) return;
+        const c = coalizioniDraft.find(x => x.id === parseInt(e.target.dataset.id, 10));
+        if (!c) return;
+        if (campo === 'usaColore') {
+            c.usaColore = e.target.checked;
+            const col = e.target.closest('.riga-coalizione').querySelector('input[type="color"]');
+            if (col) col.disabled = !c.usaColore;
+            return;
+        }
+        c[campo] = e.target.value;
+        if (campo === 'nome') renderRighe();   // aggiorna i menu a tendina delle liste
+    });
+
+    document.getElementById('contenitore-coalizioni').addEventListener('click', function(e) {
+        if (e.target.dataset.ccAzione !== 'rimuovi') return;
+        const id = parseInt(e.target.dataset.id, 10);
+        coalizioniDraft = coalizioniDraft.filter(x => x.id !== id);
+        righeDraft.forEach(r => { if (String(r.coalizioneId) === String(id)) r.coalizioneId = ''; });
+        renderCoalizioni();
+        renderRighe();
+    });
 
     function renderRighe() {
         const tipo = tipoSelezionato();
@@ -1030,6 +1104,14 @@
                         <input type="url" data-campo="logo" data-id="${riga.id}" value="${escapeHtml(riga.logo)}" placeholder="https://...">
                     </div>
                 </div>
+                ${cfg.mostraSeggi && coalizioniDraft.length ? `
+                <div class="campo-mini">
+                    <label>Coalizione</label>
+                    <select data-campo="coalizioneId" data-id="${riga.id}">
+                        <option value="">— nessuna —</option>
+                        ${coalizioniDraft.map(c => `<option value="${c.id}"${String(riga.coalizioneId) === String(c.id) ? ' selected' : ''}>${escapeHtml(c.nome.trim() || '(senza nome)')}</option>`).join('')}
+                    </select>
+                </div>` : ''}
                 <div class="colore-toggle">
                     <input type="checkbox" data-campo="usaColore" data-id="${riga.id}" ${riga.usaColore ? 'checked' : ''}>
                     <label style="text-transform:none; font-weight:400;">Colore personalizzato</label>
@@ -1037,6 +1119,7 @@
                 </div>
             </div>
         `).join('');
+        aggiornaBloccoCoalizioni();
         aggiornaRiepilogoPercentuali();
     }
 
@@ -1204,6 +1287,10 @@
             };
             if (r.usaColore && r.colore) obj.colore = r.colore;
             if (r.logo && r.logo.trim()) obj.logo = r.logo.trim();
+            if (cfg.mostraSeggi && r.coalizioneId !== '' && r.coalizioneId != null) {
+                const c = coalizioniDraft.find(x => String(x.id) === String(r.coalizioneId));
+                if (c && c.nome.trim()) obj.coalizione = c.nome.trim();
+            }
             return obj;
         });
 
@@ -1219,6 +1306,15 @@
         };
 
         if (consultazioneUnitaria) record.consultazione_unitaria = true;
+
+        // Coalizioni: salvate solo se usate da almeno una lista (nome + colore facoltativo)
+        if (cfg.mostraSeggi) {
+            const usate = new Set(risultati_partiti.map(p => p.coalizione).filter(Boolean));
+            const elenco = coalizioniDraft
+                .filter(c => c.nome.trim() && usate.has(c.nome.trim()))
+                .map(c => { const o = { nome: c.nome.trim() }; if (c.usaColore && c.colore) o.colore = c.colore; return o; });
+            if (elenco.length) record.coalizioni = elenco;
+        }
 
         // Collegamento all'organo (ID scelto dal menu a tendina): scritto solo se selezionato
         const idOrgano = document.getElementById('in-organo').value;
@@ -1259,6 +1355,16 @@
         if (!record.area) errori.push(`Il campo "${TIPI[record.tipo_codice].areaLabel}" è obbligatorio.`);
         if (!record.affluenza) errori.push('Inserisci l\'affluenza.');
         if (record.risultati_partiti.length === 0) errori.push('Aggiungi almeno una lista/partito/opzione.');
+        {
+            const viste = new Set();
+            coalizioniDraft.forEach(c => {
+                const n = c.nome.trim().toLowerCase();
+                const assegnata = righeDraft.some(r => String(r.coalizioneId) === String(c.id));
+                if (!n) { if (assegnata) errori.push('Una coalizione usata da una lista non ha un nome.'); return; }
+                if (viste.has(n)) errori.push(`La coalizione "${c.nome.trim()}" è inserita più volte.`);
+                viste.add(n);
+            });
+        }
         record.risultati_partiti.forEach((p, i) => {
             if (!p.nome) errori.push(`La riga ${i + 1} non ha un nome.`);
             if (!p.percentuale) errori.push(`La riga ${i + 1} ("${p.nome || '—'}") non ha una percentuale.`);
@@ -1325,6 +1431,8 @@
         ['in-sezioni-scrutinate', 'in-sezioni-totali', 'in-elettori', 'in-votanti', 'in-schede-nulle', 'in-schede-bianche']
             .forEach(id => { document.getElementById(id).value = ''; });
         righeDraft = [];
+        coalizioniDraft = [];
+        renderCoalizioni();
         indiceInModifica = null;
         document.getElementById('titolo-form').textContent = 'Nuovo record';
         document.getElementById('btn-salva-record').textContent = 'Aggiungi alla lista';
@@ -1396,6 +1504,16 @@
         document.getElementById('in-schede-nulle').value = valoreOpzionale(record.schede_nulle);
         document.getElementById('in-schede-bianche').value = valoreOpzionale(record.schede_bianche);
 
+        coalizioniDraft = [];
+        const aggiungiCoalizione = (nome, colore) => {
+            const n = String(nome || '').trim();
+            if (!n || coalizioniDraft.some(c => c.nome.trim().toLowerCase() === n.toLowerCase())) return;
+            contatoreIdCoalizione++;
+            coalizioniDraft.push({ id: contatoreIdCoalizione, nome: n, usaColore: !!colore, colore: colore || '#6B7280' });
+        };
+        (Array.isArray(record.coalizioni) ? record.coalizioni : []).forEach(c => aggiungiCoalizione(c && c.nome, c && c.colore));
+        record.risultati_partiti.forEach(p => aggiungiCoalizione(p.coalizione));
+        renderCoalizioni();
         righeDraft = record.risultati_partiti.map(p => {
             contatoreIdRiga++;
             return {
@@ -1406,7 +1524,8 @@
                 seggi: p.seggi || 0,
                 usaColore: !!p.colore,
                 colore: p.colore || '#1B5FA8',
-                logo: p.logo || ''
+                logo: p.logo || '',
+                coalizioneId: idCoalizionePerNome(p.coalizione)
             };
         });
         renderRighe();

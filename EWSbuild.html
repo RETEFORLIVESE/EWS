@@ -144,8 +144,8 @@ function gfx(o,L){
   return wrap(`<h3 style="margin:0 0 6px;line-height:1.25">${Q(ti)}</h3>`,svg(W,H,body,720),legend(S.map(s=>({n:s.n,c:s.c})),0,1));
  }
  /* ---------- dati dei partiti: da una consultazione oppure scritti a mano ---------- */
- let P=[],auto='',sub='';
- if(o.k){const e=L.find(x=>K(x)===o.k);if(!e)return '';P=(e.risultati_partiti||[]).map((p,i)=>({n:p.nome,v:num(p.seggi),c:colr(p,i),co:p.coalizione||p.blocco||p.coalition||''}));auto=e.tipo+' – '+e.comune;sub=e.data+(e.affluenza?' · affluenza '+e.affluenza:'')}
+ let P=[],auto='',sub='',ecc={};
+ if(o.k){const e=L.find(x=>K(x)===o.k);if(!e)return '';(e.coalizioni||[]).forEach(c=>{if(c&&c.nome&&c.colore)ecc[String(c.nome).toLowerCase()]=c.colore});P=(e.risultati_partiti||[]).map((p,i)=>({n:p.nome,v:num(p.seggi),c:colr(p,i),co:p.coalizione||p.blocco||p.coalition||''}));auto=e.tipo+' – '+e.comune;sub=e.data+(e.affluenza?' · affluenza '+e.affluenza:'')}
  else P=String(o.txt||'').split('\n').map(s=>s.trim()).filter(Boolean).map((r,i)=>{const a=r.split('|');return{n:(a[0]||'').trim(),v:num(a[1]),c:(a[2]||'').trim()||PAL[i%PAL.length],co:(a[3]||'').trim()}});
  P=P.filter(p=>p.v>0);if(!P.length)return '';
  const t=P.reduce((s,p)=>s+p.v,0),S=P.map(p=>({...p,v:Math.round(p.v)})).filter(p=>p.v>0),n=S.reduce((s,p)=>s+p.v,0),
@@ -157,7 +157,7 @@ function gfx(o,L){
  /* ---------- mappa a blocchi di coalizione (treemap) ---------- */
  if(g==='coa'){
   const mp={};String(o.co||'').split('\n').forEach(r=>{const a=r.split('|');if(a.length<2||!a[0].trim())return;a[1].split(',').forEach(x=>{if(x.trim())mp[x.trim().toLowerCase()]={n:a[0].trim(),c:(a[2]||'').trim()}})});
-  const G=[];P.forEach(p=>{const m=mp[p.n.toLowerCase()],nm=m?m.n:(p.co||''),key=nm||p.n;let q=G.find(x=>x.k===key);if(!q){q={k:key,n:key,c:(m&&m.c)||p.c,ps:[],v:0,co:!!nm};G.push(q)}q.ps.push(p);q.v+=p.v;if(m&&m.c)q.c=m.c});
+  const G=[];P.forEach(p=>{const m=mp[p.n.toLowerCase()],nm=m?m.n:(p.co||''),key=nm||p.n;let q=G.find(x=>x.k.toLowerCase()===key.toLowerCase());if(!q){q={k:key,n:key,c:(m&&m.c)||(nm&&ecc[nm.toLowerCase()])||p.c,ps:[],v:0,co:!!nm};G.push(q)}q.ps.push(p);q.v+=p.v;if(m&&m.c)q.c=m.c});
   G.sort((a,b)=>b.v-a.v);G.forEach(q=>q.ps.sort((a,b)=>b.v-a.v));
   const W=640,H=380;let b='';
   sq(G,0,0,W,H).forEach(r=>{const hd=r.co&&r.h>50&&r.w>80?20:0,pd2=r.co?3:0;
@@ -235,6 +235,10 @@ function alb(o,A){
  return h?`<div class="card" style="text-align:left">${o.ti?`<h3 style="margin:0 0 6px">${Q(o.ti)}</h3>`:''}<ul style="margin:0;padding:0;list-style:none">${h}</ul></div>`:'';
 }
 
+/* Indirizzi dei link: #pagina, nome di una pagina, https://…, //host, www.sito.it (senza https), mailto:, tel: */
+const lkU=u=>{u=String(u==null?'':u).trim();if(!u)return '';if(/^\/\//.test(u))return 'https:'+u;if(S&&S.pag&&S.pag[u]&&!/\s/.test(u))return '#'+u;if(/^(#|\/|\.|\?|[a-z][a-z0-9+.-]*:)/i.test(u))return u;return /^[^\s\/]+\.[a-z]{2,}([\/?#:]|$)/i.test(u)?'https://'+u:u},
+lkE=u=>/^https?:\/\//i.test(u),
+lkA=(u,nt)=>lkE(u)&&nt!==false?' target="_blank" rel="noopener noreferrer"':'';
 const opz=f=>()=>[['','— scegli —'],...EZ.filter(f).sort((a,b)=>a.data<b.data?1:-1).map(e=>[K(e),`${e.data} · ${e.tipo} · ${e.comune}`])];
 let PI={CTSU:[],CCP:[],NORMATIVA:[]};
 const root=()=>{try{return new URL($('#eb').value.trim()).origin+'/'}catch(e){return 'https://ews-rose.vercel.app/'}};
@@ -361,7 +365,7 @@ const T={
 titolo:{n:'Titolo',d:{txt:'Nuovo titolo',lv:'h1'},f:[['txt','Testo'],['lv','Livello','sel',['h1','h2','h3']]],h:b=>`<${b.lv}>${E(b.txt)}</${b.lv}>`},
 testo:{n:'Testo',d:{txt:'Scrivi qui…'},f:[['txt','Testo','area']],h:b=>`<p>${E(b.txt).replace(/\n/g,'<br>')}</p>`},
 img:{n:'Immagine',d:{url:'',w:300},f:[['url','URL immagine','img'],['w','Larghezza (px)','num']],h:b=>b.url?`<img src="${E(b.url)}" alt="" style="max-width:${+b.w||300}px;display:block;margin:8px 0">`:'<p class="meta">(immagine: inserisci un URL)</p>'},
-link:{n:'Link / bottone',d:{txt:'Vai ›',href:'#leggi',btn:true},f:[['txt','Etichetta'],['href','Indirizzo (#pagina o https://…)'],['btn','Come bottone','chk']],h:b=>`<p><a${b.btn?' class="btn"':''} href="${E(b.href)}">${E(b.txt)}</a></p>`},
+link:{n:'Link / bottone',d:{txt:'Vai ›',href:'#leggi',btn:true,nt:true},f:[['txt','Etichetta'],['href','Indirizzo (#pagina, https://sito-esterno.it, www.sito.it, mailto:…)'],['btn','Come bottone','chk'],['nt','Se è un sito esterno, apri in una nuova scheda','chk']],h:b=>{if(b.nt===undefined)b.nt=true;const u=lkU(b.href);return `<p><a${b.btn?' class="btn"':''} href="${E(u)}"${lkA(u,b.nt)}>${E(b.txt)}</a></p>`}},
 card:{n:'Riquadro',d:{ti:'Titolo',txt:'Testo del riquadro'},f:[['ti','Titolo'],['txt','Testo','area']],h:b=>`<div class="card"><h3>${E(b.ti)}</h3><p>${E(b.txt).replace(/\n/g,'<br>')}</p></div>`},
 gc:{n:'Riquadri affiancati',d:{txt:'Sportello | Orari e contatti\nModuli | Scarica il modulo'},f:[['txt','Una riga per riquadro: Titolo | testo','area']],h:b=>`<div class="grid">${b.txt.split('\n').filter(Boolean).map(r=>{const[a,...c]=r.split('|');return `<div class="gc"><h3>${E(a.trim())}</h3><p>${E(c.join('|').trim())}</p></div>`}).join('')}</div>`},
 ban:{n:'Fascia rossa',d:{txt:'Sezione'},f:[['txt','Testo']],h:b=>`<div class="ban">${E(b.txt)}</div>`},
@@ -395,10 +399,10 @@ ews:{n:'Sito EWS importato',hid:1,d:{nm:'sito',h:800,html:''},f:[['nm','Nome fil
  x:b=>{cbMig(b);if(!b.ed||!b.emb||!/data-bbid/.test(b.body||''))return JSON.stringify(T.ews.h(b));let js=JSON.stringify(ewsEd(b,'tok'));Object.keys(b.emb).forEach(id=>{const eb=b.emb[id],t=T[eb.t];if(!t||js.indexOf('@@BB:'+id+'@@')<0)return;const s0=stl(eb);let code=t.x?t.x(eb):JSON.stringify(t.h(eb));if(s0&&t.x)code=JSON.stringify('<div style="'+E(s0)+'">')+'+('+code+')+"</div>"';else if(s0)code=JSON.stringify(wr(eb,t.h(eb)));js=js.split('@@BB:'+id+'@@').join('"+('+code+')+"')});return js},
  h:b=>b.ed?ewsEd(b):b.html?`<iframe srcdoc="${E(b.html)}" style="width:100%;height:${+b.h||800}px;border:1px solid var(--line);background:#fff" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`:'<p class="meta">(nessun sito)</p>'},
 banner:{n:'Banner a tutta larghezza',d:{txt:'Titolo del portale',txtR:'',hrefR:'#',c:'',tc:''},f:[['txt','Testo'],['txtR','Testo a destra (es. Deutsch)'],['hrefR','Link del testo a destra'],['c','Colore sfondo (CSS, vuoto = accento)'],['tc','Colore testo (CSS)']],
- h:b=>`<div class="bn" style="${b.c?'background:'+E(b.c)+';':''}${b.tc?'color:'+E(b.tc):''}"><span>${E(b.txt)}</span>${b.txtR?`<a href="${E(b.hrefR||'#')}"${b.tc?` style="color:${E(b.tc)}"`:''}>${E(b.txtR)}</a>`:''}</div>`},
-sez:{n:'Sezione con elenco link',d:{ti:'SEZIONE',st:'g',txt:'Prima voce | #home\nSeconda voce | #chi-siamo\nTerza voce',bul:'a',img:'',iw:90,h:0,box:false},
- f:[['ti','Titolo'],['st','Stile intestazione','sel',()=>[['g','Barra sfumata'],['p','Barra piena'],['l','Solo sottolineatura'],['n','Nessuna']]],['txt','Voci: Etichetta | indirizzo (indirizzo facoltativo)','area'],['bul','Simbolo elenco','sel',()=>[['a','Freccia ▶'],['d','Pallino'],['n','Nessuno']]],['img','Immagine a sinistra','img'],['iw','Larghezza immagine (px)','num'],['h','Altezza con scorrimento (px, 0 = nessuno)','num'],['box','Con bordo','chk']],
- h:b=>{const L=(b.txt||'').split('\n').filter(Boolean).map(r=>{const[a,...c]=r.split('|'),u=c.join('|').trim();return `<li>${u?`<a href="${E(u)}">${E(a.trim())}</a>`:E(a.trim())}</li>`}).join('');return `<div class="sez${b.box?' bx':''}${b.bul==='d'?' dot':b.bul==='n'?' nob':''}">${b.ti&&b.st!=='n'?`<div class="sh2 s-${E(b.st||'g')}">${E(b.ti)}</div>`:''}<div class="sc2"${+b.h?` style="max-height:${+b.h}px"`:''}>${b.img?`<img class="im" src="${E(b.img)}" alt="" style="width:${+b.iw||90}px">`:''}<ul>${L}</ul></div></div>`}}
+ h:b=>`<div class="bn" style="${b.c?'background:'+E(b.c)+';':''}${b.tc?'color:'+E(b.tc):''}"><span>${E(b.txt)}</span>${b.txtR?`<a href="${E(lkU(b.hrefR)||'#')}"${lkA(lkU(b.hrefR))}${b.tc?` style="color:${E(b.tc)}"`:''}>${E(b.txtR)}</a>`:''}</div>`},
+sez:{n:'Sezione con elenco link',d:{ti:'SEZIONE',st:'g',txt:'Prima voce | #home\nSeconda voce | #chi-siamo\nTerza voce',bul:'a',img:'',iw:90,h:0,box:false,nt:true},
+ f:[['ti','Titolo'],['st','Stile intestazione','sel',()=>[['g','Barra sfumata'],['p','Barra piena'],['l','Solo sottolineatura'],['n','Nessuna']]],['txt','Voci, una per riga: Etichetta | indirizzo. Indirizzo facoltativo: #pagina, nome di una pagina, https://sito-esterno.it (anche solo www.sito.it), mailto:…','area'],['bul','Simbolo elenco','sel',()=>[['a','Freccia ▶'],['d','Pallino'],['n','Nessuno']]],['img','Immagine a sinistra','img'],['iw','Larghezza immagine (px)','num'],['h','Altezza con scorrimento (px, 0 = nessuno)','num'],['box','Con bordo','chk'],['nt','Apri i link a siti esterni in una nuova scheda','chk']],
+ h:b=>{if(b.nt===undefined)b.nt=true;const L=(b.txt||'').split('\n').filter(Boolean).map(r=>{const[a,...c]=r.split('|'),u=lkU(c.join('|'));return `<li>${u?`<a href="${E(u)}"${lkA(u,b.nt)}>${E(a.trim())}</a>`:E(a.trim())}</li>`}).join('');return `<div class="sez${b.box?' bx':''}${b.bul==='d'?' dot':b.bul==='n'?' nob':''}">${b.ti&&b.st!=='n'?`<div class="sh2 s-${E(b.st||'g')}">${E(b.ti)}</div>`:''}<div class="sc2"${+b.h?` style="max-height:${+b.h}px"`:''}>${b.img?`<img class="im" src="${E(b.img)}" alt="" style="width:${+b.iw||90}px">`:''}<ul>${L}</ul></div></div>`}}
 };
 /* ===== CARTELLA «Grafici»: componenti collegabili ai dati elettorali (elezioni.json) o a dati scritti a mano ===== */
 const GRD='Partito A | 40 | #8c1a0a\nPartito B | 30 | #1b3a8c\nPartito C | 20 | #2e7d4f\nPartito D | 10 | #a0731a',
@@ -447,8 +451,61 @@ const X=b=>{const t=T[b.t],s=stl(b);let r=t.x?t.x(b):JSON.stringify(t.h(b));if(s
 function siteHTML(only){dropAtti(S.pag);const t=S.th,P={};Object.keys(S.pag).filter(k=>!only||only.includes(k)).forEach(k=>P[k]=colsHTML(k,b=>b.t==='ews'&&b.ed?ewsEd(b,'out'):wr(b,T[b.t].h(b))));
 const lgx=(()=>{let f=null;for(const[k,L]of Object.entries(S.pag))for(const b of allB(L))if(b.t==='leggi'&&!f)f={src:b.src,f:piFile(b),u:b.fileurl||'',back:k};if(!f)for(const L of Object.values(S.pag))for(const b of allB(L))if((b.t==='piani'||b.t==='piano')&&b.vis==='estji'&&!f)f={src:b.src,f:piFile(b),u:b.fileurl||'',back:''};return f||{src:'NORMATIVA',f:'atti.json',u:'',back:''}})();
  const css=document.querySelector('style').textContent.split('/*BC*/')[1].split('@media(max-width:800px)')[0],esc=j=>JSON.stringify(j).replace(/</g,'\\u003c');
- return `<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(t.nome)}</title><style>:root{${tv()}}*{box-sizing:border-box}body{margin:0;background:var(--bg)${t.img?` url('${t.img}') center/cover fixed`:''};color:var(--ink);font:${t.fs}px/1.5 var(--ff)}#w{max-width:${t.w}px;margin:0 auto;background:var(--pg);min-height:100vh}a{color:var(--link)}${css}@media(max-width:700px){.grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr!important}.cols>.sc{order:1}.cols>.sl{order:2}.cols>.sl2{order:3}.cols>.sr{order:4}.cols>.sr2{order:5}}</style></head><body><div id="w">${head(only)}<main class="sm" id="m"></main>${t.foot?`<div class="sf">${E(t.foot)}</div>`:''}</div><script type="application/json" id="builder-data">${esc({...S,ez:EZ,pi:PI,org:ORG})}<\/script><script>const E=${E};const normPi=${normPi};const piCard=${piCard};const PAL=${JSON.stringify(PAL)};const K=${K};${ez};${gfx};${alb};${HYD};${PVW};const P=${esc(P)};const LG=${esc(lgx)};let LP='';const HM=()=>Object.keys(P).find(x=>x!=='atto')||'home';function r(){const k=decodeURIComponent(location.hash.slice(1)),m=document.getElementById('m'),A=${esc(apiBase())};if(/^atto-/.test(k)){PVW(A);const lg={...LG,back:LG.back||LP,home:HM()};if(P.atto!=null){PVW.tpl(m,k.slice(5),lg,P.atto);HYD(A)}else PVW.page(m,k.slice(5),lg);scrollTo(0,0);return}const ok=P[k]!=null&&k!=='atto';LP=ok?k:(Object.keys(P).find(x=>x!=='atto')||Object.keys(P)[0]);m.innerHTML=P[LP];scrollTo(0,0);HYD(A)}addEventListener('hashchange',r);r()<\/script></body></html>`}
-function imp(t){let j=null;const m=t.match(/<script type="application\/json" id="builder-data">([\s\S]*?)<\/script>/);try{j=JSON.parse(m?m[1]:t)}catch(e){}
+ const nrm=h=>{const q=document.createElement('template');q.innerHTML=h;return [...q.content.childNodes].map(n=>n.nodeType===1?'    '+n.outerHTML:n.nodeType===3&&n.textContent.trim()?'    '+E(n.textContent.trim()):'').filter(Boolean).join('\n')},
+ ks=Object.keys(P).filter(k=>k!=='atto'),
+ secs=ks.map((k,i)=>`  <section class="pg" data-page="${E(k)}"${/^[\w-]+$/.test(k)?` id="p-${k}"`:''}${i?' hidden':''}>\n${nrm(P[k])}\n  </section>`).join('\n'),
+ tpa=P.atto!=null?`<script type="text/html" id="tpl-atto">${String(P.atto).replace(/<\/script/gi,'<\\/script')}<\/script>\n`:'';
+ return `<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="generator" content="EWS Site Builder">
+<title>${E(t.nome)}</title>
+<style>
+:root{${tv()}}*{box-sizing:border-box}body{margin:0;background:var(--bg)${t.img?` url('${t.img}') center/cover fixed`:''};color:var(--ink);font:${t.fs}px/1.5 var(--ff)}#w{max-width:${t.w}px;margin:0 auto;background:var(--pg);min-height:100vh}a{color:var(--link)}${css}@media(max-width:700px){.grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr!important}.cols>.sc{order:1}.cols>.sl{order:2}.cols>.sl2{order:3}.cols>.sr{order:4}.cols>.sr2{order:5}}.pg[hidden],#av[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="w">
+${head(only).replace(/(<\/header>|<\/nav>)/g,'$1\n')}
+<main class="sm" id="m">
+${secs}
+  <div id="av" hidden></div>
+</main>
+${t.foot?`<div class="sf">${E(t.foot)}</div>\n`:''}</div>
+<script type="application/json" id="builder-data">${esc({...S,ez:EZ,pi:PI,org:ORG})}<\/script>
+${tpa}<script>
+const E=${E};
+const normPi=${normPi};
+const piCard=${piCard};
+const PAL=${JSON.stringify(PAL)};
+const K=${K};
+${ez}
+${gfx}
+${alb}
+${HYD}
+${PVW}
+const LG=${esc(lgx)};
+let LP='';
+const PG=[...document.querySelectorAll('#m>.pg')],AV=document.getElementById('av'),HM=()=>PG[0]?PG[0].dataset.page:'home';
+function r(){
+  const k=decodeURIComponent(location.hash.slice(1)),A=${esc(apiBase())};
+  if(/^atto-/.test(k)){
+    PVW(A);
+    const lg={...LG,back:LG.back||LP,home:HM()},tp=document.getElementById('tpl-atto');
+    PG.forEach(x=>x.hidden=true);AV.hidden=false;AV.innerHTML='';
+    if(tp){PVW.tpl(AV,k.slice(5),lg,tp.textContent.split('<\\\\/script').join('<'+'/script'));HYD(A)}else PVW.page(AV,k.slice(5),lg);
+    scrollTo(0,0);return}
+  const f=PG.find(x=>x.dataset.page===k)||PG[0];
+  LP=f?f.dataset.page:'';PG.forEach(x=>x.hidden=x!==f);AV.hidden=true;AV.innerHTML='';
+  scrollTo(0,0);HYD(A)}
+addEventListener('hashchange',r);r();
+<\/script>
+</body>
+</html>
+`}
+function imp(t){let j=null,er='';try{const d=new DOMParser().parseFromString(t,'text/html').getElementById('builder-data');j=JSON.parse(d?d.textContent:t)}catch(e){er=e.message;const m=t.match(/<script[^>]*id=["']builder-data["'][^>]*>([\s\S]*?)<\/script>/i);if(m){try{j=JSON.parse(m[1]);er=''}catch(e2){er=e2.message}}}imp.er=er;
  if(!j&&/<(html|body)/i.test(t)){const st=(t.match(/<style[\s\S]*?<\/style>/gi)||[]).join(''),b=t.match(/<body[^>]*>([\s\S]*)<\/body>/i);j={pag:{importata:[{t:'ews',nm:'importata',h:800,html:t}]}}}
  if(!j||!j.pag)return 0;S=Object.assign({},j,{th:Object.assign({},DTH,j.th)});if(!S.pag[S.cur])S.cur=Object.keys(S.pag)[0];if(j.ez){EZ=j.ez;nome='progetto'}delete S.ez;if(j.org)ORG=j.org;delete S.org;if(j.pi)PI=Object.assign({CTSU:[],CCP:[],NORMATIVA:[]},j.pi);delete S.pi;sel=-1;pages();render();panel();return 1}
 function out(){const m=$('#mode').value;$('#ta').value=m==='sito'?siteHTML():m==='dyn'?dynHead()+Object.entries(S.pag).map(([k,L])=>`'${k}': () => [\n${L.map(b=>'  '+X(b)).join(',\n')}\n].join(''),`).join('\n'):m==='html'?cur().map(b=>T[b.t].h(b)).join('\n'):JSON.stringify({...S,ez:EZ,pi:PI,org:ORG},null,1)}
@@ -503,7 +560,7 @@ $('#cv').ondrop=e=>{e.preventDefault();dclr();const d=e.dataTransfer.getData('te
   B.body=root.innerHTML;selEl=pathOf(src,root);sel=x.i;render();panel();return}
  const b=e.target.closest('.blk'),zn=e.target.closest('[data-z]'),z=zn?zn.dataset.z:'c',j=b?+b.dataset.i:cur().length;
  if(d.startsWith('t:'))add(d.slice(2),j,z);else if(d.startsWith('m:')){const L=cur(),i=+d.slice(2),[x]=L.splice(i,1);if(z==='c')delete x.z;else x.z=z;L.splice(j>i?j-1:j,0,x);sel=j>i?j-1:j;render();panel()}};
-$('#cv').onclick=e=>{const b=e.target.closest('.blk'),ew=e.target.closest('.ewc'),n=ew?null:e.target.closest('[data-p]');e.preventDefault();if(n){S.cur=n.dataset.p;sel=-1;selEl=null;pages();render();panel();return}selEl=(b&&ew&&e.target!==ew)?pathOf(tEl(e.target),ew):null;sel=b?+b.dataset.i:-1;render();panel()};
+$('#cv').onclick=e=>{const ea=e.target.closest('a[href]');if(ea&&(e.ctrlKey||e.metaKey)&&/^https?:/i.test(ea.getAttribute('href'))){e.preventDefault();window.open(ea.getAttribute('href'),'_blank','noopener');return}const b=e.target.closest('.blk'),ew=e.target.closest('.ewc'),n=ew?null:e.target.closest('[data-p]');e.preventDefault();if(n){S.cur=n.dataset.p;sel=-1;selEl=null;pages();render();panel();return}selEl=(b&&ew&&e.target!==ew)?pathOf(tEl(e.target),ew):null;sel=b?+b.dataset.i:-1;render();panel()};
 $('#pn').onchange=e=>{const el=e.target;if(el.dataset.ins!=null){const v=el.value;el.value='';if(v)elIns(v);return}const f=el.files&&el.files[0];if(!f)return;if(el.dataset.eup){rd(f,u=>{elSet('src',u);panel()});return}if(el.dataset.upth)rd(f,u=>{S.th[el.dataset.upth]=u;panel();render()});else if(el.dataset.up)rd(f,u=>{(embObj(cur()[sel])||cur()[sel])[el.dataset.up]=u;panel();render()})};
 $('#pn').oninput=e=>{if(e.target.dataset.alldyn!=null){dynBl().forEach(b=>b.dyn=e.target.checked);render();return}if(e.target.dataset.lk!=null){lockAR=e.target.checked;return}const ef=e.target.closest('[data-ef]');if(ef){elSet(ef.dataset.ef,ef.value);return}const ly=e.target.closest('[data-lay]');if(ly){S.lay=S.lay||{};S.lay[S.cur]=Object.assign({},S.lay[S.cur],{[ly.dataset.lay]:ly.checked});render();return}const th=e.target.closest('[data-th]');if(th){S.th[th.dataset.th]=th.type==='checkbox'?th.checked:th.type==='number'?+th.value:th.value;render();return}const el=e.target.closest('[data-k]');if(!el)return;const bb=embObj(cur()[sel])||cur()[sel];bb[el.dataset.k]=el.type==='checkbox'?el.checked:el.type==='number'?+el.value:el.value;if(el.dataset.k==='pid'&&T[bb.t].fill){T[bb.t].fill(bb);panel()}if(el.dataset.k==='src')panel();if(el.dataset.k==='z'&&el.value!=='c'){S.lay=S.lay||{};S.lay[S.cur]=Object.assign({},lay(S.cur),{[el.value]:true})}render()};
 $('#pn').onclick=e=>{const dd=e.target.dataset;if(dd.x){togUi(dd.x);return}if(dd.conv||dd.eo||dd.ez!=null||dd.etree!=null||dd.ec!=null||dd.ea){elClick(e.target);return}if(e.target.dataset.defcol){['bg','pg','ink','bar','bar2','red','link','box','line','shc'].forEach(k=>S.th[k]=DTH[k]);panel();render();msg('Colori di default ripristinati ✓');return}if(e.target.dataset.rep){if(!confirm('Copiare le zone di questa pagina (blocchi e impostazioni) su TUTTE le altre pagine? Le loro zone attuali verranno sostituite.'))return;const k=S.cur,ly=lay(k),src=S.pag[k].filter(b=>b.z&&b.z!=='c');S.lay=S.lay||{};Object.keys(S.pag).forEach(p=>{if(p===k||S.pag[p].some(b=>b.t==='ews'))return;S.pag[p]=S.pag[p].filter(b=>!b.z||b.z==='c').concat(JSON.parse(JSON.stringify(src)));S.lay[p]={...ly}});render();panel();msg('Colonne replicate ✓');return}const tk=e.target.dataset.tree,tt=e.target.dataset.treeth;if(tk){const bb=embObj(cur()[sel])||cur()[sel];openTree(u=>{bb[tk]=u;panel();render()});return}if(tt){openTree(u=>{S.th[tt]=u;panel();render()});return}const a=e.target.dataset.a;if(!a)return;const L=cur(),i=sel;
@@ -569,7 +626,7 @@ async function importEws(name,html,base,first,hash,src){msg('Apro la pagina e le
  if(first){const api=S.th.api||'';S={cur:k,pag:{[k]:[blk]},th:Object.assign({},DTH,{hdr:false,menu:false,pad:0,w:1200,foot:'',nome:c.title||k,api,bg:c.bg||DTH.bg})}}else{S.pag[k]=[blk];S.cur=k}
  selEl=null;sel=0;pages();render();panel();return k}
 async function convEws(b){msg('Converto in pagina modificabile…');try{const c=await capturePage(b.html,base());Object.assign(b,{ed:1,u:newU(),body:c.body,css:c.css,bcl:c.bcl,bst:c.bst,orig:b.html,title:c.title,src:b.src||''});b.sig=sigOf(b);delete b.html;selEl=null;render();panel();msg('Fatto ✓ Clicca un elemento della pagina per modificarlo')}catch(x){msg('Conversione non riuscita: '+x.message)}}
-$('#ewf').onchange=async e=>{const fs=[...e.target.files];if(!fs.length)return;if(!confirm(CONF)){e.target.value='';return}let n=0;for(const f of fs){const t=await f.text();if(/id="builder-data"/.test(t)){imp(t)}else{try{await importEws(f.name.replace(/\.[^.]+$/,''),t,base(),n===0,'',base()+f.name)}catch(x){msg('Import non riuscito: '+x.message)}}n++}e.target.value='';msg(n+' file importati ✓ Clicca un elemento nella pagina per modificarlo')};
+$('#ewf').onchange=async e=>{const fs=[...e.target.files];if(!fs.length)return;if(!confirm(CONF)){e.target.value='';return}let n=0;for(const f of fs){const t=await f.text();if(/id="builder-data"/.test(t)){if(!imp(t)){msg('Impossibile leggere «'+f.name+'»: '+(imp.er||'dati del progetto non validi'));e.target.value='';return}}else{try{await importEws(f.name.replace(/\.[^.]+$/,''),t,base(),n===0,'',base()+f.name)}catch(x){msg('Import non riuscito: '+x.message)}}n++}e.target.value='';msg(n+' file importati ✓ Clicca un elemento nella pagina per modificarlo')};
 $('#euB').onclick=async()=>{let u=$('#eu').value.trim();if(!u)return;if(!/^https?:/i.test(u))u=base()+u.replace(/^\/+/,'');if(!confirm(CONF))return;try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);const t=await r.text();const U=new URL(u),hs=U.hash;U.hash='';await importEws(U.pathname.split('/').pop().replace(/\.[^.]+$/,'')||'sito',t,new URL('.',U).href,true,hs,U.href);msg('Importato ✓ Clicca un elemento nella pagina per modificarlo')}catch(x){msg('Non riuscito ('+x.message+'). Se il sito blocca la lettura da un altro dominio, scarica il file e usa «Importa sito EWS».')}};
 const INSH={h2:'<h2>Nuovo titolo</h2>',h3:'<h3>Nuovo sottotitolo</h3>',p:'<p>Nuovo paragrafo</p>',a:'<p><a href="#">Nuovo link</a></p>',img:'<img src="" alt="" style="max-width:100%">',card:'<div class="card"><h3>Titolo</h3><p>Testo</p></div>',div:'<div>Nuovo contenitore</div>',ul:'<ul><li>Voce 1</li><li>Voce 2</li></ul>',hr:'<hr>'};
 const INSN={h2:'Titolo',h3:'Sottotitolo',p:'Paragrafo',a:'Link',img:'Immagine',card:'Riquadro',div:'Contenitore vuoto',ul:'Elenco puntato',hr:'Linea'};

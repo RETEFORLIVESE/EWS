@@ -2,7 +2,7 @@
 //   GET                                            -> lettura pubblica di elezioni.json
 //   POST { azione: "login", username, password }   -> login redazione
 //   POST { azione: "login-estji", id_token }       -> login redazione con Estji ID (QR + codice)
-//   POST { azione: "salva", elezioni: [...] }       -> salvataggio (richiede Authorization: Bearer <token>)
+//   POST { azione: "salva", elezioni: [...] }       -> salvataggio (richiede Authorization: Bearer <token>); ripulisce le coalizioni
 //
 // Accorpato da elezioni.js + login-elezioni.js + salva-elezioni.js per stare
 // sotto al limite di 12 funzioni serverless del piano gratuito di Vercel.
@@ -17,6 +17,38 @@ const VALID_USERS = [
         password: process.env.REDAZIONE_PASSWORD || 'TandeePetrenka'
     }
 ];
+
+// Coalizioni: ogni lista può avere "coalizione" (nome); il record può avere "coalizioni": [{ nome, colore? }].
+// Qui si ripulisce quanto arriva dalla redazione: nomi tagliati e senza spazi inutili, colori solo in formato #rgb/#rrggbb,
+// niente doppioni, e l'elenco contiene solo coalizioni usate da almeno una lista (con la stessa grafia dell'elenco).
+function normalizzaCoalizioni(el) {
+    if (!el || typeof el !== 'object' || Array.isArray(el)) return el;
+    const pulisci = v => String(v == null ? '' : v).trim().replace(/\s+/g, ' ').slice(0, 80);
+    const coloreOk = v => (typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v.trim())) ? v.trim() : '';
+    const elenco = [];
+    (Array.isArray(el.coalizioni) ? el.coalizioni : []).forEach(c => {
+        const nome = pulisci(c && c.nome);
+        if (!nome || elenco.some(x => x.nome.toLowerCase() === nome.toLowerCase())) return;
+        const voce = { nome };
+        const col = coloreOk(c.colore);
+        if (col) voce.colore = col;
+        elenco.push(voce);
+    });
+    const usate = new Set();
+    if (Array.isArray(el.risultati_partiti)) {
+        el.risultati_partiti.forEach(p => {
+            if (!p || typeof p !== 'object') return;
+            const nome = pulisci(p.coalizione);
+            if (!nome) { delete p.coalizione; return; }
+            const voce = elenco.find(x => x.nome.toLowerCase() === nome.toLowerCase());
+            p.coalizione = voce ? voce.nome : nome;
+            usate.add(p.coalizione.toLowerCase());
+        });
+    }
+    const finale = elenco.filter(x => usate.has(x.nome.toLowerCase()));
+    if (finale.length) el.coalizioni = finale; else delete el.coalizioni;
+    return el;
+}
 
 function estraiElezioni(registro) {
     if (Array.isArray(registro)) return registro;
@@ -70,7 +102,7 @@ async function gestisciSalva(req, corpo, res) {
     const elezioni = corpo && Array.isArray(corpo.elezioni) ? corpo.elezioni : null;
     if (!elezioni) return res.status(400).json({ error: 'Corpo della richiesta non valido: atteso { elezioni: [...] }.' });
     try {
-        await scriviFileJson('elezioni.json', { elezioni }, `Aggiornamento elezioni (${sessione.username})`);
+        await scriviFileJson('elezioni.json', { elezioni: elezioni.map(normalizzaCoalizioni) }, `Aggiornamento elezioni (${sessione.username})`);
         return res.status(200).json({ success: true });
     } catch (error) {
         return res.status(500).json({ error: 'Errore salvataggio: ' + error.message });
