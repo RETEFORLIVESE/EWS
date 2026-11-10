@@ -239,6 +239,10 @@
         .riga-nome { display: flex; align-items: center; gap: 0.9rem; margin: 0.4rem 0 0.6rem; }
         .dettagli-organo .riga-nome h2 { margin: 0; }
         .icona-organo { display: block; width: auto; height: auto; max-width: 64px; max-height: 64px; flex-shrink: 0; border: 1px solid #000; padding: 0; background: none; }
+        .luogo-percorso { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--ist-text); }
+        .luogo-testo { margin: 0.8rem 0 1.2rem; padding: 0.8rem 1rem; background: var(--ist-azure); border-left: 4px solid var(--ist-blue-deep); border-radius: 0 4px 4px 0; font-size: 0.95rem; line-height: 1.55; color: var(--ist-text); }
+        .luogo-testo p { margin: 0 0 0.6rem; }
+        .luogo-testo p:last-child { margin-bottom: 0; }
         .luogo-badge { 
             display: inline-block; 
             background: var(--ist-azure); 
@@ -408,6 +412,7 @@
 
             <div class="dettagli-organo" id="dettagli-panel">
                 <div class="luogo-badge" id="view-luogo">Luogo</div>
+                <div id="view-luogo-info" style="display:none;"></div>
                 <div class="riga-nome">
                     <img id="view-icona" class="icona-organo" alt="" style="display:none" onerror="this.style.display='none'">
                     <h2 id="view-nome">Nome Organo</h2>
@@ -1167,6 +1172,37 @@
             const valoreLuogo = cercaLuogo(datiPubblici.luoghi, nodo.luogo) || nodo.luogo;
             const nomeLuogo = descrizioneLuogo(valoreLuogo) || "Nessun luogo associato";
             document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + nomeLuogo;
+
+            // Percorso (luogo dentro altri luoghi) e testo personalizzato del luogo
+            const boxInfoLuogo = document.getElementById('view-luogo-info');
+            boxInfoLuogo.innerHTML = '';
+            const percorsoLuogo = [];
+            {
+                let corrente = (valoreLuogo && typeof valoreLuogo === 'object') ? valoreLuogo : null, giri = 0;
+                while (corrente && corrente.genitore && giri++ < 20) {
+                    const padre = cercaLuogo(datiPubblici.luoghi, corrente.genitore);
+                    percorsoLuogo.unshift(padre ? (descrizioneLuogo(padre) || corrente.genitore) : corrente.genitore);
+                    corrente = (padre && typeof padre === 'object') ? padre : null;
+                }
+            }
+            if (percorsoLuogo.length) {
+                const pPercorso = document.createElement('p');
+                pPercorso.className = 'luogo-percorso';
+                pPercorso.textContent = 'Dentro: ' + percorsoLuogo.join(' › ');
+                boxInfoLuogo.appendChild(pPercorso);
+            }
+            const testoLuogo = (valoreLuogo && typeof valoreLuogo === 'object' && typeof valoreLuogo.testo === 'string') ? valoreLuogo.testo.trim() : '';
+            if (testoLuogo) {
+                const boxTesto = document.createElement('div');
+                boxTesto.className = 'luogo-testo';
+                testoLuogo.split(/\n{2,}/).forEach(par => {
+                    const p = document.createElement('p');
+                    par.split('\n').forEach((riga, i) => { if (i) p.appendChild(document.createElement('br')); p.appendChild(document.createTextNode(riga)); });
+                    boxTesto.appendChild(p);
+                });
+                boxInfoLuogo.appendChild(boxTesto);
+            }
+            boxInfoLuogo.style.display = boxInfoLuogo.childNodes.length ? '' : 'none';
 
             // Sito web facoltativo: se presente mostra il pulsante, altrimenti nasconde tutto.
             const boxSito = document.getElementById('view-sito-box');

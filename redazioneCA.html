@@ -37,6 +37,17 @@
         .form-group .icone-stato { display: block; margin-top: 4px; font-size: 12px; color: #777; }
         .btn-save { background: #0055a4; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+        .form-group textarea { width: 100%; padding: 10px 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; resize: vertical; }
+        .form-group .hint-campo { display: block; margin-top: 4px; font-size: 12px; color: #777; }
+        /* Trascinamento dei luoghi */
+        #luoghi-tree-container .node-header[draggable="true"] { cursor: grab; }
+        #luoghi-tree-container .node-header.trascinato { opacity: 0.4; }
+        #luoghi-tree-container .node-header.drop-prima { box-shadow: 0 -3px 0 0 #0055a4; }
+        #luoghi-tree-container .node-header.drop-dopo { box-shadow: 0 3px 0 0 #0055a4; }
+        #luoghi-tree-container .node-header.drop-dentro { outline: 2px dashed #0055a4; background: #eef5ff; }
+        .zona-radice { margin-top: 12px; padding: 10px; border: 2px dashed #b5c7dd; border-radius: 6px; text-align: center; font-size: 13px; color: #55708f; }
+        .zona-radice.drop-dentro { border-color: #0055a4; background: #eef5ff; color: #0055a4; }
+        .hint-drag { font-size: 13px; color: #555; margin: 0 0 10px; }
         .nota-luoghi { background: #eef5ff; border: 1px solid #cfe2ff; color: #0b3d6b; padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; }
 
         /* Voci collassabili (Organi con figli, Gruppi di Luoghi) */
@@ -241,6 +252,7 @@
                         <button type="button" class="btn-mini" onclick="espandiTutto('luoghi-tree-container', true)">Espandi tutto</button>
                         <button type="button" class="btn-mini" onclick="espandiTutto('luoghi-tree-container', false)">Comprimi tutto</button>
                     </div>
+                    <p class="hint-drag">Trascina un elemento <strong>sopra un gruppo</strong> per metterlo dentro, <strong>sopra un luogo</strong> per farlo diventare suo sotto-luogo, oppure sul <strong>bordo alto/basso</strong> di una riga per riordinarlo. Per portarlo fuori usa la zona tratteggiata in fondo.</p>
                     <div id="luoghi-tree-container">In caricamento...</div>
                 </div>
 
@@ -271,6 +283,19 @@
                     <div class="form-group" id="luoghi_campo_nome">
                         <label>Nome</label>
                         <input type="text" id="luoghi_input_nome" disabled>
+                    </div>
+
+                    <div class="form-group" id="luoghi_campo_genitore">
+                        <label>Dentro il luogo (facoltativo)</label>
+                        <select id="luoghi_input_genitore" disabled>
+                            <option value="">-- Nessuno (luogo principale) --</option>
+                        </select>
+                        <span class="hint-campo">Rende questo luogo un sotto-luogo di un altro (es. un distretto dentro una città). Puoi anche trascinarlo nell'albero.</span>
+                    </div>
+
+                    <div class="form-group" id="luoghi_campo_testo">
+                        <label>Testo personalizzato (facoltativo)</label>
+                        <textarea id="luoghi_input_testo" rows="5" disabled placeholder="Testo mostrato sul sito nella scheda degli organi collegati a questo luogo. Riga vuota = nuovo paragrafo."></textarea>
                     </div>
 
                     <div class="form-group">
@@ -947,6 +972,221 @@
 
             barra.append(btnVoce, btnGruppo);
             container.appendChild(barra);
+
+            const zona = document.createElement('div');
+            zona.className = 'zona-radice';
+            zona.textContent = 'Trascina qui per portare fuori da ogni gruppo e luogo (livello principale)';
+            zona.addEventListener('dragover', (e) => {
+                const t = trascinatoLuogo;
+                if (!t) return;
+                e.preventDefault();
+                zona.classList.add('drop-dentro');
+            });
+            zona.addEventListener('dragleave', () => zona.classList.remove('drop-dentro'));
+            zona.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const t = trascinatoLuogo;
+                trascinatoLuogo = null;
+                pulisciDropLuoghi();
+                zona.classList.remove('drop-dentro');
+                if (t) spostaElementoLuogo(t.natura, t.percorso, t.chiave, [], null, null, false);
+            });
+            container.appendChild(zona);
+        }
+
+        /* ---------- Sotto-luoghi (campo "genitore") ---------- */
+        function genitoreGlobale(id) {
+            const c = trovaContenitoreLuogo(datiInMemoria.luoghi, id);
+            const v = c && c[id];
+            return (v && typeof v === 'object' && v.genitore) || null;
+        }
+        function discendeDaLuogo(id, avo) {
+            let c = genitoreGlobale(id), n = 0;
+            while (c && n++ < 100) {
+                if (c === avo) return true;
+                c = genitoreGlobale(c);
+            }
+            return false;
+        }
+        // Genitore della voce se si trova nello stesso contenitore (altrimenti la voce resta al primo livello del gruppo)
+        function genitoreNelContenitore(contenitore, chiave) {
+            const v = contenitore[chiave];
+            if (!v || typeof v !== 'object' || !v.genitore || v.genitore === chiave) return null;
+            if (!eVoceLuogo(contenitore[v.genitore])) return null;
+            let c = v.genitore, n = 0;
+            while (c && n < 100) {
+                if (c === chiave) return null;   // ciclo: non annidare
+                const w = contenitore[c];
+                c = (w && typeof w === 'object' && w.genitore && eVoceLuogo(contenitore[w.genitore])) ? w.genitore : null;
+                n++;
+            }
+            return n >= 100 ? null : v.genitore;
+        }
+
+        /* ---------- Trascinamento ---------- */
+        let trascinatoLuogo = null;   // { natura, percorso, chiave }
+
+        function pulisciDropLuoghi() {
+            document.querySelectorAll('#luoghi-tree-container .drop-prima, #luoghi-tree-container .drop-dopo, #luoghi-tree-container .drop-dentro, #luoghi-tree-container .trascinato')
+                .forEach(el => el.classList.remove('drop-prima', 'drop-dopo', 'drop-dentro', 'trascinato'));
+        }
+
+        // Calcola dove finirebbe l'elemento trascinato se lo si lasciasse su questa riga (null = non consentito)
+        function destinazioneDrop(e, header, natura, percorso, chiave, valore) {
+            const t = trascinatoLuogo;
+            if (!t || (t.chiave === chiave && JSON.stringify(t.percorso) === JSON.stringify(percorso))) return null;
+            const r = header.getBoundingClientRect();
+            const rel = r.height ? (e.clientY - r.top) / r.height : 0.5;
+            let zona = rel < 0.25 ? 'prima' : (rel > 0.75 ? 'dopo' : 'dentro');
+            if (zona === 'dentro' && natura === 'voce' && t.natura === 'gruppo') zona = 'dopo';   // un gruppo non sta dentro un luogo
+            let d;
+            if (zona === 'dentro' && natura === 'gruppo') d = { zona, destPercorso: [...percorso, chiave], genitoreId: null, rif: null, dopo: false };
+            else if (zona === 'dentro') d = { zona, destPercorso: percorso, genitoreId: chiave, rif: null, dopo: false };
+            else d = { zona, destPercorso: percorso, genitoreId: (natura === 'voce' && valore && typeof valore === 'object' && valore.genitore) || null, rif: chiave, dopo: zona === 'dopo' };
+            return destinazioneValida(t, d) ? d : null;
+        }
+        function destinazioneValida(t, d) {
+            if (t.natura === 'gruppo') {
+                const propria = [...t.percorso, t.chiave];
+                return !(d.destPercorso.length >= propria.length && propria.every((k, i) => d.destPercorso[i] === k));
+            }
+            if (d.genitoreId && (d.genitoreId === t.chiave || discendeDaLuogo(d.genitoreId, t.chiave))) return false;
+            if (d.rif && (d.rif === t.chiave || discendeDaLuogo(d.rif, t.chiave))) return false;
+            return true;
+        }
+
+        function rendiTrascinabileLuogo(header, natura, percorso, chiave, valore) {
+            header.draggable = true;
+            header.addEventListener('dragstart', (e) => {
+                trascinatoLuogo = { natura, percorso, chiave };
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', chiave); } catch (err) { /* ok */ }
+                setTimeout(() => header.classList.add('trascinato'), 0);
+            });
+            header.addEventListener('dragend', () => { trascinatoLuogo = null; pulisciDropLuoghi(); });
+            header.addEventListener('dragover', (e) => {
+                const d = destinazioneDrop(e, header, natura, percorso, chiave, valore);
+                if (!d) return;
+                e.preventDefault(); e.stopPropagation();
+                document.querySelectorAll('#luoghi-tree-container .drop-prima, #luoghi-tree-container .drop-dopo, #luoghi-tree-container .drop-dentro')
+                    .forEach(el => el.classList.remove('drop-prima', 'drop-dopo', 'drop-dentro'));
+                header.classList.add('drop-' + d.zona);
+            });
+            header.addEventListener('dragleave', (e) => {
+                if (!header.contains(e.relatedTarget)) header.classList.remove('drop-prima', 'drop-dopo', 'drop-dentro');
+            });
+            header.addEventListener('drop', (e) => {
+                const d = destinazioneDrop(e, header, natura, percorso, chiave, valore);
+                const t = trascinatoLuogo;
+                trascinatoLuogo = null;
+                pulisciDropLuoghi();
+                if (!d || !t) return;
+                e.preventDefault(); e.stopPropagation();
+                spostaElementoLuogo(t.natura, t.percorso, t.chiave, d.destPercorso, d.genitoreId, d.rif, d.dopo);
+            });
+        }
+
+        // Sposta una voce o un gruppo: in un altro gruppo, dentro/fuori un altro luogo (genitore), oppure solo di posizione.
+        // Una voce porta con sé i suoi sotto-luoghi quando cambia gruppo.
+        function spostaElementoLuogo(natura, percorsoOrigine, chiave, percorsoDest, genitoreId, rifChiave, dopo) {
+            const origine = contenitoreAlPercorso(percorsoOrigine);
+            const dest = contenitoreAlPercorso(percorsoDest);
+            if (!origine || !dest || !(chiave in origine)) { avviso('Elemento non trovato: ricarica la pagina e riprova.'); return; }
+            const eVoce = natura === 'voce';
+            if (!destinazioneValida({ natura, percorso: percorsoOrigine, chiave }, { destPercorso: percorsoDest, genitoreId, rif: rifChiave })) {
+                avviso(eVoce ? 'Un luogo non può stare dentro se stesso o dentro un suo sotto-luogo.' : 'Un gruppo non può essere spostato dentro se stesso.');
+                return;
+            }
+            const cambia = origine !== dest;
+            const chiavi = [chiave];
+            if (eVoce && cambia) {
+                (function raccogli(id) {
+                    Object.keys(origine).forEach(k => {
+                        if (!chiavi.includes(k) && eVoceLuogo(origine[k]) && typeof origine[k] === 'object' && origine[k].genitore === id) { chiavi.push(k); raccogli(k); }
+                    });
+                })(chiave);
+            }
+            if (cambia) {
+                const conflitto = chiavi.find(k => Object.prototype.hasOwnProperty.call(dest, k));
+                if (conflitto) { avviso(`In "${nomePercorso(percorsoDest)}" esiste già un elemento con ID "${conflitto}".`); return; }
+            }
+            if (rifChiave && chiavi.includes(rifChiave)) return;
+
+            const valori = chiavi.map(k => [k, origine[k]]);
+            if (cambia) chiavi.forEach(k => delete origine[k]); else delete origine[chiave];
+
+            if (eVoce) {
+                let val = valori[0][1];
+                if (genitoreId) val = (typeof val === 'string') ? { nome: val, genitore: genitoreId } : { ...val, genitore: genitoreId };
+                else if (val && typeof val === 'object' && val.genitore !== undefined) { val = { ...val }; delete val.genitore; }
+                valori[0] = [chiave, val];
+            }
+
+            const voci = Object.entries(dest);
+            voci.forEach(([k]) => delete dest[k]);
+            let idx = rifChiave ? voci.findIndex(([k]) => k === rifChiave) : -1;
+            if (idx >= 0 && dopo) idx++;
+            if (idx < 0) idx = voci.length;
+            voci.splice(idx, 0, ...valori);
+            voci.forEach(([k, v]) => { dest[k] = v; });
+
+            for (let i = 1; i <= percorsoDest.length; i++) apertiLuoghi.add(percorsoDest.slice(0, i).join('/'));
+            renderizzaAlberoLuoghi();
+            renderizzaAlbero();
+        }
+
+        // "Fuori": toglie il luogo dal luogo che lo contiene (resta nello stesso gruppo)
+        function portaFuoriDaLuogo(percorso, chiave) {
+            const c = contenitoreAlPercorso(percorso);
+            if (!c || !(chiave in c)) return;
+            const v = c[chiave];
+            if (v && typeof v === 'object' && v.genitore) {
+                delete v.genitore;
+                renderizzaAlberoLuoghi();
+            }
+        }
+
+        function creaLiVoce(contenitore, percorso, chiave) {
+            const valore = contenitore[chiave];
+            const nome = typeof valore === 'string' ? valore : valore.nome;
+            const dettagli = [];
+            if (typeof valore === 'object') {
+                if (valore.tipo) dettagli.push(ETICHETTE_TIPO_LUOGO[valore.tipo] || valore.tipo);
+                if (valore.genitore) {
+                    const g = trovaVoceLuogo(valore.genitore);
+                    dettagli.push('in ' + (g ? g.nome : valore.genitore));
+                }
+                if (valore.testo) dettagli.push('📄 testo');
+            }
+            const extra = dettagli.length ? `<em style="color:#888; font-weight:normal;">— ${escapeHtml(dettagli.join(' · '))}</em>` : '';
+            const htmlTesto = `<span data-k="${escapeHtml([...percorso, chiave].join('/'))}"><strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
+
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+            if (typeof valore === 'object' && valore.genitore) {
+                actions.appendChild(creaBottoneAzione('Fuori', 'btn-add', () => portaFuoriDaLuogo(percorso, chiave)));
+            }
+            actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaFormLuogo('edit', 'voce', percorso, chiave)));
+            actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaElementoLuogo(percorso, chiave)));
+
+            const li = document.createElement('li');
+            li.className = 'node-item';
+            const header = document.createElement('div');
+            header.className = 'node-header';
+            header.innerHTML = htmlTesto;
+            header.appendChild(actions);
+            rendiTrascinabileLuogo(header, 'voce', percorso, chiave, valore);
+            li.appendChild(header);
+
+            const figli = Object.keys(contenitore).filter(k => eVoceLuogo(contenitore[k]) && genitoreNelContenitore(contenitore, k) === chiave);
+            if (figli.length) {
+                const sub = document.createElement('ul');
+                sub.className = 'node-list';
+                figli.forEach(k => sub.appendChild(creaLiVoce(contenitore, percorso, k)));
+                li.appendChild(sub);
+            }
+            return li;
         }
 
         function creaListaLuoghi(contenitore, percorso, livello) {
@@ -960,34 +1200,12 @@
                 const gruppo = eGruppoLuogo(valore);
                 if (!voce && !gruppo) return;
 
-                const actions = document.createElement('div');
-                actions.className = 'actions';
-
                 if (voce) {
-                    const nome = typeof valore === 'string' ? valore : valore.nome;
-                    const dettagli = [];
-                    if (typeof valore === 'object') {
-                        if (valore.tipo) dettagli.push(ETICHETTE_TIPO_LUOGO[valore.tipo] || valore.tipo);
-                        if (valore.genitore) {
-                            const g = trovaVoceLuogo(valore.genitore);
-                            dettagli.push('in ' + (g ? g.nome : valore.genitore));
-                        }
-                    }
-                    const extra = dettagli.length ? `<em style="color:#888; font-weight:normal;">— ${escapeHtml(dettagli.join(' · '))}</em>` : '';
-                    const htmlTesto = `<span data-k="${escapeHtml([...percorso, chiave].join('/'))}"><strong>${escapeHtml(nome)}</strong> (${escapeHtml(chiave)}) ${extra}</span>`;
-
-                    actions.appendChild(creaBottoneAzione('Modifica', 'btn-edit', () => abilitaFormLuogo('edit', 'voce', percorso, chiave)));
-                    actions.appendChild(creaBottoneAzione('Elimina', 'btn-del', () => eliminaElementoLuogo(percorso, chiave)));
-
-                    const li = document.createElement('li');
-                    li.className = 'node-item';
-                    const header = document.createElement('div');
-                    header.className = 'node-header';
-                    header.innerHTML = htmlTesto;
-                    header.appendChild(actions);
-                    li.appendChild(header);
-                    ul.appendChild(li);
+                    if (genitoreNelContenitore(contenitore, chiave)) return;   // viene disegnato sotto il suo luogo
+                    ul.appendChild(creaLiVoce(contenitore, percorso, chiave));
                 } else {
+                    const actions = document.createElement('div');
+                    actions.className = 'actions';
                     const n = contaVoci(valore);
                     const htmlTesto = `<span data-k="${escapeHtml([...percorso, chiave].join('/'))}"><strong>${escapeHtml(etichettaGruppo(chiave))}</strong> (${escapeHtml(chiave)}) <em style="color:#888; font-weight:normal;">— gruppo, ${n} ${n === 1 ? 'voce' : 'voci'}</em></span>`;
                     const percorsoGruppo = [...percorso, chiave];
@@ -1007,6 +1225,7 @@
                     summary.className = 'node-header';
                     summary.innerHTML = htmlTesto;
                     summary.appendChild(actions);
+                    rendiTrascinabileLuogo(summary, 'gruppo', percorso, chiave, valore);
                     details.appendChild(summary);
 
                     details.appendChild(creaListaLuoghi(valore, percorsoGruppo, livello + 1));
@@ -1016,8 +1235,24 @@
             return ul;
         }
 
+        // Elenco dei luoghi tra cui scegliere il contenitore ("Dentro il luogo")
+        function popolaSelectGenitoreLuogo(selezionato, escludiId) {
+            const sel = document.getElementById('luoghi_input_genitore');
+            const html = ['<option value="">-- Nessuno (luogo principale) --</option>'];
+            let trovato = !selezionato;
+            elencoLuoghi().forEach(l => {
+                if (escludiId && (l.id === escludiId || discendeDaLuogo(l.id, escludiId))) return;
+                if (l.id === selezionato) trovato = true;
+                const gruppo = l.gruppo ? ` [${etichettaGruppo(l.gruppo)}]` : '';
+                html.push(`<option value="${escapeHtml(l.id)}">${escapeHtml(l.nome)} (${escapeHtml(l.id)})${escapeHtml(gruppo)}</option>`);
+            });
+            if (!trovato) html.push(`<option value="${escapeHtml(selezionato)}">${escapeHtml(selezionato)} (non trovato)</option>`);
+            sel.innerHTML = html.join('');
+            sel.value = selezionato || '';
+        }
+
         function abilitaFormLuogo(azione, natura, percorso, chiave) {
-            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => el.disabled = false);
+            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select, #form-panel-luoghi textarea').forEach(el => el.disabled = false);
             document.getElementById('luoghi_btn_salva_form').disabled = false;
 
             document.getElementById('luoghi_azione_tipo').value = azione;
@@ -1027,6 +1262,8 @@
             const eVoce = natura === 'voce';
             document.getElementById('luoghi_campo_tipo').classList.toggle('hidden', !eVoce);
             document.getElementById('luoghi_campo_nome').classList.toggle('hidden', !eVoce);
+            document.getElementById('luoghi_campo_genitore').classList.toggle('hidden', !eVoce);
+            document.getElementById('luoghi_campo_testo').classList.toggle('hidden', !eVoce);
             document.getElementById('luoghi_label_id').innerText = eVoce
                 ? 'ID Luogo (codice univoco, senza spazi)'
                 : 'Nome del gruppo (chiave, senza spazi)';
@@ -1046,6 +1283,8 @@
                 document.getElementById('luoghi_input_tipo').value = "";
                 document.getElementById('luoghi_input_nome').value = "";
                 document.getElementById('luoghi_input_id').value = "";
+                document.getElementById('luoghi_input_testo').value = "";
+                popolaSelectGenitoreLuogo('', null);
             } else {
                 const contenitore = contenitoreAlPercorso(percorso);
                 const valore = contenitore ? contenitore[chiave] : null;
@@ -1055,6 +1294,8 @@
                 if (eVoce) {
                     document.getElementById('luoghi_input_tipo').value = (valore && typeof valore === 'object' && valore.tipo) || "";
                     document.getElementById('luoghi_input_nome').value = typeof valore === 'string' ? valore : ((valore && valore.nome) || "");
+                    document.getElementById('luoghi_input_testo').value = (valore && typeof valore === 'object' && valore.testo) || "";
+                    popolaSelectGenitoreLuogo((valore && typeof valore === 'object' && valore.genitore) || '', chiave);
                 }
             }
         }
@@ -1082,6 +1323,14 @@
             if (idCambiato && /\s/.test(idNuovo)) {
                 avviso("L'ID non può contenere spazi (usa ad esempio underscore).");
                 return;
+            }
+
+            if (eVoce) {
+                const gSel = document.getElementById('luoghi_input_genitore').value;
+                if (gSel && (gSel === idNuovo || (modifica && (gSel === bersaglio.chiave || discendeDaLuogo(gSel, bersaglio.chiave))))) {
+                    avviso("Un luogo non può stare dentro se stesso o dentro un suo sotto-luogo.");
+                    return;
+                }
             }
 
             const destinazione = contenitoreAlPercorso(percorsoDest);
@@ -1122,6 +1371,10 @@
                 const base = (vecchio && typeof vecchio === 'object') ? { ...vecchio } : {};
                 base.nome = nome;
                 if (tipo) base.tipo = tipo; else delete base.tipo;
+                const genitoreSel = document.getElementById('luoghi_input_genitore').value;
+                if (genitoreSel) base.genitore = genitoreSel; else delete base.genitore;
+                const testoLuogo = document.getElementById('luoghi_input_testo').value.replace(/\r\n/g, '\n').trim();
+                if (testoLuogo) base.testo = testoLuogo; else delete base.testo;
                 nuovoValore = Object.keys(base).length === 1 ? base.nome : base;
             }
 
@@ -1138,7 +1391,7 @@
                 aggiornaRiferimentiLuogo(bersaglio.chiave, idNuovo);
             }
 
-            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select, #form-panel-luoghi textarea').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('luoghi_btn_salva_form').disabled = true;
             document.getElementById('luoghi-form-title').innerText = "Seleziona un'azione";
             document.getElementById('luoghi-form-context').innerText = "Modifica applicata in bozza. Ricorda di salvare online.";
@@ -1250,6 +1503,8 @@
             } catch (e) { /* ignora */ }
         }, 'Modifica applicata in bozza. Ricorda di salvare online.', false);
         conRegistroModifiche('eliminaElementoLuogo', null, 'Elemento eliminato (in bozza).', true);
+        conRegistroModifiche('spostaElementoLuogo', null, 'Spostamento applicato in bozza. Ricorda di salvare online.', true);
+        conRegistroModifiche('portaFuoriDaLuogo', null, 'Luogo portato fuori (in bozza). Ricorda di salvare online.', true);
 
         // --- Ricerca e Espandi/Comprimi ---
         function filtraUl(ul, q, forza) {
@@ -1302,7 +1557,7 @@
             evidenziaNodo('tree-container', null);
         }
         function chiudiFormLuoghi() {
-            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.querySelectorAll('#form-panel-luoghi input, #form-panel-luoghi select, #form-panel-luoghi textarea').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('luoghi_btn_salva_form').disabled = true;
             document.getElementById('luoghi-form-title').innerText = "Seleziona un'azione";
             document.getElementById('luoghi-form-context').innerText = 'Clicca su + o Modifica nell\'albero per iniziare.';
