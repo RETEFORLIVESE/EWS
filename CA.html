@@ -418,6 +418,7 @@
                     <h2 id="view-nome">Nome Organo</h2>
                 </div>
                 <p style="color: var(--ist-text); margin-bottom: 1.5rem;">ID Riferimento: <code id="view-id"></code></p>
+                <div class="luogo-testo" id="view-organo-testo" style="display:none;"></div>
                 
                 <div id="view-sito-box" style="display: none; margin-bottom: 2rem;">
                     <a href="#" id="view-link" class="btn-sito" target="_blank" rel="noopener noreferrer">Visita il Sito Ufficiale</a>
@@ -1172,6 +1173,19 @@
             const valoreLuogo = cercaLuogo(datiPubblici.luoghi, nodo.luogo) || nodo.luogo;
             const nomeLuogo = descrizioneLuogo(valoreLuogo) || "Nessun luogo associato";
             document.getElementById('view-luogo').innerText = (etichetta ? etichetta + " — " : "") + nomeLuogo;
+
+            // Testo personalizzato dell'organo
+            const boxTestoOrgano = document.getElementById('view-organo-testo');
+            boxTestoOrgano.innerHTML = '';
+            const testoOrgano = (typeof nodo.testo === 'string') ? nodo.testo.trim() : '';
+            if (testoOrgano) {
+                testoOrgano.split(/\n{2,}/).forEach(par => {
+                    const p = document.createElement('p');
+                    par.split('\n').forEach((riga, i) => { if (i) p.appendChild(document.createElement('br')); p.appendChild(document.createTextNode(riga)); });
+                    boxTestoOrgano.appendChild(p);
+                });
+            }
+            boxTestoOrgano.style.display = testoOrgano ? '' : 'none';
 
             // Percorso (luogo dentro altri luoghi) e testo personalizzato del luogo
             const boxInfoLuogo = document.getElementById('view-luogo-info');

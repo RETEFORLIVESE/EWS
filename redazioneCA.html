@@ -40,11 +40,11 @@
         .form-group textarea { width: 100%; padding: 10px 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; resize: vertical; }
         .form-group .hint-campo { display: block; margin-top: 4px; font-size: 12px; color: #777; }
         /* Trascinamento dei luoghi */
-        #luoghi-tree-container .node-header[draggable="true"] { cursor: grab; }
-        #luoghi-tree-container .node-header.trascinato { opacity: 0.4; }
-        #luoghi-tree-container .node-header.drop-prima { box-shadow: 0 -3px 0 0 #0055a4; }
-        #luoghi-tree-container .node-header.drop-dopo { box-shadow: 0 3px 0 0 #0055a4; }
-        #luoghi-tree-container .node-header.drop-dentro { outline: 2px dashed #0055a4; background: #eef5ff; }
+        #luoghi-tree-container .node-header[draggable="true"], #tree-container .node-header[draggable="true"] { cursor: grab; }
+        #luoghi-tree-container .node-header.trascinato, #tree-container .node-header.trascinato { opacity: 0.4; }
+        #luoghi-tree-container .node-header.drop-prima, #tree-container .node-header.drop-prima { box-shadow: 0 -3px 0 0 #0055a4; }
+        #luoghi-tree-container .node-header.drop-dopo, #tree-container .node-header.drop-dopo { box-shadow: 0 3px 0 0 #0055a4; }
+        #luoghi-tree-container .node-header.drop-dentro, #tree-container .node-header.drop-dentro { outline: 2px dashed #0055a4; background: #eef5ff; }
         .zona-radice { margin-top: 12px; padding: 10px; border: 2px dashed #b5c7dd; border-radius: 6px; text-align: center; font-size: 13px; color: #55708f; }
         .zona-radice.drop-dentro { border-color: #0055a4; background: #eef5ff; color: #0055a4; }
         .hint-drag { font-size: 13px; color: #555; margin: 0 0 10px; }
@@ -170,6 +170,7 @@
                         <button type="button" class="btn-mini" onclick="espandiTutto('tree-container', true)">Espandi tutto</button>
                         <button type="button" class="btn-mini" onclick="espandiTutto('tree-container', false)">Comprimi tutto</button>
                     </div>
+                    <p class="hint-drag">Trascina un organo <strong>sopra un altro</strong> per metterlo al suo interno (sotto-organo), sul <strong>bordo alto/basso</strong> di una riga per riordinarlo, o sulla zona tratteggiata in fondo per portarlo al livello principale.</p>
                     <div id="tree-container">In caricamento...</div>
                 </div>
 
@@ -209,6 +210,11 @@
                     <div class="form-group">
                         <label>Link Sito Web (Opzionale)</label>
                         <input type="url" id="input_link" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Testo personalizzato (Opzionale)</label>
+                        <textarea id="input_testo" rows="5" disabled placeholder="Testo mostrato sul sito nella scheda di questo organo. Riga vuota = nuovo paragrafo."></textarea>
                     </div>
 
                     <div class="form-group">
@@ -691,6 +697,21 @@
             btnRoot.style.marginTop = "15px";
             btnRoot.onclick = () => abilitaForm('add', null, 'Radice');
             container.appendChild(btnRoot);
+
+            const zona = document.createElement('div');
+            zona.className = 'zona-radice';
+            zona.textContent = 'Trascina qui per portare un organo al livello principale';
+            zona.addEventListener('dragover', (e) => { if (!trascinatoOrgano) return; e.preventDefault(); zona.classList.add('drop-dentro'); });
+            zona.addEventListener('dragleave', () => zona.classList.remove('drop-dentro'));
+            zona.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const id = trascinatoOrgano;
+                trascinatoOrgano = null;
+                pulisciDropOrgani(true);
+                zona.classList.remove('drop-dentro');
+                if (id) spostaOrgano(id, null, null, false);
+            });
+            container.appendChild(zona);
         }
 
         function creaListaNodi(nodi, parentId, livello) {
@@ -704,7 +725,7 @@
                 const infoLuogo = trovaVoceLuogo(nodo.luogo);
                 const testoLuogo = infoLuogo ? ` · ${escapeHtml(infoLuogo.nome)}` : '';
                 const customStyle = nodo.icona ? ` style="--icona-custom: url('${escapeHtml(urlIcona(nodo.icona))}');"` : '';
-                const htmlTesto = `<span data-k="${escapeHtml(nodo.id_organo)}"${customStyle}><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}</em></span>`;
+                const htmlTesto = `<span data-k="${escapeHtml(nodo.id_organo)}"${customStyle}><strong>${escapeHtml(nodo.nome_display)}</strong> (${escapeHtml(nodo.id_organo)}) <em style="color:#888; font-weight:normal;">— ${etichettaTipo}${testoLuogo}${nodo.testo ? ' · 📄 testo' : ''}</em></span>`;
 
                 const actions = document.createElement('div');
                 actions.className = 'actions';
@@ -724,6 +745,7 @@
                     summary.className = 'node-header';
                     summary.innerHTML = htmlTesto;
                     summary.appendChild(actions);
+                    rendiTrascinabileOrgano(summary, nodo.id_organo);
                     details.appendChild(summary);
 
                     details.appendChild(creaListaNodi(nodo.figli, nodo.id_organo, livello + 1));
@@ -735,11 +757,102 @@
                     header.className = 'node-header';
                     header.innerHTML = htmlTesto;
                     header.appendChild(actions);
+                    rendiTrascinabileOrgano(header, nodo.id_organo);
                     li.appendChild(header);
                     ul.appendChild(li);
                 }
             });
             return ul;
+        }
+
+        /* ---------- Spostamento degli organi (trascinamento) ---------- */
+        let trascinatoOrgano = null;   // id dell'organo trascinato
+
+        function arrayContenitoreOrgano(array, id) {
+            for (const n of (array || [])) {
+                if (n.id_organo === id) return array;
+                const t = n.figli && arrayContenitoreOrgano(n.figli, id);
+                if (t) return t;
+            }
+            return null;
+        }
+        function pulisciDropOrgani(tutto) {
+            document.querySelectorAll('#tree-container .drop-prima, #tree-container .drop-dopo, #tree-container .drop-dentro' + (tutto ? ', #tree-container .trascinato' : ''))
+                .forEach(el => el.classList.remove('drop-prima', 'drop-dopo', 'drop-dentro', ...(tutto ? ['trascinato'] : [])));
+        }
+        function destinazioneOrgano(e, header, idTarget) {
+            const idSorg = trascinatoOrgano;
+            if (!idSorg || idSorg === idTarget) return null;
+            const nodo = trovaNodoGenerico(datiInMemoria.alberoOrgani, idSorg, 'id_organo');
+            if (!nodo || raccogliIdNodi(nodo, 'id_organo').includes(idTarget)) return null;   // non dentro se stesso/sotto-organi
+            const r = header.getBoundingClientRect();
+            const rel = r.height ? (e.clientY - r.top) / r.height : 0.5;
+            const zona = rel < 0.25 ? 'prima' : (rel > 0.75 ? 'dopo' : 'dentro');
+            return { zona, idSorg, idTarget };
+        }
+        function rendiTrascinabileOrgano(header, id) {
+            header.draggable = true;
+            header.addEventListener('dragstart', (e) => {
+                trascinatoOrgano = id;
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', id); } catch (err) { /* ok */ }
+                setTimeout(() => header.classList.add('trascinato'), 0);
+            });
+            header.addEventListener('dragend', () => { trascinatoOrgano = null; pulisciDropOrgani(true); });
+            header.addEventListener('dragover', (e) => {
+                const d = destinazioneOrgano(e, header, id);
+                if (!d) return;
+                e.preventDefault(); e.stopPropagation();
+                pulisciDropOrgani(false);
+                header.classList.add('drop-' + d.zona);
+            });
+            header.addEventListener('dragleave', (e) => {
+                if (!header.contains(e.relatedTarget)) header.classList.remove('drop-prima', 'drop-dopo', 'drop-dentro');
+            });
+            header.addEventListener('drop', (e) => {
+                const d = destinazioneOrgano(e, header, id);
+                trascinatoOrgano = null;
+                pulisciDropOrgani(true);
+                if (!d) return;
+                e.preventDefault(); e.stopPropagation();
+                if (d.zona === 'dentro') spostaOrgano(d.idSorg, d.idTarget, null, false);
+                else spostaOrgano(d.idSorg, null, d.idTarget, d.zona === 'dopo');
+            });
+        }
+
+        // Sposta un organo (con tutti i suoi sotto-organi):
+        //  - idPadre: dentro quell'organo (in fondo ai suoi figli);
+        //  - idRif: accanto a quell'organo (prima o dopo), nello stesso livello;
+        //  - nessuno dei due: al livello principale.
+        function spostaOrgano(idSorg, idPadre, idRif, dopo) {
+            const albero = datiInMemoria.alberoOrgani;
+            const nodo = trovaNodoGenerico(albero, idSorg, 'id_organo');
+            if (!nodo) { avviso('Organo non trovato: ricarica la pagina e riprova.'); return; }
+            const vietati = raccogliIdNodi(nodo, 'id_organo');
+            if ((idPadre && vietati.includes(idPadre)) || (idRif && vietati.includes(idRif))) {
+                avviso('Un organo non può essere spostato dentro se stesso o dentro un suo sotto-organo.');
+                return;
+            }
+            let destArray;
+            if (idPadre) {
+                const padre = trovaNodoGenerico(albero, idPadre, 'id_organo');
+                if (!padre) { avviso('Organo di destinazione non trovato.'); return; }
+                if (!padre.figli) padre.figli = [];
+                destArray = padre.figli;
+            } else if (idRif) {
+                destArray = arrayContenitoreOrgano(albero, idRif);
+                if (!destArray) { avviso('Organo di riferimento non trovato.'); return; }
+            } else {
+                destArray = albero;
+            }
+            rimuoviDaArrayGenerico(albero, idSorg, 'id_organo');
+            let idx = idRif ? destArray.findIndex(n => n.id_organo === idRif) : -1;
+            if (idx >= 0 && dopo) idx++;
+            if (idx < 0) idx = destArray.length;
+            destArray.splice(idx, 0, nodo);
+            if (idPadre) apertiOrgani.add(idPadre);
+            renderizzaAlbero();
         }
 
         function popolaSelectLuoghi(selezionato) {
@@ -768,7 +881,7 @@
         }
 
         function abilitaForm(tipo, targetId, data) {
-            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => el.disabled = false);
+            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select, #form-panel-organi textarea').forEach(el => el.disabled = false);
             document.getElementById('btn_salva_form').disabled = false;
 
             document.getElementById('azione_tipo').value = tipo;
@@ -782,6 +895,7 @@
                 document.getElementById('input_id').value = "";
                 popolaSelectLuoghi("");
                 document.getElementById('input_link').value = "";
+                document.getElementById('input_testo').value = "";
                 impostaIconaSelect("");
             } else if (tipo === 'edit') {
                 document.getElementById('form-title').innerText = "Modifica Sezione";
@@ -791,6 +905,7 @@
                 document.getElementById('input_id').value = data.id_organo || "";
                 popolaSelectLuoghi(data.luogo || "");
                 document.getElementById('input_link').value = data.link_sito || "";
+                document.getElementById('input_testo').value = data.testo || "";
                 impostaIconaSelect(data.icona || "");
             }
         }
@@ -822,6 +937,8 @@
                 icona: document.getElementById('input_icona').value,
                 figli: []
             };
+            const testoOrgano = document.getElementById('input_testo').value.replace(/\r\n/g, '\n').trim();
+            if (testoOrgano) nuovoNodo.testo = testoOrgano;
 
             let applicato = false;
             let vecchioId = null;
@@ -848,13 +965,14 @@
                     nodo.luogo = nuovoNodo.luogo;
                     nodo.link_sito = nuovoNodo.link_sito;
                     nodo.icona = nuovoNodo.icona;
+                    if (nuovoNodo.testo) nodo.testo = nuovoNodo.testo; else delete nodo.testo;
                     applicato = true;
                 }
             }
 
             const inLuoghi = applicato && registraOrganoInLuoghi(vecchioId, nuovoNodo.id_organo, nuovoNodo.nome_display);
 
-            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select, #form-panel-organi textarea').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('btn_salva_form').disabled = true;
             document.getElementById('form-title').innerText = "Seleziona un'azione";
             document.getElementById('form-context').innerText = "Modifica applicata in bozza" + (inLuoghi ? " (organo registrato anche in Luoghi)" : "") + ". Ricorda di salvare online.";
@@ -1496,6 +1614,7 @@
             }
         }, 'Modifica applicata in bozza. Ricorda di salvare online.', false);
         conRegistroModifiche('eliminaNodo', null, 'Organo eliminato (in bozza).', true);
+        conRegistroModifiche('spostaOrgano', null, 'Organo spostato in bozza. Ricorda di salvare online.', true);
         conRegistroModifiche('applicaModificheLuogo', () => {
             try {
                 const p = JSON.parse(document.getElementById('luoghi_input_gruppo').value || '[]');
@@ -1549,7 +1668,7 @@
             if (span) { const h = span.closest('.node-header'); if (h) h.classList.add('in-modifica'); }
         }
         function chiudiFormOrgani() {
-            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select').forEach(el => { el.value = ''; el.disabled = true; });
+            document.querySelectorAll('#form-panel-organi input, #form-panel-organi select, #form-panel-organi textarea').forEach(el => { el.value = ''; el.disabled = true; });
             document.getElementById('btn_salva_form').disabled = true;
             document.getElementById('form-title').innerText = "Seleziona un'azione";
             document.getElementById('form-context').innerText = 'Clicca su + o Modifica nell\'albero per iniziare.';
