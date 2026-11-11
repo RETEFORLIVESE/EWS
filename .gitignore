@@ -10,3 +10,5 @@ node_modules/
 # Nascondi file di sistema macOS/Windows
 .DS_Store
 Thumbs.db
+.vercel
+.env*
